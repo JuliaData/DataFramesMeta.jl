@@ -13,6 +13,7 @@ when used in the REPL than when used inside a function.
 Here are several issues that discuss metaprogramming and/or different
 approaches to query and manipulate DataFrames:
 
+- https://github.com/JuliaStats/DataFrames.jl/issues/523
 - https://github.com/JuliaStats/DataFrames.jl/pull/472
 - https://github.com/JuliaStats/DataFrames.jl/issues/504
 - https://github.com/JuliaStats/DataFrames.jl/issues/381
