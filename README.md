@@ -10,15 +10,6 @@ deficiencies. Performance was poor. The functions relied on `eval`
 which caused several issues, most notably that results were different
 when used in the REPL than when used inside a function.
 
-Here are several issues that discuss metaprogramming and/or different
-approaches to query and manipulate DataFrames:
-
-- https://github.com/JuliaStats/DataFrames.jl/issues/523
-- https://github.com/JuliaStats/DataFrames.jl/pull/472
-- https://github.com/JuliaStats/DataFrames.jl/issues/504
-- https://github.com/JuliaStats/DataFrames.jl/issues/381
-- https://github.com/JuliaStats/DataFrames.jl/issues/369
-
 # Features
 
 ## `@with`
@@ -103,39 +94,4 @@ end
 
 For performance, we should check to see if this can play nicely with
 `@devectorize` for use on columns.
-
-
-# Options
-
-`@within` (or `@transform`) could be developed. Here's a hypothetical
-example:
-
-```julia
-@within df begin
-    x = 4
-    :x = :colA + :colB + x # a new column
-    :z = 2 * :x     # can we create a new column based on another newly created column?
-    rm(:y)          # should we / could we allow deletion of columns?
-end
-```
-
-Another option might be to extend `DataFrame()` to take a DataFrame
-and keyword arguments to create a new DataFrame as:
-
-```julia
-df1 = @with df DataFrame(df, 
-    x = :colA + :colB,  # a new column
-    z = 2 * :x)      # can we create a new column based on another newly created column?
-```
-
-This goes well with using `DataFrame` with `@with` to create a new
-DataFrame based on another DataFrame. This already works:
-
-```julia
-df1 = @with df DataFrame(
-    x = :colA + :colB,
-    z = 2 * :colA)
-```
-
-A `@linq` macro would certainly be attractive.
 
