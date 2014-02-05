@@ -65,6 +65,8 @@ This is an alternative to `getindex`.
 
 # Discussions
 
+Everything here is experimental.
+
 `@with` works by parsing the expression body for all columns
 indicated by symbols (e.g. `:colA`). Then, a function is created that
 wraps the body and passes the columns as function arguments. This
