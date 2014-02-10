@@ -45,7 +45,7 @@ d = {:s => 3, :y => 44, :d => 5}
 @with(d, :s + :y + y)
 ```
 
-## LINQ-Style Queries and Transforms
+## `@select`
 
 This is an alternative to `getindex`.
 
