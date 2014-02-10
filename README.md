@@ -45,7 +45,7 @@ d = {:s => 3, :y => 44, :d => 5}
 @with(d, :s + :y + y)
 ```
 
-## `@select`
+## LINQ-Style Queries and Transforms
 
 This is an alternative to `getindex`.
 
@@ -53,6 +53,42 @@ This is an alternative to `getindex`.
 @select(df, :x .> 1)
 @select(df, :x .> x) # again, the x's are different
 @select(df, :A .> 1, [:B, :A])
+```
+
+## LINQ-Style Queries and Transforms
+
+A number of functions for operations on DataFrames have been defined.
+Here is a table of equivalents for Hadley's
+[dplyr](https://github.com/hadley/dplyr) and common
+[LINQ](http://en.wikipedia.org/wiki/Language_Integrated_Query)
+functions.
+
+    Julia             dplyr            LINQ
+    ---------------------------------------------
+    @sub              filter           Where
+    @transform        mutate           Select (?)
+    @by                                GroupBy
+    @groupby          group_by
+    @based_on         summarise
+    orderby           arrange          OrderBy
+    select            select           Select
+
+
+Chaining operations is a useful way to manipulate data. There are
+several ways to do this. This is still in flux in base Julia
+(https://github.com/JuliaLang/julia/issues/5571). Here is one option
+from [Lazy.jl](https://github.com/one-more-minute/Lazy.jl) by Mike
+Innes:
+
+```julia
+x_thread = @> begin
+    df
+    @transform(y = 10 * :x)
+    @sub(:a .> 2)
+    @by(:b, meanX = mean(:x), meanY = mean(:y))
+    orderby(:meanX)
+    select([:meanX, :meanY, :b])
+end
 ```
 
 # Discussions

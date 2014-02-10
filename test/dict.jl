@@ -9,6 +9,7 @@ d = {:s => 3, :y => 44, :d => 5, :e => :(a + b)}
 @test @with(d, d)  == d
 @test @with(d, :s + d[^(:y)])  == d[:s] + d[:y]
 @test @with(d, :e.head) == d[:e].head
+@test @with({:s => 3, :y => 44, :d => 5, :e => :(a + b)}, :e.head) == d[:e].head
 
 x = @with d begin
     z = y + :y - 1
