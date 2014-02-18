@@ -98,8 +98,8 @@ end
 
 x_thread = @> begin
     df
-    @transform(y = 10 * :x)
     @sub(:a .> 2)
+    @transform(y = 10 * :x)
     @by(:b, meanX = mean(:x), meanY = mean(:y))
     orderby(:meanX)
     select([:meanX, :meanY, :b])

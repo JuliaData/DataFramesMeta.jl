@@ -112,7 +112,7 @@ function transform(d::AbstractDataFrame; kwargs...)
 end
 
 macro transform(x, args...)
-    esc(:(@with($x, transform($x, $(args...)))))
+    esc(:(let x = $x; @with(x, transform(x, $(args...))); end))
 end
 
 
