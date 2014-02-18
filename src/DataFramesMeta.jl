@@ -51,29 +51,29 @@ end
 
 ##############################################################################
 ##
-## @select - row and row/col selector
+## @idx - row and row/col selector
 ##
 ##############################################################################
 
-select_helper(d, arg) = :( $d[@with($d, $arg),:] )
-select_helper(d, arg, moreargs...) = :( getindex($d, @with($d, $arg), $(moreargs...)) )
+idx_helper(d, arg) = :( $d[@with($d, $arg),:] )
+idx_helper(d, arg, moreargs...) = :( getindex($d, @with($d, $arg), $(moreargs...)) )
 
-macro select(d, args...)
+macro idx(d, args...)
     esc(select_helper(d, args...))
 end
 
 
 ##############################################################################
 ##
-## @sub - select rows
+## @where - select row subsets
 ##
 ##############################################################################
 
-sub_helper(arg) = :( x -> x[@with(x, $arg),:] )    # sets up a curry if only one argument
-sub_helper(d, arg) = :( $d[@with($d, $arg),:] )
+where_helper(arg) = :( x -> x[@with(x, $arg),:] )    # sets up a curry if only one argument
+where_helper(d, arg) = :( $d[@with($d, $arg),:] )
 
-macro sub(d, arg...)
-    esc(sub_helper(d, arg...))
+macro where(d, arg...)
+    esc(where_helper(d, arg...))
 end
 
 
@@ -134,6 +134,29 @@ end
 ##############################################################################
 
 macro by(x, what, args...)
+    esc(:( by($x, $what, _DF -> @with(_DF, DataFrame($(args...)))) ))
+end
+
+
+##############################################################################
+##
+## @select - select and transform columns
+##
+##############################################################################
+
+function select(d::Union(AbstractDataFrame, Associative); kwargs...)
+    result = copy(d)
+    for (k, v) in kwargs
+        result[k] = v
+    end
+    return result
+end
+
+macro transform(x, args...)
+    esc(:(let x = $x; @with(x, transform(x, $(args...))); end))
+end
+
+macro select(x, args...)
     esc(:( by($x, $what, _DF -> @with(_DF, DataFrame($(args...)))) ))
 end
 
