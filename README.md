@@ -14,6 +14,10 @@ when used in the REPL than when used inside a function.
 
 ## `@with`
 
+`@with` allows DataFrame columns to be referenced as symbols like
+`:colX` in expressions. If an expression is wrapped in `^(expr)`,
+`expr` gets passed through untouched. Here are some examples:
+
 ```julia
 using DataArrays, DataFrames
 using DataFramesMeta
@@ -45,15 +49,32 @@ d = {:s => 3, :y => 44, :d => 5}
 @with(d, :s + :y + y)
 ```
 
+`@with` is the fundamental macro used by the other metaprogramming
+utilities.
+
 ## `@select`
 
-This is an alternative to `getindex`.
+Select rows and/or columns. This is an alternative to `getindex`.
 
 ```julia
 @select(df, :x .> 1)
 @select(df, :x .> x) # again, the x's are different
 @select(df, :A .> 1, [:B, :A])
 ```
+
+## `@transform`
+
+Add additional arguments based on keyword arguments. This is available
+in both function and macro versions with the macro version allowing
+direct reference to columns using the colon syntax:
+
+```julia
+transform(df, newCol = cos(df[:x]), anotherCol = df[:x]^2 + 3*df[:x] + 4)
+@transform(df, newCol = cos(:x), anotherCol = :x^2 + 3*:x + 4)
+```
+
+`@transform` works for associative types, too.
+
 
 ## LINQ-Style Queries and Transforms
 
