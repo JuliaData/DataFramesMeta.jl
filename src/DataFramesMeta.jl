@@ -103,7 +103,7 @@ orderby(o) = x -> orderby(x, o)
 ##
 ##############################################################################
 
-function transform(d::AbstractDataFrame; kwargs...)
+function transform(d::Union(AbstractDataFrame, Associative); kwargs...)
     result = copy(d)
     for (k, v) in kwargs
         result[k] = v

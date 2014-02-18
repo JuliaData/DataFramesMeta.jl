@@ -23,4 +23,7 @@ fun = d -> @with d begin
 end
 @test fun(d) == y + d[:y] - 1 + d[:s]
 
+d2 = @transform(d, z = :y + :s)
+@test d2[:z] == 47
+
 end # module
