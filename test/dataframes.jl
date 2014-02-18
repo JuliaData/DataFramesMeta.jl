@@ -22,11 +22,17 @@ end
 @test  @with(df, df[:A .> 1, ^([:B, :A])]) == df[df[:A] .> 1, [:B, :A]]
 @test  @with(df, DataFrame(a = :A * 2, b = :A + :B)) == DataFrame(a = df[:A] * 2, b = df[:A] + df[:B])
     
-@test  @select(df, :A .> 1)           == df[df[:A] .> 1,:]
-@test  @select(df, :B .> 1)           == df[df[:B] .> 1,:]  
-@test  @select(df, :A .> x)           == df[df[:A] .> x,:]
-@test  @select(df, :B .> x)           == df[df[:B] .> x,:]
-@test  @select(df, :A .> :B)          == df[df[:A] .> df[:B],:]
-@test  @select(df, :A .> 1, [:B, :A]) == df[df[:A] .> 1, [:B, :A]]
+@test  @idx(df, :A .> 1)           == df[df[:A] .> 1,:]
+@test  @idx(df, :B .> 1)           == df[df[:B] .> 1,:]  
+@test  @idx(df, :A .> x)           == df[df[:A] .> x,:]
+@test  @idx(df, :B .> x)           == df[df[:B] .> x,:]
+@test  @idx(df, :A .> :B)          == df[df[:A] .> df[:B],:]
+@test  @idx(df, :A .> 1, [:B, :A]) == df[df[:A] .> 1, [:B, :A]]
+
+@test  @where(df, :A .> 1)         == df[df[:A] .> 1,:]
+@test  @where(df, :B .> 1)         == df[df[:B] .> 1,:]  
+@test  @where(df, :A .> x)         == df[df[:A] .> x,:]
+@test  @where(df, :B .> x)         == df[df[:B] .> x,:]
+@test  @where(df, :A .> :B)        == df[df[:A] .> df[:B],:]
 
 end # module

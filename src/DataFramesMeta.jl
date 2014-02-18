@@ -4,10 +4,8 @@ importall Base
 using DataFrames
 
 # Basics:
-export @with, @select
-
-# LINQ-style extras:
-export @sub, orderby, transform, @transform, @by, @based_on, select
+export @with, @idx, @where, @orderby, @transform, @by, @based_on, @select
+export where, orderby, transform, select 
 
 
 ##############################################################################
@@ -51,15 +49,35 @@ end
 
 ##############################################################################
 ##
+## @withfirst - helper
+##            - @withfirst( fun(df, :a) ) becomes @with(df, fund(df, :a))
+##
+##############################################################################
+
+function withfirst_helper(e)
+    quote
+        let d = $(e.args[2]); 
+            @with(d, $(e.args[1])(d, $(e.args[3:end]...)))
+        end
+    end
+end
+
+macro withfirst(e)
+    esc(withfirst_helper(e))
+end
+
+
+##############################################################################
+##
 ## @idx - row and row/col selector
 ##
 ##############################################################################
 
-idx_helper(d, arg) = :( $d[@with($d, $arg),:] )
-idx_helper(d, arg, moreargs...) = :( getindex($d, @with($d, $arg), $(moreargs...)) )
+idx_helper(d, arg) = :( let d = $d; $d[@with($d, $arg),:]; end )
+idx_helper(d, arg, moreargs...) = :( let d = $d; getindex(d, @with(d, $arg), $(moreargs...)); end )
 
 macro idx(d, args...)
-    esc(select_helper(d, args...))
+    esc(idx_helper(d, args...))
 end
 
 
@@ -69,8 +87,14 @@ end
 ##
 ##############################################################################
 
-where_helper(arg) = :( x -> x[@with(x, $arg),:] )    # sets up a curry if only one argument
-where_helper(d, arg) = :( $d[@with($d, $arg),:] )
+where(d::AbstractDataFrame, arg) = d[arg, :]
+
+macro where(d, arg)
+    esc(:( @withfirst where($d, $arg) ))
+end
+
+
+where_helper(d, arg) = :( let d = $d; d[@with(d, $arg),:]; end )
 
 macro where(d, arg...)
     esc(where_helper(d, arg...))
@@ -84,18 +108,36 @@ end
 ##############################################################################
 
 select(d::AbstractDataFrame, arg) = d[:, arg]
-select(arg) = x -> select(x, arg)
 
 
 ##############################################################################
 ##
-## orderby
+## @orderby
 ##
 ##############################################################################
 
-orderby(x::AbstractDataFrame, o) = sort(x, cols = o)
-orderby(o) = x -> orderby(x, o)
+macro orderby(d, args...)
+    esc(quote
+        let d = $d
+            D = @with(d, typeof(d)($(args...)))
+            d[sortperm(D), :]
+        end
+    end)
+end
 
+function orderby(d::AbstractDataFrame, args...)
+    D = typeof(d)(args...)
+    d[sortperm(D), :]
+end
+
+macro orderby(d, args...)
+    esc(quote
+        let d = $d
+            D = @with(d, typeof(d)($(args...)))
+            d[sortperm(D), :]
+        end
+    end)
+end
 
 ##############################################################################
 ##
@@ -144,21 +186,36 @@ end
 ##
 ##############################################################################
 
+expandargs(x) = x
+
+function expandargs(e::Expr) 
+    if e.head == :quote && length(e.args) == 1
+        return Expr(:kw, e.args[1], Expr(:quote, e.args[1]))
+    else
+        return e
+    end
+end
+
+function expandargs(e::Tuple)
+    res = [e...]
+    for i in 1:length(res)
+        res[i] = expandargs(e[i])
+    end
+    return res
+end
+
 function select(d::Union(AbstractDataFrame, Associative); kwargs...)
-    result = copy(d)
+    result = typeof(d)()
     for (k, v) in kwargs
         result[k] = v
     end
     return result
 end
 
-macro transform(x, args...)
-    esc(:(let x = $x; @with(x, transform(x, $(args...))); end))
+macro select(x, args...)
+    esc(:(let x = $x; @with(x, select(x, $(expandargs(args)...))); end))
 end
 
-macro select(x, args...)
-    esc(:( by($x, $what, _DF -> @with(_DF, DataFrame($(args...)))) ))
-end
 
 
 end # module

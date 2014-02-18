@@ -26,4 +26,7 @@ end
 d2 = @transform(d, z = :y + :s)
 @test d2[:z] == 47
 
+d2 = @select(d, :y, z = :y + :s, :e)
+@test d2[:z] == 47
+
 end # module

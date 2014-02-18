@@ -53,7 +53,7 @@ function thread_left(x, expr, exprs...)
     call = Expr(:call, expr, x)
 
   elseif typeof(expr) == Expr && expr.head in [:call, :macrocall]
-    call = Expr(expr.head, expr.args[1], x, expr.args[2:]...)
+    call = Expr(expr.head, expr.args[1], x, expr.args[2:end]...)
 
   elseif typeof(expr) == Expr && expr.head == :->
     call = Expr(:call, expr, x)
@@ -81,37 +81,32 @@ df = DataFrame(a = rand(1:3, n),
                b = ["a","b","c","d"][rand(1:4, n)],
                x = rand(n))
 
-x = @sub(df, :a .> 2)
+x = @where(df, :a .> 2)
 x = @transform(x, y = 10 * :x)
 x = @by(x, :b, meanX = mean(:x), meanY = mean(:y))
-x = orderby(x, :meanX)
-x = select(x, [:meanX, :meanY, :b])
+x = @orderby(x, :b, -:meanX)
+x = @select(x, var = :b, :meanX, :meanY)
 
 x_as = @as _ begin
     df
-    @sub(_, :a .> 2)
+    @where(_, :a .> 2)
     @transform(_, y = 10 * :x)
     @by(_, :b, meanX = mean(:x), meanY = mean(:y))
-    orderby(_, :meanX)
-    select(_, [:meanX, :meanY, :b])
+    @orderby(_, :b, -:meanX)
+    @select(_, var = :b, :meanX, :meanY)
 end
 
 x_thread = @> begin
     df
-    @sub(:a .> 2)
+    @where(:a .> 2)
     @transform(y = 10 * :x)
     @by(:b, meanX = mean(:x), meanY = mean(:y))
-    orderby(:meanX)
-    select([:meanX, :meanY, :b])
+    @orderby(:b, -:meanX)
+    @select(var = :b, :meanX, :meanY)
 end
 
 @test x == x_as
 @test x == x_thread
 
-# Basic Julia chaining:
-
-x = df |> @sub(:a .> 2) |> orderby(:x) |> select([:b, :x])
-y = sort(df[df[:a] .> 2, [:b, :x]], cols = :x)
-@test  x == y
 
 end # module

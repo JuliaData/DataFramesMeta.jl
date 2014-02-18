@@ -52,14 +52,32 @@ d = {:s => 3, :y => 44, :d => 5}
 `@with` is the fundamental macro used by the other metaprogramming
 utilities.
 
-## `@select`
+## `@idx`
 
-Select rows and/or columns. This is an alternative to `getindex`.
+Select row and/or columns. This is an alternative to `getindex`.
 
 ```julia
-@select(df, :x .> 1)
-@select(df, :x .> x) # again, the x's are different
-@select(df, :A .> 1, [:B, :A])
+@idx(df, :x .> 1)
+@idx(df, :x .> x) # again, the x's are different
+@idx(df, :A .> 1, [:B, :A])
+```
+
+## `@where`
+
+Select row subsets.
+
+```julia
+@where(df, :x .> 1)
+@where(df, :x .> x)
+```
+
+## `@select`
+
+Column selections and transformations. Also works with Associative types.
+
+```julia
+@select(df, :x, :y, :z)
+@select(df, x2 = 2 * :x, :y, :z)
 ```
 
 ## `@transform`
@@ -86,13 +104,13 @@ functions.
 
     Julia             dplyr            LINQ
     ---------------------------------------------
-    @sub              filter           Where
+    @where            filter           Where
     @transform        mutate           Select (?)
     @by                                GroupBy
     @groupby          group_by
-    @based_on         summarise
+    @based_on         summarise/do
     orderby           arrange          OrderBy
-    select            select           Select
+    @select           select           Select
 
 
 Chaining operations is a useful way to manipulate data. There are
@@ -105,10 +123,10 @@ Innes:
 x_thread = @> begin
     df
     @transform(y = 10 * :x)
-    @sub(:a .> 2)
+    @where(:a .> 2)
     @by(:b, meanX = mean(:x), meanY = mean(:y))
     orderby(:meanX)
-    select([:meanX, :meanY, :b])
+    @select(:meanX, :meanY, var = :b)
 end
 ```
 
@@ -123,7 +141,7 @@ function is then called. Because a new function is defined, the body
 of `@with` can be evaluated effiently. `@select` is based on `@with`.
 
 Right now, `@with` works for both AbstractDataFrames and Associative
-types. `@select` really only works for AbstractDataFrames. Because
+types. `@idx` really only works for AbstractDataFrames. Because
 macros are not type specific, it would be nice to make these
 metaprogramming tools as general as possible.
 
