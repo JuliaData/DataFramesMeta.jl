@@ -4,7 +4,7 @@ importall Base
 using DataFrames
 
 # Basics:
-export @with, @idx, @where, @orderby, @transform, @by, @based_on, @select
+export @with, @ix, @where, @orderby, @transform, @by, @based_on, @select
 export where, orderby, transform, select 
 
 
@@ -69,15 +69,15 @@ end
 
 ##############################################################################
 ##
-## @idx - row and row/col selector
+## @ix - row and row/col selector
 ##
 ##############################################################################
 
-idx_helper(d, arg) = :( let d = $d; $d[@with($d, $arg),:]; end )
-idx_helper(d, arg, moreargs...) = :( let d = $d; getindex(d, @with(d, $arg), $(moreargs...)); end )
+ix_helper(d, arg) = :( let d = $d; $d[@with($d, $arg),:]; end )
+ix_helper(d, arg, moreargs...) = :( let d = $d; getindex(d, @with(d, $arg), $(moreargs...)); end )
 
-macro idx(d, args...)
-    esc(idx_helper(d, args...))
+macro ix(d, args...)
+    esc(ix_helper(d, args...))
 end
 
 
