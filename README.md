@@ -14,6 +14,10 @@ when used in the REPL than when used inside a function.
 
 ## `@with`
 
+`@with` allows DataFrame columns to be referenced as symbols like
+`:colX` in expressions. If an expression is wrapped in `^(expr)`,
+`expr` gets passed through untouched. Here are some examples:
+
 ```julia
 using DataArrays, DataFrames
 using DataFramesMeta
@@ -45,28 +49,121 @@ d = {:s => 3, :y => 44, :d => 5}
 @with(d, :s + :y + y)
 ```
 
-## `@select`
+`@with` is the fundamental macro used by the other metaprogramming
+utilities.
 
-This is an alternative to `getindex`.
+## `@ix`
+
+Select row and/or columns. This is an alternative to `getindex`.
 
 ```julia
-@select(df, :x .> 1)
-@select(df, :x .> x) # again, the x's are different
-@select(df, :A .> 1, [:B, :A])
+@ix(df, :x .> 1)
+@ix(df, :x .> x) # again, the x's are different
+@ix(df, :A .> 1, [:B, :A])
 ```
+
+## `@where`
+
+Select row subsets.
+
+```julia
+@where(df, :x .> 1)
+@where(df, :x .> x)
+```
+
+## `@select`
+
+Column selections and transformations. Also works with Associative types.
+
+```julia
+@select(df, :x, :y, :z)
+@select(df, x2 = 2 * :x, :y, :z)
+```
+
+## `@transform`
+
+Add additional arguments based on keyword arguments. This is available
+in both function and macro versions with the macro version allowing
+direct reference to columns using the colon syntax:
+
+```julia
+transform(df, newCol = cos(df[:x]), anotherCol = df[:x]^2 + 3*df[:x] + 4)
+@transform(df, newCol = cos(:x), anotherCol = :x^2 + 3*:x + 4)
+```
+
+`@transform` works for associative types, too.
+
+
+## LINQ-Style Queries and Transforms
+
+A number of functions for operations on DataFrames have been defined.
+Here is a table of equivalents for Hadley's
+[dplyr](https://github.com/hadley/dplyr) and common
+[LINQ](http://en.wikipedia.org/wiki/Language_Integrated_Query)
+functions.
+
+    Julia             dplyr            LINQ
+    ---------------------------------------------
+    @where            filter           Where
+    @transform        mutate           Select (?)
+    @by                                GroupBy
+    @groupby          group_by
+    @based_on         summarise/do
+    @orderby          arrange          OrderBy
+    @select           select           Select
+
+
+Chaining operations is a useful way to manipulate data. There are
+several ways to do this. This is still in flux in base Julia
+(https://github.com/JuliaLang/julia/issues/5571). Here is one option
+from [Lazy.jl](https://github.com/one-more-minute/Lazy.jl) by Mike
+Innes:
+
+```julia
+x_thread = @> begin
+    df
+    @transform(y = 10 * :x)
+    @where(:a .> 2)
+    @by(:b, meanX = mean(:x), meanY = mean(:y))
+    @orderby(:meanX)
+    @select(:meanX, :meanY, var = :b)
+end
+```
+
+# Performance
+
+`@with` works by parsing the expression body for all columns indicated
+by symbols (e.g. `:colA`). Then, a function is created that wraps the
+body and passes the columns as function arguments. This function is
+then called. Operations are efficient because:
+
+- A pseudo-anonymous function is defined, so types are stable.
+- Columns are passed as references, eliminating DataFrame indexing.
+
+All of the other macros are based on `@with`.
+
 
 # Discussions
 
 Everything here is experimental.
 
-`@with` works by parsing the expression body for all columns
-indicated by symbols (e.g. `:colA`). Then, a function is created that
-wraps the body and passes the columns as function arguments. This
-function is then called. Because a new function is defined, the body
-of `@with` can be evaluated effiently. `@select` is based on `@with`.
+Right now, here's my judgement on the advantages of this approach
+
+- The approach is quite expressive and flexible.
+- Use of macros improves run-time efficiency.
+- The API is relatively consistent.
+- I have not run into any show-stoppers like we had with
+  expression-based indexing.
+- The code is relatively concise.
+
+The main disadvantages are:
+
+- The syntax is a little noisy with all of the `@something` macro
+  calls. {This is my main gripe.}
+- As with most macros, there's a certain amount of magic going on.
 
 Right now, `@with` works for both AbstractDataFrames and Associative
-types. `@select` really only works for AbstractDataFrames. Because
+types. `@ix` really only works for AbstractDataFrames. Because
 macros are not type specific, it would be nice to make these
 metaprogramming tools as general as possible.
 
@@ -79,10 +176,10 @@ parentheses.
 
 From the user's point of view, it'd be nice to swap the
 "dereferencing", so in `@with(df, colA + :outsideVariable)`, `colA` is
-a column, and `:outsideVariable` is an external variable. That is quite
-difficult to do, though. You have to parse the expression tree and
-replace all quoted variables with the "right thing". Here's an example
-showing some of the difficulties:
+a column, and `:outsideVariable` is an external variable. That is
+quite difficult to do, though. You have to parse the expression tree
+and replace all quoted variables with the "right thing". Here's an
+example showing some of the difficulties:
 
 ```julia
 @with df begin

@@ -1,7 +1,9 @@
+fatalerrors = false
 anyerrors = false
 
 my_tests = ["dict.jl",
-            "dataframes.jl"]
+            "dataframes.jl",
+            "chaining.jl"]
 
 println("Running tests:")
 
