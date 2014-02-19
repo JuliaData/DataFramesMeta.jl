@@ -52,14 +52,14 @@ d = {:s => 3, :y => 44, :d => 5}
 `@with` is the fundamental macro used by the other metaprogramming
 utilities.
 
-## `@idx`
+## `@ix`
 
 Select row and/or columns. This is an alternative to `getindex`.
 
 ```julia
-@idx(df, :x .> 1)
-@idx(df, :x .> x) # again, the x's are different
-@idx(df, :A .> 1, [:B, :A])
+@ix(df, :x .> 1)
+@ix(df, :x .> x) # again, the x's are different
+@ix(df, :A .> 1, [:B, :A])
 ```
 
 ## `@where`
@@ -109,7 +109,7 @@ functions.
     @by                                GroupBy
     @groupby          group_by
     @based_on         summarise/do
-    orderby           arrange          OrderBy
+    @orderby          arrange          OrderBy
     @select           select           Select
 
 
@@ -125,23 +125,45 @@ x_thread = @> begin
     @transform(y = 10 * :x)
     @where(:a .> 2)
     @by(:b, meanX = mean(:x), meanY = mean(:y))
-    orderby(:meanX)
+    @orderby(:meanX)
     @select(:meanX, :meanY, var = :b)
 end
 ```
+
+# Performance
+
+`@with` works by parsing the expression body for all columns indicated
+by symbols (e.g. `:colA`). Then, a function is created that wraps the
+body and passes the columns as function arguments. This function is
+then called. Operations are efficient because:
+
+- A pseudo-anonymous function is defined, so types are stable.
+- Columns are passed as references, eliminating DataFrame indexing.
+
+All of the other macros are based on `@with`.
+
 
 # Discussions
 
 Everything here is experimental.
 
-`@with` works by parsing the expression body for all columns
-indicated by symbols (e.g. `:colA`). Then, a function is created that
-wraps the body and passes the columns as function arguments. This
-function is then called. Because a new function is defined, the body
-of `@with` can be evaluated effiently. `@select` is based on `@with`.
+Right now, here's my judgement on the advantages of this approach
+
+- The approach is quite expressive and flexible.
+- Use of macros improves run-time efficiency.
+- The API is relatively consistent.
+- I have not run into any show-stoppers like we had with
+  expression-based indexing.
+- The code is relatively concise.
+
+The main disadvantages are:
+
+- The syntax is a little noisy with all of the `@something` macro
+  calls. {This is my main gripe.}
+- As with most macros, there's a certain amount of magic going on.
 
 Right now, `@with` works for both AbstractDataFrames and Associative
-types. `@idx` really only works for AbstractDataFrames. Because
+types. `@ix` really only works for AbstractDataFrames. Because
 macros are not type specific, it would be nice to make these
 metaprogramming tools as general as possible.
 
@@ -154,10 +176,10 @@ parentheses.
 
 From the user's point of view, it'd be nice to swap the
 "dereferencing", so in `@with(df, colA + :outsideVariable)`, `colA` is
-a column, and `:outsideVariable` is an external variable. That is quite
-difficult to do, though. You have to parse the expression tree and
-replace all quoted variables with the "right thing". Here's an example
-showing some of the difficulties:
+a column, and `:outsideVariable` is an external variable. That is
+quite difficult to do, though. You have to parse the expression tree
+and replace all quoted variables with the "right thing". Here's an
+example showing some of the difficulties:
 
 ```julia
 @with df begin
