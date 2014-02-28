@@ -90,17 +90,18 @@ end
 
 where(d::AbstractDataFrame, arg) = d[arg, :]
 where(d::AbstractDataFrame, f::Function) = d[f(d), :]
+where(g::GroupedDataFrame, f::Function) = (@show Bool[f(x) for x in g]; g[Bool[f(x) for x in g]])
 where(g::GroupedDataFrame, f::Function) = g[Bool[f(x) for x in g]]
 
+## macro where(d, arg)
+##     esc(:( @withfirst where($d, $arg) ))
+## end
+
+
+where_helper(d, arg) = :( where($d, x -> @with(x, $arg)) )
+
 macro where(d, arg)
-    esc(:( @withfirst where($d, $arg) ))
-end
-
-
-where_helper(d, arg) = :( where(d, x -> @with(x, $arg)) )
-
-macro where(d, arg...)
-    esc(where_helper(d, arg...))
+    esc(where_helper(d, arg))
 end
 
 
@@ -124,10 +125,10 @@ function orderby(d::AbstractDataFrame, args...)
     d[sortperm(D), :]
 end
 orderby(d::AbstractDataFrame, f::Function) = d[sortperm(f(d)), :]
-orderby(g::GroupedDataFrame, f::Function) = g[sortperm(f(d))]
+orderby(g::GroupedDataFrame, f::Function) = g[sortperm([f(x) for x in g])]
 
-macro orderby(d, args...)
-    esc(:( orderby(d, x -> @with(x, $arg)) ))
+macro orderby(d, arg)
+    esc(:( orderby($d, x -> @with(x, $arg)) ))
 end
 
 
@@ -218,5 +219,11 @@ end
 combnranges(starts, ends) = [[starts[i]:ends[i] for i in 1:length(starts)]...]
 
 DataFrame(g::GroupedDataFrame) = g.parent[g.idx[combnranges(g.starts, g.ends)], :]
+
+Base.getindex(gd::GroupedDataFrame, I::AbstractArray{Int}) = GroupedDataFrame(gd.parent,
+                                                                              gd.cols,
+                                                                              gd.idx,
+                                                                              gd.starts[I],
+                                                                              gd.ends[I])
 
 end # module
