@@ -1,6 +1,7 @@
 module DataFramesMeta
 
 importall Base
+importall DataFrames
 using DataFrames
 
 # Basics:
@@ -88,13 +89,15 @@ end
 ##############################################################################
 
 where(d::AbstractDataFrame, arg) = d[arg, :]
+where(d::AbstractDataFrame, f::Function) = d[f(d), :]
+where(g::GroupedDataFrame, f::Function) = g[Bool[f(x) for x in g]]
 
 macro where(d, arg)
     esc(:( @withfirst where($d, $arg) ))
 end
 
 
-where_helper(d, arg) = :( let d = $d; d[@with(d, $arg),:]; end )
+where_helper(d, arg) = :( where(d, x -> @with(x, $arg)) )
 
 macro where(d, arg...)
     esc(where_helper(d, arg...))
@@ -116,28 +119,17 @@ select(d::AbstractDataFrame, arg) = d[:, arg]
 ##
 ##############################################################################
 
-macro orderby(d, args...)
-    esc(quote
-        let d = $d
-            D = @with(d, typeof(d)($(args...)))
-            d[sortperm(D), :]
-        end
-    end)
-end
-
 function orderby(d::AbstractDataFrame, args...)
     D = typeof(d)(args...)
     d[sortperm(D), :]
 end
+orderby(d::AbstractDataFrame, f::Function) = d[sortperm(f(d)), :]
+orderby(g::GroupedDataFrame, f::Function) = g[sortperm(f(d))]
 
 macro orderby(d, args...)
-    esc(quote
-        let d = $d
-            D = @with(d, typeof(d)($(args...)))
-            d[sortperm(D), :]
-        end
-    end)
+    esc(:( orderby(d, x -> @with(x, $arg)) ))
 end
+
 
 ##############################################################################
 ##
@@ -217,5 +209,14 @@ macro select(x, args...)
 end
 
 
+##############################################################################
+##
+## Extras for GroupedDataFrames
+##
+##############################################################################
+
+combnranges(starts, ends) = [[starts[i]:ends[i] for i in 1:length(starts)]...]
+
+DataFrame(g::GroupedDataFrame) = g.parent[g.idx[combnranges(g.starts, g.ends)], :]
 
 end # module
