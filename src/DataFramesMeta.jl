@@ -90,7 +90,6 @@ end
 
 where(d::AbstractDataFrame, arg) = d[arg, :]
 where(d::AbstractDataFrame, f::Function) = d[f(d), :]
-where(g::GroupedDataFrame, f::Function) = (@show Bool[f(x) for x in g]; g[Bool[f(x) for x in g]])
 where(g::GroupedDataFrame, f::Function) = g[Bool[f(x) for x in g]]
 
 ## macro where(d, arg)
@@ -98,7 +97,7 @@ where(g::GroupedDataFrame, f::Function) = g[Bool[f(x) for x in g]]
 ## end
 
 
-where_helper(d, arg) = :( where($d, x -> @with(x, $arg)) )
+where_helper(d, arg) = :( where($d, _DF -> @with(_DF, $arg)) )
 
 macro where(d, arg)
     esc(where_helper(d, arg))
@@ -126,9 +125,12 @@ function orderby(d::AbstractDataFrame, args...)
 end
 orderby(d::AbstractDataFrame, f::Function) = d[sortperm(f(d)), :]
 orderby(g::GroupedDataFrame, f::Function) = g[sortperm([f(x) for x in g])]
+orderbyconstructor(d::AbstractDataFrame) = typeof(d)
+orderbyconstructor(d::DataFrame) = DataFrame
+orderbyconstructor(d) = x -> x
 
-macro orderby(d, arg)
-    esc(:( orderby($d, x -> @with(x, $arg)) ))
+macro orderby(d, args...)
+    esc(:(let _D = $d;  orderby(_D, _DF -> @with(_DF, DataFramesMeta.orderbyconstructor(_D)($(args...)))); end))
 end
 
 
@@ -147,7 +149,7 @@ function transform(d::Union(AbstractDataFrame, Associative); kwargs...)
 end
 
 macro transform(x, args...)
-    esc(:(let x = $x; @with(x, transform(x, $(args...))); end))
+    esc(:(let _DF = $x; @with(_DF, transform(_DF, $(args...))); end))
 end
 
 
