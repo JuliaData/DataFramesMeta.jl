@@ -143,14 +143,40 @@ end
 function transform(d::Union(AbstractDataFrame, Associative); kwargs...)
     result = copy(d)
     for (k, v) in kwargs
-        result[k] = v
+        result[k] = isa(v, Function) ? v(d) : v
     end
     return result
 end
 
-macro transform(x, args...)
-    esc(:(let _DF = $x; @with(_DF, transform(_DF, $(args...))); end))
+function transform(g::GroupedDataFrame; kwargs...)
+    result = DataFrame(g)
+    idx2 = cumsum(Int[size(g[i],1) for i in 1:length(g)])
+    idx1 = [1, 1 + idx2[1:end-1]]
+    for (k, v) in kwargs
+        first = v(g[1])
+        result[k] = Array(eltype(first), size(result, 1))
+        result[idx1[1]:idx2[1], k] = first
+        for i in 2:length(g)
+            result[idx1[i]:idx2[i], k] = v(g[i])
+        end
+    end
+    return result
 end
+
+
+function transform_helper(x, args...)
+    # convert each kw arg value to: _DF -> @with(_DF, arg)
+    newargs = [args...]
+    for i in 1:length(args)
+        newargs[i].args[2] = :( _DF -> @with(_DF, $(newargs[i].args[2]) ) )
+    end
+    :( transform($x, $(newargs...)) )
+end
+
+macro transform(x, args...)
+    esc(transform_helper(x, args...))
+end
+
 
 
 ##############################################################################
