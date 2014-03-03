@@ -17,5 +17,7 @@ g = groupby(d, :x)
 @test  DataFrame(orderby(g, x -> mean(x[:n]))) == DataFrame(@orderby(g, mean(:n)))
 @test  DataFrames.based_on(@orderby(g, mean(:n)), x -> x[1,:x])[:x1] == [2,1,3]
 
+@test  (@transform(g, y = :n - median(:n)))[1,:y] == -10.0
+
 
 end # module

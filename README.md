@@ -130,6 +130,39 @@ x_thread = @> begin
 end
 ```
 
+## Operations on GroupedDataFrames
+
+The following operations are now included:
+
+- `where(g, d -> mean(d[:a]) > 0)` and `@where(g, mean(:a) > 0)` --
+  Filter groups based on the given criteria. Returns a
+  GroupedDataFrame.
+
+- `orderby(g, d -> mean(d[:a]))` and `@orderby(g, mean(:a))` -- Sort
+  groups based on the given criteria. Returns a GroupedDataFrame.
+
+- `DataFrame(g)` -- Convert groups back to a DataFrame with the same
+  group orderings. Should this be `convert(DataFrame, g)` instead?
+
+- `DataFrames.based_on(g, d -> DataFrame(z = [mean(d[:a])]))` and
+  `@based_on(g, z = mean(:a))` -- Summarize results within groups.
+  Returns a DataFrame.
+
+- `transform(g, d -> y = d[:a] - mean(d[:a]))` and
+  `@transform(g, y = :a - mean(:a))` -- Transform a DataFrame based
+  on operations within a group. Returns a DataFrame.
+
+You can also index on GroupedDataFrames. `g[1]` is the first group,
+returned as a SubDataFrame. `g[[1,4,5]]` or
+`g[[true, false, true, false, false]]` return subsets of groups as a
+GroupedDataFrame. You can also iterate over GroupedDataFrames.
+
+The most general split-apply-combine approach is based on `map`.
+`map(fun, g)` returns a GroupApplied object with keys and vals. This
+can be used with `combine`. {This functionality is not all fleshed out
+and could use more work.}
+
+
 # Performance
 
 `@with` works by parsing the expression body for all columns indicated
