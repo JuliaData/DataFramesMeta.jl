@@ -175,6 +175,33 @@ then called. Operations are efficient because:
 
 All of the other macros are based on `@with`.
 
+# CompositeDataFrame
+
+A CompositeDataFrame is an AbstractDataFrame built using Composite
+types. The advantages of this are:
+
+* Accessing columns `df[:colA]` is more type stable, so code should be
+  faster (without `@with` tricks). There is still the function
+  boundary to worry about.
+
+* You can access single columns directly using df.colA.
+
+* All indexing operations can be done currently.
+
+Some downsides include:
+
+* As an abuse of the type system, creating a new type for each change to
+  a CompositeDataFrame may waste memory.
+
+* You cannot change the structure of a CompositeDataFrame once created.
+  You have to treat it (almost) like an immutable object. For example to
+  add a column, you need to do something like:
+
+    transform(df, newcol = df.colA + 5)
+
+  An advantage of this is that the API becomes more functional. All
+  manipulations of the CompositeDataFrame return a new object.
+  Normally, this doesn't create much more memory.
 
 # Discussions
 
