@@ -8,6 +8,7 @@ using DataFrames
 export @with, @ix, @where, @orderby, @transform, @by, @based_on, @select
 export where, orderby, transform, select 
 
+include("compositedataframe.jl")
 
 ##############################################################################
 ##
@@ -234,7 +235,7 @@ function select(d::Union(AbstractDataFrame, Associative); kwargs...)
 end
 
 macro select(x, args...)
-    esc(:(let x = $x; @with(x, select(x, $(expandargs(args)...))); end))
+    esc(:(let _DF = $x; @with(_DF, select(_DF, $(expandargs(args)...))); end))
 end
 
 
