@@ -51,26 +51,6 @@ end
 
 ##############################################################################
 ##
-## @withfirst - helper
-##            - @withfirst( fun(df, :a) ) becomes @with(df, fund(df, :a))
-##
-##############################################################################
-
-function withfirst_helper(e)
-    quote
-        let d = $(e.args[2]); 
-            @with(d, $(e.args[1])(d, $(e.args[3:end]...)))
-        end
-    end
-end
-
-macro withfirst(e)
-    esc(withfirst_helper(e))
-end
-
-
-##############################################################################
-##
 ## @ix - row and row/col selector
 ##
 ##############################################################################
@@ -93,11 +73,6 @@ where(d::AbstractDataFrame, arg) = d[arg, :]
 where(d::AbstractDataFrame, f::Function) = d[f(d), :]
 where(g::GroupedDataFrame, f::Function) = g[Bool[f(x) for x in g]]
 
-## macro where(d, arg)
-##     esc(:( @withfirst where($d, $arg) ))
-## end
-
-
 where_helper(d, arg) = :( where($d, _DF -> @with(_DF, $arg)) )
 
 macro where(d, arg)
@@ -111,7 +86,7 @@ end
 ##
 ##############################################################################
 
-select(d::AbstractDataFrame, arg) = d[:, arg]
+select(d::AbstractDataFrame, arg) = d[ arg]
 
 
 ##############################################################################
@@ -126,8 +101,7 @@ function orderby(d::AbstractDataFrame, args...)
 end
 orderby(d::AbstractDataFrame, f::Function) = d[sortperm(f(d)), :]
 orderby(g::GroupedDataFrame, f::Function) = g[sortperm([f(x) for x in g])]
-orderbyconstructor(d::AbstractDataFrame) = typeof(d)
-orderbyconstructor(d::DataFrame) = DataFrame
+orderbyconstructor(d::AbstractDataFrame) = (x...) -> DataFrame(Any[x...])
 orderbyconstructor(d) = x -> x
 
 macro orderby(d, args...)
