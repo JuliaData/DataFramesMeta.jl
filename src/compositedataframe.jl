@@ -34,6 +34,8 @@ DataFrames.DataFrame(cdf::AbstractCompositeDataFrame) = DataFrame(values(cdf), n
 ## basic stuff
 #########################################
 
+Base.names{T <: AbstractCompositeDataFrame}(cdf::T) = collect(T.names)
+
 DataFrames.ncol(cdf::AbstractCompositeDataFrame) = length(names(cdf))
 DataFrames.nrow(cdf::AbstractCompositeDataFrame) = ncol(cdf) > 0 ? length(cdf.(1))::Int : 0
 
