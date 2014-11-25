@@ -8,7 +8,6 @@ using DataFramesMeta
 ##
 ## @as macro for expression chaining
 ## from James Porter
-## https://github.com/JuliaLang/julia/pull/5734
 ##
 ##############################################################################
 

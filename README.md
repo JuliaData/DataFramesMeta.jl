@@ -130,6 +130,46 @@ x_thread = @> begin
 end
 ```
 
+## Alternative LINQ macro
+
+As another experiment, there is also a `@linq` macro that supports
+chaining and all of the functionality defined in other macros. Here is
+an example of `@linq`:
+
+```julia
+x_thread = @linq df |>
+    transform(y = 10 * :x) |>
+    where(:a .> 2) |>
+    by(:b, meanX = mean(:x), meanY = mean(:y)) |>
+    orderby(:meanX) |>
+    select(:meanX, :meanY, var = :b)
+```
+
+Relative to the use of individual macros, chaining looks cleaner and
+more obvious with less noise from `@` symbols. This approach also
+avoids filling up the limited macro name space. The main downside is
+that more magic happens under the hood.
+
+This method is extensible. Here is a comparison of the macro and
+`@linq` versions of `with`.
+
+```julia
+macro with(d, body)
+    esc(with_helper(d, body))
+end
+
+function linq(::SymbolParameter{:with}, d, body)
+    with_helper(d, body)
+end
+```
+
+The `linq` method above registers the expression-replacement method
+defined for all `with()` calls. It should return an expression like a
+macro.
+
+Again, this is experimental. Based on feedback, we may decide to only
+use `@linq` or only support the set of linq-like macros.
+
 ## Operations on GroupedDataFrames
 
 The following operations are now included:

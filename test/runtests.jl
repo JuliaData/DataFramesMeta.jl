@@ -5,7 +5,8 @@ my_tests = ["dict.jl",
             "dataframes.jl",
             "compositedataframes.jl",
             "grouping.jl",
-            "chaining.jl"]
+            "chaining.jl",
+            "linqmacro.jl"]
 
 println("Running tests:")
 

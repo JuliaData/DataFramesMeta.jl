@@ -56,9 +56,6 @@ DataFrames.index(cdf::AbstractCompositeDataFrame) = DataFrames.Index(names(cdf))
 ## getindex
 #########################################
 
-# Snippet from Calculus.jl
-type SymbolParameter{T} end
-
 Base.getindex(cdf::AbstractCompositeDataFrame, col_inds::DataFrames.ColumnIndex) = cdf.(col_inds)
 Base.getindex{T <: DataFrames.ColumnIndex}(cdf::AbstractCompositeDataFrame, col_inds::AbstractVector{T}) = CompositeDataFrame(Any[ cdf.(col_inds[i]) for i = 1:length(col_inds) ], names(cdf)[col_inds])
 Base.getindex(cdf::AbstractCompositeDataFrame, row_inds, col_inds::DataFrames.ColumnIndex) = cdf.(col_inds)[row_inds]

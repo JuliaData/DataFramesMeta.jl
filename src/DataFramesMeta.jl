@@ -9,6 +9,7 @@ export @with, @ix, @where, @orderby, @transform, @by, @based_on, @select
 export where, orderby, transform, select 
 
 include("compositedataframe.jl")
+include("linqmacro.jl")
 
 ##############################################################################
 ##
