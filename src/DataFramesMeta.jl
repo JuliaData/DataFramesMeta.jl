@@ -6,7 +6,7 @@ using DataFrames
 
 # Basics:
 export @with, @ix, @where, @orderby, @transform, @by, @based_on, @select
-export where, orderby, transform, select
+export where, orderby, transform, select 
 
 include("compositedataframe.jl")
 
@@ -25,9 +25,6 @@ function replace_syms(e::Expr, membernames)
                             typeof(e.args[2]) == Expr && e.args[2].head == :quote ? e.args[2] : replace_syms(e.args[2], membernames))
     elseif e.head != :quote
         return Expr(e.head, (isempty(e.args) ? e.args : map(x -> replace_syms(x, membernames), e.args))...)
-    elseif e.head == :(=>) && length( e.args ) == 2
-        # Almost certainly, we don't want to interpret :a => 1 as df[:a] => 1
-        return Expr( e.head, e.args[1], replace_syms( e.args[2], membernames ) )
     else
         if haskey(membernames, e.args[1])
             return membernames[e.args[1]]
@@ -187,7 +184,7 @@ end
 
 expandargs(x) = x
 
-function expandargs(e::Expr)
+function expandargs(e::Expr) 
     if e.head == :quote && length(e.args) == 1
         return Expr(:kw, e.args[1], Expr(:quote, e.args[1]))
     else
