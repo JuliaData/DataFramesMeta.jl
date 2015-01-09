@@ -105,8 +105,9 @@ orderby(g::GroupedDataFrame, f::Function) = g[sortperm([f(x) for x in g])]
 orderbyconstructor(d::AbstractDataFrame) = (x...) -> DataFrame(Any[x...])
 orderbyconstructor(d) = x -> x
 
+# I don't esc just the input because I want _DF to be visible to the user
 macro orderby(d, args...)
-    esc(:(let _D = $d;  orderby(_D, _DF -> @with(_DF, DataFramesMeta.orderbyconstructor(_D)($(args...)))); end))
+    esc(:(let _D = $d;  DataFramesMeta.orderby(_D, _DF -> DataFramesMeta.@with(_DF, DataFramesMeta.orderbyconstructor(_D)($(args...)))); end))
 end
 
 
@@ -162,7 +163,7 @@ end
 ##############################################################################
 
 macro based_on(x, args...)
-    esc(:( DataFrames.based_on($x, _DF -> @with(_DF, DataFrame($(args...)))) ))
+    esc(:( DataFrames.based_on($x, _DF -> DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...)))) ))
 end
 
 
@@ -173,7 +174,7 @@ end
 ##############################################################################
 
 macro by(x, what, args...)
-    esc(:( by($x, $what, _DF -> @with(_DF, DataFrame($(args...)))) ))
+    esc(:( DataFrames.by($x, $what, _DF -> DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...)))) ))
 end
 
 
@@ -210,7 +211,7 @@ function select(d::Union(AbstractDataFrame, Associative); kwargs...)
 end
 
 macro select(x, args...)
-    esc(:(let _DF = $x; @with(_DF, select(_DF, $(expandargs(args)...))); end))
+    esc(:(let _DF = $x; DataFramesMeta.@with(_DF, select(_DF, $(DataFramesMeta.expandargs(args)...))); end))
 end
 
 
