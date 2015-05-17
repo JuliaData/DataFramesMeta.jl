@@ -49,18 +49,15 @@ thread_left(x) = thread_left(filter(x-> !isa(x,Expr) || x.head != :line, x.args)
 
 function thread_left(x, expr, exprs...)
   if typeof(expr) == Symbol
-    call = Expr(:call, expr, x)
-
+    callexpr = Expr(:call, expr, x)
   elseif typeof(expr) == Expr && expr.head in [:call, :macrocall]
-    call = Expr(expr.head, expr.args[1], x, expr.args[2:end]...)
-
+    callexpr = Expr(expr.head, expr.args[1], x, expr.args[2:end]...)
   elseif typeof(expr) == Expr && expr.head == :->
-    call = Expr(:call, expr, x)
-
+    callexpr = Expr(:call, expr, x)
   else
     error("Unsupported expression $expr in @>")
   end
-  isempty(exprs) ? call : :(@> $call $(exprs...))
+  isempty(exprs) ? callexpr : :(@> $callexpr $(exprs...))
 end
 
 macro >(exprs...)

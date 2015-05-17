@@ -1,3 +1,4 @@
+using Compat
 
 export AbstractCompositeDataFrame, CompositeDataFrame
 
@@ -34,7 +35,7 @@ DataFrames.DataFrame(cdf::AbstractCompositeDataFrame) = DataFrame(values(cdf), n
 ## basic stuff
 #########################################
 
-Base.names{T <: AbstractCompositeDataFrame}(cdf::T) = collect(T.names)
+Base.names{T <: AbstractCompositeDataFrame}(cdf::T) = @compat fieldnames(T)
 
 DataFrames.ncol(cdf::AbstractCompositeDataFrame) = length(names(cdf))
 DataFrames.nrow(cdf::AbstractCompositeDataFrame) = ncol(cdf) > 0 ? length(cdf.(1))::Int : 0
@@ -42,7 +43,7 @@ DataFrames.nrow(cdf::AbstractCompositeDataFrame) = ncol(cdf) > 0 ? length(cdf.(1
 Base.values(cdf::AbstractCompositeDataFrame) = Any[ cdf.(i) for i in 1:length(cdf) ]
                 
 function Base.hcat(df1::AbstractCompositeDataFrame, df2::AbstractCompositeDataFrame)
-    nms = DataFrames.make_unique([names(df1), names(df2)])
+    nms = DataFrames.make_unique([names(df1); names(df2)])
     columns = Any[values(df1)..., values(df2)...]
     return CompositeDataFrame(columns, nms)
 end
