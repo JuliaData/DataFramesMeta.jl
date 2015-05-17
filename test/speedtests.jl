@@ -12,7 +12,7 @@ b = rand(n)
 da = data(a)
 db = data(b)
 df = DataFrame(a = da, b = db)
-df2 = DataFrame({a, b})
+df2 = DataFrame(Any[a, b])
 names!(df2, [:a, :b])
 
 Base.values(da::DataArray) = da.data

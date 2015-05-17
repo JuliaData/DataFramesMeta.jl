@@ -127,7 +127,7 @@ end
 function transform(g::GroupedDataFrame; kwargs...)
     result = DataFrame(g)
     idx2 = cumsum(Int[size(g[i],1) for i in 1:length(g)])
-    idx1 = [1, 1 + idx2[1:end-1]]
+    idx1 = [1; 1 + idx2[1:end-1]]
     for (k, v) in kwargs
         first = v(g[1])
         result[k] = Array(eltype(first), size(result, 1))
@@ -220,7 +220,7 @@ end
 ##
 ##############################################################################
 
-combnranges(starts, ends) = [[starts[i]:ends[i] for i in 1:length(starts)]...]
+combnranges(starts, ends) = [[starts[i]:ends[i] for i in 1:length(starts)]...;]
 
 DataFrame(g::GroupedDataFrame) = g.parent[g.idx[combnranges(g.starts, g.ends)], :]
 

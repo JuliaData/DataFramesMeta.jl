@@ -5,13 +5,13 @@ using Base.Test
 using DataArrays, DataFrames
 using DataFramesMeta
 
-df = CompositeDataFrame(A = [1:3], B = [2, 1, 2])
+df = CompositeDataFrame(A = [1, 2, 3], B = [2, 1, 2])
 x = [2, 1, 0]
 
 @test  df.A == df[:A]
 @test  size(df[1:2,:]) == (2,2)
-@test  size(df[[1:2],:]) == (2,2)
-@test  size(df[[1:2], [:A]]) == (2,1)
+@test  size(df[[1, 2],:]) == (2,2)
+@test  size(df[[1, 2], [:A]]) == (2,1)
 @test  size(df[:, [:A]]) == (3,1)
 @test  size(df[:, 1:2]) == (3,2)
 @test  size(df[:, [1]]) == (3,1)
