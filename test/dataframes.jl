@@ -21,18 +21,30 @@ end
 @test  x == sum(df[:A] .* df[:B])
 @test  @with(df, df[:A .> 1, ^([:B, :A])]) == df[df[:A] .> 1, [:B, :A]]
 @test  @with(df, DataFrame(a = :A * 2, b = :A + :B)) == DataFrame(a = df[:A] * 2, b = df[:A] + df[:B])
-    
+
 @test  @ix(df, :A .> 1)           == df[df[:A] .> 1,:]
-@test  @ix(df, :B .> 1)           == df[df[:B] .> 1,:]  
+@test  @ix(df, :B .> 1)           == df[df[:B] .> 1,:]
 @test  @ix(df, :A .> x)           == df[df[:A] .> x,:]
 @test  @ix(df, :B .> x)           == df[df[:B] .> x,:]
 @test  @ix(df, :A .> :B)          == df[df[:A] .> df[:B],:]
 @test  @ix(df, :A .> 1, [:B, :A]) == df[df[:A] .> 1, [:B, :A]]
 
 @test  @where(df, :A .> 1)         == df[df[:A] .> 1,:]
-@test  @where(df, :B .> 1)         == df[df[:B] .> 1,:]  
+@test  @where(df, :B .> 1)         == df[df[:B] .> 1,:]
 @test  @where(df, :A .> x)         == df[df[:A] .> x,:]
 @test  @where(df, :B .> x)         == df[df[:B] .> x,:]
 @test  @where(df, :A .> :B)        == df[df[:A] .> df[:B],:]
+
+@byrow(df, if :A > :B; :A = 0 end)
+@test  df == DataFrame(A = [1, 0, 0], B = [2, 1, 2])
+
+df = DataFrame(A = 1:3, B = [2, 1, 2])  # Restore df
+y = 0
+function f(x)
+    @byrow(df, if :A + :B == 3; x += 1 end)
+    x
+end
+y = f(y)
+@test  y == 2
 
 end # module
