@@ -93,6 +93,25 @@ transform(df, newCol = cos(df[:x]), anotherCol = df[:x]^2 + 3*df[:x] + 4)
 
 `@transform` works for associative types, too.
 
+## `@byrow`
+
+Act on a DataFrame row-by-row. Includes support for control flow and `begin end` blocks. Since the "environment" induced by `@byrow df` is implicitly a single row of `df`, one uses regular operators and comparisons instead of their elementwise counterparts as in `@with`.
+
+```julia
+@byrow df if :A > :B; :A = :B * :C end
+```
+```julia
+function f()
+    x = 0.0
+    @byrow df begin
+        if :A < :B
+            x += :B * :C
+        end
+    end
+    x
+end
+```
+
 
 ## LINQ-Style Queries and Transforms
 

@@ -6,10 +6,12 @@ using DataFrames
 
 # Basics:
 export @with, @ix, @where, @orderby, @transform, @by, @based_on, @select
-export where, orderby, transform, select 
+export where, orderby, transform, select
 
 include("compositedataframe.jl")
 include("linqmacro.jl")
+include("byrow.jl")
+
 
 ##############################################################################
 ##
@@ -186,7 +188,7 @@ end
 
 expandargs(x) = x
 
-function expandargs(e::Expr) 
+function expandargs(e::Expr)
     if e.head == :quote && length(e.args) == 1
         return Expr(:kw, e.args[1], Expr(:quote, e.args[1]))
     else
