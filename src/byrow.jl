@@ -29,9 +29,10 @@ byrow_replace(x) = x
 function byrow_helper(df, body)
     e_delimiters = Expr(:(=), :row, :( 1:length($df[1]) ))
     e_forloop = Expr(:for, e_delimiters, byrow_replace(body))
-    return Expr(:macrocall, symbol("@with"), df, e_forloop)
+    return Expr(:macrocall, :(DataFramesMeta.@with), df, e_forloop)
 end
 
 macro byrow(df, body)
     esc(byrow_helper(df, body))
+    df
 end
