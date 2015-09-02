@@ -1,5 +1,8 @@
 # DataFramesMeta.jl
 
+[![DataFramesMeta](http://pkg.julialang.org/badges/DataFramesMeta_0.3.svg)](http://pkg.julialang.org/?pkg=DataFramesMeta&ver=0.3)
+[![DataFramesMeta](http://pkg.julialang.org/badges/DataFramesMeta_0.4.svg)](http://pkg.julialang.org/?pkg=DataFramesMeta&ver=0.4)
+
 Experiments with metaprogramming tools for DataFrames (and maybe other
 Julia objects that hold variables). Goals are to improve performance
 and provide more convenient syntax.
