@@ -204,7 +204,7 @@ function expandargs(e::Tuple)
     return res
 end
 
-function select(d::Union(AbstractDataFrame, Associative); kwargs...)
+function select(d::Union{AbstractDataFrame, Associative}; kwargs...)
     result = typeof(d)()
     for (k, v) in kwargs
         result[k] = v
