@@ -119,7 +119,7 @@ end
 ##
 ##############################################################################
 
-function transform(d::Union(AbstractDataFrame, Associative); kwargs...)
+function transform(d::Union{AbstractDataFrame, Associative}; kwargs...)
     result = copy(d)
     for (k, v) in kwargs
         result[k] = isa(v, Function) ? v(d) : v
