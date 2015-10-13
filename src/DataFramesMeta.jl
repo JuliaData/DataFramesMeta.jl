@@ -119,7 +119,7 @@ end
 ##
 ##############################################################################
 
-function transform(d::Union(AbstractDataFrame, Associative); kwargs...)
+function transform(d::Union{AbstractDataFrame, Associative}; kwargs...)
     result = copy(d)
     for (k, v) in kwargs
         result[k] = isa(v, Function) ? v(d) : v
@@ -204,7 +204,7 @@ function expandargs(e::Tuple)
     return res
 end
 
-function select(d::Union(AbstractDataFrame, Associative); kwargs...)
+function select(d::Union{AbstractDataFrame, Associative}; kwargs...)
     result = typeof(d)()
     for (k, v) in kwargs
         result[k] = v
