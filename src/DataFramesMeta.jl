@@ -54,7 +54,7 @@ end
 
 ##############################################################################
 ##
-## @ix - row and row/col selector
+## @ix and @ix - row and row/col selector
 ##
 ##############################################################################
 
@@ -65,10 +65,20 @@ macro ix(d, args...)
     esc(ix_helper(d, args...))
 end
 
+ix_helper!(d, arg) = :( let d = $d; deleterows!($d, find(!(@with($d, $arg) ) ) ); end )
+
+macro ix!(d, arg)
+    esc(ix_helper!(d, arg))
+end
+
+df = DataFrame(A = 1:3, B = [2, 1, 2])
+df_copy = deepcopy(df)
+Base.Test.@test @ix!(df_copy, :A .> 1) == df[df[:A] .> 1,:]
+Base.Test.@test df_copy == df[df[:A] .> 1,:]
 
 ##############################################################################
 ##
-## @where - select row subsets
+## @where and @where!- select row subsets
 ##
 ##############################################################################
 
@@ -80,6 +90,16 @@ where_helper(d, arg) = :( where($d, _DF -> @with(_DF, $arg)) )
 
 macro where(d, arg)
     esc(where_helper(d, arg))
+end
+
+where!(d::AbstractDataFrame, arg) = deleterows!(d, find( !( arg ) ) )
+where!(d::AbstractDataFrame, f::Function) = deleterows!(d, find(!( f(d) ) ) )
+where!(g::GroupedDataFrame, f::Function) = error("Not implemented yet")
+
+where_helper!(d, arg) = :( where!($d, _DF -> @with(_DF, $arg)) )
+
+macro where!(d, arg)
+    esc(where_helper!(d, arg))
 end
 
 

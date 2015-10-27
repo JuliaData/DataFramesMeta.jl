@@ -18,6 +18,7 @@ x = @with df begin
     end
     res
 end
+
 @test  x == sum(df[:A] .* df[:B])
 @test  @with(df, df[:A .> 1, ^([:B, :A])]) == df[df[:A] .> 1, [:B, :A]]
 @test  @with(df, DataFrame(a = :A * 2, b = :A + :B)) == DataFrame(a = df[:A] * 2, b = df[:A] + df[:B])
@@ -46,5 +47,15 @@ function f(x)
 end
 y = f(y)
 @test  y == 2
+
+# tests for ix! and where!
+df = DataFrame(A = 1:3, B = [2, 1, 2])
+df_copy = deepcopy(df)
+@test @ix!(df_copy, :A .> 1) == df[df[:A] .> 1,:]
+@test df_copy == df[df[:A] .> 1,:]
+
+df_copy = deepcopy(df)
+@test @where!(df_copy, :A .> 1) == df[df[:A] .> 1,:]
+@test df_copy == df[df[:A] .> 1,:]
 
 end # module
