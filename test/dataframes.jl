@@ -18,6 +18,11 @@ x = @with df begin
     end
     res
 end
+idx = :A
+@test  @with(df, _I_(idx) + :B)  ==  df[:A] + df[:B]
+idx2 = :B
+@test  @with(df, _I_(idx) + _I_(idx2))  ==  df[:A] + df[:B]
+
 @test  x == sum(df[:A] .* df[:B])
 @test  @with(df, df[:A .> 1, ^([:B, :A])]) == df[df[:A] .> 1, [:B, :A]]
 @test  @with(df, DataFrame(a = :A * 2, b = :A + :B)) == DataFrame(a = df[:A] * 2, b = df[:A] + df[:B])
