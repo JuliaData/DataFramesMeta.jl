@@ -22,13 +22,13 @@ CompositeDataFrame(; kwargs...) =
 # CompositeDataFrame(df::DataFrame) = CompositeDataFrame(df.columns, names(df))
 
 CompositeDataFrame(adf::AbstractDataFrame) =
-    CompositeDataFrame(values(adf), names(adf))
+    CompositeDataFrame(DataFrames.columns(adf), names(adf))
     
 CompositeDataFrame(adf::AbstractDataFrame, nms::Vector{Symbol}) =
-    CompositeDataFrame(values(adf), nms)
+    CompositeDataFrame(DataFrames.columns(adf), nms)
 
 
-DataFrames.DataFrame(cdf::AbstractCompositeDataFrame) = DataFrame(values(cdf), names(cdf))
+DataFrames.DataFrame(cdf::AbstractCompositeDataFrame) = DataFrame(DataFrames.columns(cdf), names(cdf))
 
 
 #########################################
@@ -40,11 +40,11 @@ Base.names{T <: AbstractCompositeDataFrame}(cdf::T) = @compat fieldnames(T)
 DataFrames.ncol(cdf::AbstractCompositeDataFrame) = length(names(cdf))
 DataFrames.nrow(cdf::AbstractCompositeDataFrame) = ncol(cdf) > 0 ? length(cdf.(1))::Int : 0
 
-Base.values(cdf::AbstractCompositeDataFrame) = Any[ cdf.(i) for i in 1:length(cdf) ]
+DataFrames.columns(cdf::AbstractCompositeDataFrame) = Any[ cdf.(i) for i in 1:length(cdf) ]
                 
 function Base.hcat(df1::AbstractCompositeDataFrame, df2::AbstractCompositeDataFrame)
     nms = DataFrames.make_unique([names(df1); names(df2)])
-    columns = Any[values(df1)..., values(df2)...]
+    columns = Any[DataFrames.columns(df1)..., DataFrames.columns(df2)...]
     return CompositeDataFrame(columns, nms)
 end
 Base.hcat(df1::DataFrame, df2::AbstractCompositeDataFrame) = hcat(df1, DataFrame(df2))
@@ -63,6 +63,7 @@ Base.getindex(cdf::AbstractCompositeDataFrame, row_inds, col_inds::DataFrames.Co
 Base.getindex(cdf::AbstractCompositeDataFrame, row_inds, col_inds) = 
     CompositeDataFrame(Any[ cdf.(col_inds[i])[row_inds] for i = 1:length(col_inds) ],
                        Symbol[ names(cdf)[i] for i = 1:length(col_inds) ])
+Base.getindex(cdf::AbstractCompositeDataFrame, row_inds, ::Colon) = typeof(cdf)([cdf.(i)[row_inds] for i in 1:length(cdf)]...)
 
 function Base.getindex(cdf::AbstractCompositeDataFrame, row_inds, col_inds::UnitRange)
     if col_inds.start == 1 && col_inds.stop == length(cdf)
@@ -81,7 +82,7 @@ order(d::AbstractCompositeDataFrame; args...) =
     d[sortperm(DataFrame(args...)), :]
                        
 transform(d::AbstractCompositeDataFrame; kwargs...) =
-    CompositeDataFrame(Any[values(d)..., [ isa(v, Function) ? v(d) : v for (k,v) in kwargs ]...],
+    CompositeDataFrame(Any[DataFrames.columns(d)..., [ isa(v, Function) ? v(d) : v for (k,v) in kwargs ]...],
                        Symbol[names(d)..., [ k for (k,v) in kwargs ]...])
 
 select(d::AbstractCompositeDataFrame; kwargs...) =
