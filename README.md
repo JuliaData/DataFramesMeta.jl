@@ -78,6 +78,7 @@ Select row subsets.
 ```julia
 @where(df, :x .> 1)
 @where(df, :x .> x)
+@where(df, :x .> x, :y .== 3)  # the two expressions are "and-ed"
 ```
 
 ## `@select`
