@@ -19,7 +19,9 @@ when used in the REPL than when used inside a function.
 
 `@with` allows DataFrame columns to be referenced as symbols like
 `:colX` in expressions. If an expression is wrapped in `^(expr)`,
-`expr` gets passed through untouched. Here are some examples:
+`expr` gets passed through untouched. If an expression is wrapped in 
+`_I_(expr)`, the column is referenced by the variable `expr` rather than
+a symbol. Here are some examples:
 
 ```julia
 using DataArrays, DataFrames
@@ -40,6 +42,9 @@ x = @with df begin
 end
 
 @with(df, df[:x .> 1, ^(:y)]) # The ^ means leave the :y alone
+
+colref = :x
+@with(df, :y + _I_(colref)) # Equivalent to df[:y] + df[colref]
 
 ```
 
@@ -313,4 +318,3 @@ end
 
 For performance, we should check to see if this can play nicely with
 `@devectorize` for use on columns.
-

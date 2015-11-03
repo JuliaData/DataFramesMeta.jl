@@ -26,23 +26,33 @@ function replace_syms(e::Expr, membernames)
     elseif e.head == :.     # special case for :a.b
         return Expr(e.head, replace_syms(e.args[1], membernames),
                             typeof(e.args[2]) == Expr && e.args[2].head == :quote ? e.args[2] : replace_syms(e.args[2], membernames))
+    elseif e.head == :call && length(e.args) == 2 && e.args[1] == :_I_
+        nam = :($(e.args[2]))
+        if haskey(membernames, nam)
+            return membernames[nam]
+        else
+            a = gensym()
+            membernames[nam] = a
+            return a
+        end
     elseif e.head != :quote
         return Expr(e.head, (isempty(e.args) ? e.args : map(x -> replace_syms(x, membernames), e.args))...)
     else
-        if haskey(membernames, e.args[1])
-            return membernames[e.args[1]]
+        nam = Meta.quot(e.args[1])
+        if haskey(membernames, nam)
+            return membernames[nam]
         else
             a = gensym()
-            membernames[e.args[1]] = a
+            membernames[nam] = a
             return a
         end
     end
 end
 
 function with_helper(d, body)
-    membernames = Dict{Symbol, Symbol}()
+    membernames = Dict{Any, Symbol}()
     body = replace_syms(body, membernames)
-    funargs = map(x -> :( getindex($d, $(Meta.quot(x))) ), collect(keys(membernames)))
+    funargs = map(x -> :( getindex($d, $x) ), collect(keys(membernames)))
     funname = gensym()
     return(:( function $funname($(collect(values(membernames))...)) $body end; $funname($(funargs...)) ))
 end
