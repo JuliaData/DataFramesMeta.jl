@@ -1,7 +1,8 @@
 # DataFramesMeta.jl
 
-[![DataFramesMeta](http://pkg.julialang.org/badges/DataFramesMeta_0.3.svg)](http://pkg.julialang.org/?pkg=DataFramesMeta&ver=0.3)
 [![DataFramesMeta](http://pkg.julialang.org/badges/DataFramesMeta_0.4.svg)](http://pkg.julialang.org/?pkg=DataFramesMeta&ver=0.4)
+[![Coverage Status](http://img.shields.io/coveralls/JuliaStats/DataFramesMeta.jl.svg)](https://coveralls.io/r/JuliaStats/DataFramesMeta.jl)
+[![Build Status](https://travis-ci.org/JuliaStats/DataFramesMeta.jl.svg?branch=master)](https://travis-ci.org/JuliaStats/DataFramesMeta.jl)
 
 Experiments with metaprogramming tools for DataFrames (and maybe other
 Julia objects that hold variables). Goals are to improve performance
