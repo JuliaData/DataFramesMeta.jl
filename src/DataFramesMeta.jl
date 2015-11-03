@@ -86,10 +86,14 @@ where(d::AbstractDataFrame, arg) = d[arg, :]
 where(d::AbstractDataFrame, f::Function) = d[f(d), :]
 where(g::GroupedDataFrame, f::Function) = g[Bool[f(x) for x in g]]
 
-where_helper(d, arg) = :( where($d, _DF -> @with(_DF, $arg)) )
+collect_ands(x::Expr) = x
+collect_ands(x::Expr, y::Expr) = :($x & $y)
+collect_ands(x::Expr, y...) = :($x & $(collect_ands(y...)))
 
-macro where(d, arg)
-    esc(where_helper(d, arg))
+where_helper(d, args...) = :( where($d, _DF -> @with(_DF, $(collect_ands(args...)))) )
+
+macro where(d, args...)
+    esc(where_helper(d, args...))
 end
 
 
