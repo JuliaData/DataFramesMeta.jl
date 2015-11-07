@@ -59,8 +59,8 @@ function linq(::SymbolParameter{:ix}, d, args...)
     ix_helper(d, args...)
 end
 
-function linq(::SymbolParameter{:where}, d, arg)
-    where_helper(d, arg)
+function linq(::SymbolParameter{:where}, d, args...)
+    where_helper(d, args...)
 end
 
 function linq(::SymbolParameter{:orderby}, d, args...)
