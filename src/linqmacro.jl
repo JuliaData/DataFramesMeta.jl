@@ -6,7 +6,44 @@ export @linq, linq
 ##         function calls
 ##
 ##############################################################################
+"""
+General macro that creates a mini DSL for chaining and macro calls
 
+### Details
+
+The following embedded function calls are equivalent to their macro version:
+
+- `with`
+- `ix`
+- `where`
+- `select`
+- `transform`
+- `by`
+- `groupby`
+- `orderby`
+- `based_on`
+
+### Examples
+
+```julia
+n = 100
+df = DataFrame(a = rand(1:3, n),
+               b = ["a","b","c","d"][rand(1:4, n)],
+               x = rand(n))
+
+x1 = @linq transform(where(df, :a .> 2, :b .!= "c"), y = 10 * :x)
+x1 = @linq by(x1, :b, meanX = mean(:x), meanY = mean(:y))
+x1 = @linq select(orderby(x1, :b, -:meanX), var = :b, :meanX, :meanY)
+
+xl = @linq df |>
+    transform(y = 10 * :x) |>
+    where(:a .> 2) |>
+    by(:b, meanX = mean(:x), meanY = mean(:y)) |>
+    orderby(:meanX) |>
+    select(:meanX, :meanY, var = :b)
+```
+
+"""
 macro linq(arg)
     esc(replacefuns(replacechains(arg)))
 end
@@ -59,8 +96,8 @@ function linq(::SymbolParameter{:ix}, d, args...)
     ix_helper(d, args...)
 end
 
-function linq(::SymbolParameter{:where}, d, arg)
-    where_helper(d, arg)
+function linq(::SymbolParameter{:where}, d, args...)
+    where_helper(d, args...)
 end
 
 function linq(::SymbolParameter{:orderby}, d, args...)

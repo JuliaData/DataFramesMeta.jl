@@ -4,15 +4,8 @@
 [![Coverage Status](http://img.shields.io/coveralls/JuliaStats/DataFramesMeta.jl.svg)](https://coveralls.io/r/JuliaStats/DataFramesMeta.jl)
 [![Build Status](https://travis-ci.org/JuliaStats/DataFramesMeta.jl.svg?branch=master)](https://travis-ci.org/JuliaStats/DataFramesMeta.jl)
 
-Experiments with metaprogramming tools for DataFrames (and maybe other
-Julia objects that hold variables). Goals are to improve performance
-and provide more convenient syntax.
-
-In earlier versions of DataFrames, expressions were used in indexing
-and in `with` and `within` functions. This approach had several
-deficiencies. Performance was poor. The functions relied on `eval`
-which caused several issues, most notably that results were different
-when used in the REPL than when used inside a function.
+Metaprogramming tools for DataFrames and Associative objects.
+These macros improve performance and provide more convenient syntax.
 
 # Features
 
@@ -53,7 +46,7 @@ This works for Associative types, too:
 
 ```julia
 y = 3
-d = {:s => 3, :y => 44, :d => 5}
+d = Dict(:s => 3, :y => 44, :d => 5)
 
 @with(d, :s + :y + y)
 ```
@@ -92,7 +85,7 @@ Column selections and transformations. Also works with Associative types.
 
 ## `@transform`
 
-Add additional arguments based on keyword arguments. This is available
+Add additional columns based on keyword arguments. This is available
 in both function and macro versions with the macro version allowing
 direct reference to columns using the colon syntax:
 
@@ -101,7 +94,7 @@ transform(df, newCol = cos(df[:x]), anotherCol = df[:x]^2 + 3*df[:x] + 4)
 @transform(df, newCol = cos(:x), anotherCol = :x^2 + 3*:x + 4)
 ```
 
-`@transform` works for associative types, too.
+`@transform` works for Associative types, too.
 
 ## `@byrow!`
 
@@ -111,8 +104,7 @@ Act on a DataFrame row-by-row. Includes support for control flow and `begin end`
 @byrow! df if :A > :B; :A = :B * :C end
 ```
 ```julia
-function f()
-    x = 0.0
+let x = 0.0
     @byrow! df begin
         if :A < :B
             x += :B * :C
@@ -211,10 +203,9 @@ The following operations are now included:
   groups based on the given criteria. Returns a GroupedDataFrame.
 
 - `DataFrame(g)` -- Convert groups back to a DataFrame with the same
-  group orderings. Should this be `convert(DataFrame, g)` instead?
+  group orderings. 
 
-- `DataFrames.based_on(g, d -> DataFrame(z = [mean(d[:a])]))` and
-  `@based_on(g, z = mean(:a))` -- Summarize results within groups.
+- `@based_on(g, z = mean(:a))` -- Summarize results within groups.
   Returns a DataFrame.
 
 - `transform(g, d -> y = d[:a] - mean(d[:a]))` and
@@ -228,8 +219,7 @@ GroupedDataFrame. You can also iterate over GroupedDataFrames.
 
 The most general split-apply-combine approach is based on `map`.
 `map(fun, g)` returns a GroupApplied object with keys and vals. This
-can be used with `combine`. {This functionality is not all fleshed out
-and could use more work.}
+can be used with `combine`. 
 
 
 # Performance
@@ -249,11 +239,9 @@ All of the other macros are based on `@with`.
 A CompositeDataFrame is an AbstractDataFrame built using Composite
 types. The advantages of this are:
 
-* Accessing columns `df[:colA]` is more type stable, so code should be
-  faster (without `@with` tricks). There is still the function
-  boundary to worry about.
-
-* You can access single columns directly using df.colA.
+* You can access single columns directly using `df.colA`. This is type stable,
+  so code should be faster. (There is still the function boundary to worry 
+  about.)
 
 * All indexing operations can be done currently.
 
@@ -266,57 +254,10 @@ Some downsides include:
   You have to treat it (almost) like an immutable object. For example to
   add a column, you need to do something like:
 
+```julia
     transform(df, newcol = df.colA + 5)
-
+```
+    
   An advantage of this is that the API becomes more functional. All
   manipulations of the CompositeDataFrame return a new object.
   Normally, this doesn't create much more memory.
-
-# Discussions
-
-Everything here is experimental.
-
-Right now, here's my judgement on the advantages of this approach
-
-- The approach is quite expressive and flexible.
-- Use of macros improves run-time efficiency.
-- The API is relatively consistent.
-- I have not run into any show-stoppers like we had with
-  expression-based indexing.
-- The code is relatively concise.
-
-The main disadvantages are:
-
-- The syntax is a little noisy with all of the `@something` macro
-  calls. {This is my main gripe.}
-- As with most macros, there's a certain amount of magic going on.
-
-Right now, `@with` works for both AbstractDataFrames and Associative
-types. `@ix` really only works for AbstractDataFrames. Because
-macros are not type specific, it would be nice to make these
-metaprogramming tools as general as possible.
-
-Instead of `:colA` to refer to a member of the type, another option is
-to use `*colA` or `^colA` or something else that isn't defined in
-Julia (but can be parsed). Then, it'd be easier to mix use of symbols
-with column references. `:colA` is most consistent in that it has (I
-think) the tightest precedence, so you don't have to worry about using
-parentheses. 
-
-From the user's point of view, it'd be nice to swap the
-"dereferencing", so in `@with(df, colA + :outsideVariable)`, `colA` is
-a column, and `:outsideVariable` is an external variable. That is
-quite difficult to do, though. You have to parse the expression tree
-and replace all quoted variables with the "right thing". Here's an
-example showing some of the difficulties:
-
-```julia
-@with df begin
-    y = 1 + x + :z  # z is supposed to be an outside variable; x is a column
-    fun(x) = x + 1  # don't want to substitute this x
-    fun(y + x)      # don't want to substitute this y
-end
-```
-
-For performance, we should check to see if this can play nicely with
-`@devectorize` for use on columns.
