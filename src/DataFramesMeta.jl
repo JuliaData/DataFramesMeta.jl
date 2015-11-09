@@ -57,6 +57,79 @@ function with_helper(d, body)
     return(:( function $funname($(collect(values(membernames))...)) $body end; $funname($(funargs...)) ))
 end
 
+"""
+`@with` allows DataFrame columns or Associative keys to be referenced as symbols
+
+### Constructors
+
+```julia
+@with(d, expr)
+```
+
+### Arguments
+
+* `d` : an AbstractDataFrame or Associative type 
+* `expr` : the expression to evaluate in `d`
+
+### Details
+
+`@with` works by parsing the expression body for all columns indicated
+by symbols (e.g. `:colA`). Then, a function is created that wraps the
+body and passes the columns as function arguments. This function is
+then called. Operations are efficient because:
+
+- A pseudo-anonymous function is defined, so types are stable.
+- Columns are passed as references, eliminating DataFrame indexing.
+
+The following
+
+```julia
+@with(d, :a + :b + 1)
+```
+
+becomes
+
+```julia
+tempfun(a,b) = a + b + 1
+tempfun(d[:a], d[:b])
+```
+
+All of the other DataFramesMeta macros are based on `@with`.
+
+If an expression is wrapped in `^(expr)`, `expr` gets passed through untouched.
+If an expression is wrapped in  `_I_(expr)`, the column is referenced by the
+variable `expr` rather than a symbol. 
+
+### Examples
+
+```julia
+y = 3
+d = Dict(:s => 3, :y => 44, :d => 5)
+
+@with(d, :s + :y + y)
+
+df = DataFrame(x = 1:3, y = [2, 1, 2])
+x = [2, 1, 0]
+
+@with(df, :y + 1)
+@with(df, :x + x)  # the two x's are different
+
+x = @with df begin
+    res = 0.0
+    for i in 1:length(:x)
+        res += :x[i] * :y[i]
+    end
+    res
+end
+
+@with(df, df[:x .> 1, ^(:y)]) # The ^ means leave the :y alone
+
+colref = :x
+@with(df, :y + _I_(colref)) # Equivalent to df[:y] + df[colref]
+
+```
+
+"""
 macro with(d, body)
     esc(with_helper(d, body))
 end
@@ -71,6 +144,34 @@ end
 ix_helper(d, arg) = :( let d = $d; $d[@with($d, $arg),:]; end )
 ix_helper(d, arg, moreargs...) = :( let d = $d; getindex(d, @with(d, $arg), $(moreargs...)); end )
 
+"""
+Select row and/or columns. This is an alternative to `getindex`.
+
+### Constructors
+
+```julia
+@ix(d, i)      # select rows
+@ix(d, i, j)   # select rows and columns
+```
+
+### Arguments
+
+* `d` : an AbstractDataFrame
+* `i` : expression for selecting rows
+* `j` : any column selector used in DataFrames
+
+### Examples
+
+```julia
+df = DataFrame(x = 1:3, y = [2, 1, 2])
+x = [2, 1, 0]
+
+@ix(df, :x .> 1)
+@ix(df, :x .> x) # again, the x's are different
+@ix(df, :x .> 1, [:x])
+```
+
+"""
 macro ix(d, args...)
     esc(ix_helper(d, args...))
 end
@@ -92,6 +193,38 @@ collect_ands(x::Expr, y...) = :($x & $(collect_ands(y...)))
 
 where_helper(d, args...) = :( where($d, _DF -> @with(_DF, $(collect_ands(args...)))) )
 
+"""
+Select row subsets in AbstractDataFrames or groups in GroupedDataFrames.
+
+### Constructors
+
+```julia
+@where(d, i...)
+```
+
+### Arguments
+
+* `d` : an AbstractDataFrame or GroupedDataFrame
+* `i...` : expression for selecting rows
+
+Multiple `i` expressions are "and-ed" together.
+
+### Examples
+
+```julia
+df = DataFrame(x = 1:3, y = [2, 1, 2])
+x = [2, 1, 0]
+
+@where(df, :x .> 1)
+@where(df, :x .> x)
+@where(df, :x .> x, :y .== 3)
+
+d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 2, 2, 3, 1, 1, 2])
+g = groupby(d, :x)
+@where(d, :x .== 3)
+@where(g, length(:x) > 5))   # pick out some groups
+```
+"""
 macro where(d, args...)
     esc(where_helper(d, args...))
 end
@@ -121,8 +254,33 @@ orderby(g::GroupedDataFrame, f::Function) = g[sortperm([f(x) for x in g])]
 orderbyconstructor(d::AbstractDataFrame) = (x...) -> DataFrame(Any[x...])
 orderbyconstructor(d) = x -> x
 
-# I don't esc just the input because I want _DF to be visible to the user
+"""
+Sort by criteria. Normally used to sort groups in GroupedDataFrames.
+
+### Constructors
+
+```julia
+@orderby(d, i...)
+```
+
+### Arguments
+
+* `d` : an AbstractDataFrame or GroupedDataFrame
+* `i...` : expression for sorting
+
+The variable `_DF` can be used in expressions to refer to the whole DataFrame.
+
+### Examples
+
+```julia
+d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 2, 2, 3, 1, 1, 2])
+g = groupby(d, :x)
+orderby(g, x -> mean(x[:n]))
+```
+
+"""
 macro orderby(d, args...)
+    # I don't esc just the input because I want _DF to be visible to the user
     esc(:(let _D = $d;  DataFramesMeta.orderby(_D, _DF -> DataFramesMeta.@with(_DF, DataFramesMeta.orderbyconstructor(_D)($(args...)))); end))
 end
 
@@ -166,6 +324,37 @@ function transform_helper(x, args...)
     :( transform($x, $(newargs...)) )
 end
 
+"""
+Add additional columns or keys based on keyword arguments.
+
+### Constructors
+
+```julia
+@transform(d, i...)
+```
+
+### Arguments
+
+* `d` : an Associative type, AbstractDataFrame, or GroupedDataFrame
+* `i...` : keyword arguments defining new columns or keys
+
+For Associative types, `@transform` only works with keys that are symbols.
+
+### Returns
+
+* `::AbstractDataFrame`, `::Associative`, or `::GroupedDataFrame`
+
+### Examples
+
+```julia
+d = Dict(:s => 3, :y => 44, :d => 5)
+@transform(d, x = :y + :d)
+
+df = DataFrame(A = 1:3, B = [2, 1, 2])
+@transform(df, a = 2 * :A, x = :A + :B)
+```
+
+"""
 macro transform(x, args...)
     esc(transform_helper(x, args...))
 end
@@ -178,8 +367,32 @@ end
 ##
 ##############################################################################
 
+"""
+Summarize a grouping operation
+
+### Constructors
+
+```julia
+@based_on(g, i...)
+```
+
+### Arguments
+
+* `g` : a GroupedDataFrame
+* `i...` : keyword arguments defining new columns
+
+### Examples
+
+```julia
+d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 2, 2, 3, 1, 1, 2])
+g = groupby(d, :x)
+@based_on(g, nsum = sum(:n))
+@based_on(g, x2 = 2 * :x, nsum = sum(:n))
+```
+"""
 macro based_on(x, args...)
-    esc(:( DataFrames.based_on($x, _DF -> DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...)))) ))
+    # esc(:( DataFrames.based_on($x, _DF -> DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...)))) ))
+    esc(:( DataFrames.combine(map(_DF -> DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...))), $x)) ))
 end
 
 
@@ -189,6 +402,33 @@ end
 ##
 ##############################################################################
 
+"""
+Split-apply-combine in one step
+
+```julia
+@by(d::AbstractDataFrame, cols, e...)
+```
+
+### Arguments
+
+* `d` : an AbstractDataFrame
+* `cols` : a column indicator (Symbol, Int, Vector{Symbol}, etc.)
+* `e` :  keyword arguments specifying new columns in terms of column groupings
+
+### Returns
+
+* `::DataFrame` 
+
+### Examples
+
+```julia
+df = DataFrame(a = rep(1:4, 2), b = rep(2:-1:1, 4), c = randn(8))
+@by(df, :a, d = sum(:c))
+@by(df, :a, d = 2 * :c)
+@by(df, :a, c_sum = sum(:c), c_mean = mean(:c))
+@by(df, :a, c = :c, c_mean = mean(:c))
+```
+"""
 macro by(x, what, args...)
     esc(:( DataFrames.by($x, $what, _DF -> DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...)))) ))
 end
@@ -226,6 +466,34 @@ function select(d::Union{AbstractDataFrame, Associative}; kwargs...)
     return result
 end
 
+"""
+Select and transform columns
+
+```julia
+@select(d, e...)
+```
+
+### Arguments
+
+* `d` : an AbstractDataFrame or Associative
+* `e` :  keyword arguments specifying new columns in terms of existing columns 
+  or symbols to specify existing columns
+
+### Returns
+
+* `::AbstractDataFrame` or `::Associative` 
+
+### Examples
+
+```julia
+d = Dict(:s => 3, :y => 44, :d => 5)
+@select(d, x = :y + :d, :s)
+
+df = DataFrame(a = rep(1:4, 2), b = rep(2:-1:1, 4), c = randn(8))
+@select(df, :c, :a)
+@select(df, :c, x = :b + :c)
+```
+"""
 macro select(x, args...)
     esc(:(let _DF = $x; DataFramesMeta.@with(_DF, select(_DF, $(DataFramesMeta.expandargs(args)...))); end))
 end

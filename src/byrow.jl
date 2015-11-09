@@ -34,6 +34,37 @@ function byrow_helper(df, body)
                 df)
 end
 
+"""
+Act on a DataFrame row-by-row.
+
+### Constructors
+
+```julia 
+@byrow!(d, expr) 
+``` 
+
+Includes support for control flow and `begin end` blocks. Since the
+"environment" induced by `@byrow! df` is implicitly a single row of `df`, 
+use regular operators and comparisons instead of their elementwise counterparts
+as in `@with`. 
+
+### Arguments
+
+* `d` : an AbstractDataFrame
+* `expr` : expression operated on row by row
+
+### Examples
+
+```julia
+df = DataFrame(A = 1:3, B = [2, 1, 2])
+let x = 0
+    @byrow!(df, if :A + :B == 3; x += 1 end)  #  This doesn't work without the let
+    x
+end
+@byrow! df if :A > :B; :A = 0 end
+```
+
+"""
 macro byrow!(df, body)
     esc(byrow_helper(df, body))
 end
