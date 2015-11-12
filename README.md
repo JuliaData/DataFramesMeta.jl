@@ -261,3 +261,14 @@ Some downsides include:
   An advantage of this is that the API becomes more functional. All
   manipulations of the CompositeDataFrame return a new object.
   Normally, this doesn't create much more memory.
+
+# Package Maintenance
+
+[Tom Short](https://github.com/tshort) is the lead maintainer. Any of the 
+[JuliaStats collaborators](https://github.com/orgs/JuliaStats/teams/collaborators) 
+also have write access and can accept pull requests. 
+
+Pull requests are welcome. Pull requests should include updated tests. If
+functionality is changed, docstrings should be added or updated. Generally,
+follow the guidelines in
+[DataFrames](https://github.com/JuliaStats/DataFrames.jl/blob/master/CONTRIBUTING.md).
