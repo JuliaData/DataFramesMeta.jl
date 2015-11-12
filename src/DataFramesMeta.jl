@@ -515,4 +515,22 @@ Base.getindex(gd::GroupedDataFrame, I::AbstractArray{Int}) = GroupedDataFrame(gd
                                                                               gd.starts[I],
                                                                               gd.ends[I])
 
+
+##############################################################################
+##
+## Extras for easier handling of Arrays
+##
+##############################################################################
+
+export P, PassThrough
+
+type PassThrough{T} <: AbstractVector{T}
+    x::AbstractVector{T}
+end
+const P = PassThrough
+size(x::PassThrough) = size(x.x)
+getindex(x::PassThrough, i) = getindex(x.x, i)
+
+DataFrames.upgrade_vector(v::PassThrough) = v.x
+
 end # module
