@@ -528,6 +528,7 @@ type PassThrough{T} <: AbstractVector{T}
     x::AbstractVector{T}
 end
 const P = PassThrough
+
 size(x::PassThrough) = size(x.x)
 getindex(x::PassThrough, i) = getindex(x.x, i)
 
