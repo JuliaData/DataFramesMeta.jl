@@ -7,7 +7,10 @@ export @linq, linq
 ##
 ##############################################################################
 """
-General macro that creates a mini DSL for chaining and macro calls
+```julia
+@linq df ...
+```
+General macro that creates a mini DSL for chaining and macro calls.
 
 ### Details
 

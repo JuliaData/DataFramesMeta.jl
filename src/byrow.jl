@@ -35,13 +35,11 @@ function byrow_helper(df, body)
 end
 
 """
-Act on a DataFrame row-by-row.
-
-### Constructors
-
 ```julia 
 @byrow!(d, expr) 
 ``` 
+
+Act on a DataFrame row-by-row.
 
 Includes support for control flow and `begin end` blocks. Since the
 "environment" induced by `@byrow! df` is implicitly a single row of `df`, 

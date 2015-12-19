@@ -1,12 +1,10 @@
 module DataFramesMeta
 
-importall Base
-importall DataFrames
 using DataFrames
 
 # Basics:
 export @with, @ix, @where, @orderby, @transform, @by, @based_on, @select
-export where, orderby, transform, select
+export where, orderby, transform
 
 include("compositedataframe.jl")
 include("linqmacro.jl")
@@ -58,13 +56,11 @@ function with_helper(d, body)
 end
 
 """
-`@with` allows DataFrame columns or Associative keys to be referenced as symbols
-
-### Constructors
-
 ```julia
 @with(d, expr)
 ```
+
+`@with` allows DataFrame columns or Associative keys to be referenced as symbols.
 
 ### Arguments
 
@@ -145,14 +141,12 @@ ix_helper(d, arg) = :( let d = $d; $d[@with($d, $arg),:]; end )
 ix_helper(d, arg, moreargs...) = :( let d = $d; getindex(d, @with(d, $arg), $(moreargs...)); end )
 
 """
-Select row and/or columns. This is an alternative to `getindex`.
-
-### Constructors
-
 ```julia
 @ix(d, i)      # select rows
 @ix(d, i, j)   # select rows and columns
 ```
+
+Select row and/or columns. This is an alternative to `getindex`.
 
 ### Arguments
 
@@ -194,13 +188,11 @@ collect_ands(x::Expr, y...) = :($x & $(collect_ands(y...)))
 where_helper(d, args...) = :( where($d, _DF -> @with(_DF, $(collect_ands(args...)))) )
 
 """
-Select row subsets in AbstractDataFrames or groups in GroupedDataFrames.
-
-### Constructors
-
 ```julia
 @where(d, i...)
 ```
+
+Select row subsets in AbstractDataFrames or groups in GroupedDataFrames.
 
 ### Arguments
 
@@ -236,7 +228,7 @@ end
 ##
 ##############################################################################
 
-select(d::AbstractDataFrame, arg) = d[ arg]
+Base.select(d::AbstractDataFrame, arg) = d[arg]
 
 
 ##############################################################################
@@ -255,13 +247,11 @@ orderbyconstructor(d::AbstractDataFrame) = (x...) -> DataFrame(Any[x...])
 orderbyconstructor(d) = x -> x
 
 """
-Sort by criteria. Normally used to sort groups in GroupedDataFrames.
-
-### Constructors
-
 ```julia
 @orderby(d, i...)
 ```
+
+Sort by criteria. Normally used to sort groups in GroupedDataFrames.
 
 ### Arguments
 
@@ -325,13 +315,11 @@ function transform_helper(x, args...)
 end
 
 """
-Add additional columns or keys based on keyword arguments.
-
-### Constructors
-
 ```julia
 @transform(d, i...)
 ```
+
+Add additional columns or keys based on keyword arguments.
 
 ### Arguments
 
@@ -368,13 +356,11 @@ end
 ##############################################################################
 
 """
-Summarize a grouping operation
-
-### Constructors
-
 ```julia
 @based_on(g, i...)
 ```
+
+Summarize a grouping operation
 
 ### Arguments
 
@@ -403,11 +389,11 @@ end
 ##############################################################################
 
 """
-Split-apply-combine in one step
-
 ```julia
 @by(d::AbstractDataFrame, cols, e...)
 ```
+
+Split-apply-combine in one step.
 
 ### Arguments
 
@@ -458,7 +444,7 @@ function expandargs(e::Tuple)
     return res
 end
 
-function select(d::Union{AbstractDataFrame, Associative}; kwargs...)
+function Base.select(d::Union{AbstractDataFrame, Associative}; kwargs...)
     result = typeof(d)()
     for (k, v) in kwargs
         result[k] = v
@@ -467,11 +453,11 @@ function select(d::Union{AbstractDataFrame, Associative}; kwargs...)
 end
 
 """
-Select and transform columns
-
 ```julia
 @select(d, e...)
 ```
+
+Select and transform columns.
 
 ### Arguments
 
@@ -529,8 +515,8 @@ type PassThrough{T} <: AbstractVector{T}
 end
 const P = PassThrough
 
-size(x::PassThrough) = size(x.x)
-getindex(x::PassThrough, i) = getindex(x.x, i)
+Base.size(x::PassThrough) = size(x.x)
+Base.getindex(x::PassThrough, i) = getindex(x.x, i)
 
 DataFrames.upgrade_vector(v::PassThrough) = v.x
 
