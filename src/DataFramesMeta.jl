@@ -137,8 +137,8 @@ end
 ##
 ##############################################################################
 
-ix_helper(d, arg) = :( let d = $d; $d[@with($d, $arg),:]; end )
-ix_helper(d, arg, moreargs...) = :( let d = $d; getindex(d, @with(d, $arg), $(moreargs...)); end )
+ix_helper(d, arg) = :( let d = $d; $d[DataFramesMeta.@with($d, $arg),:]; end )
+ix_helper(d, arg, moreargs...) = :( let d = $d; getindex(d, DataFramesMeta.@with(d, $arg), $(moreargs...)); end )
 
 """
 ```julia
@@ -185,7 +185,7 @@ collect_ands(x::Expr) = x
 collect_ands(x::Expr, y::Expr) = :($x & $y)
 collect_ands(x::Expr, y...) = :($x & $(collect_ands(y...)))
 
-where_helper(d, args...) = :( where($d, _DF -> @with(_DF, $(collect_ands(args...)))) )
+where_helper(d, args...) = :( where($d, _DF -> DataFramesMeta.@with(_DF, $(collect_ands(args...)))) )
 
 """
 ```julia
@@ -309,7 +309,7 @@ function transform_helper(x, args...)
     # convert each kw arg value to: _DF -> @with(_DF, arg)
     newargs = [args...]
     for i in 1:length(args)
-        newargs[i].args[2] = :( _DF -> @with(_DF, $(newargs[i].args[2]) ) )
+        newargs[i].args[2] = :( _DF -> DataFramesMeta.@with(_DF, $(newargs[i].args[2]) ) )
     end
     :( transform($x, $(newargs...)) )
 end

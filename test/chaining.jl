@@ -3,73 +3,7 @@ module TestChaining
 using Base.Test
 using DataArrays, DataFrames
 using DataFramesMeta
-
-##############################################################################
-##
-## @as macro for expression chaining
-## from James Porter
-##
-##############################################################################
-
-function asexpand(expr)
-    if isa(expr,Expr) && expr.head == :call && expr.args[1] == :|>
-        return [asexpand(expr.args[2]) expr.args[3]]
-    else
-        return expr
-    end
-end
-
-macro as(name, bindings)
-    if !isa(bindings, Expr)
-        error("malformed @as bindings")
-    end
-
-    if bindings.head == :block
-        exprs = filter(x-> !isa(x,Expr) || x.head != :line, bindings.args)
-    elseif bindings.head == :call
-        exprs = asexpand(bindings)
-    end
-
-    quote
-        let $([Expr(:(=),name,expr) for expr in exprs]...)
-            $name
-        end
-    end
-end
-
-##############################################################################
-##
-## @> macro for expression chaining
-## adapted from @> by Mike Innes in his Lazy.jl package
-## https://github.com/one-more-minute/Lazy.jlJ
-##
-##############################################################################
-
-thread_left(x) = thread_left(filter(x-> !isa(x,Expr) || x.head != :line, x.args)...)
-
-function thread_left(x, expr, exprs...)
-  if typeof(expr) == Symbol
-    callexpr = Expr(:call, expr, x)
-  elseif typeof(expr) == Expr && expr.head in [:call, :macrocall]
-    callexpr = Expr(expr.head, expr.args[1], x, expr.args[2:end]...)
-  elseif typeof(expr) == Expr && expr.head == :->
-    callexpr = Expr(:call, expr, x)
-  else
-    error("Unsupported expression $expr in @>")
-  end
-  isempty(exprs) ? callexpr : :(@> $callexpr $(exprs...))
-end
-
-macro >(exprs...)
-    esc(thread_left(exprs...))
-end
-
-
-##############################################################################
-##
-## The test...
-##
-##############################################################################
+using Lazy
 
 srand(1)
 n = 100
