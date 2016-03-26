@@ -54,6 +54,15 @@ d = Dict(:s => 3, :y => 44, :d => 5)
 `@with` is the fundamental macro used by the other metaprogramming
 utilities.
 
+`@with` creates a function, so scope within `@with` is a [hard
+scope](http://docs.julialang.org/en/release-0.4/manual/variables-and-scoping/#hard-local-scope),
+as with `do`-blocks or other function definitions. Variables in the parent
+can be read. Writing to variables in the parent scope differs depending on
+the type of scope of the parent. If the parent scope is a global scope, then
+a variable cannot be assigned without using the `global` keyword. If the parent
+scope is a local scope (inside a function or let block for example), the `global`
+keyword is not needed to assign to that parent scope.
+
 ## `@ix`
 
 Select row and/or columns. This is an alternative to `getindex`.

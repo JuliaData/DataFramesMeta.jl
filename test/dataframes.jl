@@ -46,11 +46,7 @@ idx2 = :B
 
 df = DataFrame(A = 1:3, B = [2, 1, 2])  # Restore df
 y = 0
-function f(x)
-    @byrow!(df, if :A + :B == 3; x += 1 end)
-    x
-end
-y = f(y)
+@byrow!(df, if :A + :B == 3; global y += 1 end)
 @test  y == 2
 
 end # module
