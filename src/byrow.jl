@@ -44,7 +44,7 @@ Act on a DataFrame row-by-row.
 Includes support for control flow and `begin end` blocks. Since the
 "environment" induced by `@byrow! df` is implicitly a single row of `df`, 
 use regular operators and comparisons instead of their elementwise counterparts
-as in `@with`. 
+as in `@with`. Note that the scope within `@byrow!` is a hard scope.
 
 ### Arguments
 

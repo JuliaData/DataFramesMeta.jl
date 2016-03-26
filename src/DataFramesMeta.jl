@@ -125,6 +125,14 @@ colref = :x
 
 ```
 
+`@with` creates a function, so scope within `@with` is a *hard scope*,
+as with `do`-blocks or other function definitions. Variables in the parent
+can be read. Writing to variables in the parent scope differs depending on
+the type of scope of the parent. If the parent scope is a global scope, then
+a variable cannot be assigned without using the `global` keyword. If the parent
+scope is a local scope (inside a function or let block for example), the `global`
+keyword is not needed to assign to that parent scope.
+
 """
 macro with(d, body)
     esc(with_helper(d, body))
