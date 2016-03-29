@@ -123,6 +123,27 @@ let x = 0.0
 end
 ```
 
+Note that the let block is required here to create a scope to allow assignment
+of `x` within `@byrow!`.
+
+`byrow!` also supports special syntax for allocating new columns to make
+`byrow!` more useful for data transformations. The syntax `@newcol
+x::Array{Int}` allocates a new column `:x` with an `Array` container with eltype
+`Int`. Note that the returned AbstractDataFrame includes these new columns, but
+the original `df` is not affected. Here is an example where two new columns are
+added:
+
+```julia
+df = DataFrame(A = 1:3, B = [2, 1, 2])
+df2 = @byrow! df begin
+    @newcol colX::Array{Float64}
+    @newcol colY::DataArray{Int}
+    :colX = :B == 2 ? pi * :A : :B
+    if :A > 1 
+        :colY = :A * :B
+    end
+end
+```
 
 ## LINQ-Style Queries and Transforms
 
