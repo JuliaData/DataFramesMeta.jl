@@ -63,16 +63,6 @@ a variable cannot be assigned without using the `global` keyword. If the parent
 scope is a local scope (inside a function or let block for example), the `global`
 keyword is not needed to assign to that parent scope.
 
-## `@ix`
-
-Select row and/or columns. This is an alternative to `getindex`.
-
-```julia
-@ix(df, :x .> 1)
-@ix(df, :x .> x) # again, the x's are different
-@ix(df, :A .> 1, [:B, :A])
-```
-
 ## `@where`
 
 Select row subsets.

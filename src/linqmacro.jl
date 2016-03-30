@@ -17,7 +17,6 @@ General macro that creates a mini DSL for chaining and macro calls.
 The following embedded function calls are equivalent to their macro version:
 
 - `with`
-- `ix`
 - `where`
 - `select`
 - `transform`
@@ -96,6 +95,7 @@ function linq(::SymbolParameter{:with}, d, body)
 end
 
 function linq(::SymbolParameter{:ix}, d, args...)
+    depwarn("`ix` is deprecated; use `where` and `select`.")
     ix_helper(d, args...)
 end
 

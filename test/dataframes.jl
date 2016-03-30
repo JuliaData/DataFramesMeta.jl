@@ -27,13 +27,6 @@ idx2 = :B
 @test  @with(df, df[:A .> 1, ^([:B, :A])]) == df[df[:A] .> 1, [:B, :A]]
 @test  @with(df, DataFrame(a = :A * 2, b = :A + :B)) == DataFrame(a = df[:A] * 2, b = df[:A] + df[:B])
 
-@test  @ix(df, :A .> 1)           == df[df[:A] .> 1,:]
-@test  @ix(df, :B .> 1)           == df[df[:B] .> 1,:]
-@test  @ix(df, :A .> x)           == df[df[:A] .> x,:]
-@test  @ix(df, :B .> x)           == df[df[:B] .> x,:]
-@test  @ix(df, :A .> :B)          == df[df[:A] .> df[:B],:]
-@test  @ix(df, :A .> 1, [:B, :A]) == df[df[:A] .> 1, [:B, :A]]
-
 @test  @where(df, :A .> 1)          == df[df[:A] .> 1,:]
 @test  @where(df, :B .> 1)          == df[df[:B] .> 1,:]
 @test  @where(df, :A .> x)          == df[df[:A] .> x,:]
