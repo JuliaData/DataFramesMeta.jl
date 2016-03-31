@@ -148,33 +148,8 @@ end
 ix_helper(d, arg) = :( let d = $d; $d[DataFramesMeta.@with($d, $arg),:]; end )
 ix_helper(d, arg, moreargs...) = :( let d = $d; getindex(d, DataFramesMeta.@with(d, $arg), $(moreargs...)); end )
 
-"""
-```julia
-@ix(d, i)      # select rows
-@ix(d, i, j)   # select rows and columns
-```
-
-Select row and/or columns. This is an alternative to `getindex`.
-
-### Arguments
-
-* `d` : an AbstractDataFrame
-* `i` : expression for selecting rows
-* `j` : any column selector used in DataFrames
-
-### Examples
-
-```julia
-df = DataFrame(x = 1:3, y = [2, 1, 2])
-x = [2, 1, 0]
-
-@ix(df, :x .> 1)
-@ix(df, :x .> x) # again, the x's are different
-@ix(df, :x .> 1, [:x])
-```
-
-"""
 macro ix(d, args...)
+    depwarn("`@ix` is deprecated; use `@where` and `@select`.")
     esc(ix_helper(d, args...))
 end
 
