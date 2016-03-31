@@ -32,4 +32,13 @@ xlinq = @linq df  |>
 @test x == x1
 @test x == xlinq
 
+xlinq2 = @linq df  |>
+    where(:a .> 2, :b .!= "c")  |>
+    transform(y = 10 * :x)  |>
+    groupby(:b) |>
+    orderby(-mean(:x))  |>
+    based_on(meanX = mean(:x), meanY = mean(:y))
+    
+@test xlinq2[[:meanX, :meanY]] == xlinq[[:meanX, :meanY]]
+
 end

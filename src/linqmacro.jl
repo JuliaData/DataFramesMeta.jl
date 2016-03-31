@@ -112,7 +112,7 @@ function linq(::SymbolParameter{:transform}, x, args...)
 end
 
 function linq(::SymbolParameter{:based_on}, x, args...)
-    :( DataFrames.based_on($x, _DF -> @with(_DF, DataFrame($(args...)))) )
+    :( DataFrames.combine(map(_DF -> DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...))), $x)) )
 end
 
 function linq(::SymbolParameter{:by}, x, what, args...)
