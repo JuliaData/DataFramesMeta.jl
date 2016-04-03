@@ -45,4 +45,14 @@ df2 = @transform(df, C = :A + 1)
 df3 = @select(df, :B, C = :A + 1, :A)
 @test df3.C == df.A + 1
 
+df = CompositeDataFrame(:MyDF, A = [1, 2, 3], B = [2, 1, 2])
+@test typeof(df) == MyDF
+@test  df.A == df[:A]
+
+res = 0
+for x in eachrow(df)
+    res += x.A * x.B
+end
+@test res == sum(df.A .* df.B)
+
 end # module
