@@ -149,7 +149,7 @@ ix_helper(d, arg) = :( let d = $d; $d[DataFramesMeta.@with($d, $arg),:]; end )
 ix_helper(d, arg, moreargs...) = :( let d = $d; getindex(d, DataFramesMeta.@with(d, $arg), $(moreargs...)); end )
 
 macro ix(d, args...)
-    depwarn("`@ix` is deprecated; use `@where` and `@select`.")
+    Base.depwarn("`@ix` is deprecated; use `@where` and `@select`.", Symbol("@ix"))
     esc(ix_helper(d, args...))
 end
 

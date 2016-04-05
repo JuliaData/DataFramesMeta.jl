@@ -95,7 +95,7 @@ function linq(::SymbolParameter{:with}, d, body)
 end
 
 function linq(::SymbolParameter{:ix}, d, args...)
-    depwarn("`ix` is deprecated; use `where` and `select`.")
+    Base.depwarn("`ix` is deprecated; use `where` and `select`.", :ix)
     ix_helper(d, args...)
 end
 
