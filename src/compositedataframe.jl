@@ -1,23 +1,90 @@
 using Compat
 
-export AbstractCompositeDataFrame, CompositeDataFrame
+export AbstractCompositeDataFrame, AbstractCompositeDataFrameRow, 
+       CompositeDataFrame, row
 
+"""
+    AbstractCompositeDataFrame
+    
+An abstract type that is an `AbstractDataFrame`. Each type that inherits from
+this is expected to be a type-stable data frame. 
+"""
 abstract AbstractCompositeDataFrame <: AbstractDataFrame
 
+abstract AbstractCompositeDataFrameRow
+
+
+"""
+    row(cdf::AbstractCompositeDataFrame, i)
+    
+Return row `i` of `cdf` as a `CompositeDataFrameRow`. This object has
+the same fields as `cdf` where the type of each field is taken from the `eltype`
+of the field in `cdf`. 
+
+See also `eachrow(cdf)`.
+
+```julia
+df = CompositeDataFrame(x = 1:3, y = [2, 1, 6])
+dfr = row(df, 3)
+dfr.y   # 6
+```
+"""
+row() = nothing
+
+"""
+```julia
+CompositeDataFrame(columns::Vector{Any}, cnames::Vector{Symbol})
+CompositeDataFrame(columns::Vector{Any}, cnames::Vector{Symbol}, typename::Symbol)
+CompositeDataFrame(; kwargs...)
+CompositeDataFrame(typename::Symbol; kwargs...)
+```
+
+A constructor of an `AbstractCompositeDataFrame` that mimics the `DataFrame`
+constructor.  This returns a composite type (not immutable) that is an
+`AbstractCompositeDataFrame`.
+
+This uses `eval` to create a new type within the current module. 
+
+### Arguments
+
+* `columns` : contains the contents of the columns
+* `cnames` : the names of the columns
+* `typename` : the optional name of the type created
+* `kwargs` : the key gives the column names, and the value is the column contents
+
+### Examples
+
+```julia
+df = CompositeDataFrame(Any[1:3, [2, 1, 2]], [:x, :y])
+df = CompositeDataFrame(x = 1:3, y = [2, 1, 2])
+df = CompositeDataFrame(:MyDF, x = 1:3, y = [2, 1, 2])
+```
+"""
 function CompositeDataFrame(columns::Vector{Any},
-                            cnames::Vector{Symbol} = gennames(length(columns)))
+                            cnames::Vector{Symbol} = gennames(length(columns)),
+                            typename::Symbol = symbol("CompositeDF" * string(gensym())))
+    rowtypename = symbol(string(typename, "Row"))
     # TODO: length checks
-    typename = symbol("CompositeDF" * string(gensym()))
     e = :(type $(typename) <: AbstractCompositeDataFrame end)
     e.args[3].args = Any[:($(cnames[i]) :: $(typeof(columns[i]))) for i in 1:length(columns)]
-    eval(e)   # create the type
-    typ = eval(typename)
+    eval(current_module(), e)   # create the composite type
+    ## do the same for the row iterator type:
+    e = :(immutable $(rowtypename) <: AbstractCompositeDataFrameRow end)
+    e.args[3].args = Any[:($(cnames[i]) :: $(eltype(columns[i]))) for i in 1:length(columns)]
+    eval(current_module(), e)   # create the type
+    typeconv = Expr(:call, rowtypename, [Expr(:ref, Expr(:(.), :d, QuoteNode(nm)), :i) for nm in cnames]...)
+    eval(current_module(), :( DataFramesMeta.row(d::$typename, i::Integer) = $typeconv ))
+    typ = eval(current_module(), typename)
     return typ(columns...)
 end
 
 CompositeDataFrame(; kwargs...) =
     CompositeDataFrame(Any[ v for (k, v) in kwargs ],
                        Symbol[ k for (k, v) in kwargs ])
+CompositeDataFrame(typename::Symbol; kwargs...) =
+    CompositeDataFrame(Any[ v for (k, v) in kwargs ],
+                       Symbol[ k for (k, v) in kwargs ],
+                       typename)
 
 # CompositeDataFrame(df::DataFrame) = CompositeDataFrame(df.columns, names(df))
 
@@ -39,6 +106,7 @@ Base.names{T <: AbstractCompositeDataFrame}(cdf::T) = @compat fieldnames(T)
 
 DataFrames.ncol(cdf::AbstractCompositeDataFrame) = length(names(cdf))
 DataFrames.nrow(cdf::AbstractCompositeDataFrame) = ncol(cdf) > 0 ? length(cdf.(1))::Int : 0
+DataFrames.nrow(cdf::AbstractCompositeDataFrame) = length(cdf.(1))
 
 DataFrames.columns(cdf::AbstractCompositeDataFrame) = Any[ cdf.(i) for i in 1:length(cdf) ]
                 
@@ -72,6 +140,34 @@ function Base.getindex(cdf::AbstractCompositeDataFrame, row_inds, col_inds::Unit
         return CompositeDataFrame(Any[ cdf.(col_inds[i])[row_inds] for i = 1:length(col_inds) ], names(cdf)[col_inds])
     end
 end
+
+#########################################
+## Row iterator
+#########################################
+
+"""
+    CDFRowIterator
+    
+An iterator over the rows of an `AbstractCompositeDataFrame`. Each row
+is an immutable type with the same names as the parent composite data frame.
+This iterator is created by calling `eachrow(df)` where `df` is an
+`AbstractCompositeDataFrame`.
+
+See also `row(cdf, i)`.
+"""
+immutable CDFRowIterator{T <: AbstractCompositeDataFrame}
+    df::T
+    len::Int
+end
+DataFrames.eachrow(df::AbstractCompositeDataFrame) = CDFRowIterator(df, nrow(df))
+
+Base.start(itr::CDFRowIterator) = 1
+Base.done(itr::CDFRowIterator, i::Int) = i > itr.len
+Base.next(itr::CDFRowIterator, i::Int) = (row(itr.df, i), i + 1)
+Base.size(itr::CDFRowIterator) = (size(itr.df, 1), )
+Base.length(itr::CDFRowIterator) = size(itr.df, 1)
+Base.getindex(itr::CDFRowIterator, i::Any) = row(itr.df, i)
+Base.map(f::Function, dfri::CDFRowIterator) = [f(row) for row in dfri]
 
 #########################################
 ## LINQ-like operations

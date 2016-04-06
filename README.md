@@ -256,8 +256,10 @@ All of the other macros are based on `@with`.
 
 # CompositeDataFrame
 
-A CompositeDataFrame is an AbstractDataFrame built using Composite
-types. The advantages of this are:
+A `CompositeDataFrame` is a type-stable `AbstractDataFrame` built using composite
+types. Each column is a field in a composite type. `CompositeDataFrame` is an
+abstract type; each concrete composite type inherits from this. The advantages
+of this approach are:
 
 * You can access single columns directly using `df.colA`. This is type stable,
   so code should be faster. (There is still the function boundary to worry 
@@ -268,19 +270,71 @@ types. The advantages of this are:
 Some downsides include:
 
 * As an abuse of the type system, creating a new type for each change to
-  a CompositeDataFrame may waste memory.
+  a `CompositeDataFrame` may waste memory.
 
-* You cannot change the structure of a CompositeDataFrame once created.
-  You have to treat it (almost) like an immutable object. For example to
-  add a column, you need to do something like:
+* You cannot change the structure of a `CompositeDataFrame` once created.
+  It is nearly like an immutable object. For example to add a column, you need 
+  to do something like:
 
 ```julia
     transform(df, newcol = df.colA + 5)
 ```
     
-  An advantage of this is that the API becomes more functional. All
-  manipulations of the CompositeDataFrame return a new object.
-  Normally, this doesn't create much more memory.
+An advantage of this is that the API becomes more functional. All
+manipulations of the `CompositeDataFrame` return a new object.
+Normally, this doesn't create much more memory.
+
+To create a CompositeDataFrame, use `CompositeDataFrame`:
+  
+```julia
+n = 10
+d = CompositeDataFrame(a = 1:n, b = rand(10), c = DataArray(rand(1:3, n)))
+```
+
+Note that `CompositeDataFrame()` does not coerce to `DataArrays`. Ranges and other
+`AbstractVectors` are left as is, so convert to `DataArray` or `NullableArray` as
+appropriate.
+
+You can also name the type of the `CompositeDataFrame` by including that as the
+first symbol:
+  
+```julia
+n = 10
+d = CompositeDataFrame(:MyDF, a = 1:n, b = rand(n), c = DataArray(rand(1:3, n)))
+```
+
+You can also define a `CompositeDataFrame` manually as follows. If you do this,
+you are responsible for keeping each column the same length.
+
+```julia
+immutable MyDF <: AbstractCompositeDataFrame
+    a::Vector{Int}
+    b::Vector{Float64}
+    c::DataVector{Float64}
+end
+
+MyDF(n::Integer) = MyDF(zeros(Int, n), zeros(n), DataArray(zeros(n)))
+d = MyDF(10)
+```
+
+Note that a `CompositeDataFrame` is type stable with field access like `df.colA` 
+but not with `getindex` indexing like `df[:colA]`. `df[:colA]` works, but it is
+not type stable.
+
+Type-stable access to rows is also provided using `row(d, i)` or the iterator
+`eachrow(d)`. Here is an example:
+
+```julia
+n = 10
+d = CompositeDataFrame(:MyDF, a = 1:n, b = rand(10), c = DataArray(rand(1:3, n)))
+x = row(d, 5)
+x.a    # 5
+y = [x.a * x.b for x in eachrow(d)]
+```
+
+In the example above, the call to `CompositeDataFrame` creates the type `MyDF`
+that holds the composite data frame and another type `MyDFRow` that is used by
+`row` and `eachrow`. 
 
 # Package Maintenance
 
