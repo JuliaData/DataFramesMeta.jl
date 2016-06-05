@@ -168,7 +168,7 @@ collect_ands(x::Expr) = x
 collect_ands(x::Expr, y::Expr) = :($x & $y)
 collect_ands(x::Expr, y...) = :($x & $(collect_ands(y...)))
 
-where_helper(d, args...) = :( DataFramesMeta.where($d, _DF -> DataFramesMeta.@with(_DF, $(collect_ands(args...)))) )
+where_helper(d, args...) = :( $DataFramesMeta.where($d, _DF -> $DataFramesMeta.@with(_DF, $(collect_ands(args...)))) )
 
 """
 ```julia
