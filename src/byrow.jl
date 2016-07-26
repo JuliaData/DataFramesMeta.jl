@@ -27,7 +27,7 @@ end
 byrow_replace(x) = x
 
 function byrow_find_newcols(e::Expr, newcol_decl)
-    if e.head == :macrocall && e.args[1] == symbol("@newcol")
+    if e.head == :macrocall && e.args[1] == Symbol("@newcol")
         ea = e.args[2]
         # expression to assign a new column to df
         return (nothing, Any[Expr(:kw, ea.args[1], Expr(:call, ea.args[2].args[1], ea.args[2].args[2], :_N))])

@@ -62,8 +62,8 @@ df = CompositeDataFrame(:MyDF, x = 1:3, y = [2, 1, 2])
 """
 function CompositeDataFrame(columns::Vector{Any},
                             cnames::Vector{Symbol} = gennames(length(columns)),
-                            typename::Symbol = symbol("CompositeDF" * string(gensym())))
-    rowtypename = symbol(string(typename, "Row"))
+                            typename::Symbol = @compat(Symbol("CompositeDF", gensym())))
+    rowtypename = @compat Symbol(typename, "Row")
     # TODO: length checks
     e = :(type $(typename) <: AbstractCompositeDataFrame end)
     e.args[3].args = Any[:($(cnames[i]) :: $(typeof(columns[i]))) for i in 1:length(columns)]
