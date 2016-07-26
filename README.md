@@ -1,6 +1,7 @@
 # DataFramesMeta.jl
 
 [![DataFramesMeta](http://pkg.julialang.org/badges/DataFramesMeta_0.4.svg)](http://pkg.julialang.org/?pkg=DataFramesMeta&ver=0.4)
+[![DataFramesMeta](http://pkg.julialang.org/badges/DataFramesMeta_0.5.svg)](http://pkg.julialang.org/?pkg=DataFramesMeta)
 [![Coverage Status](http://img.shields.io/coveralls/JuliaStats/DataFramesMeta.jl.svg)](https://coveralls.io/r/JuliaStats/DataFramesMeta.jl)
 [![Build Status](https://travis-ci.org/JuliaStats/DataFramesMeta.jl.svg?branch=master)](https://travis-ci.org/JuliaStats/DataFramesMeta.jl)
 
