@@ -1,12 +1,13 @@
 language: julia
 julia:
   - 0.4
+  - nightly
 os:
   - linux
 notifications:
   email: false
-script:
-  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-  - julia -e 'Pkg.clone(pwd()); Pkg.build("DataFramesMeta"); Pkg.test("DataFramesMeta", coverage=true)'
+# script:
+#   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+#   - julia -e 'Pkg.clone(pwd()); Pkg.build("DataFramesMeta"); Pkg.test("DataFramesMeta", coverage=true)'
 after_success:
   - julia -e 'cd(Pkg.dir("DataFramesMeta")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'

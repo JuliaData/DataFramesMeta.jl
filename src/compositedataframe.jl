@@ -1,13 +1,13 @@
 using Compat
 
-export AbstractCompositeDataFrame, AbstractCompositeDataFrameRow, 
+export AbstractCompositeDataFrame, AbstractCompositeDataFrameRow,
        CompositeDataFrame, row
 
 """
     AbstractCompositeDataFrame
-    
+
 An abstract type that is an `AbstractDataFrame`. Each type that inherits from
-this is expected to be a type-stable data frame. 
+this is expected to be a type-stable data frame.
 """
 abstract AbstractCompositeDataFrame <: AbstractDataFrame
 
@@ -16,10 +16,10 @@ abstract AbstractCompositeDataFrameRow
 
 """
     row(cdf::AbstractCompositeDataFrame, i)
-    
+
 Return row `i` of `cdf` as a `CompositeDataFrameRow`. This object has
 the same fields as `cdf` where the type of each field is taken from the `eltype`
-of the field in `cdf`. 
+of the field in `cdf`.
 
 See also `eachrow(cdf)`.
 
@@ -43,7 +43,7 @@ A constructor of an `AbstractCompositeDataFrame` that mimics the `DataFrame`
 constructor.  This returns a composite type (not immutable) that is an
 `AbstractCompositeDataFrame`.
 
-This uses `eval` to create a new type within the current module. 
+This uses `eval` to create a new type within the current module.
 
 ### Arguments
 
@@ -62,8 +62,8 @@ df = CompositeDataFrame(:MyDF, x = 1:3, y = [2, 1, 2])
 """
 function CompositeDataFrame(columns::Vector{Any},
                             cnames::Vector{Symbol} = gennames(length(columns)),
-                            typename::Symbol = symbol("CompositeDF" * string(gensym())))
-    rowtypename = symbol(string(typename, "Row"))
+                            typename::Symbol = @compat(Symbol("CompositeDF", gensym())))
+    rowtypename = @compat Symbol(typename, "Row")
     # TODO: length checks
     e = :(type $(typename) <: AbstractCompositeDataFrame end)
     e.args[3].args = Any[:($(cnames[i]) :: $(typeof(columns[i]))) for i in 1:length(columns)]
@@ -90,7 +90,7 @@ CompositeDataFrame(typename::Symbol; kwargs...) =
 
 CompositeDataFrame(adf::AbstractDataFrame) =
     CompositeDataFrame(DataFrames.columns(adf), names(adf))
-    
+
 CompositeDataFrame(adf::AbstractDataFrame, nms::Vector{Symbol}) =
     CompositeDataFrame(DataFrames.columns(adf), nms)
 
@@ -105,11 +105,11 @@ DataFrames.DataFrame(cdf::AbstractCompositeDataFrame) = DataFrame(DataFrames.col
 Base.names{T <: AbstractCompositeDataFrame}(cdf::T) = @compat fieldnames(T)
 
 DataFrames.ncol(cdf::AbstractCompositeDataFrame) = length(names(cdf))
-DataFrames.nrow(cdf::AbstractCompositeDataFrame) = ncol(cdf) > 0 ? length(cdf.(1))::Int : 0
-DataFrames.nrow(cdf::AbstractCompositeDataFrame) = length(cdf.(1))
+DataFrames.nrow(cdf::AbstractCompositeDataFrame) = ncol(cdf) > 0 ? length(getfield(cdf, 1))::Int : 0
+DataFrames.nrow(cdf::AbstractCompositeDataFrame) = length(getfield(cdf, 1))
 
-DataFrames.columns(cdf::AbstractCompositeDataFrame) = Any[ cdf.(i) for i in 1:length(cdf) ]
-                
+DataFrames.columns(cdf::AbstractCompositeDataFrame) = Any[ getfield(cdf, i) for i in 1:length(cdf) ]
+
 function Base.hcat(df1::AbstractCompositeDataFrame, df2::AbstractCompositeDataFrame)
     nms = DataFrames.make_unique([names(df1); names(df2)])
     columns = Any[DataFrames.columns(df1)..., DataFrames.columns(df2)...]
@@ -125,19 +125,19 @@ DataFrames.index(cdf::AbstractCompositeDataFrame) = DataFrames.Index(names(cdf))
 ## getindex
 #########################################
 
-Base.getindex(cdf::AbstractCompositeDataFrame, col_inds::DataFrames.ColumnIndex) = cdf.(col_inds)
-Base.getindex{T <: DataFrames.ColumnIndex}(cdf::AbstractCompositeDataFrame, col_inds::AbstractVector{T}) = CompositeDataFrame(Any[ cdf.(col_inds[i]) for i = 1:length(col_inds) ], names(cdf)[col_inds])
-Base.getindex(cdf::AbstractCompositeDataFrame, row_inds, col_inds::DataFrames.ColumnIndex) = cdf.(col_inds)[row_inds]
-Base.getindex(cdf::AbstractCompositeDataFrame, row_inds, col_inds) = 
-    CompositeDataFrame(Any[ cdf.(col_inds[i])[row_inds] for i = 1:length(col_inds) ],
+Base.getindex(cdf::AbstractCompositeDataFrame, col_inds::DataFrames.ColumnIndex) = getfield(cdf, col_inds)
+Base.getindex{T <: DataFrames.ColumnIndex}(cdf::AbstractCompositeDataFrame, col_inds::AbstractVector{T}) = CompositeDataFrame(Any[ getfield(cdf, col_inds[i]) for i = 1:length(col_inds) ], names(cdf)[col_inds])
+Base.getindex(cdf::AbstractCompositeDataFrame, row_inds, col_inds::DataFrames.ColumnIndex) = getfield(cdf, col_inds)[row_inds]
+Base.getindex(cdf::AbstractCompositeDataFrame, row_inds, col_inds) =
+    CompositeDataFrame(Any[ getfield(cdf, col_inds[i])[row_inds] for i = 1:length(col_inds) ],
                        Symbol[ names(cdf)[i] for i = 1:length(col_inds) ])
-Base.getindex(cdf::AbstractCompositeDataFrame, row_inds, ::Colon) = typeof(cdf)([cdf.(i)[row_inds] for i in 1:length(cdf)]...)
+Base.getindex(cdf::AbstractCompositeDataFrame, row_inds, ::Colon) = typeof(cdf)([getfield(cdf, i)[row_inds] for i in 1:length(cdf)]...)
 
 function Base.getindex(cdf::AbstractCompositeDataFrame, row_inds, col_inds::UnitRange)
     if col_inds.start == 1 && col_inds.stop == length(cdf)
-        return typeof(cdf)([ cdf.(i)[row_inds] for i in 1:length(cdf) ]...)
+        return typeof(cdf)([ getfield(cdf, i)[row_inds] for i in 1:length(cdf) ]...)
     else
-        return CompositeDataFrame(Any[ cdf.(col_inds[i])[row_inds] for i = 1:length(col_inds) ], names(cdf)[col_inds])
+        return CompositeDataFrame(Any[ getfield(cdf, col_inds[i])[row_inds] for i = 1:length(col_inds) ], names(cdf)[col_inds])
     end
 end
 
@@ -147,7 +147,7 @@ end
 
 """
     CDFRowIterator
-    
+
 An iterator over the rows of an `AbstractCompositeDataFrame`. Each row
 is an immutable type with the same names as the parent composite data frame.
 This iterator is created by calling `eachrow(df)` where `df` is an
@@ -176,7 +176,7 @@ Base.map(f::Function, dfri::CDFRowIterator) = [f(row) for row in dfri]
 
 order(d::AbstractCompositeDataFrame; args...) =
     d[sortperm(DataFrame(args...)), :]
-                       
+
 transform(d::AbstractCompositeDataFrame; kwargs...) =
     CompositeDataFrame(Any[DataFrames.columns(d)..., [ isa(v, Function) ? v(d) : v for (k,v) in kwargs ]...],
                        Symbol[names(d)..., [ k for (k,v) in kwargs ]...])
