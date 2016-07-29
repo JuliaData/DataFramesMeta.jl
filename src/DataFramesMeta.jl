@@ -1,6 +1,7 @@
 module DataFramesMeta
 
 using DataFrames
+import MacroTools
 
 # Basics:
 export @with, @ix, @where, @orderby, @transform, @by, @based_on, @select
@@ -17,39 +18,35 @@ include("byrow.jl")
 ##
 ##############################################################################
 
-replace_syms(x, membernames) = x
-function replace_syms(e::Expr, membernames)
-    if e.head == :call && length(e.args) == 2 && e.args[1] == :^
-        return e.args[2]
-    elseif e.head == :.     # special case for :a.b
-        return Expr(e.head, replace_syms(e.args[1], membernames),
-                            typeof(e.args[2]) == Expr && e.args[2].head == :quote ? e.args[2] : replace_syms(e.args[2], membernames))
-    elseif e.head == :call && length(e.args) == 2 && e.args[1] == :_I_
-        nam = :($(e.args[2]))
-        if haskey(membernames, nam)
-            return membernames[nam]
-        else
-            a = gensym()
-            membernames[nam] = a
-            return a
-        end
-    elseif e.head != :quote
-        return Expr(e.head, (isempty(e.args) ? e.args : map(x -> replace_syms(x, membernames), e.args))...)
-    else
-        nam = Meta.quot(e.args[1])
-        if haskey(membernames, nam)
-            return membernames[nam]
-        else
-            a = gensym()
-            membernames[nam] = a
-            return a
-        end
+import MacroTools
+
+function addkey!(membernames, nam)
+    if !haskey(membernames, nam)
+        membernames[nam] = gensym()
     end
+    membernames[nam]
 end
+
+replace_syms!(e, membernames)  = x
+replace_syms!(e::Expr, membernames) =
+    MacroTools.@match e begin
+        ^(e_) => e
+        _I_(e_) => addkey!(membernames, e)
+        :(e_) => addkey!(membernames, Meta.quot(e))
+        x_.y_ => replace_dotted!(x, y, membernames)
+        e_ => Expr(e.head, map(e -> replace_syms!(e, membernames), e.args)...)
+    end
+
+function replace_dotted!(x, y, membernames)
+  x_new = replace_syms!(x, membernames)
+  y_new = MacroTools.isexpr(y, :quote) ? y : replace_syms!(y, membernames)
+  :($x_new.$y_new)
+end
+
 
 function with_helper(d, body)
     membernames = Dict{Any, Symbol}()
-    body = replace_syms(body, membernames)
+    body = replace_syms!(body, membernames)
     funargs = map(x -> :( getindex($d, $x) ), collect(keys(membernames)))
     funname = gensym()
     return(:( function $funname($(collect(values(membernames))...)) $body end; $funname($(funargs...)) ))
@@ -64,7 +61,7 @@ end
 
 ### Arguments
 
-* `d` : an AbstractDataFrame or Associative type 
+* `d` : an AbstractDataFrame or Associative type
 * `expr` : the expression to evaluate in `d`
 
 ### Details
@@ -94,7 +91,7 @@ All of the other DataFramesMeta macros are based on `@with`.
 
 If an expression is wrapped in `^(expr)`, `expr` gets passed through untouched.
 If an expression is wrapped in  `_I_(expr)`, the column is referenced by the
-variable `expr` rather than a symbol. 
+variable `expr` rather than a symbol.
 
 ### Examples
 
@@ -228,6 +225,7 @@ orderby(d::AbstractDataFrame, f::Function) = d[sortperm(f(d)), :]
 orderby(g::GroupedDataFrame, f::Function) = g[sortperm([f(x) for x in g])]
 orderbyconstructor(d::AbstractDataFrame) = (x...) -> DataFrame(Any[x...])
 orderbyconstructor(d) = x -> x
+
 
 """
 ```julia
@@ -386,7 +384,7 @@ Split-apply-combine in one step.
 
 ### Returns
 
-* `::DataFrame` 
+* `::DataFrame`
 
 ### Examples
 
@@ -445,12 +443,12 @@ Select and transform columns.
 ### Arguments
 
 * `d` : an AbstractDataFrame or Associative
-* `e` :  keyword arguments specifying new columns in terms of existing columns 
+* `e` :  keyword arguments specifying new columns in terms of existing columns
   or symbols to specify existing columns
 
 ### Returns
 
-* `::AbstractDataFrame` or `::Associative` 
+* `::AbstractDataFrame` or `::Associative`
 
 ### Examples
 
