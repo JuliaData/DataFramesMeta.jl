@@ -18,8 +18,6 @@ include("byrow.jl")
 ##
 ##############################################################################
 
-import MacroTools
-
 function addkey!(membernames, nam)
     if !haskey(membernames, nam)
         membernames[nam] = gensym()
@@ -27,7 +25,9 @@ function addkey!(membernames, nam)
     membernames[nam]
 end
 
-replace_syms!(e, membernames)  = x
+replace_syms!(e, membernames)  = e
+replace_syms!(e::QuoteNode, membernames) =
+    replace_syms!(Meta.quot(e.value), membernames)
 replace_syms!(e::Expr, membernames) =
     MacroTools.@match e begin
         ^(e_) => e
@@ -42,7 +42,6 @@ function replace_dotted!(x, y, membernames)
   y_new = MacroTools.isexpr(y, :quote) ? y : replace_syms!(y, membernames)
   :($x_new.$y_new)
 end
-
 
 function with_helper(d, body)
     membernames = Dict{Any, Symbol}()
@@ -245,14 +244,15 @@ orderby(g::GroupedDataFrame, f::Function) = g[sortperm([f(x) for x in g])]
 orderbyconstructor(d::AbstractDataFrame) = (x...) -> DataFrame(Any[x...])
 orderbyconstructor(d) = x -> x
 
-orderby_helper(d, args...) =
+function orderby_helper(d, args...)
     construct_args = :(DataFramesMeta.orderbyconstructor(_D)($(args...)))
     with_args = :(DataFramesMeta.@with(_DF, $construct_args))
     quote
         let _D = $d
-            DataFramesMeta.orderby(_D, _DF -> $with_args))
+            DataFramesMeta.orderby(_D, _DF -> $with_args)
         end
     end
+end
 
 """
 ```julia
@@ -320,7 +320,7 @@ function transform_helper(x, args...)
         kw.args[2] = :( _DF -> DataFramesMeta.@with(_DF, $(kw.args[2]) ) )
         kw
     end
-    map!(newargs, convert_kw)
+    map!(convert_kw, newargs)
     :( transform($x, $(newargs...)) )
 end
 
@@ -404,7 +404,7 @@ end
 
 function by_helper(x, what, args...)
     with_args = :(DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...))))
-    :( DataFrames.by($x, $what, _DF -> $with_args)
+    :( DataFrames.by($x, $what, _DF -> $with_args) )
 end
 
 """
@@ -456,7 +456,7 @@ function expandargs(e::Expr)
 end
 
 function expandargs(e::Tuple)
-    map(e, expandargs)
+    return map(expandargs, e)
 end
 
 function Base.select(d::Union{AbstractDataFrame, Associative}; kwargs...)
@@ -467,14 +467,15 @@ function Base.select(d::Union{AbstractDataFrame, Associative}; kwargs...)
     return result
 end
 
+
 function select_helper(x, args...)
-    select_args = :(select(_DF, $(DataFramesMeta.expandargs(args)...)))
+    select_args = :(select(_DF; $(expandargs(args)...)))
     quote
         let _DF = $x
             DataFramesMeta.@with(_DF, $select_args)
         end
     end
-
+end
 
 """
 ```julia
