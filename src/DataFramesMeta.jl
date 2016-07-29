@@ -317,9 +317,11 @@ end
 function transform_helper(x, args...)
     # convert each kw arg value to: _DF -> @with(_DF, arg)
     newargs = [args...]
-    for i in 1:length(args)
-        newargs[i].args[2] = :( _DF -> DataFramesMeta.@with(_DF, $(newargs[i].args[2]) ) )
+    function convert_kw(kw)
+        kw.args[2] = :( _DF -> DataFramesMeta.@with(_DF, $(kw.args[2]) ) )
+        kw
     end
+    map!(newargs, convert_kw)
     :( transform($x, $(newargs...)) )
 end
 
@@ -455,11 +457,7 @@ function expandargs(e::Expr)
 end
 
 function expandargs(e::Tuple)
-    res = [e...]
-    for i in 1:length(res)
-        res[i] = expandargs(e[i])
-    end
-    return res
+    map(e, expandargs)
 end
 
 function Base.select(d::Union{AbstractDataFrame, Associative}; kwargs...)
@@ -470,10 +468,11 @@ function Base.select(d::Union{AbstractDataFrame, Associative}; kwargs...)
     return result
 end
 
-select_helper(x, args...) =
+function select_helper(x, args...)
+    select_args = :(select(_DF, $(DataFramesMeta.expandargs(args)...)))
     quote
         let _DF = $x
-            DataFramesMeta.@with(_DF, select(_DF, $(DataFramesMeta.expandargs(args)...)))
+            DataFramesMeta.@with(_DF, $select_args)
         end
     end
 
