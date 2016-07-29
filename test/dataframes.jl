@@ -47,7 +47,7 @@ df2 = @byrow! df begin
     @newcol colX::Array{Float64}
     @newcol colY::DataArray{Int}
     :colX = :B == 2 ? pi * :A : :B
-    if :A > 1 
+    if :A > 1
         :colY = :A * :B
     end
 end

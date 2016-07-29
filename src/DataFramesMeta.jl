@@ -1,7 +1,6 @@
 module DataFramesMeta
 
 using DataFrames
-import MacroTools
 
 # Basics:
 export @with, @ix, @where, @orderby, @transform, @by, @based_on, @select
@@ -25,21 +24,28 @@ function addkey!(membernames, nam)
     membernames[nam]
 end
 
-replace_syms!(e, membernames)  = e
+onearg(e, f) = e.head == :call && length(e.args) == 2 && e.args[1] == f
+map_expr(f, e) = Expr(e.head, map(f, e.args)...)
+
+replace_syms!(x, membernames) = x
 replace_syms!(e::QuoteNode, membernames) =
     replace_syms!(Meta.quot(e.value), membernames)
 replace_syms!(e::Expr, membernames) =
-    MacroTools.@match e begin
-        ^(e_) => e
-        _I_(e_) => addkey!(membernames, e)
-        :(e_) => addkey!(membernames, Meta.quot(e))
-        x_.y_ => replace_dotted!(x, y, membernames)
-        e_ => Expr(e.head, map(e -> replace_syms!(e, membernames), e.args)...)
-    end
+    onearg(e, :^)    ? e.args[2]                                       :
+    onearg(e, :_I_)  ? addkey!(membernames, :($(e.args[2])))           :
+    e.head == :quote ? addkey!(membernames, Meta.quot(e.args[1]) )     :
+    e.head == :.     ? replace_dotted!(e, membernames)                 :
+                       map_expr(x -> replace_syms!(x, membernames), e)
 
-function replace_dotted!(x, y, membernames)
-  x_new = replace_syms!(x, membernames)
-  y_new = MacroTools.isexpr(y, :quote) ? y : replace_syms!(y, membernames)
+protect_replace_syms!(e, membernames) = e
+protect_replace_syms!(e::QuoteNode, membernames) =
+    protect_replace_syms!(Meta.quot(e.value), membernames)
+protect_replace_syms!(e::Expr, membernames) =
+  e.head == :quote ? e.args[1] : replace_syms!(e, membernames)
+
+function replace_dotted!(e, membernames)
+  x_new = replace_syms!(e.args[1], membernames)
+  y_new = protect_replace_syms!(e.args[2], membernames)
   :($x_new.$y_new)
 end
 
@@ -476,6 +482,8 @@ function select_helper(x, args...)
         end
     end
 end
+
+
 
 """
 ```julia
