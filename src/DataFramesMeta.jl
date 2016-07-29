@@ -180,7 +180,10 @@ collect_ands(x::Expr) = x
 collect_ands(x::Expr, y::Expr) = :($x & $y)
 collect_ands(x::Expr, y...) = :($x & $(collect_ands(y...)))
 
-where_helper(d, args...) = :( $DataFramesMeta.where($d, _DF -> $DataFramesMeta.@with(_DF, $(collect_ands(args...)))) )
+function where_helper(d, args...)
+    with_args = :($DataFramesMeta.@with(_DF, $(collect_ands(args...))))
+    :( $DataFramesMeta.where($d, _DF -> $with_args) )
+end
 
 """
 ```julia
@@ -236,15 +239,19 @@ function orderby(d::AbstractDataFrame, args...)
     D = typeof(d)(args...)
     d[sortperm(D), :]
 end
+
 orderby(d::AbstractDataFrame, f::Function) = d[sortperm(f(d)), :]
 orderby(g::GroupedDataFrame, f::Function) = g[sortperm([f(x) for x in g])]
+
 orderbyconstructor(d::AbstractDataFrame) = (x...) -> DataFrame(Any[x...])
 orderbyconstructor(d) = x -> x
 
 orderby_helper(d, args...) =
+    construct_args = :(DataFramesMeta.orderbyconstructor(_D)($(args...)))
+    with_args = :(DataFramesMeta.@with(_DF, $construct_args))
     quote
         let _D = $d
-            DataFramesMeta.orderby(_D, _DF -> DataFramesMeta.@with(_DF, DataFramesMeta.orderbyconstructor(_D)($(args...))))
+            DataFramesMeta.orderby(_D, _DF -> $with_args))
         end
     end
 
@@ -356,8 +363,10 @@ end
 ##
 ##############################################################################
 
-based_on_helper(x, args...) =
-    :( DataFrames.combine(map(_DF -> DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...))), $x)) )
+function based_on_helper(x, args...)
+    with_args = :(DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...))))
+    :( DataFrames.combine(map(_DF -> $with_args, $x)) )
+end
 
 """
 ```julia
@@ -392,8 +401,10 @@ end
 ##
 ##############################################################################
 
-by_helper(x, what, args...) =
-  :( DataFrames.by($x, $what, _DF -> DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...)))) )
+function by_helper(x, what, args...)
+    with_args = :(DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...))))
+    :( DataFrames.by($x, $what, _DF -> $with_args)
+end
 
 """
 ```julia
