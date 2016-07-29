@@ -5,8 +5,7 @@ import MacroTools
 
 # Basics:
 export @with, @ix, @where, @orderby, @transform, @by, @based_on, @select
-export with_helper, ix_helper, where_helper, orderby_helper, transform_helper,
-       by_helper, based_on_helper, select_helper
+export where, orderby, transform
 
 include("compositedataframe.jl")
 include("linqmacro.jl")
