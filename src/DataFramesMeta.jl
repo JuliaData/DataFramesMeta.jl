@@ -5,7 +5,8 @@ import MacroTools
 
 # Basics:
 export @with, @ix, @where, @orderby, @transform, @by, @based_on, @select
-export where, orderby, transform
+export with_helper, ix_helper, where_helper, orderby_helper, transform_helper,
+       by_helper, based_on_helper, select_helper
 
 include("compositedataframe.jl")
 include("linqmacro.jl")
@@ -49,7 +50,12 @@ function with_helper(d, body)
     body = replace_syms!(body, membernames)
     funargs = map(x -> :( getindex($d, $x) ), collect(keys(membernames)))
     funname = gensym()
-    return(:( function $funname($(collect(values(membernames))...)) $body end; $funname($(funargs...)) ))
+    return quote
+        function $funname($(collect(values(membernames))...))
+            $body
+        end
+        $funname($(funargs...))
+    end
 end
 
 """
@@ -142,8 +148,17 @@ end
 ##
 ##############################################################################
 
-ix_helper(d, arg) = :( let d = $d; $d[DataFramesMeta.@with($d, $arg),:]; end )
-ix_helper(d, arg, moreargs...) = :( let d = $d; getindex(d, DataFramesMeta.@with(d, $arg), $(moreargs...)); end )
+ix_helper(d, arg) = quote
+    let d = $d
+        $d[DataFramesMeta.@with($d, $arg),:]
+    end
+end
+
+ix_helper(d, arg, moreargs...) = quote
+    let d = $d
+        getindex(d, DataFramesMeta.@with(d, $arg), $(moreargs...))
+    end
+end
 
 macro ix(d, args...)
     Base.depwarn("`@ix` is deprecated; use `@where` and `@select`.", Symbol("@ix"))
@@ -226,6 +241,12 @@ orderby(g::GroupedDataFrame, f::Function) = g[sortperm([f(x) for x in g])]
 orderbyconstructor(d::AbstractDataFrame) = (x...) -> DataFrame(Any[x...])
 orderbyconstructor(d) = x -> x
 
+orderby_helper(d, args...) =
+    quote
+        let _D = $d
+            DataFramesMeta.orderby(_D, _DF -> DataFramesMeta.@with(_DF, DataFramesMeta.orderbyconstructor(_D)($(args...))))
+        end
+    end
 
 """
 ```julia
@@ -252,7 +273,7 @@ orderby(g, x -> mean(x[:n]))
 """
 macro orderby(d, args...)
     # I don't esc just the input because I want _DF to be visible to the user
-    esc(:(let _D = $d;  DataFramesMeta.orderby(_D, _DF -> DataFramesMeta.@with(_DF, DataFramesMeta.orderbyconstructor(_D)($(args...)))); end))
+    esc(orderby_helper(d, args...))
 end
 
 
@@ -329,12 +350,14 @@ macro transform(x, args...)
 end
 
 
-
 ##############################################################################
 ##
 ## @based_on - summarize a grouping operation
 ##
 ##############################################################################
+
+based_on_helper(x, args...) =
+    :( DataFrames.combine(map(_DF -> DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...))), $x)) )
 
 """
 ```julia
@@ -359,7 +382,7 @@ g = groupby(d, :x)
 """
 macro based_on(x, args...)
     # esc(:( DataFrames.based_on($x, _DF -> DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...)))) ))
-    esc(:( DataFrames.combine(map(_DF -> DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...))), $x)) ))
+    esc(based_on_helper(x, args...))
 end
 
 
@@ -368,6 +391,9 @@ end
 ## @by - grouping
 ##
 ##############################################################################
+
+by_helper(x, what, args...) =
+  :( DataFrames.by($x, $what, _DF -> DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...)))) )
 
 """
 ```julia
@@ -397,7 +423,7 @@ df = DataFrame(a = rep(1:4, 2), b = rep(2:-1:1, 4), c = randn(8))
 ```
 """
 macro by(x, what, args...)
-    esc(:( DataFrames.by($x, $what, _DF -> DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...)))) ))
+    esc(by_helper(x, what, args...))
 end
 
 
@@ -433,6 +459,14 @@ function Base.select(d::Union{AbstractDataFrame, Associative}; kwargs...)
     return result
 end
 
+select_helper(x, args...) =
+    quote
+        let _DF = $x
+            DataFramesMeta.@with(_DF, select(_DF, $(DataFramesMeta.expandargs(args)...)))
+        end
+    end
+
+
 """
 ```julia
 @select(d, e...)
@@ -462,7 +496,7 @@ df = DataFrame(a = rep(1:4, 2), b = rep(2:-1:1, 4), c = randn(8))
 ```
 """
 macro select(x, args...)
-    esc(:(let _DF = $x; DataFramesMeta.@with(_DF, select(_DF, $(DataFramesMeta.expandargs(args)...))); end))
+    esc(select_helper(x, args...))
 end
 
 
