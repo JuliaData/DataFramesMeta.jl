@@ -25,28 +25,24 @@ function addkey!(membernames, nam)
 end
 
 onearg(e, f) = e.head == :call && length(e.args) == 2 && e.args[1] == f
-map_expr(f, e) = Expr(e.head, map(f, e.args)...)
+mapexpr(f, e) = Expr(e.head, map(f, e.args)...)
 
 replace_syms!(x, membernames) = x
-replace_syms!(e::QuoteNode, membernames) =
-    replace_syms!(Meta.quot(e.value), membernames)
 replace_syms!(e::Expr, membernames) =
     onearg(e, :^)    ? e.args[2]                                       :
     onearg(e, :_I_)  ? addkey!(membernames, :($(e.args[2])))           :
     e.head == :quote ? addkey!(membernames, Meta.quot(e.args[1]) )     :
     e.head == :.     ? replace_dotted!(e, membernames)                 :
-                       map_expr(x -> replace_syms!(x, membernames), e)
+                       mapexpr(x -> replace_syms!(x, membernames), e)
 
 protect_replace_syms!(e, membernames) = e
-protect_replace_syms!(e::QuoteNode, membernames) =
-    protect_replace_syms!(Meta.quot(e.value), membernames)
 protect_replace_syms!(e::Expr, membernames) =
-  e.head == :quote ? e.args[1] : replace_syms!(e, membernames)
+  e.head == :quote ? e : replace_syms!(e, membernames)
 
 function replace_dotted!(e, membernames)
   x_new = replace_syms!(e.args[1], membernames)
   y_new = protect_replace_syms!(e.args[2], membernames)
-  :($x_new.$y_new)
+  :($x_new.($y_new))
 end
 
 function with_helper(d, body)
