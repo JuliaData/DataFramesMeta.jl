@@ -29,20 +29,26 @@ mapexpr(f, e) = Expr(e.head, map(f, e.args)...)
 
 replace_syms!(x, membernames) = x
 replace_syms!(e::Expr, membernames) =
-    onearg(e, :^)    ? e.args[2]                                       :
-    onearg(e, :_I_)  ? addkey!(membernames, :($(e.args[2])))           :
-    e.head == :quote ? addkey!(membernames, Meta.quot(e.args[1]) )     :
-    e.head == :.     ? replace_dotted!(e, membernames)                 :
-                       mapexpr(x -> replace_syms!(x, membernames), e)
+    if onearg(e, :^)
+        e.args[2]
+    elseif onearg(e, :_I_)
+        addkey!(membernames, :($(e.args[2])))
+    elseif e.head == :quote
+        addkey!(membernames, Meta.quot(e.args[1]) )
+    elseif e.head == :.
+        replace_dotted!(e, membernames)
+    else
+        mapexpr(x -> replace_syms!(x, membernames), e)
+    end
 
 protect_replace_syms!(e, membernames) = e
 protect_replace_syms!(e::Expr, membernames) =
-  e.head == :quote ? e : replace_syms!(e, membernames)
+    e.head == :quote ? e : replace_syms!(e, membernames)
 
 function replace_dotted!(e, membernames)
-  x_new = replace_syms!(e.args[1], membernames)
-  y_new = protect_replace_syms!(e.args[2], membernames)
-  :($x_new.($y_new))
+    x_new = replace_syms!(e.args[1], membernames)
+    y_new = protect_replace_syms!(e.args[2], membernames)
+    :($x_new.($y_new))
 end
 
 function with_helper(d, body)
@@ -314,15 +320,15 @@ function transform(g::GroupedDataFrame; kwargs...)
     return result
 end
 
+function convert_kw!(kw)
+    kw.args[2] = :( _DF -> DataFramesMeta.@with(_DF, $(kw.args[2]) ) )
+    kw
+end
 
 function transform_helper(x, args...)
     # convert each kw arg value to: _DF -> @with(_DF, arg)
     newargs = [args...]
-    function convert_kw(kw)
-        kw.args[2] = :( _DF -> DataFramesMeta.@with(_DF, $(kw.args[2]) ) )
-        kw
-    end
-    map!(convert_kw, newargs)
+    map!(convert_kw!, newargs)
     :( transform($x, $(newargs...)) )
 end
 
