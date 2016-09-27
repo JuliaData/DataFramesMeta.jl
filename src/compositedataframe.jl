@@ -106,7 +106,6 @@ Base.names{T <: AbstractCompositeDataFrame}(cdf::T) = @compat fieldnames(T)
 
 DataFrames.ncol(cdf::AbstractCompositeDataFrame) = length(names(cdf))
 DataFrames.nrow(cdf::AbstractCompositeDataFrame) = ncol(cdf) > 0 ? length(getfield(cdf, 1))::Int : 0
-DataFrames.nrow(cdf::AbstractCompositeDataFrame) = length(getfield(cdf, 1))
 
 DataFrames.columns(cdf::AbstractCompositeDataFrame) = Any[ getfield(cdf, i) for i in 1:length(cdf) ]
 
