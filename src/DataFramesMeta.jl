@@ -17,42 +17,51 @@ include("byrow.jl")
 ##
 ##############################################################################
 
-replace_syms(x, membernames) = x
-function replace_syms(e::Expr, membernames)
-    if e.head == :call && length(e.args) == 2 && e.args[1] == :^
-        return e.args[2]
-    elseif e.head == :.     # special case for :a.b
-        return Expr(e.head, replace_syms(e.args[1], membernames),
-                            typeof(e.args[2]) == Expr && e.args[2].head == :quote ? e.args[2] : replace_syms(e.args[2], membernames))
-    elseif e.head == :call && length(e.args) == 2 && e.args[1] == :_I_
-        nam = :($(e.args[2]))
-        if haskey(membernames, nam)
-            return membernames[nam]
-        else
-            a = gensym()
-            membernames[nam] = a
-            return a
-        end
-    elseif e.head != :quote
-        return Expr(e.head, (isempty(e.args) ? e.args : map(x -> replace_syms(x, membernames), e.args))...)
-    else
-        nam = Meta.quot(e.args[1])
-        if haskey(membernames, nam)
-            return membernames[nam]
-        else
-            a = gensym()
-            membernames[nam] = a
-            return a
-        end
+function addkey!(membernames, nam)
+    if !haskey(membernames, nam)
+        membernames[nam] = gensym()
     end
+    membernames[nam]
+end
+
+onearg(e, f) = e.head == :call && length(e.args) == 2 && e.args[1] == f
+mapexpr(f, e) = Expr(e.head, map(f, e.args)...)
+
+replace_syms!(x, membernames) = x
+replace_syms!(e::Expr, membernames) =
+    if onearg(e, :^)
+        e.args[2]
+    elseif onearg(e, :_I_)
+        addkey!(membernames, :($(e.args[2])))
+    elseif e.head == :quote
+        addkey!(membernames, Meta.quot(e.args[1]) )
+    elseif e.head == :.
+        replace_dotted!(e, membernames)
+    else
+        mapexpr(x -> replace_syms!(x, membernames), e)
+    end
+
+protect_replace_syms!(e, membernames) = e
+protect_replace_syms!(e::Expr, membernames) =
+    e.head == :quote ? e : replace_syms!(e, membernames)
+
+function replace_dotted!(e, membernames)
+    x_new = replace_syms!(e.args[1], membernames)
+    y_new = protect_replace_syms!(e.args[2], membernames)
+    :($x_new.($y_new))
 end
 
 function with_helper(d, body)
     membernames = Dict{Any, Symbol}()
-    body = replace_syms(body, membernames)
+    body = replace_syms!(body, membernames)
     funargs = map(x -> :( getindex($d, $x) ), collect(keys(membernames)))
     funname = gensym()
-    return(:( function $funname($(collect(values(membernames))...)) $body end; $funname($(funargs...)) ))
+    return quote
+        function $funname($(collect(values(membernames))...))
+            $body
+        end
+        $funname($(funargs...))
+    end
 end
 
 """
@@ -64,7 +73,7 @@ end
 
 ### Arguments
 
-* `d` : an AbstractDataFrame or Associative type 
+* `d` : an AbstractDataFrame or Associative type
 * `expr` : the expression to evaluate in `d`
 
 ### Details
@@ -94,7 +103,7 @@ All of the other DataFramesMeta macros are based on `@with`.
 
 If an expression is wrapped in `^(expr)`, `expr` gets passed through untouched.
 If an expression is wrapped in  `_I_(expr)`, the column is referenced by the
-variable `expr` rather than a symbol. 
+variable `expr` rather than a symbol.
 
 ### Examples
 
@@ -145,8 +154,17 @@ end
 ##
 ##############################################################################
 
-ix_helper(d, arg) = :( let d = $d; $d[DataFramesMeta.@with($d, $arg),:]; end )
-ix_helper(d, arg, moreargs...) = :( let d = $d; getindex(d, DataFramesMeta.@with(d, $arg), $(moreargs...)); end )
+ix_helper(d, arg) = quote
+    let d = $d
+        $d[DataFramesMeta.@with($d, $arg),:]
+    end
+end
+
+ix_helper(d, arg, moreargs...) = quote
+    let d = $d
+        getindex(d, DataFramesMeta.@with(d, $arg), $(moreargs...))
+    end
+end
 
 macro ix(d, args...)
     Base.depwarn("`@ix` is deprecated; use `@where` and `@select`.", Symbol("@ix"))
@@ -168,7 +186,10 @@ collect_ands(x::Expr) = x
 collect_ands(x::Expr, y::Expr) = :($x & $y)
 collect_ands(x::Expr, y...) = :($x & $(collect_ands(y...)))
 
-where_helper(d, args...) = :( $DataFramesMeta.where($d, _DF -> $DataFramesMeta.@with(_DF, $(collect_ands(args...)))) )
+function where_helper(d, args...)
+    with_args = :($DataFramesMeta.@with(_DF, $(collect_ands(args...))))
+    :( $DataFramesMeta.where($d, _DF -> $with_args) )
+end
 
 """
 ```julia
@@ -224,10 +245,22 @@ function orderby(d::AbstractDataFrame, args...)
     D = typeof(d)(args...)
     d[sortperm(D), :]
 end
+
 orderby(d::AbstractDataFrame, f::Function) = d[sortperm(f(d)), :]
 orderby(g::GroupedDataFrame, f::Function) = g[sortperm([f(x) for x in g])]
+
 orderbyconstructor(d::AbstractDataFrame) = (x...) -> DataFrame(Any[x...])
 orderbyconstructor(d) = x -> x
+
+function orderby_helper(d, args...)
+    construct_args = :(DataFramesMeta.orderbyconstructor(_D)($(args...)))
+    with_args = :(DataFramesMeta.@with(_DF, $construct_args))
+    quote
+        let _D = $d
+            DataFramesMeta.orderby(_D, _DF -> $with_args)
+        end
+    end
+end
 
 """
 ```julia
@@ -254,7 +287,7 @@ orderby(g, x -> mean(x[:n]))
 """
 macro orderby(d, args...)
     # I don't esc just the input because I want _DF to be visible to the user
-    esc(:(let _D = $d;  DataFramesMeta.orderby(_D, _DF -> DataFramesMeta.@with(_DF, DataFramesMeta.orderbyconstructor(_D)($(args...)))); end))
+    esc(orderby_helper(d, args...))
 end
 
 
@@ -287,13 +320,15 @@ function transform(g::GroupedDataFrame; kwargs...)
     return result
 end
 
+function convert_kw!(kw)
+    kw.args[2] = :( _DF -> DataFramesMeta.@with(_DF, $(kw.args[2]) ) )
+    kw
+end
 
 function transform_helper(x, args...)
     # convert each kw arg value to: _DF -> @with(_DF, arg)
     newargs = [args...]
-    for i in 1:length(args)
-        newargs[i].args[2] = :( _DF -> DataFramesMeta.@with(_DF, $(newargs[i].args[2]) ) )
-    end
+    map!(convert_kw!, newargs)
     :( transform($x, $(newargs...)) )
 end
 
@@ -331,12 +366,16 @@ macro transform(x, args...)
 end
 
 
-
 ##############################################################################
 ##
 ## @based_on - summarize a grouping operation
 ##
 ##############################################################################
+
+function based_on_helper(x, args...)
+    with_args = :(DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...))))
+    :( DataFrames.combine(map(_DF -> $with_args, $x)) )
+end
 
 """
 ```julia
@@ -361,7 +400,7 @@ g = groupby(d, :x)
 """
 macro based_on(x, args...)
     # esc(:( DataFrames.based_on($x, _DF -> DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...)))) ))
-    esc(:( DataFrames.combine(map(_DF -> DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...))), $x)) ))
+    esc(based_on_helper(x, args...))
 end
 
 
@@ -370,6 +409,11 @@ end
 ## @by - grouping
 ##
 ##############################################################################
+
+function by_helper(x, what, args...)
+    with_args = :(DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...))))
+    :( DataFrames.by($x, $what, _DF -> $with_args) )
+end
 
 """
 ```julia
@@ -386,7 +430,7 @@ Split-apply-combine in one step.
 
 ### Returns
 
-* `::DataFrame` 
+* `::DataFrame`
 
 ### Examples
 
@@ -399,7 +443,7 @@ df = DataFrame(a = rep(1:4, 2), b = rep(2:-1:1, 4), c = randn(8))
 ```
 """
 macro by(x, what, args...)
-    esc(:( DataFrames.by($x, $what, _DF -> DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...)))) ))
+    esc(by_helper(x, what, args...))
 end
 
 
@@ -420,11 +464,7 @@ function expandargs(e::Expr)
 end
 
 function expandargs(e::Tuple)
-    res = [e...]
-    for i in 1:length(res)
-        res[i] = expandargs(e[i])
-    end
-    return res
+    return map(expandargs, e)
 end
 
 function Base.select(d::Union{AbstractDataFrame, Associative}; kwargs...)
@@ -434,6 +474,18 @@ function Base.select(d::Union{AbstractDataFrame, Associative}; kwargs...)
     end
     return result
 end
+
+
+function select_helper(x, args...)
+    select_args = :(select(_DF; $(expandargs(args)...)))
+    quote
+        let _DF = $x
+            DataFramesMeta.@with(_DF, $select_args)
+        end
+    end
+end
+
+
 
 """
 ```julia
@@ -445,12 +497,12 @@ Select and transform columns.
 ### Arguments
 
 * `d` : an AbstractDataFrame or Associative
-* `e` :  keyword arguments specifying new columns in terms of existing columns 
+* `e` :  keyword arguments specifying new columns in terms of existing columns
   or symbols to specify existing columns
 
 ### Returns
 
-* `::AbstractDataFrame` or `::Associative` 
+* `::AbstractDataFrame` or `::Associative`
 
 ### Examples
 
@@ -464,7 +516,7 @@ df = DataFrame(a = rep(1:4, 2), b = rep(2:-1:1, 4), c = randn(8))
 ```
 """
 macro select(x, args...)
-    esc(:(let _DF = $x; DataFramesMeta.@with(_DF, select(_DF, $(DataFramesMeta.expandargs(args)...))); end))
+    esc(select_helper(x, args...))
 end
 
 
