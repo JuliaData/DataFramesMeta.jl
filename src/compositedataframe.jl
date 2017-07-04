@@ -9,9 +9,9 @@ export AbstractCompositeDataFrame, AbstractCompositeDataFrameRow,
 An abstract type that is an `AbstractDataFrame`. Each type that inherits from
 this is expected to be a type-stable data frame.
 """
-abstract AbstractCompositeDataFrame <: AbstractDataFrame
+@compat abstract type AbstractCompositeDataFrame <: AbstractDataFrame end
 
-abstract AbstractCompositeDataFrameRow
+@compat abstract type AbstractCompositeDataFrameRow end
 
 
 """

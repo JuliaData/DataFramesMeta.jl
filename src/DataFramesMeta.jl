@@ -165,8 +165,8 @@ where(d::AbstractDataFrame, f::Function) = d[f(d), :]
 where(g::GroupedDataFrame, f::Function) = g[Bool[f(x) for x in g]]
 
 collect_ands(x::Expr) = x
-collect_ands(x::Expr, y::Expr) = :($x & $y)
-collect_ands(x::Expr, y...) = :($x & $(collect_ands(y...)))
+collect_ands(x::Expr, y::Expr) = :($x .& $y)
+collect_ands(x::Expr, y...) = :($x .& $(collect_ands(y...)))
 
 where_helper(d, args...) = :( $DataFramesMeta.where($d, _DF -> $DataFramesMeta.@with(_DF, $(collect_ands(args...)))) )
 
