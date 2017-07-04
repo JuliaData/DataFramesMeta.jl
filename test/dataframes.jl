@@ -4,6 +4,7 @@ module TestDataFrames
 using Base.Test
 using DataArrays, DataFrames
 using DataFramesMeta
+using Compat
 
 df = DataFrame(A = 1:3, B = [2, 1, 2])
 
@@ -36,8 +37,8 @@ idx2 = :B
 @test  @where(df, :A .> x)          == df[df[:A] .> x,:]
 @test  @where(df, :B .> x)          == df[df[:B] .> x,:]
 @test  @where(df, :A .> :B)         == df[df[:A] .> df[:B],:]
-@test  @where(df, :A .> 1, :B .> 1) == df[(df[:A] .> 1) .& (df[:B] .> 1),:]
-@test  @where(df, :A .> 1, :A .< 4, :B .> 1) == df[(df[:A] .> 1) .& (df[:B] .> 1),:]
+@test  @where(df, :A .> 1, :B .> 1) == @compat df[(df[:A] .> 1) .& (df[:B] .> 1),:]
+@test  @where(df, :A .> 1, :A .< 4, :B .> 1) == @compat df[(df[:A] .> 1) .& (df[:B] .> 1),:]
 
 @test select(df, :A) == df[:A]
 
