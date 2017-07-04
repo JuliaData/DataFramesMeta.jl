@@ -30,7 +30,7 @@ function byrow_find_newcols(e::Expr, newcol_decl)
     if e.head == :macrocall && e.args[1] == Symbol("@newcol")
         ea = e.args[2]
         # expression to assign a new column to df
-        return (nothing, Any[Expr(:kw, ea.args[1], Expr(:call, ea.args[2].args[1], ea.args[2].args[2], :_N))])
+        return (nothing, Any[Expr(:kw, ea.args[1], ea.args[2])])
     else
         if isempty(e.args)
             return (e.args, Any[])
@@ -72,10 +72,11 @@ use regular operators and comparisons instead of their elementwise counterparts
 as in `@with`. Note that the scope within `@byrow!` is a hard scope.
 
 `byrow!` also supports special syntax for allocating new columns. The syntax
-`@newcol x::Array{Int}` allocates a new column `:x` with an `Array` container
+`@newcol x = Array{Int}(_N)` allocates a new column `:x` with an `Array` container
 with eltype `Int`. Note that the returned `AbstractDataFrame` includes these new
 columns, but the original `d` is not affected. This feature makes it easier to
-use `byrow!` for data transformations.
+use `byrow!` for data transformations. `_N` is introduced to represent the
+length of the dataframe.
 
 ### Arguments
 
@@ -96,7 +97,7 @@ let x = 0
 end
 @byrow! df if :A > :B; :A = 0 end
 df2 = @byrow! df begin
-    @newcol colX::Array{Float64}
+    @newcol colX = Array{Float64}(_N)
     :colX = :B == 2 ? pi * :A : :B
 end
 ```

@@ -178,7 +178,7 @@ Base.map(f::Function, dfri::CDFRowIterator) = [f(row) for row in dfri]
 #########################################
 
 
-order(d::AbstractCompositeDataFrame; args...) =
+DataFrames.order(d::AbstractCompositeDataFrame; args...) =
     d[sortperm(DataFrame(args...)), :]
 
 transform(d::AbstractCompositeDataFrame; kwargs...) =
