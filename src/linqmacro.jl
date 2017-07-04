@@ -51,7 +51,7 @@ macro linq(arg)
 end
 
 # Snippet from Calculus.jl
-immutable type SymbolParameter{T} end
+immutable SymbolParameter{T} end
 SymbolParameter(s::Symbol) = SymbolParameter{s}()
 
 replacefuns(x) = x  # default for non-expression stuff

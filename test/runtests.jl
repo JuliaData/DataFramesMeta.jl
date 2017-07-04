@@ -1,4 +1,4 @@
-fatalerrors = false
+fatalerrors = true
 anyerrors = false
 
 my_tests = ["dict.jl",

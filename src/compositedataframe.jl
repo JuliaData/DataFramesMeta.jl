@@ -73,7 +73,7 @@ function CompositeDataFrame(columns::Vector{Any},
     type_definition = :(type $(typename) <: AbstractCompositeDataFrame end)
     type_definition.args[3].args = Any[:($(cnames[i]) :: $(typeof(columns[i]))) for i in 1:length(columns)]
     ## do the same for the row iterator type:
-    column_definition = @compat :(immutable type $(rowtypename) <: AbstractCompositeDataFrameRow end)
+    column_definition = :(immutable $(rowtypename) <: AbstractCompositeDataFrameRow end)
     column_definition.args[3].args = Any[:($(cnames[i]) :: $(eltype(columns[i]))) for i in 1:length(columns)]
     typeconv = Expr(:call, rowtypename, [Expr(:ref, Expr(:(.), :d, QuoteNode(nm)), :i) for nm in cnames]...)
     row_method = Expr(:function, :( DataFramesMeta.row(d::$typename, i::Integer) ), typeconv)
