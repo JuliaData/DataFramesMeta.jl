@@ -1,6 +1,8 @@
 
 module TestCompositeDataFrames
 
+using Compat
+
 using Base.Test
 using DataArrays, DataFrames
 using DataFramesMeta
@@ -19,8 +21,8 @@ x = [2, 1, 0]
 @test  size([df df]) == (3,4)
 
 @test  @with(df, :A + 1)   ==  df[:A] + 1
-@test  @with(df, :A + :B)  ==  df[:A] + df[:B]
-@test  @with(df, :A + x)   ==  df[:A] + x
+@test  @with(df, :A .+ :B)  ==  df[:A] .+ df[:B]
+@test  @with(df, :A .+ x)   ==  df[:A] .+ x
 x = @with df begin
     res = 0.0
     for i in 1:length(:A)

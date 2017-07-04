@@ -165,8 +165,8 @@ where(d::AbstractDataFrame, f::Function) = d[f(d), :]
 where(g::GroupedDataFrame, f::Function) = g[Bool[f(x) for x in g]]
 
 collect_ands(x::Expr) = x
-collect_ands(x::Expr, y::Expr) = :($x & $y)
-collect_ands(x::Expr, y...) = :($x & $(collect_ands(y...)))
+collect_ands(x::Expr, y::Expr) = :($x .& $y)
+collect_ands(x::Expr, y...) = :($x .& $(collect_ands(y...)))
 
 where_helper(d, args...) = :( $DataFramesMeta.where($d, _DF -> $DataFramesMeta.@with(_DF, $(collect_ands(args...)))) )
 
@@ -291,8 +291,9 @@ end
 function transform_helper(x, args...)
     # convert each kw arg value to: _DF -> @with(_DF, arg)
     newargs = [args...]
-    for i in 1:length(args)
-        newargs[i].args[2] = :( _DF -> DataFramesMeta.@with(_DF, $(newargs[i].args[2]) ) )
+    for arg in newargs
+        arg.head = :kw
+        arg.args[2] = :( _DF -> DataFramesMeta.@with(_DF, $(arg.args[2]) ) )
     end
     :( transform($x, $(newargs...)) )
 end
@@ -399,7 +400,7 @@ df = DataFrame(a = rep(1:4, 2), b = rep(2:-1:1, 4), c = randn(8))
 ```
 """
 macro by(x, what, args...)
-    esc(:( DataFrames.by($x, $what, _DF -> DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...)))) ))
+    esc(:( DataFrames.by($x, $what, _DF -> DataFramesMeta.@with(_DF, DataFrames.DataFrame($((Expr(:kw, x.args...) for x in args)...)))) ))
 end
 
 
@@ -464,7 +465,7 @@ df = DataFrame(a = rep(1:4, 2), b = rep(2:-1:1, 4), c = randn(8))
 ```
 """
 macro select(x, args...)
-    esc(:(let _DF = $x; DataFramesMeta.@with(_DF, select(_DF, $(DataFramesMeta.expandargs(args)...))); end))
+    esc(:(let _DF = $x; DataFramesMeta.@with(_DF, select(_DF, $((Expr(:kw, x.args...) for x in DataFramesMeta.expandargs(args))...))); end))
 end
 
 

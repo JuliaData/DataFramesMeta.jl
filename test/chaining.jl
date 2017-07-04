@@ -17,13 +17,13 @@ x = @by(x, :b, meanX = mean(:x), meanY = mean(:y))
 x = @orderby(x, :b, -:meanX)
 x = @select(x, var = :b, :meanX, :meanY)
 
-x_as = @as _ begin
+x_as = @as X begin
     df
-    @where(_, :a .> 2)
-    @transform(_, y = 10 * :x)
-    @by(_, :b, meanX = mean(:x), meanY = mean(:y))
-    @orderby(_, :b, -:meanX)
-    @select(_, var = :b, :meanX, :meanY)
+    @where(X, :a .> 2)
+    @transform(X, y = 10 * :x)
+    @by(X, :b, meanX = mean(:x), meanY = mean(:y))
+    @orderby(X, :b, -:meanX)
+    @select(X, var = :b, :meanX, :meanY)
 end
 
 x_thread = @> begin

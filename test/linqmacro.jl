@@ -1,5 +1,7 @@
 module TestLinqMacro
 
+using Compat
+
 using Base.Test
 using DataArrays, DataFrames
 using DataFramesMeta
