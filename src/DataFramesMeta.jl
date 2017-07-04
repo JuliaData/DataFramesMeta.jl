@@ -28,6 +28,8 @@ onearg(e, f) = e.head == :call && length(e.args) == 2 && e.args[1] == f
 mapexpr(f, e) = Expr(e.head, map(f, e.args)...)
 
 replace_syms!(x, membernames) = x
+replace_syms!(q::QuoteNode, membernames) =
+    replace_syms!( Meta.quot(q.value), membernames)
 replace_syms!(e::Expr, membernames) =
     if onearg(e, :^)
         e.args[2]
@@ -43,25 +45,37 @@ replace_syms!(e::Expr, membernames) =
 
 protect_replace_syms!(e, membernames) = e
 protect_replace_syms!(e::Expr, membernames) =
-    e.head == :quote ? e : replace_syms!(e, membernames)
+    if e.head == :quote
+        e
+    else
+        replace_syms!(e, membernames)
+    end
 
 function replace_dotted!(e, membernames)
     x_new = replace_syms!(e.args[1], membernames)
     y_new = protect_replace_syms!(e.args[2], membernames)
-    :($x_new.($y_new))
+    Expr(:., x_new, y_new)
 end
+
+anon(x, y) = Expr(:->, Expr(:tuple, x...), y)
+anon(x::Symbol, y) = Expr(:->, x, y)
 
 function with_helper(d, body)
     membernames = Dict{Any, Symbol}()
     body = replace_syms!(body, membernames)
-    funargs = map(x -> :( getindex($d, $x) ), collect(keys(membernames)))
-    funname = gensym()
-    return quote
-        function $funname($(collect(values(membernames))...))
-            $body
+    if isempty(membernames)
+        body
+    else
+        funargs = map(keys(membernames)) do key
+            :( $d[$key] )
         end
-        $funname($(funargs...))
+        Expr(:call, anon(values(membernames), body), funargs...)
     end
+end
+
+function with_anonymous(body)
+    d = gensym()
+    anon( d, with_helper(d, body) )
 end
 
 """
@@ -147,7 +161,6 @@ macro with(d, body)
     esc(with_helper(d, body))
 end
 
-
 ##############################################################################
 ##
 ## @ix - row and row/col selector
@@ -182,13 +195,10 @@ where(d::AbstractDataFrame, arg) = d[arg, :]
 where(d::AbstractDataFrame, f::Function) = d[f(d), :]
 where(g::GroupedDataFrame, f::Function) = g[Bool[f(x) for x in g]]
 
-collect_ands(x::Expr) = x
-collect_ands(x::Expr, y::Expr) = :($x & $y)
-collect_ands(x::Expr, y...) = :($x & $(collect_ands(y...)))
+and(x, y) = :($x .& $y)
 
 function where_helper(d, args...)
-    with_args = :($DataFramesMeta.@with(_DF, $(collect_ands(args...))))
-    :( $DataFramesMeta.where($d, _DF -> $with_args) )
+    :( $where($d, $(with_anonymous( reduce(and, args)))))
 end
 
 """
@@ -320,16 +330,11 @@ function transform(g::GroupedDataFrame; kwargs...)
     return result
 end
 
-function convert_kw!(kw)
-    kw.args[2] = :( _DF -> DataFramesMeta.@with(_DF, $(kw.args[2]) ) )
-    kw
-end
-
 function transform_helper(x, args...)
-    # convert each kw arg value to: _DF -> @with(_DF, arg)
-    newargs = [args...]
-    map!(convert_kw!, newargs)
-    :( transform($x, $(newargs...)) )
+    new_args = map(args) do kw
+        Expr(:kw, kw.args[1], with_anonymous(kw.args[2]))
+    end
+    :( $transform($x, $(new_args...) ) )
 end
 
 """
@@ -411,8 +416,8 @@ end
 ##############################################################################
 
 function by_helper(x, what, args...)
-    with_args = :(DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...))))
-    :( DataFrames.by($x, $what, _DF -> $with_args) )
+    with_args = with_anonymous(:($(DataFrames.DataFrame)($(replace_equals_with_kw.(args)...))))
+    :( $(DataFrames.by)($x, $what, $with_args) )
 end
 
 """
@@ -435,7 +440,7 @@ Split-apply-combine in one step.
 ### Examples
 
 ```julia
-df = DataFrame(a = rep(1:4, 2), b = rep(2:-1:1, 4), c = randn(8))
+df = DataFrame(a = repeat(1:4, outer = 2), b = repeat(2:-1:1, outer = 4), c = randn(8))
 @by(df, :a, d = sum(:c))
 @by(df, :a, d = 2 * :c)
 @by(df, :a, c_sum = sum(:c), c_mean = mean(:c))
@@ -453,20 +458,6 @@ end
 ##
 ##############################################################################
 
-expandargs(x) = x
-
-function expandargs(e::Expr)
-    if e.head == :quote && length(e.args) == 1
-        return Expr(:kw, e.args[1], Expr(:quote, e.args[1]))
-    else
-        return e
-    end
-end
-
-function expandargs(e::Tuple)
-    return map(expandargs, e)
-end
-
 function Base.select(d::Union{AbstractDataFrame, Associative}; kwargs...)
     result = typeof(d)()
     for (k, v) in kwargs
@@ -475,17 +466,27 @@ function Base.select(d::Union{AbstractDataFrame, Associative}; kwargs...)
     return result
 end
 
+replace_equals_with_kw(e) =
+    if e.head == :(=)
+        Expr(:kw, e.args[1], e.args[2])
+    else
+        e
+    end
+
+expandargs(x) = x
+expandargs(q::QuoteNode) = Expr(:kw, q.value, q)
+expandargs(e::Expr) =
+    if e.head == :quote
+        Expr(:kw, e.args[1], e)
+    else
+        replace_equals_with_kw(e)
+    end
 
 function select_helper(x, args...)
-    select_args = :(select(_DF; $(expandargs(args)...)))
-    quote
-        let _DF = $x
-            DataFramesMeta.@with(_DF, $select_args)
-        end
-    end
+    DF = gensym()
+    select_args = with_helper(DF, :($select($DF, $(expandargs.(args)...))))
+    Expr(:let, select_args, :($DF = $x) )
 end
-
-
 
 """
 ```julia
@@ -510,7 +511,7 @@ Select and transform columns.
 d = Dict(:s => 3, :y => 44, :d => 5)
 @select(d, x = :y + :d, :s)
 
-df = DataFrame(a = rep(1:4, 2), b = rep(2:-1:1, 4), c = randn(8))
+df = DataFrame(a = repeat(1:4, outer = 2), b = repeat(2:-1:1, outer = 4), c = randn(8))
 @select(df, :c, :a)
 @select(df, :c, x = :b + :c)
 ```

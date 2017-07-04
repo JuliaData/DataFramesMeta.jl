@@ -36,8 +36,8 @@ idx2 = :B
 @test  @where(df, :A .> x)          == df[df[:A] .> x,:]
 @test  @where(df, :B .> x)          == df[df[:B] .> x,:]
 @test  @where(df, :A .> :B)         == df[df[:A] .> df[:B],:]
-@test  @where(df, :A .> 1, :B .> 1) == df[(df[:A] .> 1) & (df[:B] .> 1),:]
-@test  @where(df, :A .> 1, :A .< 4, :B .> 1) == df[(df[:A] .> 1) & (df[:B] .> 1),:]
+@test  @where(df, :A .> 1, :B .> 1) == df[(df[:A] .> 1) .& (df[:B] .> 1),:]
+@test  @where(df, :A .> 1, :A .< 4, :B .> 1) == df[(df[:A] .> 1) .& (df[:B] .> 1),:]
 
 @test select(df, :A) == df[:A]
 

@@ -104,7 +104,7 @@ function linq(::SymbolParameter{:where}, d, args...)
 end
 
 function linq(::SymbolParameter{:orderby}, d, args...)
-    :(let _D = $d;  orderby(_D, _DF -> @with(_DF, DataFramesMeta.orderbyconstructor(_D)($(args...)))); end)
+    :(let _D = $d;  orderby(_D, _DF -> $DataFramesMeta.@with(_DF, DataFramesMeta.orderbyconstructor(_D)($(args...)))); end)
 end
 
 function linq(::SymbolParameter{:transform}, x, args...)
@@ -112,7 +112,7 @@ function linq(::SymbolParameter{:transform}, x, args...)
 end
 
 function linq(::SymbolParameter{:based_on}, x, args...)
-    :( DataFrames.combine(map(_DF -> DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...))), $x)) )
+    :( DataFrames.combine(map(_DF -> $DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...))), $x)) )
 end
 
 function linq(::SymbolParameter{:by}, x, what, args...)
@@ -120,5 +120,5 @@ function linq(::SymbolParameter{:by}, x, what, args...)
 end
 
 function linq(::SymbolParameter{:select}, x, args...)
-    :(let _DF = $x; @with(_DF, select(_DF, $(expandargs(args)...))); end)
+    select_helper(x, args...)
 end

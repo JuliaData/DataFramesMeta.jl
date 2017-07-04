@@ -31,9 +31,9 @@ end
 @test  x == sum(df[:A] .* df[:B])
 @test  @with(df, df[:A .> 1, ^([:B, :A])]) == df[df[:A] .> 1, [:B, :A]]
 @test  @with(df, DataFrame(a = :A * 2, b = :A + :B)) == DataFrame(a = df[:A] * 2, b = df[:A] + df[:B])
-    
+
 @test  @where(df, :A .> 1)         == df[df[:A] .> 1,:]
-@test  @where(df, :B .> 1)         == df[df[:B] .> 1,:]  
+@test  @where(df, :B .> 1)         == df[df[:B] .> 1,:]
 @test  @where(df, :A .> x)         == df[df[:A] .> x,:]
 @test  @where(df, :B .> x)         == df[df[:B] .> x,:]
 @test  @where(df, :A .> :B)        == df[df[:A] .> df[:B],:]
@@ -46,7 +46,7 @@ df3 = @select(df, :B, C = :A + 1, :A)
 @test df3.C == df.A + 1
 
 df = CompositeDataFrame(:MyDF, A = [1, 2, 3], B = [2, 1, 2])
-@test typeof(df) == MyDF
+@test typeof(df) == DataFramesMeta.MyDF
 @test  df.A == df[:A]
 
 res = 0

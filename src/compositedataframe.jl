@@ -43,7 +43,8 @@ A constructor of an `AbstractCompositeDataFrame` that mimics the `DataFrame`
 constructor.  This returns a composite type (not immutable) that is an
 `AbstractCompositeDataFrame`.
 
-This uses `eval` to create a new type within the current module.
+This uses `eval` to create a new type within the module specified by the
+inmodule keyword.
 
 ### Arguments
 
@@ -51,6 +52,9 @@ This uses `eval` to create a new type within the current module.
 * `cnames` : the names of the columns
 * `typename` : the optional name of the type created
 * `kwargs` : the key gives the column names, and the value is the column contents
+* `inmodule = DataFramesMeta` : a keyword argument to specify what module you
+want to define the type in. Consider passing `current_module()` or
+`@__MODULE__` depending on your julia version.
 
 ### Examples
 
@@ -62,29 +66,30 @@ df = CompositeDataFrame(:MyDF, x = 1:3, y = [2, 1, 2])
 """
 function CompositeDataFrame(columns::Vector{Any},
                             cnames::Vector{Symbol} = gennames(length(columns)),
-                            typename::Symbol = @compat(Symbol("CompositeDF", gensym())))
+                            typename::Symbol = @compat(Symbol("CompositeDF", gensym()));
+                            inmodule = DataFramesMeta)
     rowtypename = @compat Symbol(typename, "Row")
     # TODO: length checks
-    e = :(type $(typename) <: AbstractCompositeDataFrame end)
-    e.args[3].args = Any[:($(cnames[i]) :: $(typeof(columns[i]))) for i in 1:length(columns)]
-    eval(current_module(), e)   # create the composite type
+    type_definition = :(type $(typename) <: AbstractCompositeDataFrame end)
+    type_definition.args[3].args = Any[:($(cnames[i]) :: $(typeof(columns[i]))) for i in 1:length(columns)]
     ## do the same for the row iterator type:
-    e = :(immutable $(rowtypename) <: AbstractCompositeDataFrameRow end)
-    e.args[3].args = Any[:($(cnames[i]) :: $(eltype(columns[i]))) for i in 1:length(columns)]
-    eval(current_module(), e)   # create the type
+    column_definition = :(immutable $(rowtypename) <: AbstractCompositeDataFrameRow end)
+    column_definition.args[3].args = Any[:($(cnames[i]) :: $(eltype(columns[i]))) for i in 1:length(columns)]
     typeconv = Expr(:call, rowtypename, [Expr(:ref, Expr(:(.), :d, QuoteNode(nm)), :i) for nm in cnames]...)
-    eval(current_module(), :( DataFramesMeta.row(d::$typename, i::Integer) = $typeconv ))
-    typ = eval(current_module(), typename)
-    return typ(columns...)
+    row_method = Expr(:function, :( DataFramesMeta.row(d::$typename, i::Integer) ), typeconv)
+    row_call = :($typename($columns...))
+    eval(inmodule, Expr(:block, type_definition, column_definition, row_method, row_call))
 end
 
-CompositeDataFrame(; kwargs...) =
-    CompositeDataFrame(Any[ v for (k, v) in kwargs ],
-                       Symbol[ k for (k, v) in kwargs ])
-CompositeDataFrame(typename::Symbol; kwargs...) =
+CompositeDataFrame(; inmodule = DataFramesMeta, kwargs...) =
     CompositeDataFrame(Any[ v for (k, v) in kwargs ],
                        Symbol[ k for (k, v) in kwargs ],
-                       typename)
+                       inmodule = inmodule)
+CompositeDataFrame(typename::Symbol; inmodule = DataFramesMeta, kwargs...) =
+    CompositeDataFrame(Any[ v for (k, v) in kwargs ],
+                       Symbol[ k for (k, v) in kwargs ],
+                       typename,
+                       inmodule = inmodule)
 
 # CompositeDataFrame(df::DataFrame) = CompositeDataFrame(df.columns, names(df))
 

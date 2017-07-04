@@ -38,8 +38,8 @@ function byrow_find_newcols(e::Expr, newcol_decl)
         newargs = Any[]
         for ea in e.args
             (nea, newcol) = byrow_find_newcols(ea, newcol_decl)
-            nea != nothing && push!(newargs, nea) 
-            nea == nothing && length(newcol) > 0 && append!(newcol_decl, newcol) 
+            nea != nothing && push!(newargs, nea)
+            nea == nothing && length(newcol) > 0 && append!(newcol_decl, newcol)
         end
         return (Expr(e.head, newargs...), newcol_decl)
     end
@@ -60,14 +60,14 @@ function byrow_helper(df, body)
 end
 
 """
-```julia 
-@byrow!(d, expr) 
-``` 
+```julia
+@byrow!(d, expr)
+```
 
 Act on a DataFrame row-by-row.
 
 Includes support for control flow and `begin end` blocks. Since the
-"environment" induced by `@byrow! df` is implicitly a single row of `df`, 
+"environment" induced by `@byrow! df` is implicitly a single row of `df`,
 use regular operators and comparisons instead of their elementwise counterparts
 as in `@with`. Note that the scope within `@byrow!` is a hard scope.
 
