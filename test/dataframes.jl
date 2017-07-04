@@ -62,7 +62,6 @@ df2 = @byrow! df begin
     end
 end
 
-import MacroTools
 @test  df2[:colX] == [pi, 1.0, 3pi]
 @test  isna(df2[1, :colY])
 @test  df2[2, :colY] == 2

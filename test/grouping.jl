@@ -14,9 +14,12 @@ g = groupby(d, :x)
 @test  DataFrame(@where(g, length(:x) > 5))[:n][1:3] == @data [5, 6, 7]
 
 @test  DataFrame(orderby(g, x -> mean(x[:n]))) == DataFrame(@orderby(g, mean(:n)))
-#@test  DataFrames.based_on(@orderby(g, mean(:n)), x -> x[1,:x])[:x1] == [3,1,2]
 
 @test  (@transform(g, y = :n - median(:n)))[1,:y] == -5.0
 
+d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 2, 2, 3, 1, 1, 2])
+g = groupby(d, :x)
+@based_on(g, nsum = sum(:n))
+@based_on(g, x2 = 2 * :x, nsum = sum(:n))
 
 end # module

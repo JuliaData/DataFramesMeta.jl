@@ -247,11 +247,7 @@ orderbyconstructor(d) = x -> x
 function orderby_helper(d, args...)
     construct_args = :(DataFramesMeta.orderbyconstructor(_D)($(args...)))
     with_args = :(DataFramesMeta.@with(_DF, $construct_args))
-    quote
-        let _D = $d
-            DataFramesMeta.orderby(_D, _DF -> $with_args)
-        end
-    end
+    Expr(:let, :(DataFramesMeta.orderby(_D, _DF -> $with_args)), :(_D = $d) )
 end
 
 """
