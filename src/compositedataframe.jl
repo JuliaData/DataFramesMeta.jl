@@ -70,10 +70,10 @@ function CompositeDataFrame(columns::Vector{Any},
                             inmodule = DataFramesMeta)
     rowtypename = @compat Symbol(typename, "Row")
     # TODO: length checks
-    type_definition = @compat :(mutable struct $(typename) <: AbstractCompositeDataFrame end)
+    type_definition = :(type $(typename) <: AbstractCompositeDataFrame end)
     type_definition.args[3].args = Any[:($(cnames[i]) :: $(typeof(columns[i]))) for i in 1:length(columns)]
     ## do the same for the row iterator type:
-    column_definition = @compat :(struct $(rowtypename) <: AbstractCompositeDataFrameRow end)
+    column_definition = @compat :(immutable type $(rowtypename) <: AbstractCompositeDataFrameRow end)
     column_definition.args[3].args = Any[:($(cnames[i]) :: $(eltype(columns[i]))) for i in 1:length(columns)]
     typeconv = Expr(:call, rowtypename, [Expr(:ref, Expr(:(.), :d, QuoteNode(nm)), :i) for nm in cnames]...)
     row_method = Expr(:function, :( DataFramesMeta.row(d::$typename, i::Integer) ), typeconv)
@@ -159,7 +159,7 @@ This iterator is created by calling `eachrow(df)` where `df` is an
 
 See also `row(cdf, i)`.
 """
-@compat struct CDFRowIterator{T <: AbstractCompositeDataFrame}
+immutable CDFRowIterator{T <: AbstractCompositeDataFrame}
     df::T
     len::Int
 end

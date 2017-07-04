@@ -551,7 +551,7 @@ Base.getindex(gd::GroupedDataFrame, I::AbstractArray{Int}) = GroupedDataFrame(gd
 
 export P, PassThrough
 
-@compat mutable struct PassThrough{T} <: AbstractVector{T}
+type PassThrough{T} <: AbstractVector{T}
     x::AbstractVector{T}
 end
 const P = PassThrough
