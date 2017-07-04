@@ -37,8 +37,8 @@ idx2 = :B
 @test  @where(df, :A .> x)          == df[df[:A] .> x,:]
 @test  @where(df, :B .> x)          == df[df[:B] .> x,:]
 @test  @where(df, :A .> :B)         == df[df[:A] .> df[:B],:]
-@test  @where(df, :A .> 1, :B .> 1) == @compat df[(df[:A] .> 1) .& (df[:B] .> 1),:]
-@test  @where(df, :A .> 1, :A .< 4, :B .> 1) == @compat df[(df[:A] .> 1) .& (df[:B] .> 1),:]
+@test  @where(df, :A .> 1, :B .> 1) == df[map(&, df[:A] .> 1, df[:B] .> 1),:]
+@test  @where(df, :A .> 1, :A .< 4, :B .> 1) == df[map(&, df[:A] .> 1, df[:A] .< 4, df[:B] .> 1),:]
 
 @test select(df, :A) == df[:A]
 
@@ -54,8 +54,8 @@ y = 0
 
 df = DataFrame(A = 1:3, B = [2, 1, 2])
 df2 = @byrow! df begin
-    @newcol colX::Array{Float64}(_N)
-    @newcol colY::DataArray(Int, _N)
+    @newcol colX = Array{Float64}(_N)
+    @newcol colY = DataArray(Int, _N)
     :colX = :B == 2 ? pi * :A : :B
     if :A > 1
         :colY = :A * :B
