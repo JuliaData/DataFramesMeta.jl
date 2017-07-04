@@ -33,10 +33,10 @@ row() = nothing
 
 """
 ```julia
-CompositeDataFrame(columns::Vector{Any}, cnames::Vector{Symbol})
-CompositeDataFrame(columns::Vector{Any}, cnames::Vector{Symbol}, typename::Symbol)
-CompositeDataFrame(; kwargs...)
-CompositeDataFrame(typename::Symbol; kwargs...)
+CompositeDataFrame(columns::Vector{Any}, cnames::Vector{Symbol}; inmodule = DataFramesMeta)
+CompositeDataFrame(columns::Vector{Any}, cnames::Vector{Symbol}, typename::Symbol; inmodule = DataFramesMeta)
+CompositeDataFrame(; inmodule = DataFramesMeta, kwargs...)
+CompositeDataFrame(typename::Symbol; inmodule = DataFramesMeta, kwargs...)
 ```
 
 A constructor of an `AbstractCompositeDataFrame` that mimics the `DataFrame`
@@ -44,7 +44,7 @@ constructor.  This returns a composite type (not immutable) that is an
 `AbstractCompositeDataFrame`.
 
 This uses `eval` to create a new type within the module specified by the
-inmodule keyword.
+`inmodule` keyword argument.
 
 ### Arguments
 
@@ -93,11 +93,11 @@ CompositeDataFrame(typename::Symbol; inmodule = DataFramesMeta, kwargs...) =
 
 # CompositeDataFrame(df::DataFrame) = CompositeDataFrame(df.columns, names(df))
 
-CompositeDataFrame(adf::AbstractDataFrame) =
-    CompositeDataFrame(DataFrames.columns(adf), names(adf))
+CompositeDataFrame(adf::AbstractDataFrame, inmodule = DataFramesMeta) =
+    CompositeDataFrame(DataFrames.columns(adf), names(adf), inmodule = inmodule)
 
-CompositeDataFrame(adf::AbstractDataFrame, nms::Vector{Symbol}) =
-    CompositeDataFrame(DataFrames.columns(adf), nms)
+CompositeDataFrame(adf::AbstractDataFrame, nms::Vector{Symbol}, inmodule = DataFramesMeta) =
+    CompositeDataFrame(DataFrames.columns(adf), nms, inmodule = inmodule)
 
 
 DataFrames.DataFrame(cdf::AbstractCompositeDataFrame) = DataFrame(DataFrames.columns(cdf), names(cdf))

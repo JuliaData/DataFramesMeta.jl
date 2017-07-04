@@ -19,7 +19,6 @@ g = groupby(d, :x)
 
 d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 2, 2, 3, 1, 1, 2])
 g = groupby(d, :x)
-@based_on(g, nsum = sum(:n))
-@based_on(g, x2 = 2 * :x, nsum = sum(:n))
+@test @based_on(g, nsum = sum(:n))[:nsum] == [99, 84, 27]
 
 end # module

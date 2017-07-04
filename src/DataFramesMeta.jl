@@ -1,7 +1,6 @@
 module DataFramesMeta
 
 using DataFrames
-import DataFrames
 
 # Basics:
 export @with, @ix, @where, @orderby, @transform, @by, @based_on, @select
@@ -30,7 +29,7 @@ mapexpr(f, e) = Expr(e.head, map(f, e.args)...)
 
 replace_syms!(x, membernames) = x
 replace_syms!(q::QuoteNode, membernames) =
-    replace_syms!( Meta.quot(q.value), membernames)
+    replace_syms!(Meta.quot(q.value), membernames)
 replace_syms!(e::Expr, membernames) =
     if onearg(e, :^)
         e.args[2]
@@ -45,12 +44,13 @@ replace_syms!(e::Expr, membernames) =
     end
 
 protect_replace_syms!(e, membernames) = e
-protect_replace_syms!(e::Expr, membernames) =
+function protect_replace_syms!(e::Expr, membernames)
     if e.head == :quote
         e
     else
         replace_syms!(e, membernames)
     end
+end
 
 function replace_dotted!(e, membernames)
     x_new = replace_syms!(e.args[1], membernames)
@@ -76,7 +76,7 @@ end
 
 function with_anonymous(body)
     d = gensym()
-    anon( d, with_helper(d, body) )
+    anon(d, with_helper(d, body))
 end
 
 """
@@ -180,7 +180,7 @@ and(x, y) =
     end
 
 function where_helper(d, args...)
-    :( $where($d, $(with_anonymous( reduce(and, args)))))
+    :($where($d, $(with_anonymous(reduce(and, args)))))
 end
 
 """
@@ -356,7 +356,7 @@ end
 ##############################################################################
 
 function based_on_helper(x, args...)
-    with_args = :(DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...))))
+    with_args = :(DataFramesMeta.@with(_DF, DataFrames.DataFrame($(map(replace_equals_with_kw, args)...))))
     :( DataFrames.combine(map(_DF -> $with_args, $x)) )
 end
 
@@ -444,12 +444,13 @@ function Base.select(d::Union{AbstractDataFrame, Associative}; kwargs...)
     return result
 end
 
-replace_equals_with_kw(e) =
+function replace_equals_with_kw(e)
     if e.head == :(=)
         Expr(:kw, e.args[1], e.args[2])
     else
         e
     end
+end
 
 expandargs(x) = x
 expandargs(q::QuoteNode) = Expr(:kw, q.value, q)
