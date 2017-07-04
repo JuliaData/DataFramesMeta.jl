@@ -421,7 +421,7 @@ end
 ##############################################################################
 
 function by_helper(x, what, args...)
-    with_args = with_anonymous(:($(DataFrames.DataFrame)($(replace_equals_with_kw.(args)...))))
+    with_args = with_anonymous(:($(DataFrames.DataFrame)($(map(replace_equals_with_kw, args)...))))
     :( $(DataFrames.by)($x, $what, $with_args) )
 end
 
@@ -489,7 +489,7 @@ expandargs(e::Expr) =
 
 function select_helper(x, args...)
     DF = gensym()
-    select_args = with_helper(DF, :($select($DF, $(expandargs.(args)...))))
+    select_args = with_helper(DF, :($select($DF, $(map(expandargs, args)...))))
     Expr(:let, select_args, :($DF = $x) )
 end
 
