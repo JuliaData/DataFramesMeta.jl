@@ -40,5 +40,6 @@ xlinq2 = @linq df  |>
 
 @test xlinq2[[:meanX, :meanY]] == xlinq[[:meanX, :meanY]]
 
+@test (@linq df |> with(:a)) == df[:a]
+
 end
-1

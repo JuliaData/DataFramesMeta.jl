@@ -51,12 +51,7 @@ function byrow_helper(df, body)
     (e_body, e_newcols) = byrow_find_newcols(body, Any[])
     e_delimiters = Expr(:(=), :row, :( 1:_N ))
     e_forloop = Expr(:for, e_delimiters, byrow_replace(e_body))
-    return quote
-        _N = length($df[1])
-        _DF = @transform($df, $(e_newcols...))
-        @with _DF $e_forloop
-        _DF
-    end
+    :(_N = length($df[1]); _DF = @transform($df, $(e_newcols...)); @with _DF $e_forloop; _DF)
 end
 
 """

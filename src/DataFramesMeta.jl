@@ -1,6 +1,7 @@
 module DataFramesMeta
 
 using DataFrames
+import DataFrames
 
 # Basics:
 export @with, @ix, @where, @orderby, @transform, @by, @based_on, @select
@@ -160,30 +161,6 @@ keyword is not needed to assign to that parent scope.
 macro with(d, body)
     esc(with_helper(d, body))
 end
-
-##############################################################################
-##
-## @ix - row and row/col selector
-##
-##############################################################################
-
-ix_helper(d, arg) = quote
-    let d = $d
-        $d[DataFramesMeta.@with($d, $arg),:]
-    end
-end
-
-ix_helper(d, arg, moreargs...) = quote
-    let d = $d
-        getindex(d, DataFramesMeta.@with(d, $arg), $(moreargs...))
-    end
-end
-
-macro ix(d, args...)
-    Base.depwarn("`@ix` is deprecated; use `@where` and `@select`.", Symbol("@ix"))
-    esc(ix_helper(d, args...))
-end
-
 
 ##############################################################################
 ##
