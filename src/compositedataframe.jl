@@ -9,9 +9,9 @@ export AbstractCompositeDataFrame, AbstractCompositeDataFrameRow,
 An abstract type that is an `AbstractDataFrame`. Each type that inherits from
 this is expected to be a type-stable data frame.
 """
-abstract AbstractCompositeDataFrame <: AbstractDataFrame
+@compat abstract type AbstractCompositeDataFrame <: AbstractDataFrame end
 
-abstract AbstractCompositeDataFrameRow
+@compat abstract type AbstractCompositeDataFrameRow end
 
 
 """
@@ -70,10 +70,10 @@ function CompositeDataFrame(columns::Vector{Any},
                             inmodule = DataFramesMeta)
     rowtypename = @compat Symbol(typename, "Row")
     # TODO: length checks
-    type_definition = :(type $(typename) <: AbstractCompositeDataFrame end)
+    type_definition = @compat :(mutable struct $(typename) <: AbstractCompositeDataFrame end)
     type_definition.args[3].args = Any[:($(cnames[i]) :: $(typeof(columns[i]))) for i in 1:length(columns)]
     ## do the same for the row iterator type:
-    column_definition = :(immutable $(rowtypename) <: AbstractCompositeDataFrameRow end)
+    column_definition = @compat :(struct $(rowtypename) <: AbstractCompositeDataFrameRow end)
     column_definition.args[3].args = Any[:($(cnames[i]) :: $(eltype(columns[i]))) for i in 1:length(columns)]
     typeconv = Expr(:call, rowtypename, [Expr(:ref, Expr(:(.), :d, QuoteNode(nm)), :i) for nm in cnames]...)
     row_method = Expr(:function, :( DataFramesMeta.row(d::$typename, i::Integer) ), typeconv)
@@ -159,7 +159,7 @@ This iterator is created by calling `eachrow(df)` where `df` is an
 
 See also `row(cdf, i)`.
 """
-immutable CDFRowIterator{T <: AbstractCompositeDataFrame}
+@compat struct CDFRowIterator{T <: AbstractCompositeDataFrame}
     df::T
     len::Int
 end

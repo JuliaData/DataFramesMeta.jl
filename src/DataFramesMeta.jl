@@ -326,7 +326,7 @@ function transform(g::GroupedDataFrame; kwargs...)
     idx1 = [1; 1 + idx2[1:end-1]]
     for (k, v) in kwargs
         first = v(g[1])
-        result[k] = Array(eltype(first), size(result, 1))
+        result[k] = Array{eltype(first)}(size(result, 1))
         result[idx1[1]:idx2[1], k] = first
         for i in 2:length(g)
             result[idx1[i]:idx2[i], k] = v(g[i])
@@ -551,7 +551,7 @@ Base.getindex(gd::GroupedDataFrame, I::AbstractArray{Int}) = GroupedDataFrame(gd
 
 export P, PassThrough
 
-type PassThrough{T} <: AbstractVector{T}
+@compat mutable struct PassThrough{T} <: AbstractVector{T}
     x::AbstractVector{T}
 end
 const P = PassThrough
