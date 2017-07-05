@@ -28,9 +28,14 @@ byrow_replace(x) = x
 
 function byrow_find_newcols(e::Expr, newcol_decl)
     if e.head == :macrocall && e.args[1] == Symbol("@newcol")
-        ea = e.args[2]
+        ea =
+            if VERSION < v"0.7-"
+                e.args[2]
+            else
+                e.args[3]
+            end
         # expression to assign a new column to df
-        return (nothing, Any[Expr(:kw, ea.args[1], ea.args[2])])
+        return (nothing, Any[Expr(:kw, ea.args[1], Expr(:call, ea.args[2], :_N))])
     else
         if isempty(e.args)
             return (e.args, Any[])
@@ -48,16 +53,19 @@ end
 byrow_find_newcols(x, newcol_decl) = (x, Any[])
 
 function byrow_helper(df, body)
-    (e_body, e_newcols) = byrow_find_newcols(body, Any[])
-    e_delimiters = Expr(:(=), :row, :( 1:_N ))
-    e_forloop = Expr(:for, e_delimiters, byrow_replace(e_body))
-    :(_N = length($df[1]); _DF = @transform($df, $(e_newcols...)); @with _DF $e_forloop; _DF)
+    e_body, e_newcols = byrow_find_newcols(body, Any[])
+    quote
+        _N = length($df[1])
+        _DF = @transform($df, $(e_newcols...))
+        $(with_helper(:_DF, :(for row = 1:_N
+            $(byrow_replace(e_body))
+        end)))
+        _DF
+    end
 end
 
 """
-```julia
-@byrow!(d, expr)
-```
+    @byrow!(d, expr)
 
 Act on a DataFrame row-by-row.
 
@@ -67,11 +75,12 @@ use regular operators and comparisons instead of their elementwise counterparts
 as in `@with`. Note that the scope within `@byrow!` is a hard scope.
 
 `byrow!` also supports special syntax for allocating new columns. The syntax
-`@newcol x = Array{Int}(_N)` allocates a new column `:x` with an `Array` container
+`@newcol x::Array{Int}` allocates a new column `:x` with an `Array` container
 with eltype `Int`. Note that the returned `AbstractDataFrame` includes these new
 columns, but the original `d` is not affected. This feature makes it easier to
 use `byrow!` for data transformations. `_N` is introduced to represent the
-length of the dataframe.
+length of the dataframe, `_D` represents the dataframe including added columns,
+and `row` represents the current row.
 
 ### Arguments
 
@@ -85,16 +94,33 @@ The modified `AbstractDataFrame`.
 ### Examples
 
 ```julia
-df = DataFrame(A = 1:3, B = [2, 1, 2])
-let x = 0
-    @byrow!(df, if :A + :B == 3; x += 1 end)  #  This doesn't work without the let
-    x
-end
-@byrow! df if :A > :B; :A = 0 end
-df2 = @byrow! df begin
-    @newcol colX = Array{Float64}(_N)
-    :colX = :B == 2 ? pi * :A : :B
-end
+julia> using DataFrames, DataFramesMeta
+
+julia> df = DataFrame(A = 1:3, B = [2, 1, 2]);
+
+julia> let x = 0
+            @byrow!(df, if :A + :B == 3; x += 1 end)  #  This doesn't work without the let
+            x
+        end
+
+julia> @byrow! df if :A > :B; :A = 0 end
+3×2 DataFrames.DataFrame
+│ Row │ A │ B │
+├─────┼───┼───┤
+│ 1   │ 1 │ 2 │
+│ 2   │ 0 │ 1 │
+│ 3   │ 0 │ 2 │
+
+julia> df2 = @byrow! df begin
+            @newcol colX::Array{Float64}
+            :colX = :B == 2 ? pi * :A : :B
+        end
+3×3 DataFrames.DataFrame
+│ Row │ A │ B │ colX    │
+├─────┼───┼───┼─────────┤
+│ 1   │ 1 │ 2 │ 3.14159 │
+│ 2   │ 0 │ 1 │ 1.0     │
+│ 3   │ 0 │ 2 │ 0.0     │
 ```
 
 """

@@ -34,8 +34,8 @@ d2 = @select(d, :y, z = :y + :s, :e)
 @test DataFramesMeta.with_helper(:df, :(f.(1))) == :(f.(1))
 @test DataFramesMeta.with_helper(:df, :(f.(b + c))) == :(f.(b + c))
 @test DataFramesMeta.with_helper(:df, Expr(:., :a, QuoteNode(:b))) == Expr(:., :a, QuoteNode(:b))
-@test DataFramesMeta.select_helper(:df, 1).args[1].args[3] == 1
-@test DataFramesMeta.select_helper(:df, QuoteNode(:a)).args[1].args[1].args[2].args[3].args[1] == :a
+@test DataFramesMeta.select_helper(:df, 1).args[1].args[2].args[3] == 1
+@test DataFramesMeta.select_helper(:df, QuoteNode(:a)).args[1].args[2].args[2].args[2].args[2].args[3].args[1] == :a
 @test DataFramesMeta.expandargs(QuoteNode(:a)) == Expr(:kw, :a, QuoteNode(:a))
 @test DataFramesMeta.byrow_find_newcols(:(;), Any[]) == (Any[], Any[])
 

@@ -23,21 +23,25 @@ of the field in `cdf`.
 
 See also `eachrow(cdf)`.
 
-```julia
-df = CompositeDataFrame(x = 1:3, y = [2, 1, 6])
-dfr = row(df, 3)
-dfr.y   # 6
+```jldoctest
+julia> using DataFramesMeta
+
+julia> df = CompositeDataFrame(x = 1:3, y = [2, 1, 6]);
+
+julia> dfr = row(df, 3);
+
+julia> dfr.y
+6
 ```
 """
 row() = nothing
 
 """
-```julia
-CompositeDataFrame(columns::Vector{Any}, cnames::Vector{Symbol}; inmodule = DataFramesMeta)
-CompositeDataFrame(columns::Vector{Any}, cnames::Vector{Symbol}, typename::Symbol; inmodule = DataFramesMeta)
-CompositeDataFrame(; inmodule = DataFramesMeta, kwargs...)
-CompositeDataFrame(typename::Symbol; inmodule = DataFramesMeta, kwargs...)
-```
+    CompositeDataFrame(columns::Vector{Any}, cnames::Vector{Symbol}; inmodule = DataFramesMeta)
+    CompositeDataFrame(columns::Vector{Any}, cnames::Vector{Symbol}, typename::Symbol; inmodule = DataFramesMeta)
+    CompositeDataFrame(; inmodule = DataFramesMeta, kwargs...)
+    CompositeDataFrame(typename::Symbol; inmodule = DataFramesMeta, kwargs...)
+
 
 A constructor of an `AbstractCompositeDataFrame` that mimics the `DataFrame`
 constructor.  This returns a composite type (not immutable) that is an
@@ -58,10 +62,14 @@ want to define the type in. Consider passing `current_module()` or
 
 ### Examples
 
-```julia
-df = CompositeDataFrame(Any[1:3, [2, 1, 2]], [:x, :y])
-df = CompositeDataFrame(x = 1:3, y = [2, 1, 2])
-df = CompositeDataFrame(:MyDF, x = 1:3, y = [2, 1, 2])
+```jldoctest
+julia> using DataFramesMeta
+
+julia> df = CompositeDataFrame(Any[1:3, [2, 1, 2]], [:x, :y]);
+
+julia> df = CompositeDataFrame(x = 1:3, y = [2, 1, 2]);
+
+julia> df = CompositeDataFrame(:MyDF, x = 1:3, y = [2, 1, 2]);
 ```
 """
 function CompositeDataFrame(columns::Vector{Any},
@@ -70,10 +78,10 @@ function CompositeDataFrame(columns::Vector{Any},
                             inmodule = DataFramesMeta)
     rowtypename = @compat Symbol(typename, "Row")
     # TODO: length checks
-    type_definition = :(type $(typename) <: AbstractCompositeDataFrame end)
+    type_definition = :(type $typename <: AbstractCompositeDataFrame end)
     type_definition.args[3].args = Any[:($(cnames[i]) :: $(typeof(columns[i]))) for i in 1:length(columns)]
     ## do the same for the row iterator type:
-    column_definition = :(immutable $(rowtypename) <: AbstractCompositeDataFrameRow end)
+    column_definition = :(immutable $rowtypename <: AbstractCompositeDataFrameRow end)
     column_definition.args[3].args = Any[:($(cnames[i]) :: $(eltype(columns[i]))) for i in 1:length(columns)]
     typeconv = Expr(:call, rowtypename, [Expr(:ref, Expr(:(.), :d, QuoteNode(nm)), :i) for nm in cnames]...)
     row_method = Expr(:function, :( DataFramesMeta.row(d::$typename, i::Integer) ), typeconv)

@@ -54,8 +54,8 @@ y = 0
 
 df = DataFrame(A = 1:3, B = [2, 1, 2])
 df2 = @byrow! df begin
-    @newcol colX = Array{Float64}(_N)
-    @newcol colY = DataArray(Int, _N)
+    @newcol colX::Array{Float64}
+    @newcol colY::Array{Float64}
     :colX = :B == 2 ? pi * :A : :B
     if :A > 1
         :colY = :A * :B
@@ -63,7 +63,6 @@ df2 = @byrow! df begin
 end
 
 @test  df2[:colX] == [pi, 1.0, 3pi]
-@test  isna(df2[1, :colY])
 @test  df2[2, :colY] == 2
 
 end # module

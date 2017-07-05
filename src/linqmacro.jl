@@ -7,9 +7,8 @@ export @linq, linq
 ##
 ##############################################################################
 """
-```julia
-@linq df ...
-```
+    @linq df ...
+
 General macro that creates a mini DSL for chaining and macro calls.
 
 ### Details
@@ -27,22 +26,40 @@ The following embedded function calls are equivalent to their macro version:
 
 ### Examples
 
-```julia
-n = 100
-df = DataFrame(a = rand(1:3, n),
-               b = ["a","b","c","d"][rand(1:4, n)],
-               x = rand(n))
+```jldoctest
+julia> using DataFrames, DataFramesMeta
 
-x1 = @linq transform(where(df, :a .> 2, :b .!= "c"), y = 10 * :x)
-x1 = @linq by(x1, :b, meanX = mean(:x), meanY = mean(:y))
-x1 = @linq select(orderby(x1, :b, -:meanX), var = :b, :meanX, :meanY)
+julia> n = 100;
 
-xl = @linq df |>
-    transform(y = 10 * :x) |>
-    where(:a .> 2) |>
-    by(:b, meanX = mean(:x), meanY = mean(:y)) |>
-    orderby(:meanX) |>
-    select(:meanX, :meanY, var = :b)
+julia> df = DataFrame(a = rand(1:3, n),
+            b = ["a","b","c","d"][rand(1:4, n)],
+            x = rand(n));
+
+julia> x1 = @linq transform(where(df, :a .> 2, :b .!= "c"), y = 10 * :x);
+
+julia> x1 = @linq by(x1, :b, meanX = mean(:x), meanY = mean(:y));
+
+julia> @linq select(orderby(x1, :b, -:meanX), var = :b, :meanX, :meanY)
+3×3 DataFrames.DataFrame
+│ Row │ var │ meanX    │ meanY   │
+├─────┼─────┼──────────┼─────────┤
+│ 1   │ "a" │ 0.665682 │ 6.65682 │
+│ 2   │ "b" │ 0.617848 │ 6.17848 │
+│ 3   │ "d" │ 0.568289 │ 5.68289 │
+
+julia> @linq df |>
+            transform(y = 10 * :x) |>
+            where(:a .> 2) |>
+            by(:b, meanX = mean(:x), meanY = mean(:y)) |>
+            orderby(:meanX) |>
+            select(:meanX, :meanY, var = :b)
+4×3 DataFrames.DataFrame
+│ Row │ meanX    │ meanY   │ var │
+├─────┼──────────┼─────────┼─────┤
+│ 1   │ 0.353205 │ 3.53205 │ "a" │
+│ 2   │ 0.419833 │ 4.19833 │ "d" │
+│ 3   │ 0.452061 │ 4.52061 │ "c" │
+│ 4   │ 0.519316 │ 5.19316 │ "b" │
 ```
 
 """
@@ -99,7 +116,7 @@ function linq(::SymbolParameter{:where}, d, args...)
 end
 
 function linq(::SymbolParameter{:orderby}, d, args...)
-    :(let _D = $d;  orderby(_D, _DF -> $DataFramesMeta.@with(_DF, DataFramesMeta.orderbyconstructor(_D)($(args...)))); end)
+    orderby_helper(d, args...)
 end
 
 function linq(::SymbolParameter{:transform}, x, args...)
@@ -107,11 +124,11 @@ function linq(::SymbolParameter{:transform}, x, args...)
 end
 
 function linq(::SymbolParameter{:based_on}, x, args...)
-    :( DataFrames.combine(map(_DF -> $DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...))), $x)) )
+    based_on_helper(x, args...)
 end
 
 function linq(::SymbolParameter{:by}, x, what, args...)
-    :( by($x, $what, _DF -> @with(_DF, DataFrame($(args...)))) )
+    by_helper(x, what, args...)
 end
 
 function linq(::SymbolParameter{:select}, x, args...)
