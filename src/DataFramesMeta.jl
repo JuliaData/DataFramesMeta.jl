@@ -194,12 +194,13 @@ where(d::AbstractDataFrame, arg) = d[arg, :]
 where(d::AbstractDataFrame, f::Function) = d[f(d), :]
 where(g::GroupedDataFrame, f::Function) = g[Bool[f(x) for x in g]]
 
-and(x, y) =
+function and(x, y)
     if VERSION < v"0.6.0-"
         :($x & $y)
     else
         :($x .& $y)
     end
+end
 
 function where_helper(d, args...)
     :($where($d, $(with_anonymous(reduce(and, args)))))
@@ -243,9 +244,8 @@ julia> @where(df, :x .> x)
 julia> @where(df, :x .> x, :y .== 3)
 0×2 DataFrames.DataFrame
 
-julia> d = DataFrame(
-            n = 1:20,
-            x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
+julia> d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
+                                    2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
 
 julia> g = groupby(d, :x);
 
@@ -320,9 +320,11 @@ orderbyconstructor(d) = x -> x
 
 function orderby_helper(d, args...)
     _D = gensym()
-    :(let $_D = $d
-        $orderby($_D, $(with_anonymous(:($orderbyconstructor($_D)($(args...))))))
-    end)
+    quote
+        let $_D = $d
+            $orderby($_D, $(with_anonymous(:($orderbyconstructor($_D)($(args...))))))
+        end
+    end
 end
 
 """
@@ -340,13 +342,12 @@ Sort by criteria. Normally used to sort groups in GroupedDataFrames.
 ```jldoctest
 julia> using DataFrames, DataFramesMeta
 
-julia> d = DataFrame(
-            n = 1:20,
-            x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
+julia> d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
+                                    2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
 
 julia> g = groupby(d, :x);
 
-julia> @macroexpand @orderby(g, mean(:n))
+julia> @orderby(g, mean(:n))
 DataFrames.GroupedDataFrame  3 groups with keys: Symbol[:x]
 First Group:
 5×2 DataFrames.SubDataFrame{Array{Int64,1}}
@@ -407,9 +408,11 @@ function transform(g::GroupedDataFrame; kwargs...)
 end
 
 function transform_helper(x, args...)
-    :( $transform($x, $(map(args) do kw
-        Expr(:kw, kw.args[1], with_anonymous(kw.args[2]))
-    end...) ) )
+    quote
+        $transform($x, $(map(args) do kw
+            Expr(:kw, kw.args[1], with_anonymous(kw.args[2]))
+        end...) )
+    end
 end
 
 """
@@ -537,7 +540,7 @@ end
 
 function by_helper(x, what, args...)
     :($by($x, $what,
-        $(with_anonymous(:($DataFrame($(map(replace_equals_with_kw, args)...)))))))
+          $(with_anonymous(:($DataFrame($(map(replace_equals_with_kw, args)...)))))))
 end
 
 """
@@ -639,19 +642,22 @@ end
 
 expandargs(x) = x
 expandargs(q::QuoteNode) = Expr(:kw, q.value, q)
-expandargs(e::Expr) =
+function expandargs(e::Expr)
     if e.head == :quote
         Expr(:kw, e.args[1], e)
     else
         replace_equals_with_kw(e)
     end
+end
 
 function select_helper(x, args...)
     DF = gensym()
     select_args = with_helper(DF, :($select($DF, $(map(expandargs, args)...))))
-    :(let $DF = $x
-        $(with_helper(DF, :($select($DF, $(map(expandargs, args)...)))))
-    end)
+    quote
+        let $DF = $x
+            $(with_helper(DF, :($select($DF, $(map(expandargs, args)...)))))
+        end
+    end
 end
 
 """

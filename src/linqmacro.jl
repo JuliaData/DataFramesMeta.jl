@@ -32,8 +32,8 @@ julia> using DataFrames, DataFramesMeta
 julia> n = 100;
 
 julia> df = DataFrame(a = rand(1:3, n),
-            b = ["a","b","c","d"][rand(1:4, n)],
-            x = rand(n));
+                      b = ["a","b","c","d"][rand(1:4, n)],
+                      x = rand(n));
 
 julia> x1 = @linq transform(where(df, :a .> 2, :b .!= "c"), y = 10 * :x);
 
@@ -48,11 +48,11 @@ julia> @linq select(orderby(x1, :b, -:meanX), var = :b, :meanX, :meanY)
 │ 3   │ "d" │ 0.568289 │ 5.68289 │
 
 julia> @linq df |>
-            transform(y = 10 * :x) |>
-            where(:a .> 2) |>
-            by(:b, meanX = mean(:x), meanY = mean(:y)) |>
-            orderby(:meanX) |>
-            select(:meanX, :meanY, var = :b)
+           transform(y = 10 * :x) |>
+           where(:a .> 2) |>
+           by(:b, meanX = mean(:x), meanY = mean(:y)) |>
+           orderby(:meanX) |>
+           select(:meanX, :meanY, var = :b)
 4×3 DataFrames.DataFrame
 │ Row │ meanX    │ meanY   │ var │
 ├─────┼──────────┼─────────┼─────┤

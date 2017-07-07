@@ -1,6 +1,5 @@
 # DataFramesMeta.jl
 
-[![DataFramesMeta](http://pkg.julialang.org/badges/DataFramesMeta_0.4.svg)](http://pkg.julialang.org/?pkg=DataFramesMeta&ver=0.4)
 [![DataFramesMeta](http://pkg.julialang.org/badges/DataFramesMeta_0.5.svg)](http://pkg.julialang.org/?pkg=DataFramesMeta?pkg=DataFramesMeta&ver=0.5)
 [![DataFramesMeta](http://pkg.julialang.org/badges/DataFramesMeta_0.6.svg)](http://pkg.julialang.org/?pkg=DataFramesMeta?pkg=DataFramesMeta&ver=0.6)
 [![Coveralls](https://coveralls.io/repos/github/JuliaStats/DataFramesMeta.jl/badge.svg?branch=master)](https://coveralls.io/github/JuliaStats/DataFramesMeta.jl?branch=master)
@@ -16,7 +15,7 @@ These macros improve performance and provide more convenient syntax.
 
 `@with` allows DataFrame columns to be referenced as symbols like
 `:colX` in expressions. If an expression is wrapped in `^(expr)`,
-`expr` gets passed through untouched. If an expression is wrapped in 
+`expr` gets passed through untouched. If an expression is wrapped in
 `_I_(expr)`, the column is referenced by the variable `expr` rather than
 a symbol. Here are some examples:
 
@@ -132,7 +131,7 @@ df2 = @byrow! df begin
     @newcol colX::Array{Float64}
     @newcol colY::DataArray{Int}
     :colX = :B == 2 ? pi * :A : :B
-    if :A > 1 
+    if :A > 1
         :colY = :A * :B
     end
 end
@@ -226,7 +225,7 @@ The following operations are now included:
   groups based on the given criteria. Returns a GroupedDataFrame.
 
 - `DataFrame(g)` -- Convert groups back to a DataFrame with the same
-  group orderings. 
+  group orderings.
 
 - `@based_on(g, z = mean(:a))` -- Summarize results within groups.
   Returns a DataFrame.
@@ -242,7 +241,7 @@ GroupedDataFrame. You can also iterate over GroupedDataFrames.
 
 The most general split-apply-combine approach is based on `map`.
 `map(fun, g)` returns a GroupApplied object with keys and vals. This
-can be used with `combine`. 
+can be used with `combine`.
 
 
 # Performance
@@ -265,7 +264,7 @@ abstract type; each concrete composite type inherits from this. The advantages
 of this approach are:
 
 * You can access single columns directly using `df.colA`. This is type stable,
-  so code should be faster. (There is still the function boundary to worry 
+  so code should be faster. (There is still the function boundary to worry
   about.)
 
 * All indexing operations can be done currently.
@@ -276,19 +275,19 @@ Some downsides include:
   a `CompositeDataFrame` may waste memory.
 
 * You cannot change the structure of a `CompositeDataFrame` once created.
-  It is nearly like an immutable object. For example to add a column, you need 
+  It is nearly like an immutable object. For example to add a column, you need
   to do something like:
 
 ```julia
     transform(df, newcol = df.colA + 5)
 ```
-    
+
 An advantage of this is that the API becomes more functional. All
 manipulations of the `CompositeDataFrame` return a new object.
 Normally, this doesn't create much more memory.
 
 To create a CompositeDataFrame, use `CompositeDataFrame`:
-  
+
 ```julia
 n = 10
 d = CompositeDataFrame(a = 1:n, b = rand(10), c = DataArray(rand(1:3, n)))
@@ -300,7 +299,7 @@ appropriate.
 
 You can also name the type of the `CompositeDataFrame` by including that as the
 first symbol:
-  
+
 ```julia
 n = 10
 d = CompositeDataFrame(:MyDF, a = 1:n, b = rand(n), c = DataArray(rand(1:3, n)))
@@ -320,7 +319,7 @@ MyDF(n::Integer) = MyDF(zeros(Int, n), zeros(n), DataArray(zeros(n)))
 d = MyDF(10)
 ```
 
-Note that a `CompositeDataFrame` is type stable with field access like `df.colA` 
+Note that a `CompositeDataFrame` is type stable with field access like `df.colA`
 but not with `getindex` indexing like `df[:colA]`. `df[:colA]` works, but it is
 not type stable.
 
@@ -337,13 +336,13 @@ y = [x.a * x.b for x in eachrow(d)]
 
 In the example above, the call to `CompositeDataFrame` creates the type `MyDF`
 that holds the composite data frame and another type `MyDFRow` that is used by
-`row` and `eachrow`. 
+`row` and `eachrow`.
 
 # Package Maintenance
 
-[Tom Short](https://github.com/tshort) is the lead maintainer. Any of the 
-[JuliaStats collaborators](https://github.com/orgs/JuliaStats/teams/collaborators) 
-also have write access and can accept pull requests. 
+[Tom Short](https://github.com/tshort) is the lead maintainer. Any of the
+[JuliaStats collaborators](https://github.com/orgs/JuliaStats/teams/collaborators)
+also have write access and can accept pull requests.
 
 Pull requests are welcome. Pull requests should include updated tests. If
 functionality is changed, docstrings should be added or updated. Generally,

@@ -38,7 +38,8 @@ row() = nothing
 
 """
     CompositeDataFrame(columns::Vector{Any}, cnames::Vector{Symbol}; inmodule = DataFramesMeta)
-    CompositeDataFrame(columns::Vector{Any}, cnames::Vector{Symbol}, typename::Symbol; inmodule = DataFramesMeta)
+    CompositeDataFrame(columns::Vector{Any}, cnames::Vector{Symbol}, typename::Symbol;
+        inmodule = DataFramesMeta)
     CompositeDataFrame(; inmodule = DataFramesMeta, kwargs...)
     CompositeDataFrame(typename::Symbol; inmodule = DataFramesMeta, kwargs...)
 
@@ -57,8 +58,8 @@ This uses `eval` to create a new type within the module specified by the
 * `typename` : the optional name of the type created
 * `kwargs` : the key gives the column names, and the value is the column contents
 * `inmodule = DataFramesMeta` : a keyword argument to specify what module you
-want to define the type in. Consider passing `current_module()` or
-`@__MODULE__` depending on your julia version.
+   want to define the type in. Consider passing `current_module()`
+   (`VERSION < v"0.7-") or `@__MODULE__` depending on your julia version.
 
 ### Examples
 
