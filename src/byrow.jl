@@ -28,7 +28,7 @@ byrow_replace(x) = x
 
 function byrow_find_newcols(e::Expr, newcol_decl)
     if e.head == :macrocall && e.args[1] == Symbol("@newcol")
-        if VERSION < v"0.7-"
+        @static if VERSION < v"0.7.0-DEV.357"
             ea = e.args[2]
         else
             ea = e.args[3]

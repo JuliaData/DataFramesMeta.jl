@@ -194,12 +194,10 @@ where(d::AbstractDataFrame, arg) = d[arg, :]
 where(d::AbstractDataFrame, f::Function) = d[f(d), :]
 where(g::GroupedDataFrame, f::Function) = g[Bool[f(x) for x in g]]
 
-function and(x, y)
-    if VERSION < v"0.6.0-"
-        :($x & $y)
-    else
-        :($x .& $y)
-    end
+if VERSION < v"0.6.0-"
+    and(x, y) = :($x & $y)
+else
+    and(x, y) = :($x .& $y)
 end
 
 function where_helper(d, args...)

@@ -37,9 +37,10 @@ julia> dfr.y
 row() = nothing
 
 """
-    CompositeDataFrame(columns::Vector{Any}, cnames::Vector{Symbol}; inmodule = DataFramesMeta)
+    CompositeDataFrame(columns::Vector{Any}, cnames::Vector{Symbol};
+                       inmodule = DataFramesMeta)
     CompositeDataFrame(columns::Vector{Any}, cnames::Vector{Symbol}, typename::Symbol;
-        inmodule = DataFramesMeta)
+                       inmodule = DataFramesMeta)
     CompositeDataFrame(; inmodule = DataFramesMeta, kwargs...)
     CompositeDataFrame(typename::Symbol; inmodule = DataFramesMeta, kwargs...)
 
