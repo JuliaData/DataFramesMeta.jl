@@ -194,7 +194,7 @@ where(d::AbstractDataFrame, arg) = d[arg, :]
 where(d::AbstractDataFrame, f::Function) = d[f(d), :]
 where(g::GroupedDataFrame, f::Function) = g[Bool[f(x) for x in g]]
 
-if VERSION < v"0.6.0-"
+if VERSION < v"0.6.0-dev.1632" # julia PR #17623
     and(x, y) = :($x & $y)
 else
     and(x, y) = :($x .& $y)
