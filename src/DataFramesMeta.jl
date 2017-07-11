@@ -28,6 +28,8 @@ onearg(e, f) = e.head == :call && length(e.args) == 2 && e.args[1] == f
 mapexpr(f, e) = Expr(e.head, map(f, e.args)...)
 
 replace_syms!(x, membernames) = x
+replace_syms!(q::QuoteNode, membernames) =
+    replace_syms!(Meta.quot(q.value), membernames)
 replace_syms!(e::Expr, membernames) =
     if onearg(e, :^)
         e.args[2]
@@ -42,32 +44,45 @@ replace_syms!(e::Expr, membernames) =
     end
 
 protect_replace_syms!(e, membernames) = e
-protect_replace_syms!(e::Expr, membernames) =
-    e.head == :quote ? e : replace_syms!(e, membernames)
+function protect_replace_syms!(e::Expr, membernames)
+    if e.head == :quote
+        e
+    else
+        replace_syms!(e, membernames)
+    end
+end
 
 function replace_dotted!(e, membernames)
     x_new = replace_syms!(e.args[1], membernames)
     y_new = protect_replace_syms!(e.args[2], membernames)
-    :($x_new.($y_new))
+    Expr(:., x_new, y_new)
 end
 
 function with_helper(d, body)
     membernames = Dict{Any, Symbol}()
-    body = replace_syms!(body, membernames)
-    funargs = map(x -> :( getindex($d, $x) ), collect(keys(membernames)))
     funname = gensym()
-    return quote
-        function $funname($(collect(values(membernames))...))
-            $body
+    body = replace_syms!(body, membernames)
+    if isempty(membernames)
+        body
+    else
+        quote
+            function $funname($(values(membernames)...))
+                $body
+            end
+            $funname($(map(keys(membernames)) do key
+                :($d[$key])
+            end...))
         end
-        $funname($(funargs...))
     end
 end
 
+function with_anonymous(body)
+    d = gensym()
+    :($d -> $(with_helper(d, body)))
+end
+
 """
-```julia
-@with(d, expr)
-```
+    @with(d, expr)
 
 `@with` allows DataFrame columns or Associative keys to be referenced as symbols.
 
@@ -95,7 +110,7 @@ The following
 becomes
 
 ```julia
-tempfun(a,b) = a + b + 1
+tempfun(a, b) = a + b + 1
 tempfun(d[:a], d[:b])
 ```
 
@@ -107,31 +122,53 @@ variable `expr` rather than a symbol.
 
 ### Examples
 
-```julia
-y = 3
-d = Dict(:s => 3, :y => 44, :d => 5)
+```jldoctest
+julia> using DataFramesMeta
 
-@with(d, :s + :y + y)
+julia> y = 3;
 
-df = DataFrame(x = 1:3, y = [2, 1, 2])
-x = [2, 1, 0]
+julia> d = Dict(:s => 3, :y => 44, :d => 5);
 
-@with(df, :y + 1)
-@with(df, :x + x)  # the two x's are different
+julia> @with(d, :s + :y + y)
+50
 
-x = @with df begin
-    res = 0.0
-    for i in 1:length(:x)
-        res += :x[i] * :y[i]
-    end
-    res
-end
+julia> df = DataFrame(x = 1:3, y = [2, 1, 2]);
 
-@with(df, df[:x .> 1, ^(:y)]) # The ^ means leave the :y alone
+julia> x = [2, 1, 0];
 
-colref = :x
-@with(df, :y + _I_(colref)) # Equivalent to df[:y] + df[colref]
+julia> @with(df, :y + 1)
+3-element DataArrays.DataArray{Int64,1}:
+ 3
+ 2
+ 3
 
+julia> @with(df, :x + x)  # the two x's are different
+3-element DataArrays.DataArray{Int64,1}:
+ 3
+ 3
+ 3
+
+julia> @with df begin
+            res = 0.0
+            for i in 1:length(:x)
+                res += :x[i] * :y[i]
+            end
+            res
+        end
+10.0
+
+julia> @with(df, df[:x .> 1, ^(:y)]) # The ^ means leave the :y alone
+2-element DataArrays.DataArray{Int64,1}:
+ 1
+ 2
+
+julia> colref = :x;
+
+julia> @with(df, :y + _I_(colref)) # Equivalent to df[:y] + df[colref]
+3-element DataArrays.DataArray{Int64,1}:
+ 3
+ 3
+ 5
 ```
 
 `@with` creates a function, so scope within `@with` is a *hard scope*,
@@ -147,31 +184,6 @@ macro with(d, body)
     esc(with_helper(d, body))
 end
 
-
-##############################################################################
-##
-## @ix - row and row/col selector
-##
-##############################################################################
-
-ix_helper(d, arg) = quote
-    let d = $d
-        $d[DataFramesMeta.@with($d, $arg),:]
-    end
-end
-
-ix_helper(d, arg, moreargs...) = quote
-    let d = $d
-        getindex(d, DataFramesMeta.@with(d, $arg), $(moreargs...))
-    end
-end
-
-macro ix(d, args...)
-    Base.depwarn("`@ix` is deprecated; use `@where` and `@select`.", Symbol("@ix"))
-    esc(ix_helper(d, args...))
-end
-
-
 ##############################################################################
 ##
 ## @where - select row subsets
@@ -182,19 +194,18 @@ where(d::AbstractDataFrame, arg) = d[arg, :]
 where(d::AbstractDataFrame, f::Function) = d[f(d), :]
 where(g::GroupedDataFrame, f::Function) = g[Bool[f(x) for x in g]]
 
-collect_ands(x::Expr) = x
-collect_ands(x::Expr, y::Expr) = :($x & $y)
-collect_ands(x::Expr, y...) = :($x & $(collect_ands(y...)))
+if VERSION < v"0.6.0-"
+    and(x, y) = :($x & $y)
+else
+    and(x, y) = :($x .& $y)
+end
 
 function where_helper(d, args...)
-    with_args = :($DataFramesMeta.@with(_DF, $(collect_ands(args...))))
-    :( $DataFramesMeta.where($d, _DF -> $with_args) )
+    :($where($d, $(with_anonymous(reduce(and, args)))))
 end
 
 """
-```julia
-@where(d, i...)
-```
+    @where(d, i...)
 
 Select row subsets in AbstractDataFrames or groups in GroupedDataFrames.
 
@@ -207,18 +218,71 @@ Multiple `i` expressions are "and-ed" together.
 
 ### Examples
 
-```julia
-df = DataFrame(x = 1:3, y = [2, 1, 2])
-x = [2, 1, 0]
+```jldoctest
+julia> using DataFramesMeta, DataFrames
 
-@where(df, :x .> 1)
-@where(df, :x .> x)
-@where(df, :x .> x, :y .== 3)
+julia> df = DataFrame(x = 1:3, y = [2, 1, 2]);
 
-d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 2, 2, 3, 1, 1, 2])
-g = groupby(d, :x)
-@where(d, :x .== 3)
-@where(g, length(:x) > 5))   # pick out some groups
+julia> x = [2, 1, 0];
+
+julia> @where(df, :x .> 1)
+2×2 DataFrames.DataFrame
+│ Row │ x │ y │
+├─────┼───┼───┤
+│ 1   │ 2 │ 1 │
+│ 2   │ 3 │ 2 │
+
+julia> @where(df, :x .> x)
+2×2 DataFrames.DataFrame
+│ Row │ x │ y │
+├─────┼───┼───┤
+│ 1   │ 2 │ 1 │
+│ 2   │ 3 │ 2 │
+
+julia> @where(df, :x .> x, :y .== 3)
+0×2 DataFrames.DataFrame
+
+julia> d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
+                                    2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
+
+julia> g = groupby(d, :x);
+
+julia> @where(d, :x .== 3)
+5×2 DataFrames.DataFrame
+│ Row │ n  │ x │
+├─────┼────┼───┤
+│ 1   │ 1  │ 3 │
+│ 2   │ 2  │ 3 │
+│ 3   │ 3  │ 3 │
+│ 4   │ 4  │ 3 │
+│ 5   │ 17 │ 3 │
+
+julia> @where(g, length(:x) > 5)   # pick out some groups
+DataFrames.GroupedDataFrame  2 groups with keys: Symbol[:x]
+First Group:
+9×2 DataFrames.SubDataFrame{Array{Int64,1}}
+│ Row │ n  │ x │
+├─────┼────┼───┤
+│ 1   │ 5  │ 1 │
+│ 2   │ 6  │ 1 │
+│ 3   │ 7  │ 1 │
+│ 4   │ 9  │ 1 │
+│ 5   │ 10 │ 1 │
+│ 6   │ 12 │ 1 │
+│ 7   │ 13 │ 1 │
+│ 8   │ 18 │ 1 │
+│ 9   │ 19 │ 1 │
+⋮
+Last Group:
+6×2 DataFrames.SubDataFrame{Array{Int64,1}}
+│ Row │ n  │ x │
+├─────┼────┼───┤
+│ 1   │ 8  │ 2 │
+│ 2   │ 11 │ 2 │
+│ 3   │ 14 │ 2 │
+│ 4   │ 15 │ 2 │
+│ 5   │ 16 │ 2 │
+│ 6   │ 20 │ 2 │
 ```
 """
 macro where(d, args...)
@@ -253,19 +317,16 @@ orderbyconstructor(d::AbstractDataFrame) = (x...) -> DataFrame(Any[x...])
 orderbyconstructor(d) = x -> x
 
 function orderby_helper(d, args...)
-    construct_args = :(DataFramesMeta.orderbyconstructor(_D)($(args...)))
-    with_args = :(DataFramesMeta.@with(_DF, $construct_args))
+    _D = gensym()
     quote
-        let _D = $d
-            DataFramesMeta.orderby(_D, _DF -> $with_args)
+        let $_D = $d
+            $orderby($_D, $(with_anonymous(:($orderbyconstructor($_D)($(args...))))))
         end
     end
 end
 
 """
-```julia
-@orderby(d, i...)
-```
+    @orderby(d, i...)
 
 Sort by criteria. Normally used to sort groups in GroupedDataFrames.
 
@@ -274,14 +335,38 @@ Sort by criteria. Normally used to sort groups in GroupedDataFrames.
 * `d` : an AbstractDataFrame or GroupedDataFrame
 * `i...` : expression for sorting
 
-The variable `_DF` can be used in expressions to refer to the whole DataFrame.
-
 ### Examples
 
-```julia
-d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 2, 2, 3, 1, 1, 2])
-g = groupby(d, :x)
-orderby(g, x -> mean(x[:n]))
+```jldoctest
+julia> using DataFrames, DataFramesMeta
+
+julia> d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
+                                    2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
+
+julia> g = groupby(d, :x);
+
+julia> @orderby(g, mean(:n))
+DataFrames.GroupedDataFrame  3 groups with keys: Symbol[:x]
+First Group:
+5×2 DataFrames.SubDataFrame{Array{Int64,1}}
+│ Row │ n  │ x │
+├─────┼────┼───┤
+│ 1   │ 1  │ 3 │
+│ 2   │ 2  │ 3 │
+│ 3   │ 3  │ 3 │
+│ 4   │ 4  │ 3 │
+│ 5   │ 17 │ 3 │
+⋮
+Last Group:
+6×2 DataFrames.SubDataFrame{Array{Int64,1}}
+│ Row │ n  │ x │
+├─────┼────┼───┤
+│ 1   │ 8  │ 2 │
+│ 2   │ 11 │ 2 │
+│ 3   │ 14 │ 2 │
+│ 4   │ 15 │ 2 │
+│ 5   │ 16 │ 2 │
+│ 6   │ 20 │ 2 │
 ```
 
 """
@@ -311,7 +396,7 @@ function transform(g::GroupedDataFrame; kwargs...)
     idx1 = [1; 1 + idx2[1:end-1]]
     for (k, v) in kwargs
         first = v(g[1])
-        result[k] = Array(eltype(first), size(result, 1))
+        result[k] = Array{eltype(first)}(size(result, 1))
         result[idx1[1]:idx2[1], k] = first
         for i in 2:length(g)
             result[idx1[i]:idx2[i], k] = v(g[i])
@@ -320,22 +405,16 @@ function transform(g::GroupedDataFrame; kwargs...)
     return result
 end
 
-function convert_kw!(kw)
-    kw.args[2] = :( _DF -> DataFramesMeta.@with(_DF, $(kw.args[2]) ) )
-    kw
-end
-
 function transform_helper(x, args...)
-    # convert each kw arg value to: _DF -> @with(_DF, arg)
-    newargs = [args...]
-    map!(convert_kw!, newargs)
-    :( transform($x, $(newargs...)) )
+    quote
+        $transform($x, $(map(args) do kw
+            Expr(:kw, kw.args[1], with_anonymous(kw.args[2]))
+        end...) )
+    end
 end
 
 """
-```julia
-@transform(d, i...)
-```
+    @transform(d, i...)
 
 Add additional columns or keys based on keyword arguments.
 
@@ -352,12 +431,27 @@ For Associative types, `@transform` only works with keys that are symbols.
 
 ### Examples
 
-```julia
-d = Dict(:s => 3, :y => 44, :d => 5)
-@transform(d, x = :y + :d)
+```jldoctest
+julia> using DataFramesMeta, DataFrames
 
-df = DataFrame(A = 1:3, B = [2, 1, 2])
-@transform(df, a = 2 * :A, x = :A + :B)
+julia> d = Dict(:s => 3, :y => 44, :d => 5);
+
+julia> @transform(d, x = :y + :d)
+Dict{Symbol,Int64} with 4 entries:
+  :d => 5
+  :s => 3
+  :y => 44
+  :x => 49
+
+julia> df = DataFrame(A = 1:3, B = [2, 1, 2]);
+
+julia> @transform(df, a = 2 * :A, x = :A + :B)
+3×4 DataFrames.DataFrame
+│ Row │ A │ B │ a │ x │
+├─────┼───┼───┼───┼───┤
+│ 1   │ 1 │ 2 │ 2 │ 3 │
+│ 2   │ 2 │ 1 │ 4 │ 3 │
+│ 3   │ 3 │ 2 │ 6 │ 5 │
 ```
 
 """
@@ -373,14 +467,13 @@ end
 ##############################################################################
 
 function based_on_helper(x, args...)
-    with_args = :(DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...))))
-    :( DataFrames.combine(map(_DF -> $with_args, $x)) )
+    with_args =
+        with_anonymous(:($DataFrame($(map(replace_equals_with_kw, args)...))))
+    :( DataFrames.combine(map($with_args, $x)))
 end
 
 """
-```julia
-@based_on(g, i...)
-```
+    @based_on(g, i...)
 
 Summarize a grouping operation
 
@@ -391,15 +484,48 @@ Summarize a grouping operation
 
 ### Examples
 
-```julia
-d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 2, 2, 3, 1, 1, 2])
-g = groupby(d, :x)
-@based_on(g, nsum = sum(:n))
-@based_on(g, x2 = 2 * :x, nsum = sum(:n))
+```jldoctest
+julia> using DataFramesMeta, DataFrames
+
+julia> d = DataFrame(
+            n = 1:20,
+            x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
+
+julia> g = groupby(d, :x);
+
+julia> @based_on(g, nsum = sum(:n))
+3×2 DataFrames.DataFrame
+│ Row │ x │ nsum │
+├─────┼───┼──────┤
+│ 1   │ 1 │ 99   │
+│ 2   │ 2 │ 84   │
+│ 3   │ 3 │ 27   │
+
+julia> @based_on(g, x2 = 2 * :x, nsum = sum(:n))
+20×3 DataFrames.DataFrame
+│ Row │ x │ x2 │ nsum │
+├─────┼───┼────┼──────┤
+│ 1   │ 1 │ 2  │ 99   │
+│ 2   │ 1 │ 2  │ 99   │
+│ 3   │ 1 │ 2  │ 99   │
+│ 4   │ 1 │ 2  │ 99   │
+│ 5   │ 1 │ 2  │ 99   │
+│ 6   │ 1 │ 2  │ 99   │
+│ 7   │ 1 │ 2  │ 99   │
+│ 8   │ 1 │ 2  │ 99   │
+⋮
+│ 12  │ 2 │ 4  │ 84   │
+│ 13  │ 2 │ 4  │ 84   │
+│ 14  │ 2 │ 4  │ 84   │
+│ 15  │ 2 │ 4  │ 84   │
+│ 16  │ 3 │ 6  │ 27   │
+│ 17  │ 3 │ 6  │ 27   │
+│ 18  │ 3 │ 6  │ 27   │
+│ 19  │ 3 │ 6  │ 27   │
+│ 20  │ 3 │ 6  │ 27   │
 ```
 """
 macro based_on(x, args...)
-    # esc(:( DataFrames.based_on($x, _DF -> DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...)))) ))
     esc(based_on_helper(x, args...))
 end
 
@@ -411,14 +537,12 @@ end
 ##############################################################################
 
 function by_helper(x, what, args...)
-    with_args = :(DataFramesMeta.@with(_DF, DataFrames.DataFrame($(args...))))
-    :( DataFrames.by($x, $what, _DF -> $with_args) )
+    :($by($x, $what,
+          $(with_anonymous(:($DataFrame($(map(replace_equals_with_kw, args)...)))))))
 end
 
 """
-```julia
-@by(d::AbstractDataFrame, cols, e...)
-```
+    @by(d::AbstractDataFrame, cols, e...)
 
 Split-apply-combine in one step.
 
@@ -434,12 +558,57 @@ Split-apply-combine in one step.
 
 ### Examples
 
-```julia
-df = DataFrame(a = rep(1:4, 2), b = rep(2:-1:1, 4), c = randn(8))
-@by(df, :a, d = sum(:c))
-@by(df, :a, d = 2 * :c)
-@by(df, :a, c_sum = sum(:c), c_mean = mean(:c))
-@by(df, :a, c = :c, c_mean = mean(:c))
+```jldoctest
+julia> using DataFrames, DataFramesMeta
+
+julia> df = DataFrame(
+            a = repeat(1:4, outer = 2),
+            b = repeat(2:-1:1, outer = 4),
+            c = randn(8));
+
+julia> @by(df, :a, d = sum(:c))
+4×2 DataFrames.DataFrame
+│ Row │ a │ d        │
+├─────┼───┼──────────┤
+│ 1   │ 1 │ 1.27638  │
+│ 2   │ 2 │ 1.00951  │
+│ 3   │ 3 │ 1.48328  │
+│ 4   │ 4 │ -2.42621 │
+
+julia> @by(df, :a, d = 2 * :c)
+8×2 DataFrames.DataFrame
+│ Row │ a │ d         │
+├─────┼───┼───────────┤
+│ 1   │ 1 │ 1.22982   │
+│ 2   │ 1 │ 1.32294   │
+│ 3   │ 2 │ 1.93664   │
+│ 4   │ 2 │ 0.0823819 │
+│ 5   │ 3 │ -0.670512 │
+│ 6   │ 3 │ 3.63708   │
+│ 7   │ 4 │ -3.06436  │
+│ 8   │ 4 │ -1.78806  │
+
+julia> @by(df, :a, c_sum = sum(:c), c_mean = mean(:c))
+4×3 DataFrames.DataFrame
+│ Row │ a │ c_sum    │ c_mean   │
+├─────┼───┼──────────┼──────────┤
+│ 1   │ 1 │ 1.27638  │ 0.63819  │
+│ 2   │ 2 │ 1.00951  │ 0.504755 │
+│ 3   │ 3 │ 1.48328  │ 0.741642 │
+│ 4   │ 4 │ -2.42621 │ -1.2131  │
+
+julia> @by(df, :a, c = :c, c_mean = mean(:c))
+8×3 DataFrames.DataFrame
+│ Row │ a │ c         │ c_mean   │
+├─────┼───┼───────────┼──────────┤
+│ 1   │ 1 │ 0.61491   │ 0.63819  │
+│ 2   │ 1 │ 0.66147   │ 0.63819  │
+│ 3   │ 2 │ 0.968319  │ 0.504755 │
+│ 4   │ 2 │ 0.041191  │ 0.504755 │
+│ 5   │ 3 │ -0.335256 │ 0.741642 │
+│ 6   │ 3 │ 1.81854   │ 0.741642 │
+│ 7   │ 4 │ -1.53218  │ -1.2131  │
+│ 8   │ 4 │ -0.894029 │ -1.2131  │
 ```
 """
 macro by(x, what, args...)
@@ -453,20 +622,6 @@ end
 ##
 ##############################################################################
 
-expandargs(x) = x
-
-function expandargs(e::Expr)
-    if e.head == :quote && length(e.args) == 1
-        return Expr(:kw, e.args[1], Expr(:quote, e.args[1]))
-    else
-        return e
-    end
-end
-
-function expandargs(e::Tuple)
-    return map(expandargs, e)
-end
-
 function Base.select(d::Union{AbstractDataFrame, Associative}; kwargs...)
     result = typeof(d)()
     for (k, v) in kwargs
@@ -475,22 +630,36 @@ function Base.select(d::Union{AbstractDataFrame, Associative}; kwargs...)
     return result
 end
 
+function replace_equals_with_kw(e)
+    if e.head == :(=)
+        Expr(:kw, e.args[1], e.args[2])
+    else
+        e
+    end
+end
+
+expandargs(x) = x
+expandargs(q::QuoteNode) = Expr(:kw, q.value, q)
+function expandargs(e::Expr)
+    if e.head == :quote
+        Expr(:kw, e.args[1], e)
+    else
+        replace_equals_with_kw(e)
+    end
+end
 
 function select_helper(x, args...)
-    select_args = :(select(_DF; $(expandargs(args)...)))
+    DF = gensym()
+    select_args = with_helper(DF, :($select($DF, $(map(expandargs, args)...))))
     quote
-        let _DF = $x
-            DataFramesMeta.@with(_DF, $select_args)
+        let $DF = $x
+            $(with_helper(DF, :($select($DF, $(map(expandargs, args)...)))))
         end
     end
 end
 
-
-
 """
-```julia
-@select(d, e...)
-```
+    @select(d, e...)
 
 Select and transform columns.
 
@@ -506,13 +675,54 @@ Select and transform columns.
 
 ### Examples
 
-```julia
-d = Dict(:s => 3, :y => 44, :d => 5)
-@select(d, x = :y + :d, :s)
+```jldoctest
+julia> using DataFrames, DataFramesMeta
 
-df = DataFrame(a = rep(1:4, 2), b = rep(2:-1:1, 4), c = randn(8))
-@select(df, :c, :a)
-@select(df, :c, x = :b + :c)
+julia> d = Dict(:s => 3, :y => 44, :d => 5);
+
+julia> @select(d, x = :y + :d, :s)
+Dict{Symbol,Int64} with 2 entries:
+  :s => 3
+  :x => 49
+
+julia> df = DataFrame(a = repeat(1:4, outer = 2), b = repeat(2:-1:1, outer = 4), c = randn(8))
+8×3 DataFrames.DataFrame
+│ Row │ a │ b │ c         │
+├─────┼───┼───┼───────────┤
+│ 1   │ 1 │ 2 │ -0.354685 │
+│ 2   │ 2 │ 1 │ 0.287631  │
+│ 3   │ 3 │ 2 │ -0.918007 │
+│ 4   │ 4 │ 1 │ -0.352519 │
+│ 5   │ 1 │ 2 │ 0.743501  │
+│ 6   │ 2 │ 1 │ -1.27415  │
+│ 7   │ 3 │ 2 │ 0.258456  │
+│ 8   │ 4 │ 1 │ -0.460486 │
+
+julia> @select(df, :c, :a)
+8×2 DataFrames.DataFrame
+│ Row │ c         │ a │
+├─────┼───────────┼───┤
+│ 1   │ -0.354685 │ 1 │
+│ 2   │ 0.287631  │ 2 │
+│ 3   │ -0.918007 │ 3 │
+│ 4   │ -0.352519 │ 4 │
+│ 5   │ 0.743501  │ 1 │
+│ 6   │ -1.27415  │ 2 │
+│ 7   │ 0.258456  │ 3 │
+│ 8   │ -0.460486 │ 4 │
+
+julia> @select(df, :c, x = :b + :c)
+8×2 DataFrames.DataFrame
+│ Row │ c         │ x         │
+├─────┼───────────┼───────────┤
+│ 1   │ -0.354685 │ 1.64531   │
+│ 2   │ 0.287631  │ 1.28763   │
+│ 3   │ -0.918007 │ 1.08199   │
+│ 4   │ -0.352519 │ 0.647481  │
+│ 5   │ 0.743501  │ 2.7435    │
+│ 6   │ -1.27415  │ -0.274145 │
+│ 7   │ 0.258456  │ 2.25846   │
+│ 8   │ -0.460486 │ 0.539514  │
 ```
 """
 macro select(x, args...)
