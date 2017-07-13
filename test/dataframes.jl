@@ -30,7 +30,7 @@ idx2 = :B
 @test  @with(df, df[:A .> 1, ^([:B, :A])]) == df[df[:A] .> 1, [:B, :A]]
 @test  @with(df, DataFrame(a = :A * 2, b = :A + :B)) == DataFrame(a = df[:A] * 2, b = df[:A] + df[:B])
 
-@test where(df, 1) == df[1, :]
+@test DataFramesMeta.where(df, 1) == df[1, :]
 
 @test  @where(df, :A .> 1)          == df[df[:A] .> 1,:]
 @test  @where(df, :B .> 1)          == df[df[:B] .> 1,:]
@@ -42,7 +42,7 @@ idx2 = :B
 
 @test DataFramesMeta.select(df, :A) == df[:A]
 
-@test orderby(df, df[[1, 3, 2], :]) == df[[1, 3, 2], :]
+@test DataFramesMeta.orderby(df, df[[1, 3, 2], :]) == df[[1, 3, 2], :]
 
 @test @byrow!(df, if :A > :B; :A = 0 end) == DataFrame(A = [1, 0, 0], B = [2, 1, 2])
 @test  df == DataFrame(A = [1, 0, 0], B = [2, 1, 2])

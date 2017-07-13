@@ -4,7 +4,6 @@ using DataFrames
 
 # Basics:
 export @with, @ix, @where, @orderby, @transform, @by, @based_on, @select
-export where, orderby, transform
 
 include("compositedataframe.jl")
 include("linqmacro.jl")
