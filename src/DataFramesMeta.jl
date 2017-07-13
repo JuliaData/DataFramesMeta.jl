@@ -296,7 +296,7 @@ end
 ##
 ##############################################################################
 
-Base.select(d::AbstractDataFrame, arg) = d[arg]
+select(d::AbstractDataFrame, arg) = d[arg]
 
 
 ##############################################################################
@@ -622,7 +622,7 @@ end
 ##
 ##############################################################################
 
-function Base.select(d::Union{AbstractDataFrame, Associative}; kwargs...)
+function select(d::Union{AbstractDataFrame, Associative}; kwargs...)
     result = typeof(d)()
     for (k, v) in kwargs
         result[k] = v

@@ -40,7 +40,7 @@ idx2 = :B
 @test  @where(df, :A .> 1, :B .> 1) == df[map(&, df[:A] .> 1, df[:B] .> 1),:]
 @test  @where(df, :A .> 1, :A .< 4, :B .> 1) == df[map(&, df[:A] .> 1, df[:A] .< 4, df[:B] .> 1),:]
 
-@test select(df, :A) == df[:A]
+@test DataFramesMeta.select(df, :A) == df[:A]
 
 @test orderby(df, df[[1, 3, 2], :]) == df[[1, 3, 2], :]
 
