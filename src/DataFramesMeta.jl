@@ -64,7 +64,7 @@ end
 
 ### Arguments
 
-* `d` : an AbstractDataFrame or Associative type 
+* `d` : an AbstractDataFrame or Associative type
 * `expr` : the expression to evaluate in `d`
 
 ### Details
@@ -94,7 +94,7 @@ All of the other DataFramesMeta macros are based on `@with`.
 
 If an expression is wrapped in `^(expr)`, `expr` gets passed through untouched.
 If an expression is wrapped in  `_I_(expr)`, the column is referenced by the
-variable `expr` rather than a symbol. 
+variable `expr` rather than a symbol.
 
 ### Examples
 
@@ -165,8 +165,8 @@ where(d::AbstractDataFrame, f::Function) = d[f(d), :]
 where(g::GroupedDataFrame, f::Function) = g[Bool[f(x) for x in g]]
 
 collect_ands(x::Expr) = x
-collect_ands(x::Expr, y::Expr) = :($x & $y)
-collect_ands(x::Expr, y...) = :($x & $(collect_ands(y...)))
+collect_ands(x::Expr, y::Expr) = :($x .& $y)
+collect_ands(x::Expr, y...) = :($x .& $(collect_ands(y...)))
 
 where_helper(d, args...) = :( $DataFramesMeta.where($d, _DF -> $DataFramesMeta.@with(_DF, $(collect_ands(args...)))) )
 
@@ -386,7 +386,7 @@ Split-apply-combine in one step.
 
 ### Returns
 
-* `::DataFrame` 
+* `::DataFrame`
 
 ### Examples
 
@@ -445,12 +445,12 @@ Select and transform columns.
 ### Arguments
 
 * `d` : an AbstractDataFrame or Associative
-* `e` :  keyword arguments specifying new columns in terms of existing columns 
+* `e` :  keyword arguments specifying new columns in terms of existing columns
   or symbols to specify existing columns
 
 ### Returns
 
-* `::AbstractDataFrame` or `::Associative` 
+* `::AbstractDataFrame` or `::Associative`
 
 ### Examples
 
