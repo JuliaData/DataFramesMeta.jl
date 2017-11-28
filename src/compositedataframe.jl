@@ -1,5 +1,3 @@
-using Compat
-
 export AbstractCompositeDataFrame, AbstractCompositeDataFrameRow,
        CompositeDataFrame, row
 
@@ -9,9 +7,9 @@ export AbstractCompositeDataFrame, AbstractCompositeDataFrameRow,
 An abstract type that is an `AbstractDataFrame`. Each type that inherits from
 this is expected to be a type-stable data frame.
 """
-@compat abstract type AbstractCompositeDataFrame <: AbstractDataFrame end
+abstract type AbstractCompositeDataFrame <: AbstractDataFrame end
 
-@compat abstract type AbstractCompositeDataFrameRow end
+abstract type AbstractCompositeDataFrameRow end
 
 
 """
@@ -76,9 +74,9 @@ julia> df = CompositeDataFrame(:MyDF, x = 1:3, y = [2, 1, 2]);
 """
 function CompositeDataFrame(columns::Vector{Any},
                             cnames::Vector{Symbol} = gennames(length(columns)),
-                            typename::Symbol = @compat(Symbol("CompositeDF", gensym()));
+                            typename::Symbol = Symbol("CompositeDF", gensym());
                             inmodule = DataFramesMeta)
-    rowtypename = @compat Symbol(typename, "Row")
+    rowtypename = Symbol(typename, "Row")
     # TODO: length checks
     type_definition = :(type $typename <: AbstractCompositeDataFrame end)
     type_definition.args[3].args = Any[:($(cnames[i]) :: $(typeof(columns[i]))) for i in 1:length(columns)]
@@ -117,7 +115,7 @@ DataFrames.DataFrame(cdf::AbstractCompositeDataFrame) = DataFrame(DataFrames.col
 ## basic stuff
 #########################################
 
-Base.names{T <: AbstractCompositeDataFrame}(cdf::T) = @compat fieldnames(T)
+Base.names{T <: AbstractCompositeDataFrame}(cdf::T) = fieldnames(T)
 
 DataFrames.ncol(cdf::AbstractCompositeDataFrame) = length(names(cdf))
 DataFrames.nrow(cdf::AbstractCompositeDataFrame) = ncol(cdf) > 0 ? length(getfield(cdf, 1))::Int : 0

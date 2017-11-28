@@ -79,9 +79,4 @@ df3 = CompositeDataFrame(:DF3, C = [1, 2, 3], D = [2, 1, 2])
 @test names(df[[1, 2]]) == [:A, :B]
 @test names(df[1:1]) == [:A]
 
-p = PassThrough([1, 2, 3])
-@test size(p) == (3,)
-@test getindex(p, 1) == 1
-@test DataFrames.upgrade_vector(p) == [1, 2, 3]
-
 end # module

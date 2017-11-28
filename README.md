@@ -1,6 +1,5 @@
 # DataFramesMeta.jl
 
-[![DataFramesMeta](http://pkg.julialang.org/badges/DataFramesMeta_0.5.svg)](http://pkg.julialang.org/?pkg=DataFramesMeta?pkg=DataFramesMeta&ver=0.5)
 [![DataFramesMeta](http://pkg.julialang.org/badges/DataFramesMeta_0.6.svg)](http://pkg.julialang.org/?pkg=DataFramesMeta?pkg=DataFramesMeta&ver=0.6)
 [![Coveralls](https://coveralls.io/repos/github/JuliaStats/DataFramesMeta.jl/badge.svg?branch=master)](https://coveralls.io/github/JuliaStats/DataFramesMeta.jl?branch=master)
 [![Travis](https://travis-ci.org/JuliaStats/DataFramesMeta.jl.svg?branch=master)](https://travis-ci.org/JuliaStats/DataFramesMeta.jl)
@@ -290,19 +289,15 @@ To create a CompositeDataFrame, use `CompositeDataFrame`:
 
 ```julia
 n = 10
-d = CompositeDataFrame(a = 1:n, b = rand(10), c = DataArray(rand(1:3, n)))
+d = CompositeDataFrame(a = 1:n, b = rand(10), c = rand(1:3, n))
 ```
-
-Note that `CompositeDataFrame()` does not coerce to `DataArrays`. Ranges and other
-`AbstractVectors` are left as is, so convert to `DataArray` or `NullableArray` as
-appropriate.
 
 You can also name the type of the `CompositeDataFrame` by including that as the
 first symbol:
 
 ```julia
 n = 10
-d = CompositeDataFrame(:MyDF, a = 1:n, b = rand(n), c = DataArray(rand(1:3, n)))
+d = CompositeDataFrame(:MyDF, a = 1:n, b = rand(n), c = rand(1:3, n))
 ```
 
 You can also define a `CompositeDataFrame` manually as follows. If you do this,
@@ -315,7 +310,7 @@ immutable MyDF <: AbstractCompositeDataFrame
     c::DataVector{Float64}
 end
 
-MyDF(n::Integer) = MyDF(zeros(Int, n), zeros(n), DataArray(zeros(n)))
+MyDF(n::Integer) = MyDF(zeros(Int, n), zeros(n), zeros(n))
 d = MyDF(10)
 ```
 
