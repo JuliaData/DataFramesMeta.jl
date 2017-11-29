@@ -2,16 +2,15 @@ module TestDicts
 
 using Base.Test
 using DataFramesMeta
-using Compat
 
 y = 3
-@compat d = Dict(:s => 3, :y => 44, :d => 5, :e => :(a + b))
+d = Dict(:s => 3, :y => 44, :d => 5, :e => :(a + b))
 @test @with(d, :s + :y) == d[:s] + d[:y]
 @test @with(d, :s + y)  == d[:s] + y
 @test @with(d, d)  == d
 @test @with(d, :s + d[^(:y)])  == d[:s] + d[:y]
 @test @with(d, :e.head) == d[:e].head
-@test @compat @with(Dict(:s => 3, :y => 44, :d => 5, :e => :(a + b)), :e.head) == d[:e].head
+@test @with(Dict(:s => 3, :y => 44, :d => 5, :e => :(a + b)), :e.head) == d[:e].head
 
 x = @with d begin
     z = y + :y - 1

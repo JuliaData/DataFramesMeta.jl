@@ -4,7 +4,6 @@ module TestDataFrames
 using Base.Test
 using DataArrays, DataFrames
 using DataFramesMeta
-using Compat
 
 df = DataFrame(A = 1:3, B = [2, 1, 2])
 

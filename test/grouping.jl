@@ -7,7 +7,7 @@ using DataArrays, DataFrames
 using DataFramesMeta
 
 d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 2, 2, 3, 1, 1, 2])
-g = groupby(d, :x)
+g = groupby(d, :x, sort=true)
 
 @test  @where(d, :x .== 3) == where(d, x -> x[:x] .== 3)
 @test  DataFrame(@where(g, length(:x) > 5)) == DataFrame(where(g, x -> length(x[:x]) > 5))
@@ -18,7 +18,7 @@ g = groupby(d, :x)
 @test  (@transform(g, y = :n - median(:n)))[1,:y] == -5.0
 
 d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 2, 2, 3, 1, 1, 2])
-g = groupby(d, :x)
+g = groupby(d, :x, sort=true)
 @test @based_on(g, nsum = sum(:n))[:nsum] == [99, 84, 27]
 
 end # module
