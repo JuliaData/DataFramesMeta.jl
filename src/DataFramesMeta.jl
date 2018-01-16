@@ -313,7 +313,7 @@ end
 orderby(d::AbstractDataFrame, f::Function) = d[sortperm(f(d)), :]
 orderby(g::GroupedDataFrame, f::Function) = g[sortperm([f(x) for x in g])]
 
-orderbyconstructor(d::AbstractDataFrame) = (x...) -> DataFrame(Any[x...])
+orderbyconstructor(d::AbstractDataFrame) = (x...) -> DataFrame(Any[x...], Symbol.(1:length(x)))
 orderbyconstructor(d) = x -> x
 
 function orderby_helper(d, args...)
