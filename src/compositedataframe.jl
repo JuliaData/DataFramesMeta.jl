@@ -195,6 +195,6 @@ transform(d::AbstractCompositeDataFrame; kwargs...) =
     CompositeDataFrame(Any[DataFrames.columns(d)..., [ isa(v, Function) ? v(d) : v for (k,v) in kwargs ]...],
                        Symbol[names(d)..., [ k for (k,v) in kwargs ]...])
 
-Base.select(d::AbstractCompositeDataFrame; kwargs...) =
+select(d::AbstractCompositeDataFrame; kwargs...) =
     CompositeDataFrame(Any[ v for (k,v) in kwargs ],
                        Symbol[ k for (k,v) in kwargs ])
