@@ -69,9 +69,7 @@ function with_helper(d, body)
             function $funname($(values(membernames)...))
                 $body
             end
-            $funname($(map(keys(membernames)) do key
-                :($d[$key])
-            end...))
+            $funname($((:($d[$key]) for key in keys(membernames))...))
         end
     end
 end
