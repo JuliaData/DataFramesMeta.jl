@@ -170,7 +170,7 @@ This iterator is created by calling `eachrow(df)` where `df` is an
 
 See also `row(cdf, i)`.
 """
-immutable CDFRowIterator{T <: AbstractCompositeDataFrame}
+struct CDFRowIterator{T <: AbstractCompositeDataFrame}
     df::T
     len::Int
 end

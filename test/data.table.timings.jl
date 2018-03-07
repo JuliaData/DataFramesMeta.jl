@@ -1,6 +1,7 @@
 # Julia benchmarks from R's data.table
 # https://github.com/Rdatatable/data.table/wiki/Benchmarks-:-Grouping
 
+using Compat.Random
 using DataFrames, DataFramesMeta
 using CategoricalArrays, DataArrays
 

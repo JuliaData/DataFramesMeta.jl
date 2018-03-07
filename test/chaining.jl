@@ -1,7 +1,7 @@
 module TestChaining
 
-using Base.Test
-using DataArrays, DataFrames
+using Compat.Test, Compat.Random
+using DataFrames
 using DataFramesMeta
 using Lazy
 

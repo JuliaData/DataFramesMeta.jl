@@ -1,6 +1,6 @@
 module SpeedTests
 
-using Base.Test
+using Compat.Test, Compat.Random
 using DataArrays, DataFrames
 using DataFramesMeta
 using Devectorize

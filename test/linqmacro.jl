@@ -1,7 +1,7 @@
 module TestLinqMacro
 
-using Base.Test
-using DataArrays, DataFrames
+using Compat.Test
+using DataFrames
 using DataFramesMeta
 
 srand(100)

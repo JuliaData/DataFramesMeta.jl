@@ -2,7 +2,7 @@
 
 module TestGrouping
 
-using Base.Test
+using Compat.Test
 using DataArrays, DataFrames
 using DataFramesMeta
 
