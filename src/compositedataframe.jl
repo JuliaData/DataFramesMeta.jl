@@ -78,10 +78,10 @@ function CompositeDataFrame(columns::Vector{Any},
                             inmodule = DataFramesMeta)
     rowtypename = Symbol(typename, "Row")
     # TODO: length checks
-    type_definition = :(type $typename <: AbstractCompositeDataFrame end)
+    type_definition = :(mutable struct $typename <: AbstractCompositeDataFrame end)
     type_definition.args[3].args = Any[:($(cnames[i]) :: $(typeof(columns[i]))) for i in 1:length(columns)]
     ## do the same for the row iterator type:
-    column_definition = :(immutable $rowtypename <: AbstractCompositeDataFrameRow end)
+    column_definition = :(struct $rowtypename <: AbstractCompositeDataFrameRow end)
     column_definition.args[3].args = Any[:($(cnames[i]) :: $(eltype(columns[i]))) for i in 1:length(columns)]
     typeconv = Expr(:call, rowtypename, [Expr(:ref, Expr(:(.), :d, QuoteNode(nm)), :i) for nm in cnames]...)
     row_method = Expr(:function, :( DataFramesMeta.row(d::$typename, i::Integer) ), typeconv)
@@ -115,7 +115,7 @@ DataFrames.DataFrame(cdf::AbstractCompositeDataFrame) = DataFrame(DataFrames.col
 ## basic stuff
 #########################################
 
-Base.names{T <: AbstractCompositeDataFrame}(cdf::T) = fieldnames(T)
+Base.names(cdf::T) where {T<:AbstractCompositeDataFrame} = fieldnames(T)
 
 DataFrames.ncol(cdf::AbstractCompositeDataFrame) = length(names(cdf))
 DataFrames.nrow(cdf::AbstractCompositeDataFrame) = ncol(cdf) > 0 ? length(getfield(cdf, 1))::Int : 0
@@ -138,7 +138,10 @@ DataFrames.index(cdf::AbstractCompositeDataFrame) = DataFrames.Index(names(cdf))
 #########################################
 
 Base.getindex(cdf::AbstractCompositeDataFrame, col_inds::DataFrames.ColumnIndex) = getfield(cdf, col_inds)
-Base.getindex{T <: DataFrames.ColumnIndex}(cdf::AbstractCompositeDataFrame, col_inds::AbstractVector{T}) = CompositeDataFrame(Any[ getfield(cdf, col_inds[i]) for i = 1:length(col_inds) ], names(cdf)[col_inds])
+function Base.getindex(cdf::AbstractCompositeDataFrame, col_inds::AbstractVector{T}
+                      ) where {T<:DataFrames.ColumnIndex}
+    CompositeDataFrame(Any[ getfield(cdf, col_inds[i]) for i = 1:length(col_inds) ], names(cdf)[col_inds])
+end
 Base.getindex(cdf::AbstractCompositeDataFrame, row_inds, col_inds::DataFrames.ColumnIndex) = getfield(cdf, col_inds)[row_inds]
 Base.getindex(cdf::AbstractCompositeDataFrame, row_inds, col_inds) =
     CompositeDataFrame(Any[ getfield(cdf, col_inds[i])[row_inds] for i = 1:length(col_inds) ],

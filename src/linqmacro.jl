@@ -68,7 +68,7 @@ macro linq(arg)
 end
 
 # Snippet from Calculus.jl
-immutable SymbolParameter{T} end
+struct SymbolParameter{T} end
 SymbolParameter(s::Symbol) = SymbolParameter{s}()
 
 replacefuns(x) = x  # default for non-expression stuff
@@ -105,7 +105,7 @@ end
 ##############################################################################
 
 ## Default, no-op:
-linq{s}(::SymbolParameter{s}, args...) = Expr(:call, s, args...)
+linq(::SymbolParameter{s}, args...) where {s} = Expr(:call, s, args...)
 
 function linq(::SymbolParameter{:with}, d, body)
     with_helper(d, body)
