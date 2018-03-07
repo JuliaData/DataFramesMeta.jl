@@ -9,9 +9,9 @@ df = DataFrame(A = 1:3, B = [2, 1, 2])
 
 x = [2, 1, 0]
 
-@test  @with(df, :A .+ 1)   ==  df[:A] + 1
-@test  @with(df, :A .+ :B)  ==  df[:A] + df[:B]
-@test  @with(df, :A .+ x)   ==  df[:A] + x
+@test  @with(df, :A .+ 1)   ==  df[:A] .+ 1
+@test  @with(df, :A .+ :B)  ==  df[:A] .+ df[:B]
+@test  @with(df, :A .+ x)   ==  df[:A] .+ x
 
 x = @with df begin
     res = 0.0

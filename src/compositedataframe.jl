@@ -138,8 +138,7 @@ DataFrames.index(cdf::AbstractCompositeDataFrame) = DataFrames.Index(names(cdf))
 #########################################
 
 Base.getindex(cdf::AbstractCompositeDataFrame, col_inds::DataFrames.ColumnIndex) = getfield(cdf, col_inds)
-function Base.getindex(cdf::AbstractCompositeDataFrame, col_inds::AbstractVector{T}
-                      ) where {T<:DataFrames.ColumnIndex}
+function Base.getindex(cdf::AbstractCompositeDataFrame, col_inds::AbstractVector{T}) where {T<:DataFrames.ColumnIndex}
     CompositeDataFrame(Any[ getfield(cdf, col_inds[i]) for i = 1:length(col_inds) ], names(cdf)[col_inds])
 end
 Base.getindex(cdf::AbstractCompositeDataFrame, row_inds, col_inds::DataFrames.ColumnIndex) = getfield(cdf, col_inds)[row_inds]
