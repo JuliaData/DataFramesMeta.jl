@@ -1,8 +1,8 @@
 
 module TestCompositeDataFrames
 
-using Base.Test
-using DataArrays, DataFrames
+using Compat.Test
+using DataFrames
 using DataFramesMeta
 
 df = CompositeDataFrame(A = [1, 2, 3], B = [2, 1, 2])

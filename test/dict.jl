@@ -1,6 +1,6 @@
 module TestDicts
 
-using Base.Test
+using Compat.Test
 using DataFramesMeta
 
 y = 3

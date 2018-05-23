@@ -1,6 +1,7 @@
 
 module CompositeDataFrameTimings
 
+using Compat.Random
 using DataArrays, DataFrames
 using DataFramesMeta
 

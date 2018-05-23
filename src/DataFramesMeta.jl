@@ -1,6 +1,6 @@
 module DataFramesMeta
 
-using DataFrames
+using DataFrames, Compat
 
 # Basics:
 export @with, @ix, @where, @orderby, @transform, @by, @based_on, @select
@@ -81,11 +81,11 @@ end
 """
     @with(d, expr)
 
-`@with` allows DataFrame columns or Associative keys to be referenced as symbols.
+`@with` allows DataFrame columns or AbstractDict keys to be referenced as symbols.
 
 ### Arguments
 
-* `d` : an AbstractDataFrame or Associative type
+* `d` : an AbstractDataFrame or AbstractDict type
 * `expr` : the expression to evaluate in `d`
 
 ### Details
@@ -379,7 +379,7 @@ end
 ##
 ##############################################################################
 
-function transform(d::Union{AbstractDataFrame, Associative}; kwargs...)
+function transform(d::Union{AbstractDataFrame, AbstractDict}; kwargs...)
     result = copy(d)
     for (k, v) in kwargs
         result[k] = isa(v, Function) ? v(d) : v
@@ -417,14 +417,14 @@ Add additional columns or keys based on keyword arguments.
 
 ### Arguments
 
-* `d` : an Associative type, AbstractDataFrame, or GroupedDataFrame
+* `d` : an AbstractDict type, AbstractDataFrame, or GroupedDataFrame
 * `i...` : keyword arguments defining new columns or keys
 
-For Associative types, `@transform` only works with keys that are symbols.
+For AbstractDict types, `@transform` only works with keys that are symbols.
 
 ### Returns
 
-* `::AbstractDataFrame`, `::Associative`, or `::GroupedDataFrame`
+* `::AbstractDataFrame`, `::AbstractDict`, or `::GroupedDataFrame`
 
 ### Examples
 
@@ -619,6 +619,7 @@ end
 ##
 ##############################################################################
 
+
 function select(d::Union{AbstractDataFrame, Associative}; kwargs...)
     result = typeof(d)()
     for (k, v) in kwargs
@@ -662,13 +663,13 @@ Select and transform columns.
 
 ### Arguments
 
-* `d` : an AbstractDataFrame or Associative
+* `d` : an AbstractDataFrame or AbstractDict
 * `e` :  keyword arguments specifying new columns in terms of existing columns
   or symbols to specify existing columns
 
 ### Returns
 
-* `::AbstractDataFrame` or `::Associative`
+* `::AbstractDataFrame` or `::AbstractDict`
 
 ### Examples
 
