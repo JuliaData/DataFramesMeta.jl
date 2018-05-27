@@ -76,7 +76,7 @@ function replacefuns(e::Expr)
     for i in 1:length(e.args)
         e.args[i] = replacefuns(e.args[i])
     end
-    if e.head == :call
+    if e.head == :call && isa(e.args[1], Symbol)
         return linq(SymbolParameter(e.args[1]), e.args[2:end]...)
     else
         return e

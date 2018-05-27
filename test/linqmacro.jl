@@ -40,6 +40,15 @@ xlinq2 = @linq df  |>
 
 @test xlinq2[[:meanX, :meanY]] == xlinq[[:meanX, :meanY]]
 
+xlinq3 = @linq df  |>
+    where(:a .> 2, :b .!= "c")  |>
+    transform(y = 10 * :x)  |>
+    DataFrames.groupby(:b) |>
+    orderby(-mean(:x))  |>
+    based_on(meanX = mean(:x), meanY = mean(:y))
+
+@test xlinq3[[:meanX, :meanY]] == xlinq[[:meanX, :meanY]]
+
 @test (@linq df |> with(:a)) == df[:a]
 
 end
