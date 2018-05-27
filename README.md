@@ -149,7 +149,7 @@ functions.
     @where            filter           Where
     @transform        mutate           Select (?)
     @by                                GroupBy
-    @groupby          group_by
+    groupby           group_by
     @based_on         summarise/do
     @orderby          arrange          OrderBy
     @select           select           Select
