@@ -393,7 +393,8 @@ function transform(g::GroupedDataFrame; kwargs...)
     idx1 = [1; 1 + idx2[1:end-1]]
     for (k, v) in kwargs
         first = v(g[1])
-        result[k] = Array{eltype(first)}(size(result, 1))
+        first isa Vector ? (T = eltype(first)) : (T = typeof(first))
+        result[k] = Array{T}(size(result, 1))
         result[idx1[1]:idx2[1], k] = first
         for i in 2:length(g)
             result[idx1[i]:idx2[i], k] = v(g[i])
