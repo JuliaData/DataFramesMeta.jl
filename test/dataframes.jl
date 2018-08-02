@@ -21,9 +21,9 @@ x = @with df begin
     res
 end
 idx = :A
-@test  @with(df, _I_(idx) .+ :B)  ==  df[:A] .+ df[:B]
+@test  @with(df, cols(idx) .+ :B)  ==  df[:A] .+ df[:B]
 idx2 = :B
-@test  @with(df, _I_(idx) .+ _I_(idx2))  ==  df[:A] .+ df[:B]
+@test  @with(df, cols(idx) .+ cols(idx2))  ==  df[:A] .+ df[:B]
 
 @test  x == sum(df[:A] .* df[:B])
 @test  @with(df, df[:A .> 1, ^([:B, :A])]) == df[df[:A] .> 1, [:B, :A]]

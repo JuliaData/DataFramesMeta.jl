@@ -15,7 +15,7 @@ These macros improve performance and provide more convenient syntax.
 `@with` allows DataFrame columns to be referenced as symbols like
 `:colX` in expressions. If an expression is wrapped in `^(expr)`,
 `expr` gets passed through untouched. If an expression is wrapped in
-`_I_(expr)`, the column is referenced by the variable `expr` rather than
+`cols(expr)`, the column is referenced by the variable `expr` rather than
 a symbol. Here are some examples:
 
 ```julia
@@ -39,7 +39,7 @@ end
 @with(df, df[:x .> 1, ^(:y)]) # The ^ means leave the :y alone
 
 colref = :x
-@with(df, :y + _I_(colref)) # Equivalent to df[:y] + df[colref]
+@with(df, :y + cols(colref)) # Equivalent to df[:y] + df[colref]
 ```
 
 This works for `AbstractDict` types, too:
