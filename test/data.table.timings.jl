@@ -3,7 +3,6 @@
 
 using Compat.Random
 using DataFrames, DataFramesMeta
-# using CategoricalArrays, DataArrays
 using CategoricalArrays
 
 N=10_0000; K=100
@@ -51,21 +50,6 @@ DMA = DataFrame(
   v3 =  Array{Union{Float64, Missing}}(rand(N))                            # numeric e.g. 23.5749
 );
 
-# DataArray version
-
-DDA = DataFrame(
-  id1 = DataArray(rand([Symbol("id", i) for i=1:K], N)),          # large groups (char)
-  id2 = DataArray(rand([Symbol("id", i) for i=1:K], N)),          # large groups (char)
-  id3 = DataArray(rand([Symbol("id", i) for i=1:N÷K], N)),   # small groups (char)
-  id4 = DataArray(rand(1:K, N)),                          # large groups (int)
-  id5 = DataArray(rand(1:K, N)),                          # large groups (int)
-  id6 = DataArray(rand(1:N÷K, N)),                        # small groups (int)
-  v1 =  DataArray(rand(1:5, N)),                          # int in range [1,5]
-  v2 =  DataArray(rand(1:5, N)),                          # int in range [1,5]
-  v3 =  DataArray(rand(N))                                # numeric e.g. 23.5749
-);
-
-
 function dt_timings(D)
     @time @by(D, :id1, sv =sum(:v1));
     @time @by(D, :id1, sv =sum(:v1));
@@ -83,6 +67,5 @@ end
 dt_timings(DA)
 dt_timings(DCA)
 dt_timings(DMA)
-dt_timings(DDA)
 
 @profile @by(DA, :id1, sv =sum(:v1));

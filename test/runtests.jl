@@ -3,8 +3,6 @@ anyerrors = false
 
 my_tests = ["dict.jl",
             "dataframes.jl",
-            # remove from tests until figured out how to fix it
-            # "compositedataframes.jl",
             "grouping.jl",
             "chaining.jl",
             "linqmacro.jl"]

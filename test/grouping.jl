@@ -4,7 +4,6 @@ module TestGrouping
 
 using Compat.Test
 using DataFrames
-# using DataArrays, DataFrames
 using DataFramesMeta
 using Statistics
 

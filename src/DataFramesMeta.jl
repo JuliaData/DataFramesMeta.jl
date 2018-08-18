@@ -3,9 +3,8 @@ module DataFramesMeta
 using DataFrames, Compat
 
 # Basics:
-export @with, @ix, @where, @orderby, @transform, @by, @based_on, @select
+export @with, @where, @orderby, @transform, @by, @based_on, @select
 
-include("compositedataframe.jl")
 include("linqmacro.jl")
 include("byrow.jl")
 
