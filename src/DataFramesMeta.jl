@@ -133,14 +133,14 @@ julia> df = DataFrame(x = 1:3, y = [2, 1, 2]);
 
 julia> x = [2, 1, 0];
 
-julia> @with(df, :y + 1)
-3-element DataArrays.DataArray{Int64,1}:
+julia> @with(df, :y .+ 1)
+3-element Array{Int64,1}:
  3
  2
  3
 
-julia> @with(df, :x + x)  # the two x's are different
-3-element DataArrays.DataArray{Int64,1}:
+julia> @with(df, :x + x)
+3-element Array{Int64,1}:
  3
  3
  3
@@ -155,14 +155,14 @@ julia> @with df begin
 10.0
 
 julia> @with(df, df[:x .> 1, ^(:y)]) # The ^ means leave the :y alone
-2-element DataArrays.DataArray{Int64,1}:
+2-element Array{Int64,1}:
  1
  2
 
 julia> colref = :x;
 
 julia> @with(df, :y + _I_(colref)) # Equivalent to df[:y] + df[colref]
-3-element DataArrays.DataArray{Int64,1}:
+3-element Array{Int64,1}:
  3
  3
  5
@@ -301,6 +301,9 @@ select(d::AbstractDataFrame, arg) = d[arg]
 ## @orderby
 ##
 ##############################################################################
+
+# needed on Julia 1.0 till #1489 in DataFrames is merged
+orderby(d::DataFrame, arg::DataFrame) = d[sortperm(arg), :]
 
 function orderby(d::AbstractDataFrame, args...)
     D = typeof(d)(args...)
