@@ -100,13 +100,13 @@ then called. Operations are efficient because:
 The following
 
 ```julia
-@with(d, :a + :b + 1)
+@with(d, :a .+ :b .+ 1)
 ```
 
 becomes
 
 ```julia
-tempfun(a, b) = a + b + 1
+tempfun(a, b) = a .+ b .+ 1
 tempfun(d[:a], d[:b])
 ```
 
@@ -167,13 +167,12 @@ julia> @with(df, :y + _I_(colref)) # Equivalent to df[:y] + df[colref]
  5
 ```
 
-`@with` creates a function, so scope within `@with` is a *hard scope*,
-as with `do`-blocks or other function definitions. Variables in the parent
-can be read. Writing to variables in the parent scope differs depending on
-the type of scope of the parent. If the parent scope is a global scope, then
-a variable cannot be assigned without using the `global` keyword. If the parent
-scope is a local scope (inside a function or let block for example), the `global`
-keyword is not needed to assign to that parent scope.
+`@with` creates a function, so scope within `@with` is a local scope.
+Variables in the parent can be read. Writing to variables in the parent scope
+differs depending on the type of scope of the parent. If the parent scope is a
+global scope, then a variable cannot be assigned without using the `global` keyword.
+If the parent scope is a local scope (inside a function or let block for example),
+the `global` keyword is not needed to assign to that parent scope.
 
 """
 macro with(d, body)
@@ -337,7 +336,7 @@ Sort by criteria. Normally used to sort groups in GroupedDataFrames.
 ### Examples
 
 ```jldoctest
-julia> using DataFrames, DataFramesMeta
+julia> using DataFrames, DataFramesMeta, Statistics
 
 julia> d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
                                     2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
@@ -444,7 +443,7 @@ Dict{Symbol,Int64} with 4 entries:
 
 julia> df = DataFrame(A = 1:3, B = [2, 1, 2]);
 
-julia> @transform(df, a = 2 * :A, x = :A + :B)
+julia> @transform(df, a = 2 * :A, x = :A .+ :B)
 3×4 DataFrames.DataFrame
 │ Row │ A │ B │ a │ x │
 ├─────┼───┼───┼───┼───┤
@@ -558,7 +557,7 @@ Split-apply-combine in one step.
 ### Examples
 
 ```jldoctest
-julia> using DataFrames, DataFramesMeta
+julia> using DataFrames, DataFramesMeta, Statistics
 
 julia> df = DataFrame(
             a = repeat(1:4, outer = 2),
