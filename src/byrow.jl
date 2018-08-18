@@ -34,7 +34,7 @@ function byrow_find_newcols(e::Expr, newcol_decl)
             ea = e.args[3]
         end
         # expression to assign a new column to df
-        return (nothing, Any[Expr(:kw, ea.args[1], Expr(:call, ea.args[2], :_N))])
+        return (nothing, Any[Expr(:kw, ea.args[1], Expr(:call, ea.args[2], undef, :_N))])
     else
         if isempty(e.args)
             return (e.args, Any[])
