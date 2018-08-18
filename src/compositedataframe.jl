@@ -175,9 +175,10 @@ struct CDFRowIterator{T <: AbstractCompositeDataFrame}
 end
 DataFrames.eachrow(df::AbstractCompositeDataFrame) = CDFRowIterator(df, nrow(df))
 
-Base.start(itr::CDFRowIterator) = 1
-Base.done(itr::CDFRowIterator, i::Int) = i > itr.len
-Base.next(itr::CDFRowIterator, i::Int) = (row(itr.df, i), i + 1)
+function Base.iterate(itr::CDFRowIterator, i=1)
+    i > itr.len && return nothing
+    return (row(itr.df, i), i+1)
+end
 Base.size(itr::CDFRowIterator) = (size(itr.df, 1), )
 Base.length(itr::CDFRowIterator) = size(itr.df, 1)
 Base.getindex(itr::CDFRowIterator, i::Any) = row(itr.df, i)
