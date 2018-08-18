@@ -3,7 +3,8 @@
 
 using Compat.Random
 using DataFrames, DataFramesMeta
-using CategoricalArrays, DataArrays
+# using CategoricalArrays, DataArrays
+using CategoricalArrays
 
 N=10_0000; K=100
 srand(1)

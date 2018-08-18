@@ -2,7 +2,8 @@
 module CompositeDataFrameTimings
 
 using Compat.Random
-using DataArrays, DataFrames
+# using DataArrays, DataFrames
+using DataFrames
 using DataFramesMeta
 
 srand(1)

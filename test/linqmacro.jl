@@ -3,8 +3,10 @@ module TestLinqMacro
 using Compat.Test
 using DataFrames
 using DataFramesMeta
+using Statistics
+using Random
 
-srand(100)
+Random.seed!(100)
 n = 100
 df = DataFrame(a = rand(1:3, n),
                b = ["a","b","c","d"][rand(1:4, n)],

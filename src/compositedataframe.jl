@@ -86,6 +86,8 @@ function CompositeDataFrame(columns::Vector{Any},
     typeconv = Expr(:call, rowtypename, [Expr(:ref, Expr(:(.), :d, QuoteNode(nm)), :i) for nm in cnames]...)
     row_method = Expr(:function, :( DataFramesMeta.row(d::$typename, i::Integer) ), typeconv)
     row_call = :($typename($columns...))
+    all_statements = Expr(:block, type_definition, column_definition, row_method, row_call)
+    println(all_statements)
     eval(inmodule, Expr(:block, type_definition, column_definition, row_method, row_call))
 end
 
