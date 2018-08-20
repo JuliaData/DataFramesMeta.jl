@@ -335,9 +335,9 @@ that holds the composite data frame and another type `MyDFRow` that is used by
 
 # Package Maintenance
 
-[Tom Short](https://github.com/tshort) is the lead maintainer. Any of the
+Any of the
 [JuliaStats collaborators](https://github.com/orgs/JuliaStats/teams/collaborators)
-also have write access and can accept pull requests.
+have write access and can accept pull requests.
 
 Pull requests are welcome. Pull requests should include updated tests. If
 functionality is changed, docstrings should be added or updated. Generally,
