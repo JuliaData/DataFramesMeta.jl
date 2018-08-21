@@ -1,6 +1,6 @@
 module TestChaining
 
-using Compat.Test, Compat.Random
+using Test, Random
 using DataFrames
 using DataFramesMeta
 using Lazy

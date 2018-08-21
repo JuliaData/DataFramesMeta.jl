@@ -1,11 +1,11 @@
 
 module DataFramesTimings
 
-using Compat.Random
+using Random
 using DataFrames
 using DataFramesMeta
 
-srand(1)
+Random.seed!(1)
 const n = 5_000_000
 a = rand(n)
 b = rand(n)

@@ -22,11 +22,7 @@ byrow_replace(x) = x
 
 function byrow_find_newcols(e::Expr, newcol_decl)
     if e.head == :macrocall && e.args[1] == Symbol("@newcol")
-        @static if VERSION < v"0.7.0-DEV.357"
-            ea = e.args[2]
-        else
-            ea = e.args[3]
-        end
+        ea = e.args[3]
         # expression to assign a new column to df
         return (nothing, Any[Expr(:kw, ea.args[1], Expr(:call, ea.args[2], :undef, :_N))])
     else

@@ -1,11 +1,11 @@
 module SpeedTests
 
-using Compat.Test, Compat.Random
+using Test, Random
 using DataFrames
 using DataFramesMeta
 using Devectorize
 
-srand(1)
+Random.seed!(1)
 const n = 5_000_000
 a = rand(n)
 b = rand(n)
