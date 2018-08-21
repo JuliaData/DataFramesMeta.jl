@@ -5,7 +5,7 @@
 [![Travis](https://travis-ci.org/JuliaStats/DataFramesMeta.jl.svg?branch=master)](https://travis-ci.org/JuliaStats/DataFramesMeta.jl)
 [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/juliastats/dataframesmeta.jl?branch=master&svg=true)](https://ci.appveyor.com/project/tshort/dataframesmeta-jl/branch/master)
 
-Metaprogramming tools for DataFrames and AbstractDict objects.
+Metaprogramming tools for DataFrames.jl and `AbstractDict` objects.
 These macros improve performance and provide more convenient syntax.
 
 # Features
@@ -42,7 +42,7 @@ colref = :x
 @with(df, :y + _I_(colref)) # Equivalent to df[:y] + df[colref]
 ```
 
-This works for Associative types, too:
+This works for `AbstractDict` types, too:
 
 ```julia
 y = 3
@@ -73,7 +73,7 @@ Select row subsets.
 
 ## `@select`
 
-Column selections and transformations. Also works with Associative types.
+Column selections and transformations. Also works with `AbstractDict` types.
 
 ```julia
 @select(df, :x, :y, :z)
@@ -88,7 +88,7 @@ Add additional columns based on keyword arguments.
 @transform(df, newCol = cos.(:x), anotherCol = :x.^2 + 3*:x .+ 4)
 ```
 
-`@transform` works for Associative types, too.
+`@transform` works for `AbstractDict` types, too.
 
 ## `@byrow!`
 
@@ -122,10 +122,12 @@ added:
 df = DataFrame(A = 1:3, B = [2, 1, 2])
 df2 = @byrow! df begin
     @newcol colX::Array{Float64}
-    @newcol colY::Array{Int}
+    @newcol colY::Array{Union{Int,Missing}}
     :colX = :B == 2 ? pi * :A : :B
     if :A > 1
         :colY = :A * :B
+    else
+        :colY = Missing
     end
 end
 ```

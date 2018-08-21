@@ -28,6 +28,7 @@ x_as = @as _x_ begin
     @select(_x_, var = :b, :meanX, :meanY)
 end
 
+# Uncomment and add to README.md when it starts working:
 # @> is broken in 0.7 Lazy
 #x_thread = @> begin
 #    df
