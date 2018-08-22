@@ -3,9 +3,8 @@ module DataFramesMeta
 using DataFrames, Compat
 
 # Basics:
-export @with, @ix, @where, @orderby, @transform, @by, @based_on, @select
+export @with, @where, @orderby, @transform, @by, @based_on, @select
 
-include("compositedataframe.jl")
 include("linqmacro.jl")
 include("byrow.jl")
 
@@ -101,13 +100,13 @@ then called. Operations are efficient because:
 The following
 
 ```julia
-@with(d, :a + :b + 1)
+@with(d, :a .+ :b .+ 1)
 ```
 
 becomes
 
 ```julia
-tempfun(a, b) = a + b + 1
+tempfun(a, b) = a .+ b .+ 1
 tempfun(d[:a], d[:b])
 ```
 
@@ -133,14 +132,14 @@ julia> df = DataFrame(x = 1:3, y = [2, 1, 2]);
 
 julia> x = [2, 1, 0];
 
-julia> @with(df, :y + 1)
-3-element DataArrays.DataArray{Int64,1}:
+julia> @with(df, :y .+ 1)
+3-element Array{Int64,1}:
  3
  2
  3
 
-julia> @with(df, :x + x)  # the two x's are different
-3-element DataArrays.DataArray{Int64,1}:
+julia> @with(df, :x + x)
+3-element Array{Int64,1}:
  3
  3
  3
@@ -155,26 +154,25 @@ julia> @with df begin
 10.0
 
 julia> @with(df, df[:x .> 1, ^(:y)]) # The ^ means leave the :y alone
-2-element DataArrays.DataArray{Int64,1}:
+2-element Array{Int64,1}:
  1
  2
 
 julia> colref = :x;
 
 julia> @with(df, :y + _I_(colref)) # Equivalent to df[:y] + df[colref]
-3-element DataArrays.DataArray{Int64,1}:
+3-element Array{Int64,1}:
  3
  3
  5
 ```
 
-`@with` creates a function, so scope within `@with` is a *hard scope*,
-as with `do`-blocks or other function definitions. Variables in the parent
-can be read. Writing to variables in the parent scope differs depending on
-the type of scope of the parent. If the parent scope is a global scope, then
-a variable cannot be assigned without using the `global` keyword. If the parent
-scope is a local scope (inside a function or let block for example), the `global`
-keyword is not needed to assign to that parent scope.
+`@with` creates a function, so scope within `@with` is a local scope.
+Variables in the parent can be read. Writing to variables in the parent scope
+differs depending on the type of scope of the parent. If the parent scope is a
+global scope, then a variable cannot be assigned without using the `global` keyword.
+If the parent scope is a local scope (inside a function or let block for example),
+the `global` keyword is not needed to assign to that parent scope.
 
 """
 macro with(d, body)
@@ -302,6 +300,9 @@ select(d::AbstractDataFrame, arg) = d[arg]
 ##
 ##############################################################################
 
+# needed on Julia 1.0 till #1489 in DataFrames is merged
+orderby(d::DataFrame, arg::DataFrame) = d[sortperm(arg), :]
+
 function orderby(d::AbstractDataFrame, args...)
     D = typeof(d)(args...)
     d[sortperm(D), :]
@@ -335,7 +336,7 @@ Sort by criteria. Normally used to sort groups in GroupedDataFrames.
 ### Examples
 
 ```jldoctest
-julia> using DataFrames, DataFramesMeta
+julia> using DataFrames, DataFramesMeta, Statistics
 
 julia> d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
                                     2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
@@ -390,10 +391,10 @@ end
 function transform(g::GroupedDataFrame; kwargs...)
     result = DataFrame(g)
     idx2 = cumsum(Int[size(g[i],1) for i in 1:length(g)])
-    idx1 = [1; 1 + idx2[1:end-1]]
+    idx1 = [1; 1 .+ idx2[1:end-1]]
     for (k, v) in kwargs
         first = v(g[1])
-        result[k] = Array{eltype(first)}(size(result, 1))
+        result[k] = Array{eltype(first)}(undef, size(result, 1))
         result[idx1[1]:idx2[1], k] = first
         for i in 2:length(g)
             result[idx1[i]:idx2[i], k] = v(g[i])
@@ -442,7 +443,7 @@ Dict{Symbol,Int64} with 4 entries:
 
 julia> df = DataFrame(A = 1:3, B = [2, 1, 2]);
 
-julia> @transform(df, a = 2 * :A, x = :A + :B)
+julia> @transform(df, a = 2 * :A, x = :A .+ :B)
 3×4 DataFrames.DataFrame
 │ Row │ A │ B │ a │ x │
 ├─────┼───┼───┼───┼───┤
@@ -556,7 +557,7 @@ Split-apply-combine in one step.
 ### Examples
 
 ```jldoctest
-julia> using DataFrames, DataFramesMeta
+julia> using DataFrames, DataFramesMeta, Statistics
 
 julia> df = DataFrame(
             a = repeat(1:4, outer = 2),
@@ -620,7 +621,7 @@ end
 ##############################################################################
 
 
-function select(d::Union{AbstractDataFrame, Associative}; kwargs...)
+function select(d::Union{AbstractDataFrame, AbstractDict}; kwargs...)
     result = typeof(d)()
     for (k, v) in kwargs
         result[k] = v

@@ -27,7 +27,7 @@ The following embedded function calls are equivalent to their macro version:
 ### Examples
 
 ```jldoctest
-julia> using DataFrames, DataFramesMeta
+julia> using DataFrames, DataFramesMeta, Statistics
 
 julia> n = 100;
 

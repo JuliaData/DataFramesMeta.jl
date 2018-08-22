@@ -10,17 +10,11 @@ export @byrow!
 # Recursive function that traverses the syntax tree of e, replaces instances of
 # ":(:(x))" with ":x[row]".
 function byrow_replace(e::Expr)
-    # target is the Expr that is built to replace ":(:(x))"
-    target = Expr(:ref)
-
     # Traverse the syntax tree of e
-    if e.head != :quote
-        return Expr(e.head, (isempty(e.args) ? e.args : map(x -> byrow_replace(x), e.args))...)
-    else
-        push!(target.args, e, :row)
-        return target
-    end
+    Expr(e.head, (isempty(e.args) ? e.args : map(byrow_replace, e.args))...)
 end
+
+byrow_replace(e::QuoteNode) = Expr(:ref, e, :row)
 
 # Set the base case for helper, i.e. for when expand hits an object of type
 # other than Expr (generally a Symbol or a literal).
@@ -34,7 +28,7 @@ function byrow_find_newcols(e::Expr, newcol_decl)
             ea = e.args[3]
         end
         # expression to assign a new column to df
-        return (nothing, Any[Expr(:kw, ea.args[1], Expr(:call, ea.args[2], :_N))])
+        return (nothing, Any[Expr(:kw, ea.args[1], Expr(:call, ea.args[2], :undef, :_N))])
     else
         if isempty(e.args)
             return (e.args, Any[])

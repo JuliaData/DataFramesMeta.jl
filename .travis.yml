@@ -1,9 +1,11 @@
 language: julia
 julia:
-  - 0.6
+  - 0.7
+  - 1.0
   - nightly
 os:
   - linux
+  - osx
 notifications:
   email: false
 # script:

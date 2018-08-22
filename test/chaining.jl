@@ -4,8 +4,10 @@ using Compat.Test, Compat.Random
 using DataFrames
 using DataFramesMeta
 using Lazy
+using Statistics
+using Random
 
-srand(1)
+Random.seed!(1)
 n = 100
 df = DataFrame(a = rand(1:3, n),
                b = ["a","b","c","d"][rand(1:4, n)],
@@ -17,15 +19,16 @@ x = @by(x, :b, meanX = mean(:x), meanY = mean(:y))
 x = @orderby(x, :b, -:meanX)
 x = @select(x, var = :b, :meanX, :meanY)
 
-x_as = @as _ begin
+x_as = @as _x_ begin
     df
-    @where(_, :a .> 2)
-    @transform(_, y = 10 * :x)
-    @by(_, :b, meanX = mean(:x), meanY = mean(:y))
-    @orderby(_, :b, -:meanX)
-    @select(_, var = :b, :meanX, :meanY)
+    @where(_x_, :a .> 2)
+    @transform(_x_, y = 10 * :x)
+    @by(_x_, :b, meanX = mean(:x), meanY = mean(:y))
+    @orderby(_x_, :b, -:meanX)
+    @select(_x_, var = :b, :meanX, :meanY)
 end
 
+# Uncomment and add to README.md when it starts working:
 # @> is broken in 0.7 Lazy
 #x_thread = @> begin
 #    df

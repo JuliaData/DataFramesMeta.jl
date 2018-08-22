@@ -3,7 +3,6 @@ anyerrors = false
 
 my_tests = ["dict.jl",
             "dataframes.jl",
-            "compositedataframes.jl",
             "grouping.jl",
             "chaining.jl",
             "linqmacro.jl"]

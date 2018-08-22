@@ -5,7 +5,7 @@
 [![Travis](https://travis-ci.org/JuliaStats/DataFramesMeta.jl.svg?branch=master)](https://travis-ci.org/JuliaStats/DataFramesMeta.jl)
 [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/juliastats/dataframesmeta.jl?branch=master&svg=true)](https://ci.appveyor.com/project/tshort/dataframesmeta-jl/branch/master)
 
-Metaprogramming tools for DataFrames and Associative objects.
+Metaprogramming tools for DataFrames.jl and `AbstractDict` objects.
 These macros improve performance and provide more convenient syntax.
 
 # Features
@@ -19,13 +19,13 @@ These macros improve performance and provide more convenient syntax.
 a symbol. Here are some examples:
 
 ```julia
-using DataArrays, DataFrames
+using DataFrames
 using DataFramesMeta
 
 df = DataFrame(x = 1:3, y = [2, 1, 2])
 x = [2, 1, 0]
 
-@with(df, :y + 1)
+@with(df, :y .+ 1)
 @with(df, :x + x)  # the two x's are different
 
 x = @with df begin
@@ -40,10 +40,9 @@ end
 
 colref = :x
 @with(df, :y + _I_(colref)) # Equivalent to df[:y] + df[colref]
-
 ```
 
-This works for Associative types, too:
+This works for `AbstractDict` types, too:
 
 ```julia
 y = 3
@@ -55,14 +54,12 @@ d = Dict(:s => 3, :y => 44, :d => 5)
 `@with` is the fundamental macro used by the other metaprogramming
 utilities.
 
-`@with` creates a function, so scope within `@with` is a [hard
-scope](http://docs.julialang.org/en/release-0.4/manual/variables-and-scoping/#hard-local-scope),
-as with `do`-blocks or other function definitions. Variables in the parent
-can be read. Writing to variables in the parent scope differs depending on
-the type of scope of the parent. If the parent scope is a global scope, then
-a variable cannot be assigned without using the `global` keyword. If the parent
-scope is a local scope (inside a function or let block for example), the `global`
-keyword is not needed to assign to that parent scope.
+`@with` creates a function, so scope within `@with` is a local scope.
+Variables in the parent can be read. Writing to variables in the parent scope
+differs depending on the type of scope of the parent. If the parent scope is a
+global scope, then a variable cannot be assigned without using the `global` keyword.
+If the parent scope is a local scope (inside a function or let block for example),
+the `global` keyword is not needed to assign to that parent scope.
 
 ## `@where`
 
@@ -76,7 +73,7 @@ Select row subsets.
 
 ## `@select`
 
-Column selections and transformations. Also works with Associative types.
+Column selections and transformations. Also works with `AbstractDict` types.
 
 ```julia
 @select(df, :x, :y, :z)
@@ -85,16 +82,13 @@ Column selections and transformations. Also works with Associative types.
 
 ## `@transform`
 
-Add additional columns based on keyword arguments. This is available
-in both function and macro versions with the macro version allowing
-direct reference to columns using the colon syntax:
+Add additional columns based on keyword arguments.
 
 ```julia
-transform(df, newCol = cos(df[:x]), anotherCol = df[:x]^2 + 3*df[:x] + 4)
-@transform(df, newCol = cos(:x), anotherCol = :x^2 + 3*:x + 4)
+@transform(df, newCol = cos.(:x), anotherCol = :x.^2 + 3*:x .+ 4)
 ```
 
-`@transform` works for Associative types, too.
+`@transform` works for `AbstractDict` types, too.
 
 ## `@byrow!`
 
@@ -120,7 +114,7 @@ of `x` within `@byrow!`.
 `byrow!` also supports special syntax for allocating new columns to make
 `byrow!` more useful for data transformations. The syntax `@newcol
 x::Array{Int}` allocates a new column `:x` with an `Array` container with eltype
-`Int`. Note that the returned AbstractDataFrame includes these new columns, but
+`Int`. Note that the returned `AbstractDataFrame` includes these new columns, but
 the original `df` is not affected. Here is an example where two new columns are
 added:
 
@@ -128,10 +122,12 @@ added:
 df = DataFrame(A = 1:3, B = [2, 1, 2])
 df2 = @byrow! df begin
     @newcol colX::Array{Float64}
-    @newcol colY::DataArray{Int}
+    @newcol colY::Array{Union{Int,Missing}}
     :colX = :B == 2 ? pi * :A : :B
     if :A > 1
         :colY = :A * :B
+    else
+        :colY = Missing
     end
 end
 ```
@@ -155,28 +151,10 @@ functions.
     @select           select           Select
 
 
-Chaining operations is a useful way to manipulate data. There are
-several ways to do this. This is still in flux in base Julia
-(https://github.com/JuliaLang/julia/issues/5571). Here is one option
-from [Lazy.jl](https://github.com/one-more-minute/Lazy.jl) by Mike
-Innes:
+## LINQ macro
 
-```julia
-x_thread = @> begin
-    df
-    @transform(y = 10 * :x)
-    @where(:a .> 2)
-    @by(:b, meanX = mean(:x), meanY = mean(:y))
-    @orderby(:meanX)
-    @select(:meanX, :meanY, var = :b)
-end
-```
-
-## Alternative LINQ macro
-
-As another experiment, there is also a `@linq` macro that supports
-chaining and all of the functionality defined in other macros. Here is
-an example of `@linq`:
+There is also a `@linq` macro that supports chaining and all of the
+functionality defined in other macros. Here is an example of `@linq`:
 
 ```julia
 x_thread = @linq df |>
@@ -255,83 +233,6 @@ then called. Operations are efficient because:
 
 All of the other macros are based on `@with`.
 
-# CompositeDataFrame
-
-A `CompositeDataFrame` is a type-stable `AbstractDataFrame` built using composite
-types. Each column is a field in a composite type. `CompositeDataFrame` is an
-abstract type; each concrete composite type inherits from this. The advantages
-of this approach are:
-
-* You can access single columns directly using `df.colA`. This is type stable,
-  so code should be faster. (There is still the function boundary to worry
-  about.)
-
-* All indexing operations can be done currently.
-
-Some downsides include:
-
-* As an abuse of the type system, creating a new type for each change to
-  a `CompositeDataFrame` may waste memory.
-
-* You cannot change the structure of a `CompositeDataFrame` once created.
-  It is nearly like an immutable object. For example to add a column, you need
-  to do something like:
-
-```julia
-    transform(df, newcol = df.colA + 5)
-```
-
-An advantage of this is that the API becomes more functional. All
-manipulations of the `CompositeDataFrame` return a new object.
-Normally, this doesn't create much more memory.
-
-To create a CompositeDataFrame, use `CompositeDataFrame`:
-
-```julia
-n = 10
-d = CompositeDataFrame(a = 1:n, b = rand(10), c = rand(1:3, n))
-```
-
-You can also name the type of the `CompositeDataFrame` by including that as the
-first symbol:
-
-```julia
-n = 10
-d = CompositeDataFrame(:MyDF, a = 1:n, b = rand(n), c = rand(1:3, n))
-```
-
-You can also define a `CompositeDataFrame` manually as follows. If you do this,
-you are responsible for keeping each column the same length.
-
-```julia
-immutable MyDF <: AbstractCompositeDataFrame
-    a::Vector{Int}
-    b::Vector{Float64}
-    c::DataVector{Float64}
-end
-
-MyDF(n::Integer) = MyDF(zeros(Int, n), zeros(n), zeros(n))
-d = MyDF(10)
-```
-
-Note that a `CompositeDataFrame` is type stable with field access like `df.colA`
-but not with `getindex` indexing like `df[:colA]`. `df[:colA]` works, but it is
-not type stable.
-
-Type-stable access to rows is also provided using `row(d, i)` or the iterator
-`eachrow(d)`. Here is an example:
-
-```julia
-n = 10
-d = CompositeDataFrame(:MyDF, a = 1:n, b = rand(10), c = DataArray(rand(1:3, n)))
-x = row(d, 5)
-x.a    # 5
-y = [x.a * x.b for x in eachrow(d)]
-```
-
-In the example above, the call to `CompositeDataFrame` creates the type `MyDF`
-that holds the composite data frame and another type `MyDFRow` that is used by
-`row` and `eachrow`.
 
 # Package Maintenance
 
