@@ -1,6 +1,6 @@
 module DataFramesMeta
 
-using DataFrames, Compat
+using DataFrames
 
 # Basics:
 export @with, @where, @orderby, @transform, @by, @based_on, @select
