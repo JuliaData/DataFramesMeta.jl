@@ -1,7 +1,7 @@
 
 module TestDataFrames
 
-using Compat.Test
+using Test
 using DataFrames
 using DataFramesMeta
 

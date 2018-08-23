@@ -1,6 +1,6 @@
 module TestLinqMacro
 
-using Compat.Test
+using Test
 using DataFrames
 using DataFramesMeta
 using Statistics
