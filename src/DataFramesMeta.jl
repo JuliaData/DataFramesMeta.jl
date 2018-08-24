@@ -32,7 +32,7 @@ replace_syms!(e::Expr, membernames) =
     if onearg(e, :^)
         e.args[2]
     elseif onearg(e, :_I_)
-        warn("_I_() for escaping variables is deprecated, use cols() instead")
+        @warn "_I_() for escaping variables is deprecated, use cols() instead"
         addkey!(membernames, :($(e.args[2])))     
     elseif onearg(e, :cols)
         addkey!(membernames, :($(e.args[2])))
