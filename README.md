@@ -11,7 +11,7 @@ These macros improve performance and provide more convenient syntax.
 # Features
 
 ## `@with`
-. 
+
 `@with` allows DataFrame columns to be referenced as symbols like
 `:colX` in expressions. If an expression is wrapped in `^(expr)`,
 `expr` gets passed through untouched. If an expression is wrapped in
