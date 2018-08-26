@@ -32,6 +32,9 @@ replace_syms!(e::Expr, membernames) =
     if onearg(e, :^)
         e.args[2]
     elseif onearg(e, :_I_)
+        @warn "_I_() for escaping variables is deprecated, use cols() instead"
+        addkey!(membernames, :($(e.args[2])))     
+    elseif onearg(e, :cols)
         addkey!(membernames, :($(e.args[2])))
     elseif e.head == :quote
         addkey!(membernames, Meta.quot(e.args[1]) )
@@ -113,7 +116,7 @@ tempfun(d[:a], d[:b])
 All of the other DataFramesMeta macros are based on `@with`.
 
 If an expression is wrapped in `^(expr)`, `expr` gets passed through untouched.
-If an expression is wrapped in  `_I_(expr)`, the column is referenced by the
+If an expression is wrapped in  `cols(expr)`, the column is referenced by the
 variable `expr` rather than a symbol.
 
 ### Examples
@@ -160,8 +163,7 @@ julia> @with(df, df[:x .> 1, ^(:y)]) # The ^ means leave the :y alone
 
 julia> colref = :x;
 
-julia> @with(df, :y + _I_(colref)) # Equivalent to df[:y] + df[colref]
-3-element Array{Int64,1}:
+julia> @with(df, :y + cols(colref)) # Equivalent to df[:y] + df[colref]
  3
  3
  5
