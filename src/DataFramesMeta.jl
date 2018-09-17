@@ -377,7 +377,6 @@ end
 ## transform & @transform
 ##
 ##############################################################################
-
 function transform(d::Union{AbstractDataFrame, AbstractDict}; kwargs...)
     result = copy(d)
     for (k, v) in kwargs
@@ -386,19 +385,31 @@ function transform(d::Union{AbstractDataFrame, AbstractDict}; kwargs...)
     return result
 end
 
+
 function transform(g::GroupedDataFrame; kwargs...)
     result = DataFrame(g)
     idx2 = cumsum(Int[size(g[i],1) for i in 1:length(g)])
     idx1 = [1; 1 .+ idx2[1:end-1]]
+
     for (k, v) in kwargs
-        first = v(g[1])
-        result[k] = Array{eltype(first)}(undef, size(result, 1))
-        result[idx1[1]:idx2[1], k] = first
-        for i in 2:length(g)
-            result[idx1[i]:idx2[i], k] = v(g[i])
+        output_iterator = (v(ig) for ig in g)
+        if first(output_iterator) isa AbstractVector 
+            first(output_iterator)
+            T = mapreduce(eltype, promote_type, output_iterator)
+            if length(first(output_iterator)) != size(g[1], 1)
+                throw("If a function returns a vector, the result " * 
+                      "must have the same length as the groups it " *
+                      "operates on")
+            end
+        else 
+            T = mapreduce(typeof, promote_type, output_iterator)
+        end
+        result[k] = Vector{T}(undef, size(result, 1))
+        for (i, output) in enumerate(output_iterator)
+            result[idx1[i]:idx2[i], k] = output
         end
     end
-    return result
+    result
 end
 
 function transform_helper(x, args...)

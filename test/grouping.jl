@@ -22,4 +22,8 @@ d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 2, 2, 3, 
 g = groupby(d, :x, sort=true)
 @test @based_on(g, nsum = sum(:n))[:nsum] == [99, 84, 27]
 
+d = DataFrame(a = [1,1,1,2,2], b = [1,2,3,missing,missing])
+g = groupby(d, :a)
+@test isequal(@transform(g, t = mean(:b))[:t], [2.0, 2.0, 2.0, missing, missing])
+
 end # module
