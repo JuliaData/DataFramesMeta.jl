@@ -385,31 +385,44 @@ function transform(d::Union{AbstractDataFrame, AbstractDict}; kwargs...)
     return result
 end
 
-
 function transform(g::GroupedDataFrame; kwargs...)
     result = DataFrame(g)
     idx2 = cumsum(Int[size(g[i],1) for i in 1:length(g)])
     idx1 = [1; 1 .+ idx2[1:end-1]]
-
     for (k, v) in kwargs
-        output_iterator = (v(ig) for ig in g)
-        if first(output_iterator) isa AbstractVector 
-            first(output_iterator)
-            T = mapreduce(eltype, promote_type, output_iterator)
-            if length(first(output_iterator)) != size(g[1], 1)
+        first = v(g[1])
+        if first isa AbstractVector 
+            if length(first) != size(g[1], 1)
                 throw("If a function returns a vector, the result " * 
                       "must have the same length as the groups it " *
                       "operates on")
             end
+            result[k] = Array{eltype(first)}(undef, size(result, 1))
+            result[idx1[1]:idx2[1], k] = first
+            for i in 2:length(g)
+                out = v(g[i])
+                S = eltype(out)
+                T = eltype(result[k])
+                if !(S <: T)
+                    result[k] = copyto!(similar(result[k]), promote_type(S, T), result[k])
+                end
+                result[idx1[i]:idx2[i], k] = out
+            end
         else 
-            T = mapreduce(typeof, promote_type, output_iterator)
-        end
-        result[k] = Vector{T}(undef, size(result, 1))
-        for (i, output) in enumerate(output_iterator)
-            result[idx1[i]:idx2[i], k] = output
+            result[k] = Array{typeof(first)}(undef, size(result, 1))
+            result[idx1[1]:idx2[1], k] = first
+            for i in 2:length(g)
+                out = v(g[i])
+                S = typeof(out)
+                T = eltype(result[k])
+                if !(S <: T)
+                    result[k] = copyto!(similar(result[k]), promote_type(S, T), result[k])
+                end
+                result[idx1[i]:idx2[i], k] = out
+            end
         end
     end
-    result
+    return result
 end
 
 function transform_helper(x, args...)
