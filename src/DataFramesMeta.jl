@@ -1,7 +1,7 @@
 module DataFramesMeta
 
 using DataFrames 
-using Tables
+using Tables: allocatecolumn
 # Basics:
 export @with, @where, @orderby, @transform, @by, @based_on, @select
 
@@ -410,7 +410,7 @@ function transform(g::GroupedDataFrame; kwargs...)
                 T = eltype(t)
                 if !(S <: T || promote_type(S, T) <: T)
                     t = copyto!(Tables.allocatecolumn(promote_type(S, T), size(result, 1)), 
-                                t[1:idx2[i-1]])
+                                1, t, 1, idx2[i-1])
                 end
                 t[idx1[i]:idx2[i]] = out
             end
@@ -423,7 +423,7 @@ function transform(g::GroupedDataFrame; kwargs...)
                 T = eltype(t)
                 if !(S <: T || promote_type(S, T) <: T)
                     t = copyto!(Tables.allocatecolumn(promote_type(S, T), size(result, 1)), 
-                                t[1:idx2[i-1]])
+                                1, t, 1, idx2[i-1])
                 end
                 t[idx1[i]:idx2[i]] .= out
             end
