@@ -26,5 +26,6 @@ g = groupby(d, :x, sort=true)
 d = DataFrame(a = [1,1,1,2,2], b = [1,2,3,missing,missing])
 g = groupby(d, :a)
 @test isequal(@transform(g, t = mean(:b))[:t], [2.0, 2.0, 2.0, missing, missing])
+@test isequal(@transform(g, t = fill(:b[1], length(:b))), [1, 1, 1, missing, missing])
 
 end # module
