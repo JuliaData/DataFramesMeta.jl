@@ -6,6 +6,7 @@ using Test
 using DataFrames
 using DataFramesMeta
 using Statistics
+using Tables
 
 d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 2, 2, 3, 1, 1, 2])
 g = groupby(d, :x, sort=true)

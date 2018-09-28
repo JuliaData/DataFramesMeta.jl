@@ -1,6 +1,7 @@
 module DataFramesMeta
 
-using DataFrames
+using DataFrames 
+import Tables: allocatecolumn
 
 # Basics:
 export @with, @where, @orderby, @transform, @by, @based_on, @select
@@ -397,30 +398,33 @@ function transform(g::GroupedDataFrame; kwargs...)
                       "must have the same length as the groups it " *
                       "operates on")
             end
-            result[k] = Array{eltype(first)}(undef, size(result, 1))
-            result[idx1[1]:idx2[1], k] = first
+            t = Tables.allocatecolumn(eltype(first), size(result, 1))
+            t[idx1[1]:idx2[1]] = first
             for i in 2:length(g)
                 out = v(g[i])
                 S = eltype(out)
-                T = eltype(result[k])
-                if !(S <: T)
-                    result[k] = copyto!(similar(result[k]), promote_type(S, T), result[k])
+                T = eltype(t)
+                if !(S <: T || promote_type(S, T) <: T)
+                    t = copyto!(Tables.allocatecolumn(promote_type(S, T), size(result, 1)), 
+                        t[1:idx2[i-1]])
                 end
-                result[idx1[i]:idx2[i], k] = out
+                t[idx1[i]:idx2[i]] = out
             end
         else 
-            result[k] = Array{typeof(first)}(undef, size(result, 1))
-            result[idx1[1]:idx2[1], k] = first
+            t = Tables.allocatecolumn(typeof(first), size(result, 1))
+            t[idx1[1]:idx2[1]] .= first
             for i in 2:length(g)
                 out = v(g[i])
                 S = typeof(out)
-                T = eltype(result[k])
-                if !(S <: T)
-                    result[k] = copyto!(similar(result[k]), promote_type(S, T), result[k])
+                T = eltype(t)
+                if !(S <: T || promote_type(S, T) <: T)
+                    t = copyto!(Tables.allocatecolumn(promote_type(S, T), size(result, 1)), 
+                        t[1:idx2[i-1]])
                 end
-                result[idx1[i]:idx2[i], k] = out
+                t[idx1[i]:idx2[i]] .= out
             end
         end
+        result[k] = t
     end
     return result
 end
