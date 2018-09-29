@@ -1,7 +1,6 @@
 module DataFramesMeta
 
-using DataFrames
-using Tables: allocatecolumn
+using DataFrames, Tables
 # Basics:
 export @with, @where, @orderby, @transform, @by, @based_on, @select
 
