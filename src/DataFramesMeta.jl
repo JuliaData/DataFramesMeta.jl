@@ -405,6 +405,10 @@ function transform(g::GroupedDataFrame; kwargs...)
                     throw("If a function returns a vector, the result " * 
                           "must have the same length as the groups it operates on")
                 end
+                if !(out isa AbstractVector)
+                    throw("return value must not change its kind (single " *
+                          "value, named tuple, vector or data frame) across groups")
+                end
                 S = eltype(out)
                 T = eltype(t)
                 if !(S <: T || promote_type(S, T) <: T)
@@ -418,6 +422,10 @@ function transform(g::GroupedDataFrame; kwargs...)
             t[idx1[1]:idx2[1]] .= first
             for i in 2:length(g)
                 out = v(g[i])
+                if out isa AbstractVector
+                    throw("return value must not change its kind (single " *
+                          "value, named tuple, vector or data frame) across groups")
+                end
                 S = typeof(out)
                 T = eltype(t)
                 if !(S <: T || promote_type(S, T) <: T)

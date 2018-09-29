@@ -23,8 +23,23 @@ d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 2, 2, 3, 
 g = groupby(d, :x, sort=true)
 @test @based_on(g, nsum = sum(:n))[:nsum] == [99, 84, 27]
 
-d = DataFrame(a = [1,1,1,2,2], b = [1,2,3,missing,missing])
+# Transform tests
+d = DataFrame(a = [1,1,1,2,2,3,3,1], 
+              b = Any[1,2,3,missing,missing,6.0,5.0,4], 
+              c = CategoricalArray([1,2,3,1,2,3,1,2]))
 g = groupby(d, :a)
-@test isequal(@transform(g, t = mean(:b))[:t], [2.0, 2.0, 2.0, missing, missing])
-@test isequal(@transform(g, t = fill(:b[1], length(:b))), [1, 1, 1, missing, missing])
+## Scalar output 
+# Type promotion Int -> Float
+@test @transform(g, t = :b[1])[1, :t] == 1.0
+# Type promotion Number -> Any
+@test @transform(g, t = isequal(:b[1], 1) ? :b[1] : "a")[1, :t] == 1
+## Vector output 
+# Normal use
+@test @transform(g, t = :b .- mean(:b))[:t][1, :t] == -1.5
+# Type promotion
+@test @transform(g, t = isequal(:b[1], 1) ? fill(1, length(:b)) : fill(2.0, length(:b)))[1, :t] == 1.0
+# Vectors of different types
+@test @transform(g, t = isequal(:b[1], 1) ? :b : fill("a", length(:b)))[1, :t] == 1
+# Categorical Categorical Array 
+
 end # module
