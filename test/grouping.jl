@@ -27,19 +27,27 @@ g = groupby(d, :x, sort=true)
 d = DataFrame(a = [1,1,1,2,2,3,3,1], 
               b = Any[1,2,3,missing,missing,6.0,5.0,4], 
               c = CategoricalArray([1,2,3,1,2,3,1,2]))
-g = groupby(d, :a)
+g = groupby(d, :a, sort = false)
 ## Scalar output 
 # Type promotion Int -> Float
-@test @transform(g, t = :b[1])[1, :t] == 1.0
+@test isequal(@transform(g, t = :b[1])[:t], 
+              [1.0, 1.0, 1.0, 1.0, missing, missing, 6.0, 6.0])
 # Type promotion Number -> Any
-@test @transform(g, t = isequal(:b[1], 1) ? :b[1] : "a")[1, :t] == 1
+@test (@transform(g, t = isequal(:b[1], 1) ? :b[1] : "a")[:t] .=== 
+                  [1, 1, 1, 1,"a" ,"a" ,"a" ,"a"]) |> all
 ## Vector output 
 # Normal use
-@test @transform(g, t = :b .- mean(:b))[:t][1, :t] == -1.5
+@test isequal(@transform(g, t = :b .- mean(:b))[:t],
+              [-1.5, -0.5, 0.5, 1.5, missing, missing, 0.5, -0.5])
 # Type promotion
-@test @transform(g, t = isequal(:b[1], 1) ? fill(1, length(:b)) : fill(2.0, length(:b)))[1, :t] == 1.0
+@test (@transform(g, t = isequal(:b[1], 1) ? fill(1, length(:b)) : fill(2.0, length(:b)))[:t] .=== 
+                  [1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0]) |> all
 # Vectors of different types
-@test @transform(g, t = isequal(:b[1], 1) ? :b : fill("a", length(:b)))[1, :t] == 1
+@test (@transform(g, t = isequal(:b[1], 1) ? :b : fill("a", length(:b)))[:t] .=== 
+                  [1, 2, 3, 4, "a", "a", "a", "a"]) |> all
 # Categorical Categorical Array 
-
+# Scalar
+@test @transform(g, t = :c[1])[:t] == CategoricalArray([1, 1, 1, 1, 1, 1, 3, 3])
+# Vector 
+@test @transform(g, t = :c)[:t] == CategoricalArray([1, 2, 3, 2, 1, 2, 3, 1])
 end # module

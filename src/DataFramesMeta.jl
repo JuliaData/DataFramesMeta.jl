@@ -400,13 +400,11 @@ function transform(g::GroupedDataFrame; kwargs...)
             t[idx1[1]:idx2[1]] = first
             for i in 2:length(g)
                 out = v(g[i])
-                if length(out) != size(g[i], 1)
+                if !(out isa AbstractVector)
+                    throw("Return value must be an `AbstractVector` for all groups or for none of them")
+                elseif length(out) != size(g[i], 1)
                     throw("If a function returns a vector, the result " * 
                           "must have the same length as the groups it operates on")
-                end
-                if !(out isa AbstractVector)
-                    throw("return value must not change its kind (single " *
-                          "value, named tuple, vector or data frame) across groups")
                 end
                 S = eltype(out)
                 T = eltype(t)
@@ -416,14 +414,13 @@ function transform(g::GroupedDataFrame; kwargs...)
                 end
                 t[idx1[i]:idx2[i]] = out
             end
-        else 
+        else
             t = Tables.allocatecolumn(typeof(first), size(result, 1))
-            t[idx1[1]:idx2[1]] .= first
+            t[idx1[1]:idx2[1]] = fill(first, size(g[1],1))
             for i in 2:length(g)
                 out = v(g[i])
                 if out isa AbstractVector
-                    throw("return value must not change its kind (single " *
-                          "value, named tuple, vector or data frame) across groups")
+                    throw("Return value must be an `AbstractVector` for all groups or for none of them")
                 end
                 S = typeof(out)
                 T = eltype(t)
@@ -431,7 +428,7 @@ function transform(g::GroupedDataFrame; kwargs...)
                     t = copyto!(Tables.allocatecolumn(promote_type(S, T), size(result, 1)), 
                                 1, t, 1, idx2[i-1])
                 end
-                t[idx1[i]:idx2[i]] .= out
+                t[idx1[i]:idx2[i]] = fill(out, size(g[i],1))
             end
         end
         result[k] = t
