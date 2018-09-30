@@ -416,7 +416,7 @@ function transform(g::GroupedDataFrame; kwargs...)
             end
         else
             t = Tables.allocatecolumn(typeof(first), size(result, 1))
-            t[idx1[1]:idx2[1]] = fill(first, size(g[1],1))
+            @views fill!(t[idx1[1]:idx2[1]], first)
             for i in 2:length(g)
                 out = v(g[i])
                 if out isa AbstractVector
@@ -428,7 +428,7 @@ function transform(g::GroupedDataFrame; kwargs...)
                     t = copyto!(Tables.allocatecolumn(promote_type(S, T), size(result, 1)), 
                                 1, t, 1, idx2[i-1])
                 end
-                t[idx1[i]:idx2[i]] = fill(out, size(g[i],1))
+                @views fill!(t[idx1[i]:idx2[i]], out)
             end
         end
         result[k] = t

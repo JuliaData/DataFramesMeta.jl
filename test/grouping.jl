@@ -30,24 +30,33 @@ d = DataFrame(a = [1,1,1,2,2,3,3,1],
 g = groupby(d, :a, sort = false)
 ## Scalar output 
 # Type promotion Int -> Float
-@test isequal(@transform(g, t = :b[1])[:t], 
-              [1.0, 1.0, 1.0, 1.0, missing, missing, 6.0, 6.0])
+t = @transform(g, t = :b[1])[:t] 
+correct = [1.0, 1.0, 1.0, 1.0, missing, missing, 6.0, 6.0]
+@test all(t .=== correct) && typeof(t) == typeof(correct)
 # Type promotion Number -> Any
-@test (@transform(g, t = isequal(:b[1], 1) ? :b[1] : "a")[:t] .=== 
-                  [1, 1, 1, 1,"a" ,"a" ,"a" ,"a"]) |> all
+t = @transform(g, t = isequal(:b[1], 1) ? :b[1] : "a")[:t]
+correct = Any[1, 1, 1, 1,"a" ,"a" ,"a" ,"a"]
+@test all(t .=== correct) && typeof(t) == typeof(correct)
 ## Vector output 
 # Normal use
-@test isequal(@transform(g, t = :b .- mean(:b))[:t],
-              [-1.5, -0.5, 0.5, 1.5, missing, missing, 0.5, -0.5])
+t = @transform(g, t = :b .- mean(:b))[:t]
+correct = Union{Float64, Missing}[-1.5, -0.5, 0.5, 1.5, missing, missing, 0.5, -0.5]
+@test all(t .=== correct) && typeof(t) == typeof(correct)
 # Type promotion
-@test (@transform(g, t = isequal(:b[1], 1) ? fill(1, length(:b)) : fill(2.0, length(:b)))[:t] .=== 
-                  [1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0]) |> all
+t = @transform(g, t = isequal(:b[1], 1) ? fill(1, length(:b)) : fill(2.0, length(:b)))[:t] 
+correct = Float64[1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0]
+@test all(t .=== correct) && typeof(t) == typeof(correct)
 # Vectors of different types
-@test (@transform(g, t = isequal(:b[1], 1) ? :b : fill("a", length(:b)))[:t] .=== 
-                  [1, 2, 3, 4, "a", "a", "a", "a"]) |> all
+t = @transform(g, t = isequal(:b[1], 1) ? :b : fill("a", length(:b)))[:t]
+correct = Any[1, 2, 3, 4, "a", "a", "a", "a"]
+@test all(t .=== correct) && typeof(t) == typeof(correct)
 # Categorical Categorical Array 
 # Scalar
-@test @transform(g, t = :c[1])[:t] == CategoricalArray([1, 1, 1, 1, 1, 1, 3, 3])
+t = @transform(g, t = :c[1])[:t]
+correct = CategoricalArray([1, 1, 1, 1, 1, 1, 3, 3])
+@test all(isequal.(t, correct)) && typeof(t) == typeof(correct)
 # Vector 
-@test @transform(g, t = :c)[:t] == CategoricalArray([1, 2, 3, 2, 1, 2, 3, 1])
+t = @transform(g, t = :c)[:t]
+correct = CategoricalArray([1, 2, 3, 2, 1, 2, 3, 1])
+@test all(isequal.(t, correct)) && typeof(t) == typeof(correct)
 end # module
