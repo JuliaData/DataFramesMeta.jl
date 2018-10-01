@@ -53,10 +53,10 @@ t = @transform(g, t = isequal(:b[1], 1) ? :b : fill("a", length(:b)))[:t]
 # Categorical Array 
 # Scalar
 t = @transform(g, t = :c[1])[:t]
-correct = CategoricalArray([1, 1, 1, 1, 1, 1, 3, 3])
-@test isequal(t, correct) && typeof(t) == typeof(correct)
+@test isequal(t, CategoricalArray([1, 1, 1, 1, 1, 1, 3, 3])) && 
+      t isa CategoricalVector{Int}
 # Vector 
 t = @transform(g, t = :c)[:t]
-correct = CategoricalArray([1, 2, 3, 2, 1, 2, 3, 1])
-@test isequal(t, correct) && typeof(t) == typeof(correct)
+@test isequal(t, CategoricalArray([1, 2, 3, 2, 1, 2, 3, 1])) && 
+      t isa CategoricalVector{Int}
 end # module
