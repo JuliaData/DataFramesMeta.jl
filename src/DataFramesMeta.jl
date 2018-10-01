@@ -398,10 +398,10 @@ function transform(g::GroupedDataFrame; kwargs...)
             end
             t = Tables.allocatecolumn(eltype(first), size(result, 1))
             t[idx1[1]:idx2[1]] = first
-            for i in 2:length(g)
+            @inbounds for i in 2:length(g)
                 out = v(g[i])
                 if !(out isa AbstractVector)
-                    throw("Return value must be an `AbstractVector` for all groups or for none of them")
+                    throw(ArgumentError("Return value must be an `AbstractVector` for all groups or for none of them"))
                 elseif length(out) != size(g[i], 1)
                     throw("If a function returns a vector, the result " * 
                           "must have the same length as the groups it operates on")
@@ -417,10 +417,10 @@ function transform(g::GroupedDataFrame; kwargs...)
         else
             t = Tables.allocatecolumn(typeof(first), size(result, 1))
             @views fill!(t[idx1[1]:idx2[1]], first)
-            for i in 2:length(g)
+            @inbounds for i in 2:length(g)
                 out = v(g[i])
                 if out isa AbstractVector
-                    throw("Return value must be an `AbstractVector` for all groups or for none of them")
+                    throw(ArgumentError("Return value must be an `AbstractVector` for all groups or for none of them"))
                 end
                 S = typeof(out)
                 T = eltype(t)
