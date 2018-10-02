@@ -387,54 +387,60 @@ end
 
 function transform(g::GroupedDataFrame; kwargs...)
     result = DataFrame(g)
-    idx2 = cumsum(Int[size(g[i],1) for i in 1:length(g)])
-    idx1 = [1; 1 .+ idx2[1:end-1]]
+    ends = cumsum(Int[size(g[i],1) for i in 1:length(g)])
+    starts = [1; 1 .+ ends[1:end-1]]
     for (k, v) in kwargs
         first = v(g[1])
         if first isa AbstractVector 
-            if length(first) != size(g[1], 1)
-                throw(ArgumentError("If a function returns a vector, the result " * 
-                                    "must have the same length as the groups it operates on"))
-            end
             t = Tables.allocatecolumn(eltype(first), size(result, 1))
-            t[idx1[1]:idx2[1]] = first
-            @inbounds for i in 2:length(g)
-                out = v(g[i])
-                if !(out isa AbstractVector)
-                    throw(ArgumentError("Return value must be an `AbstractVector` for all groups or for none of them"))
-                elseif length(out) != size(g[i], 1)
-                    throw(ArgumentError("If a function returns a vector, the result " * 
-                                        "must have the same length as the groups it operates on"))
-                end
-                S = eltype(out)
-                T = eltype(t)
-                if !(S <: T || promote_type(S, T) <: T)
-                    t = copyto!(Tables.allocatecolumn(promote_type(S, T), size(result, 1)), 
-                                1, t, 1, idx2[i-1])
-                end
-                t[idx1[i]:idx2[i]] = out
-            end
-        else
+            t = _transform!(t, 1, first, first, g, v, starts, ends)
+        else 
             t = Tables.allocatecolumn(typeof(first), size(result, 1))
-            @views fill!(t[idx1[1]:idx2[1]], first)
-            @inbounds for i in 2:length(g)
-                out = v(g[i])
-                if out isa AbstractVector
-                    throw(ArgumentError("Return value must be an `AbstractVector` for all groups or for none of them"))
-                end
-                S = typeof(out)
-                T = eltype(t)
-                if !(S <: T || promote_type(S, T) <: T)
-                    t = copyto!(Tables.allocatecolumn(promote_type(S, T), size(result, 1)), 
-                                1, t, 1, idx2[i-1])
-                end
-                @views fill!(t[idx1[i]:idx2[i]], out)
-            end
+            t = _transform!(t, 1, first, first, g, v, starts, ends)
         end
         result[k] = t
     end
     return result
 end
+
+function _transform!(t::AbstractVector, i::Int, previous::AbstractVector, current::AbstractVector, g::GroupedDataFrame, v::Function, starts::Vector, ends::Vector)
+    if !(current isa AbstractVector)
+        throw(ArgumentError("Return value must be an `AbstractVector` for all groups or for none of them"))
+    elseif length(current) != size(g[i], 1)
+        throw(ArgumentError("If a function returns a vector, the result " * 
+                            "must have the same length as the groups it operates on"))
+    end
+    S = eltype(current)
+    T = eltype(previous)
+    if !(S <: T || promote_type(S, T) <: T)
+        t = copyto!(Tables.allocatecolumn(promote_type(S, T), length(t)), 
+                    1, t, 1, ends[i-1])
+    end
+    t[starts[i]:ends[i]] = current
+    if i != length(g) 
+        return _transform!(t, i + 1, current, v(g[i+1]), g, v, starts, ends)
+    else 
+        return t
+    end
+end 
+
+function _transform!(t::AbstractVector, i::Int, previous::Any, current::Any, g::GroupedDataFrame, v::Function, starts::Vector, ends::Vector)
+    if (current isa AbstractVector)
+        throw(ArgumentError("Return value must be an `AbstractVector` for all groups or for none of them"))
+    end
+    S = typeof(current)
+    T = typeof(previous)
+    if !(S <: T || promote_type(S, T) <: T)
+        t = copyto!(Tables.allocatecolumn(promote_type(S, T), length(t)), 
+                    1, t, 1, ends[i-1])
+    end
+    @views fill!(t[starts[i]:ends[i]], current)
+    if i != length(g) 
+        return _transform!(t, i + 1, current, v(g[i+1]), g, v, starts, ends)
+    else 
+        return t
+    end
+end 
 
 function transform_helper(x, args...)
     quote
