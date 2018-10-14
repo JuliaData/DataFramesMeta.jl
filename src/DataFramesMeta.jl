@@ -33,7 +33,7 @@ replace_syms!(e::Expr, membernames) =
         e.args[2]
     elseif onearg(e, :_I_)
         @warn "_I_() for escaping variables is deprecated, use cols() instead"
-        addkey!(membernames, :($(e.args[2])))     
+        addkey!(membernames, :($(e.args[2])))
     elseif onearg(e, :cols)
         addkey!(membernames, :($(e.args[2])))
     elseif e.head == :quote
@@ -189,7 +189,11 @@ end
 
 where(d::AbstractDataFrame, arg) = d[arg, :]
 where(d::AbstractDataFrame, f::Function) = d[f(d), :]
+where(d::AbstractDataFrame, f_tuple::Tuple{Function, Expr}) =
+    where(d, f_tuple[1])
 where(g::GroupedDataFrame, f::Function) = g[Bool[f(x) for x in g]]
+where(d::GroupedDataFrame, f_tuple::Tuple{Function, Expr}) =
+    where(d, f_tuple[1])
 
 and(x, y) = :($x .& $y)
 
@@ -307,7 +311,11 @@ function orderby(d::AbstractDataFrame, args...)
 end
 
 orderby(d::AbstractDataFrame, f::Function) = d[sortperm(f(d)), :]
+order_by(d::AbstractDataFrame, f_tuple::Tuple{Function, Expr}) =
+    orderby(d, f_tuple[1])
 orderby(g::GroupedDataFrame, f::Function) = g[sortperm([f(x) for x in g])]
+order_by(d::GroupedDataFrame, f_tuple::Tuple{Function, Expr}) =
+    orderby(d, f_tuple[1])
 
 orderbyconstructor(d::AbstractDataFrame) = (x...) -> DataFrame(Any[x...], Symbol.(1:length(x)))
 orderbyconstructor(d) = x -> x
@@ -385,6 +393,8 @@ function transform(d::Union{AbstractDataFrame, AbstractDict}; kwargs...)
     end
     return result
 end
+transform(d::Union{AbstractDataFrame, AbstractDict}; kwarg_tuples::Tuple{Function, Expr}...) =
+    transform(d, map(x -> x[1], kwarg_tuples)...)
 
 function transform(g::GroupedDataFrame; kwargs...)
     result = DataFrame(g)
@@ -400,6 +410,8 @@ function transform(g::GroupedDataFrame; kwargs...)
     end
     return result
 end
+transform(::GroupedDataFrame; kwarg_tuples::Tuple{Function, Expr}...) =
+    transform(g, map(x -> x[1], kwarg_tuples)...)
 
 function transform_helper(x, args...)
     quote
