@@ -46,7 +46,7 @@ t = @transform(g, t = :b .- mean(:b))[:t]
 t = @transform(g, t = isequal(:b[1], 1) ? fill(1, length(:b)) : fill(2.0, length(:b)))[:t] 
 @test isequal(t, [1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0]) && 
       t isa Vector{Float64}
-# Vectors of different types
+# Vectors whose eltypes promote to any
 t = @transform(g, t = isequal(:b[1], 1) ? :b : fill("a", length(:b)))[:t]
 @test isequal(t, [1, 2, 3, 4, "a", "a", "a", "a"]) && 
       t isa Vector{Any}
