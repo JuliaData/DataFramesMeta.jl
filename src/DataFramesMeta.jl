@@ -392,54 +392,79 @@ function transform(g::GroupedDataFrame; kwargs...)
     lengths = [ends[i] - starts[i] + 1 for i in 1:length(starts)]
     for (k, v) in kwargs
         first = v(g[1])
-        if first isa AbstractVector 
-            t = Tables.allocatecolumn(eltype(first), size(result, 1))
-            t[starts[1]:ends[1]] = first
+        if first isa AbstractVector
+            t = _transform!(Tables.allocatecolumn(eltype(first), size(result, 1)), first, 1, g, v, starts, ends)
         else 
-            t = Tables.allocatecolumn(typeof(first), size(result, 1))
-            @views fill!(t[starts[1]:ends[1]], first)
-        end
-        @inbounds for i in 2:length(g)
-            t = _transform!(t, i, v(g[i]), starts, ends, lengths)
+            t = _transform!(Tables.allocatecolumn(typeof(first), size(result, 1)), first, 1, g, v, starts, ends)
         end
         result[k] = t
     end
     return result
 end
 
-function _transform!(t::AbstractVector, i::Int, out::AbstractVector, starts::Vector, ends::Vector, lengths::Vector)
+function _transform!(t::AbstractVector, first::AbstractVector, start::Int, g::GroupedDataFrame, v::Function, starts::Vector, ends::Vector)
+    # handle the first case 
+    j = fill_column_vec!(t, first, starts[start], ends[start], size(g[start], 1))
+    @assert j === nothing
+    for i in (start+1):length(g)
+        out = v(g[i])
+        promoted = fill_column_vec!(t, out, starts[i], ends[i], size(g[i], 1))
+        if !(promoted === nothing)
+             t = copyto!(Tables.allocatecolumn(promoted, length(t)), 
+                         1, t, 1, ends[i-1])
+             _transform!(t, out, i, g, v, starts, ends)
+         end
+    end
+    return t
+end
+
+function _transform!(t::AbstractVector, first::Any, start::Int, g::GroupedDataFrame, v::Function, starts::Vector, ends::Vector)
+    # handle the first case 
+    j = fill_column_any!(t, first, starts[start], ends[start])
+    @assert j === nothing
+    for i in (start+1):length(g)
+        out = v(g[i])
+        promoted = fill_column_any!(t, out, starts[i], ends[i])
+        if !(promoted === nothing)
+             t = copyto!(Tables.allocatecolumn(promoted, length(t)), 
+                         1, t, 1, ends[i-1])
+             _transform!(t, out, i, g, v, starts, ends)
+         end
+    end
+    return t
+end
+
+function fill_column_vec!(t::AbstractVector, out, startpoint::Int, endpoint::Int, len::Int)
     if !(out isa AbstractVector)
          throw(ArgumentError("Return value must be an `AbstractVector` for all groups or for none of them"))
-    elseif length(out) != lengths[i]
+    elseif length(out) != len
         throw(ArgumentError("If a function returns a vector, the result " * 
-                            "must have the same length as the groups it operates on"))
-    end
+                            "must have the same length as the groups it operates on"))    
+    end     
     elout = eltype(out)
     T = eltype(t)
     promoted = promote_type(elout, T)
-    if !(elout <: T || promoted <: T)
-        t = copyto!(Tables.allocatecolumn(promoted, length(t)), 
-                    1, t, 1, ends[i-1])
-        return _transform!(t, i, out, starts, ends, lengths)
+    if (elout <: T || promoted <: T)
+        t[startpoint:endpoint] = out
+    else 
+        return promoted
     end
-    t[starts[i]:ends[i]] = out
-    return t
+    return nothing 
 end 
 
-function _transform!(t::AbstractVector, i::Int, out::Any, starts::Vector, ends::Vector, lengths::Vector)
+function fill_column_any!(t::AbstractVector, out, startpoint::Int, endpoint::Int)
     if (out isa AbstractVector)
-        throw(ArgumentError("Return value must be an `AbstractVector` for all groups or for none of them"))
-    end
+         throw(ArgumentError("Return value must be an `AbstractVector` for all groups or for none of them"))
+    end     
     typout = typeof(out)
     T = eltype(t)
     promoted = promote_type(typout, T)
-    if !(typout <: T || promoted <: T)
-        t = copyto!(Tables.allocatecolumn(promoted, length(t)), 
-                    1, t, 1, ends[i-1])
-        return _transform!(t, i, out, starts, ends, lengths)
+    if (typout <: T || promoted <: T)
+        @views t[startpoint:endpoint] .= Ref(out)
+    else 
+        return promoted
     end
-    @views fill!(t[starts[i]:ends[i]], out)
-    return t
+    return nothing 
 end 
 
 function transform_helper(x, args...)
