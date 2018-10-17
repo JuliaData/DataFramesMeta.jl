@@ -405,9 +405,29 @@ end
 
 function _transform!(t::AbstractVector, first::AbstractVector, start::Int, 
                      g::GroupedDataFrame, v::Function, starts::Vector, ends::Vector)
+    @inline function fill_column_vec!(t::AbstractVector, out, startpoint::Int, endpoint::Int, len::Int)
+        if !(out isa AbstractVector)
+            throw(ArgumentError("Return value must be an `AbstractVector` for all groups or" *
+                                "for none of them"))
+        elseif length(out) != len
+            throw(ArgumentError("If a function returns a vector, the result " * 
+                                "must have the same length as the groups it operates on"))    
+        end     
+        elout = eltype(out)
+        T = eltype(t)
+        newtype = promote_type(elout, T)
+        if elout <: T || newtype <: T
+           t[startpoint:endpoint] = out
+            return nothing 
+        else 
+            return newtype
+        end
+        return nothing
+    end 
+
     # handle the first case 
-    newtype = fill_column_vec!(t, first, starts[start], ends[start], size(g[start], 1))
-    @assert newtype === nothing
+    newtype_first = fill_column_vec!(t, first, starts[start], ends[start], size(g[start], 1))
+    #@assert newtype_first === nothing
     @inbounds for i in (start+1):length(g)
         out = v(g[i])
         newtype = fill_column_vec!(t, out, starts[i], ends[i], size(g[i], 1))
@@ -422,9 +442,24 @@ end
 
 function _transform!(t::AbstractVector, first::Any, start::Int, 
                      g::GroupedDataFrame, v::Function, starts::Vector, ends::Vector)
+    @inline function fill_column_any!(t::AbstractVector, out, startpoint::Int, endpoint::Int)
+        if out isa AbstractVector
+            throw(ArgumentError("Return value must be an `AbstractVector` for all groups or" *
+                                 "for none of them"))
+        end     
+        typout = typeof(out)
+        T = eltype(t)
+        newtype = promote_type(typout, T)
+        if typout <: T || newtype <: T
+            t[startpoint:endpoint] .= Ref(out)
+            return nothing
+        else 
+            return newtype
+        end
+    end 
     # handle the first case 
-    newtype = fill_column_any!(t, first, starts[start], ends[start])
-    @assert newtype === nothing
+    newtype_first = fill_column_any!(t, first, starts[start], ends[start])
+    #@assert newtype_first === nothing
     @inbounds for i in (start+1):length(g)
         out = v(g[i])
         newtype = fill_column_any!(t, out, starts[i], ends[i])
@@ -435,42 +470,8 @@ function _transform!(t::AbstractVector, first::Any, start::Int,
          end
     end
     return t
+
 end
-
-function fill_column_vec!(t::AbstractVector, out, startpoint::Int, endpoint::Int, len::Int)
-    if !(out isa AbstractVector)
-        throw(ArgumentError("Return value must be an `AbstractVector` for all groups or" *
-                            "for none of them"))
-    elseif length(out) != len
-        throw(ArgumentError("If a function returns a vector, the result " * 
-                            "must have the same length as the groups it operates on"))    
-    end     
-    elout = eltype(out)
-    T = eltype(t)
-    newtype = promote_type(elout, T)
-    if elout <: T || newtype <: T
-        t[startpoint:endpoint] = out
-        return nothing 
-    else 
-        return newtype
-    end
-end 
-
-function fill_column_any!(t::AbstractVector, out, startpoint::Int, endpoint::Int)
-    if out isa AbstractVector
-        throw(ArgumentError("Return value must be an `AbstractVector` for all groups or" *
-                             "for none of them"))
-    end     
-    typout = typeof(out)
-    T = eltype(t)
-    newtype = promote_type(typout, T)
-    if typout <: T || newtype <: T
-        t[startpoint:endpoint] .= Ref(out)
-        return nothing
-    else 
-        return newtype
-    end
-end 
 
 function transform_helper(x, args...)
     quote
