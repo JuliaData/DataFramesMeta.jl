@@ -394,9 +394,11 @@ function transform(g::GroupedDataFrame; kwargs...)
     for (k, v) in kwargs
         first = v(g[1])
         if first isa AbstractVector
-            t = _transform!(Tables.allocatecolumn(eltype(first), size(result, 1)), first, 1, g, v, starts, ends)
+            t = _transform!(Tables.allocatecolumn(eltype(first), size(result, 1)), 
+                            first, 1, g, v, starts, ends)
         else 
-            t = _transform!(Tables.allocatecolumn(typeof(first), size(result, 1)), first, 1, g, v, starts, ends)
+            t = _transform!(Tables.allocatecolumn(typeof(first), size(result, 1)), 
+                            first, 1, g, v, starts, ends)
         end
         result[k] = t
     end
@@ -405,7 +407,8 @@ end
 
 function _transform!(t::AbstractVector, first::AbstractVector, start::Int, 
                      g::GroupedDataFrame, v::Function, starts::Vector, ends::Vector)
-    @inline function fill_column_vec!(t::AbstractVector, out, startpoint::Int, endpoint::Int, len::Int)
+    @inline function fill_column_vec!(t::AbstractVector, out, startpoint::Int, endpoint::Int, 
+                                      len::Int)
         if !(out isa AbstractVector)
             throw(ArgumentError("Return value must be an `AbstractVector` for all groups or" *
                                 "for none of them"))
