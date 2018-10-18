@@ -39,7 +39,7 @@ end
 function dot8(a::Vector, b::Vector)
     x = 0.0
     for i in 1:length(a)
-        if !(isnan(a[i]) || isnan(a[i]))
+        if !(isnan(a[i]) || isnan(b[i]))
             x += a[i] * b[i]
         end
     end
