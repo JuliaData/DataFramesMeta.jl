@@ -3,7 +3,7 @@ module DataFramesMeta
 using DataFrames, Tables
 
 # Basics:
-export @with, @where, @orderby, @transform, @by, @based_on, @select
+export @with, @where, @orderby, @transform, @transform!, @by, @based_on, @select, @select!
 
 include("linqmacro.jl")
 include("byrow.jl")
@@ -378,14 +378,18 @@ end
 ##
 ##############################################################################
 
-function transform(d::Union{AbstractDataFrame, AbstractDict}; kwargs...)
-    result = copy(d)
+function transform!(d::Union{AbstractDataFrame, AbstractDict}; kwargs...)
     for (k, v) in kwargs
-        result[k] = isa(v, Function) ? v(d) : v
+        d[k] = isa(v, Function) ? v(d) : v
     end
-    return result
+    return d
 end
 
+function transform(d::Union{AbstractDataFrame, AbstractDict}; kwargs...)
+    return transform!(copy(d))
+end
+
+# No mutating transform since transform returns a full DataFrame
 function transform(g::GroupedDataFrame; kwargs...)
     result = DataFrame(g)
     ends = cumsum(Int[size(g[i],1) for i in 1:length(g)])
@@ -481,6 +485,14 @@ function transform_helper(x, args...)
     end
 end
 
+function transform!_helper(x, args...)
+    quote
+        $transform!($x, $(map(args) do kw
+            Expr(:kw, kw.args[1], with_anonymous(kw.args[2]))
+        end...) )
+    end
+end
+
 """
     @transform(d, i...)
 
@@ -527,6 +539,9 @@ macro transform(x, args...)
     esc(transform_helper(x, args...))
 end
 
+macro transform!(x, args...)
+    esc(transform!_helper(x, args...))
+end
 
 ##############################################################################
 ##
@@ -690,6 +705,18 @@ end
 ##
 ##############################################################################
 
+function select!(d::Union{AbstractDataFrame, AbstractDict}; kwargs...)
+    tokeep = [k for (k, v) in kwargs]
+    
+    todrop = setdiff(names(d), tokeep)
+    deletecols!(d, todrop)
+
+    for (k, v) in kwargs
+        d[k] = v
+    end
+    return d
+end
+
 
 function select(d::Union{AbstractDataFrame, AbstractDict}; kwargs...)
     result = typeof(d)()
@@ -723,6 +750,16 @@ function select_helper(x, args...)
     quote
         let $DF = $x
             $(with_helper(DF, :($select($DF, $(map(expandargs, args)...)))))
+        end
+    end
+end
+
+function select!_helper(x, args...)
+    DF = gensym()
+    select_args = with_helper(DF, :($select!($DF, $(map(expandargs, args)...))))
+    quote
+        let $DF = $x
+            $(with_helper(DF, :($select!($DF, $(map(expandargs, args)...)))))
         end
     end
 end
@@ -796,6 +833,10 @@ julia> @select(df, :c, x = :b + :c)
 """
 macro select(x, args...)
     esc(select_helper(x, args...))
+end
+
+macro select!(x, args...)
+    esc(select!_helper(x, args...))
 end
 
 
