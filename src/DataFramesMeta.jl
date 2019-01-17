@@ -283,14 +283,6 @@ macro where(d, args...)
 end
 
 
-##############################################################################
-##
-## select - select columns
-##
-##############################################################################
-
-select(d::AbstractDataFrame, arg) = d[arg]
-
 
 ##############################################################################
 ##
@@ -392,16 +384,25 @@ end
 # No mutating transform since transform returns a full DataFrame
 function transform(g::GroupedDataFrame; kwargs...)
     result = DataFrame(g)
+    return _transform!(result, g; kwargs...)
+end
+
+function transform!(g::GroupedDataFrame; kwargs...)
+    result = g.parent
+    return _transform!(result, g; kwargs...)
+end
+
+function _transform!(result::AbstractDataFrame, g::GroupedDataFrame; kwargs...)
     ends = cumsum(Int[size(g[i],1) for i in 1:length(g)])
     starts = [1; 1 .+ ends[1:end-1]]
     lengths = [ends[i] - starts[i] + 1 for i in 1:length(starts)]
     for (k, v) in kwargs
         first = v(g[1])
         if first isa AbstractVector
-            t = _transform!(Tables.allocatecolumn(eltype(first), size(result, 1)), 
+            t = __transform!(Tables.allocatecolumn(eltype(first), size(result, 1)), 
                             first, 1, g, v, starts, ends)
         else 
-            t = _transform!(Tables.allocatecolumn(typeof(first), size(result, 1)), 
+            t = __transform!(Tables.allocatecolumn(typeof(first), size(result, 1)), 
                             first, 1, g, v, starts, ends)
         end
         result[k] = t
@@ -409,7 +410,7 @@ function transform(g::GroupedDataFrame; kwargs...)
     return result
 end
 
-function _transform!(t::AbstractVector, first::AbstractVector, start::Int, 
+function __transform!(t::AbstractVector, first::AbstractVector, start::Int, 
                      g::GroupedDataFrame, v::Function, starts::Vector, ends::Vector)
     @inline function fill_column!(t::AbstractVector, out, startpoint::Int, endpoint::Int, 
                                       len::Int)
@@ -440,13 +441,13 @@ function _transform!(t::AbstractVector, first::AbstractVector, start::Int,
         if newtype !== nothing
              t = copyto!(Tables.allocatecolumn(newtype, length(t)), 
                          1, t, 1, ends[i-1])
-             _transform!(t, out, i, g, v, starts, ends)
+             __transform!(t, out, i, g, v, starts, ends)
          end
     end
     return t
 end
 
-function _transform!(t::AbstractVector, first::Any, start::Int, 
+function __transform!(t::AbstractVector, first::Any, start::Int, 
                      g::GroupedDataFrame, v::Function, starts::Vector, ends::Vector)
     @inline function fill_column!(t::AbstractVector, out, startpoint::Int, endpoint::Int)
         if out isa AbstractVector
@@ -471,7 +472,7 @@ function _transform!(t::AbstractVector, first::Any, start::Int,
         if newtype !== nothing
              t = copyto!(Tables.allocatecolumn(newtype, length(t)), 
                          1, t, 1, ends[i-1])
-             _transform!(t, out, i, g, v, starts, ends)
+             __transform!(t, out, i, g, v, starts, ends)
          end
     end
     return t
@@ -698,6 +699,13 @@ macro by(x, what, args...)
     esc(by_helper(x, what, args...))
 end
 
+##############################################################################
+##
+## select - select columns
+##
+##############################################################################
+
+select(d::AbstractDataFrame, arg) = d[arg]
 
 ##############################################################################
 ##
