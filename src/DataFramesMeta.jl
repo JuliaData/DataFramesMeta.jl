@@ -805,6 +805,6 @@ end
 ##
 ##############################################################################
 
-DataFrame(g::GroupedDataFrame) = collect(g)
+DataFrame(g::GroupedDataFrame) = combine(g)
 
 end # module
