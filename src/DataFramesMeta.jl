@@ -798,13 +798,4 @@ macro select(x, args...)
     esc(select_helper(x, args...))
 end
 
-
-##############################################################################
-##
-## Extras for GroupedDataFrames
-##
-##############################################################################
-
-DataFrame(g::GroupedDataFrame) = combine(g)
-
 end # module
