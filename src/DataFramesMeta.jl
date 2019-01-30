@@ -537,7 +537,7 @@ end
 function based_on_helper(x, args...)
     with_args =
         with_anonymous(:($DataFrame($(map(replace_equals_with_kw, args)...))))
-    :( DataFrames.combine(map($with_args, $x)))
+    :( DataFrames.DataFrame(map($with_args, $x)))
 end
 
 """
