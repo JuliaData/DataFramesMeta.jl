@@ -33,7 +33,7 @@ replace_syms!(e::Expr, membernames) =
         e.args[2]
     elseif onearg(e, :_I_)
         @warn "_I_() for escaping variables is deprecated, use cols() instead"
-        addkey!(membernames, :($(e.args[2])))     
+        addkey!(membernames, :($(e.args[2])))
     elseif onearg(e, :cols)
         addkey!(membernames, :($(e.args[2])))
     elseif e.head == :quote
@@ -394,10 +394,10 @@ function transform(g::GroupedDataFrame; kwargs...)
     for (k, v) in kwargs
         first = v(g[1])
         if first isa AbstractVector
-            t = _transform!(Tables.allocatecolumn(eltype(first), size(result, 1)), 
+            t = _transform!(Tables.allocatecolumn(eltype(first), size(result, 1)),
                             first, 1, g, v, starts, ends)
-        else 
-            t = _transform!(Tables.allocatecolumn(typeof(first), size(result, 1)), 
+        else
+            t = _transform!(Tables.allocatecolumn(typeof(first), size(result, 1)),
                             first, 1, g, v, starts, ends)
         end
         result[k] = t
@@ -405,36 +405,36 @@ function transform(g::GroupedDataFrame; kwargs...)
     return result
 end
 
-function _transform!(t::AbstractVector, first::AbstractVector, start::Int, 
+function _transform!(t::AbstractVector, first::AbstractVector, start::Int,
                      g::GroupedDataFrame, v::Function, starts::Vector, ends::Vector)
-    @inline function fill_column!(t::AbstractVector, out, startpoint::Int, endpoint::Int, 
+    @inline function fill_column!(t::AbstractVector, out, startpoint::Int, endpoint::Int,
                                       len::Int)
         if !(out isa AbstractVector)
             throw(ArgumentError("Return value must be an `AbstractVector` for all groups or" *
                                 "for none of them"))
         elseif length(out) != len
-            throw(ArgumentError("If a function returns a vector, the result " * 
-                                "must have the same length as the groups it operates on"))    
-        end     
+            throw(ArgumentError("If a function returns a vector, the result " *
+                                "must have the same length as the groups it operates on"))
+        end
         eltypout = eltype(out)
         T = eltype(t)
         if eltypout <: T || (newtype = promote_type(eltypout, T)) <: T
            t[startpoint:endpoint] = out
-            return nothing 
-        else 
+            return nothing
+        else
             return newtype
         end
         return nothing
-    end 
+    end
 
-    # handle the first case 
+    # handle the first case
     newtype_first = fill_column!(t, first, starts[start], ends[start], size(g[start], 1))
     @assert newtype_first === nothing
     @inbounds for i in (start+1):length(g)
         out = v(g[i])
         newtype = fill_column!(t, out, starts[i], ends[i], size(g[i], 1))
         if newtype !== nothing
-             t = copyto!(Tables.allocatecolumn(newtype, length(t)), 
+             t = copyto!(Tables.allocatecolumn(newtype, length(t)),
                          1, t, 1, ends[i-1])
              _transform!(t, out, i, g, v, starts, ends)
          end
@@ -442,30 +442,30 @@ function _transform!(t::AbstractVector, first::AbstractVector, start::Int,
     return t
 end
 
-function _transform!(t::AbstractVector, first::Any, start::Int, 
+function _transform!(t::AbstractVector, first::Any, start::Int,
                      g::GroupedDataFrame, v::Function, starts::Vector, ends::Vector)
     @inline function fill_column!(t::AbstractVector, out, startpoint::Int, endpoint::Int)
         if out isa AbstractVector
             throw(ArgumentError("Return value must be an `AbstractVector` for all groups or" *
                                  "for none of them"))
-        end     
+        end
         typout = typeof(out)
         T = eltype(t)
         if typout <: T || (newtype = promote_type(typout, T)) <: T
             t[startpoint:endpoint] .= Ref(out)
             return nothing
-        else 
+        else
             return newtype
         end
-    end 
-    # handle the first case 
+    end
+    # handle the first case
     newtype_first = fill_column!(t, first, starts[start], ends[start])
     @assert newtype_first === nothing
     @inbounds for i in (start+1):length(g)
         out = v(g[i])
         newtype = fill_column!(t, out, starts[i], ends[i])
         if newtype !== nothing
-             t = copyto!(Tables.allocatecolumn(newtype, length(t)), 
+             t = copyto!(Tables.allocatecolumn(newtype, length(t)),
                          1, t, 1, ends[i-1])
              _transform!(t, out, i, g, v, starts, ends)
          end
@@ -537,7 +537,7 @@ end
 function based_on_helper(x, args...)
     with_args =
         with_anonymous(:($DataFrame($(map(replace_equals_with_kw, args)...))))
-    :( DataFrames.combine(map($with_args, $x)))
+    :( DataFrames.DataFrame(map($with_args, $x)))
 end
 
 """
@@ -797,22 +797,5 @@ julia> @select(df, :c, x = :b + :c)
 macro select(x, args...)
     esc(select_helper(x, args...))
 end
-
-
-##############################################################################
-##
-## Extras for GroupedDataFrames
-##
-##############################################################################
-
-combnranges(starts, ends) = [[starts[i]:ends[i] for i in 1:length(starts)]...;]
-
-DataFrame(g::GroupedDataFrame) = g.parent[g.idx[combnranges(g.starts, g.ends)], :]
-
-Base.getindex(gd::GroupedDataFrame, I::AbstractArray{Int}) = GroupedDataFrame(gd.parent,
-                                                                              gd.cols,
-                                                                              gd.idx,
-                                                                              gd.starts[I],
-                                                                              gd.ends[I])
 
 end # module
