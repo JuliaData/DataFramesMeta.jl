@@ -606,7 +606,15 @@ end
 
 function by_helper(x, what, args...)
     :($by($x, $what,
-          $(with_anonymous(:($DataFrame($(map(replace_equals_with_kw, args)...)))))))
+          $(with_anonymous(Expr(:tuple, map(replace_kw_with_equals, args)...)))))
+end
+
+function replace_kw_with_equals(e)
+    if e.head == :kw
+        Expr(:(=), e.args[1], e.args[2])
+    else
+        e
+    end
 end
 
 """
