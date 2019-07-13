@@ -5,7 +5,7 @@
 [![Travis](https://travis-ci.org/JuliaStats/DataFramesMeta.jl.svg?branch=master)](https://travis-ci.org/JuliaStats/DataFramesMeta.jl)
 [![AppVeyor](https://ci.appveyor.com/api/projects/status/github/juliastats/dataframesmeta.jl?branch=master&svg=true)](https://ci.appveyor.com/project/tshort/dataframesmeta-jl/branch/master)
 
-Metaprogramming tools for DataFrames.jl and `AbstractDict` objects.
+Metaprogramming tools for DataFrames.jl objects.
 These macros improve performance and provide more convenient syntax.
 
 # Features
@@ -42,15 +42,6 @@ colref = :x
 @with(df, :y + cols(colref)) # Equivalent to df[:y] + df[colref]
 ```
 
-This works for `AbstractDict` types, too:
-
-```julia
-y = 3
-d = Dict(:s => 3, :y => 44, :d => 5)
-
-@with(d, :s + :y + y)
-```
-
 `@with` is the fundamental macro used by the other metaprogramming
 utilities.
 
@@ -73,7 +64,7 @@ Select row subsets.
 
 ## `@select`
 
-Column selections and transformations. Also works with `AbstractDict` types.
+Column selections and transformations.
 
 ```julia
 @select(df, :x, :y, :z)
@@ -87,8 +78,6 @@ Add additional columns based on keyword arguments.
 ```julia
 @transform(df, newCol = cos.(:x), anotherCol = :x.^2 + 3*:x .+ 4)
 ```
-
-`@transform` works for `AbstractDict` types, too.
 
 ## `@byrow!`
 
@@ -190,6 +179,18 @@ macro.
 Again, this is experimental. Based on feedback, we may decide to only
 use `@linq` or only support the set of linq-like macros.
 
+Alternatively you can use Lazy.jl `@>` macro like this:
+
+```julia
+x_thread = @> begin
+    df
+    @transform(y = 10 * :x)
+    @where(:a .> 2)
+    @by(:b, meanX = mean(:x), meanY = mean(:y))
+    @orderby(:meanX)
+    @select(:meanX, :meanY, var = :b)
+end
+```
 ## Operations on GroupedDataFrames
 
 The following operations are now included:

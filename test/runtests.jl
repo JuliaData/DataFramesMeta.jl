@@ -1,8 +1,7 @@
 fatalerrors = false
 anyerrors = false
 
-my_tests = ["dict.jl",
-            "dataframes.jl",
+my_tests = ["dataframes.jl",
             "grouping.jl",
             "chaining.jl",
             "linqmacro.jl"]
