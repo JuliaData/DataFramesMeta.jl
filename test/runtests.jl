@@ -1,5 +1,6 @@
 fatalerrors = false
 anyerrors = false
+quiet = false
 
 my_tests = ["dataframes.jl",
             "grouping.jl",
