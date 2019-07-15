@@ -12,11 +12,14 @@ for my_test in my_tests
     try
         include(my_test)
         println("\t\033[1m\033[32mPASSED\033[0m: $(my_test)")
-    catch
+    catch e
         global anyerrors = true
         println("\t\033[1m\033[31mFAILED\033[0m: $(my_test)")
         if fatalerrors
-            rethrow()
+            rethrow(e)
+        elseif !quiet
+            showerror(stdout, e, backtrace())
+            println()
         end
     end
 end
