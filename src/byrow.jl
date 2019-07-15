@@ -44,7 +44,7 @@ byrow_find_newcols(x, newcol_decl) = (x, Any[])
 function byrow_helper(df, body)
     e_body, e_newcols = byrow_find_newcols(body, Any[])
     quote
-        _N = length($df[1])
+        _N = length($df[!, 1])
         _DF = @transform($df, $(e_newcols...))
         $(with_helper(:_DF, :(for row = 1:_N
             $(byrow_replace(e_body))
@@ -70,6 +70,8 @@ columns, but the original `d` is not affected. This feature makes it easier to
 use `byrow!` for data transformations. `_N` is introduced to represent the
 length of the dataframe, `_D` represents the `dataframe` including added columns,
 and `row` represents the index of the current row.
+
+Also note that the returned data frame does not share columns with `d`.
 
 ### Arguments
 

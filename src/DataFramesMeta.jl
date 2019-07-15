@@ -70,7 +70,7 @@ function with_helper(d, body)
             function $funname($(values(membernames)...))
                 $body
             end
-            $funname($((:($d[$key]) for key in keys(membernames))...))
+            $funname($((:($d[!, $key]) for key in keys(membernames))...))
         end
     end
 end
@@ -83,11 +83,11 @@ end
 """
     @with(d, expr)
 
-`@with` allows DataFrame columns or AbstractDict keys to be referenced as symbols.
+`@with` allows DataFrame columns keys to be referenced as symbols.
 
 ### Arguments
 
-* `d` : an AbstractDataFrame or AbstractDict type
+* `d` : an AbstractDataFrame type
 * `expr` : the expression to evaluate in `d`
 
 ### Details
@@ -110,7 +110,7 @@ becomes
 
 ```julia
 tempfun(a, b) = a .+ b .+ 1
-tempfun(d[:a], d[:b])
+tempfun(d[!, :a], d[!, :b])
 ```
 
 All of the other DataFramesMeta macros are based on `@with`.
@@ -125,11 +125,6 @@ variable `expr` rather than a symbol.
 julia> using DataFramesMeta
 
 julia> y = 3;
-
-julia> d = Dict(:s => 3, :y => 44, :d => 5);
-
-julia> @with(d, :s + :y + y)
-50
 
 julia> df = DataFrame(x = 1:3, y = [2, 1, 2]);
 
@@ -163,7 +158,7 @@ julia> @with(df, df[:x .> 1, ^(:y)]) # The ^ means leave the :y alone
 
 julia> colref = :x;
 
-julia> @with(df, :y + cols(colref)) # Equivalent to df[:y] + df[colref]
+julia> @with(df, :y + cols(colref)) # Equivalent to df[!, :y] + df[!, colref]
  3
  3
  5
@@ -289,7 +284,7 @@ end
 ##
 ##############################################################################
 
-select(d::AbstractDataFrame, arg) = d[arg]
+select(d::AbstractDataFrame, arg) = d[!, arg]
 
 
 ##############################################################################
@@ -378,10 +373,10 @@ end
 ##
 ##############################################################################
 
-function transform(d::Union{AbstractDataFrame, AbstractDict}; kwargs...)
+function transform(d::AbstractDataFrame; kwargs...)
     result = copy(d)
     for (k, v) in kwargs
-        result[k] = isa(v, Function) ? v(d) : v
+        result[!, k] = isa(v, Function) ? v(d) : v
     end
     return result
 end
@@ -400,7 +395,7 @@ function transform(g::GroupedDataFrame; kwargs...)
             t = _transform!(Tables.allocatecolumn(typeof(first), size(result, 1)),
                             first, 1, g, v, starts, ends)
         end
-        result[k] = t
+        result[!, k] = t
     end
     return result
 end
@@ -488,28 +483,17 @@ Add additional columns or keys based on keyword arguments.
 
 ### Arguments
 
-* `d` : an AbstractDict type, AbstractDataFrame, or GroupedDataFrame
+* `d` : an `AbstractDataFrame`, or `GroupedDataFrame`
 * `i...` : keyword arguments defining new columns or keys
-
-For AbstractDict types, `@transform` only works with keys that are symbols.
 
 ### Returns
 
-* `::AbstractDataFrame`, `::AbstractDict`, or `::GroupedDataFrame`
+* `::AbstractDataFrame` or `::GroupedDataFrame`
 
 ### Examples
 
 ```jldoctest
 julia> using DataFramesMeta, DataFrames
-
-julia> d = Dict(:s => 3, :y => 44, :d => 5);
-
-julia> @transform(d, x = :y + :d)
-Dict{Symbol,Int64} with 4 entries:
-  :d => 5
-  :s => 3
-  :y => 44
-  :x => 49
 
 julia> df = DataFrame(A = 1:3, B = [2, 1, 2]);
 
@@ -691,10 +675,10 @@ end
 ##############################################################################
 
 
-function select(d::Union{AbstractDataFrame, AbstractDict}; kwargs...)
+function select(d::AbstractDataFrame; kwargs...)
     result = typeof(d)()
     for (k, v) in kwargs
-        result[k] = v
+        result[!, k] = v
     end
     return result
 end
@@ -734,25 +718,18 @@ Select and transform columns.
 
 ### Arguments
 
-* `d` : an AbstractDataFrame or AbstractDict
+* `d` : an AbstractDataFrame
 * `e` :  keyword arguments specifying new columns in terms of existing columns
   or symbols to specify existing columns
 
 ### Returns
 
-* `::AbstractDataFrame` or `::AbstractDict`
+* `::AbstractDataFrame`
 
 ### Examples
 
 ```jldoctest
 julia> using DataFrames, DataFramesMeta
-
-julia> d = Dict(:s => 3, :y => 44, :d => 5);
-
-julia> @select(d, x = :y + :d, :s)
-Dict{Symbol,Int64} with 2 entries:
-  :s => 3
-  :x => 49
 
 julia> df = DataFrame(a = repeat(1:4, outer = 2), b = repeat(2:-1:1, outer = 4), c = randn(8))
 8×3 DataFrames.DataFrame

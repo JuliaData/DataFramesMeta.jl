@@ -40,7 +40,7 @@ xlinq2 = @linq df  |>
     orderby(-mean(:x))  |>
     based_on(meanX = mean(:x), meanY = mean(:y))
 
-@test xlinq2[[:meanX, :meanY]] == xlinq[[:meanX, :meanY]]
+@test xlinq2[!, [:meanX, :meanY]] == xlinq[!, [:meanX, :meanY]]
 
 xlinq3 = @linq df  |>
     where(:a .> 2, :b .!= "c")  |>
@@ -49,8 +49,8 @@ xlinq3 = @linq df  |>
     orderby(-mean(:x))  |>
     based_on(meanX = mean(:x), meanY = mean(:y))
 
-@test xlinq3[[:meanX, :meanY]] == xlinq[[:meanX, :meanY]]
+@test xlinq3[!, [:meanX, :meanY]] == xlinq[!, [:meanX, :meanY]]
 
-@test (@linq df |> with(:a)) == df[:a]
+@test (@linq df |> with(:a)) == df.a
 
 end

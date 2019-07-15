@@ -28,19 +28,16 @@ x_as = @as _x_ begin
     @select(_x_, var = :b, :meanX, :meanY)
 end
 
-# Uncomment and add to README.md when it starts working:
-# @> is broken in 0.7 Lazy
-#x_thread = @> begin
-#    df
-#    @where(:a .> 2)
-#    @transform(y = 10 * :x)
-#    @by(:b, meanX = mean(:x), meanY = mean(:y))
-#    @orderby(:b, -:meanX)
-#    @select(var = :b, :meanX, :meanY)
-#end
+x_thread = @> begin
+   df
+   @where(:a .> 2)
+   @transform(y = 10 * :x)
+   @by(:b, meanX = mean(:x), meanY = mean(:y))
+   @orderby(:b, -:meanX)
+   @select(var = :b, :meanX, :meanY)
+end
 
 @test x == x_as
-#@test x == x_thread
-
+@test x == x_thread
 
 end # module
