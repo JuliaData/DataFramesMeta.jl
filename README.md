@@ -67,8 +67,8 @@ Select row subsets.
 Column selections and transformations.
 
 ```julia
-@select(df, :x, :y, :z)
-@select(df, x2 = 2 * :x, :y, :z)
+@select(df, :x, :y)
+@select(df, x2 = 2 * :x, :y)
 ```
 
 ## `@transform`
