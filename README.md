@@ -146,11 +146,13 @@ There is also a `@linq` macro that supports chaining and all of the
 functionality defined in other macros. Here is an example of `@linq`:
 
 ```julia
+using Statistics
+df = DataFrame(x = 1:12, a = repeat([1,2,3],4), b = repeat([4,3,2,1],3))
 x_thread = @linq df |>
     transform(y = 10 * :x) |>
-    where(:a .> 2) |>
+    where(:a .>= 2) |>
     by(:b, meanX = mean(:x), meanY = mean(:y)) |>
-    orderby(:meanX) |>
+    orderby(:meanX, :b) |>
     select(:meanX, :meanY, var = :b)
 ```
 
@@ -182,12 +184,13 @@ use `@linq` or only support the set of linq-like macros.
 Alternatively you can use Lazy.jl `@>` macro like this:
 
 ```julia
+using Lazy
 x_thread = @> begin
-    df
-    @transform(y = 10 * :x)
-    @where(:a .> 2)
-    @by(:b, meanX = mean(:x), meanY = mean(:y))
-    @orderby(:meanX)
+    df 
+    @transform(y = 10 * :x) 
+    @where(:a .>= 2) 
+    @by(:b, meanX = sum(:x)/length(:x), meanY = sum(:y)/length(:y)) 
+    @orderby(:meanX, :b)
     @select(:meanX, :meanY, var = :b)
 end
 ```
