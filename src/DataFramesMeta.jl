@@ -375,8 +375,15 @@ end
 
 function transform(d::AbstractDataFrame; kwargs...)
     result = copy(d)
+    nr = size(d, 1)
     for (k, v) in kwargs
-        result[!, k] = isa(v, Function) ? v(d) : v
+        if isa(v, Array)
+            result[!, k] = v
+        elseif isa(v, Function)
+            result[!, k] = v(d)
+        else
+            result[!, k] = fill(v, nr)
+        end
     end
     return result
 end
