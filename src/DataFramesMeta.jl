@@ -376,7 +376,7 @@ end
 function transform(d::AbstractDataFrame; kwargs...)
     result = copy(d)
     for (k, v) in kwargs
-        result[!, k] = isa(v, Function) ? v(d) : v
+        result[!, k] .= isa(v, Function) ? v(d) : v
     end
     return result
 end
