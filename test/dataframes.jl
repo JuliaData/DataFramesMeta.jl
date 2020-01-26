@@ -33,10 +33,14 @@ x = [2, 1, 0]
 
 @test DataFramesMeta.transform(df, C = x).C == x # non-macro function test
 @test @transform(df, C = x).C === x # vector assignment, confirming no reallocation
-@test all(@transform(df, C = :A + :B).C .=== df.A + df.B) # basic correctness test
-@test all(@transform(df, C = 1).C .=== 1) # scalar broadcasting
-@test all(@transform(df, C = 1:3).C .=== [1,2,3]) # range assignment
-@test all(@transform(df, C = Ref(x)).C .=== Ref(x)) # Ref broadcasting
+@test @transform(df, C = :A + :B).C == df.A + df.B # basic correctness test
+@test @transform(df, C = 1).C == [1,1,1] # scalar broadcasting
+@test @transform(df, C = 1:3).C == collect(1:3) # range assignment
+
+# @test @transform(df, C = Ref(x)).C .== [Ref(x), Ref(x), Ref(x)] # Ref broadcasting
+
+x = (1,2,3)
+@test @transform(df, C = x).C == [x,x,x] # tuple broadcasting
 
 @test DataFramesMeta.where(df, 1) == df[1, :]
 
