@@ -380,7 +380,7 @@ function transform(d::AbstractDataFrame; kwargs...)
         if isa(res, AbstractArray)
             result[!, k] = res
         else
-            result[!, k] .= res
+            result[!, k] .= Ref(res)
         end
     end
     return result
@@ -486,7 +486,7 @@ end
 
 Add additional columns or keys based on keyword arguments.
 Broadcasting occurs if the assigned value is not an 
-AbstractArray.
+`AbstractArray`.
 
 ### Arguments
 
