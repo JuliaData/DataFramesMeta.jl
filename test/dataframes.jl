@@ -29,6 +29,15 @@ idx2 = :B
 @test  @with(df, df[:A .> 1, ^([:B, :A])]) == df[df.A .> 1, [:B, :A]]
 @test  @with(df, DataFrame(a = :A * 2, b = :A .+ :B)) == DataFrame(a = df.A * 2, b = df.A .+ df.B)
 
+x = [2, 1, 0]
+
+@test DataFramesMeta.transform(df, C = x).C == x # non-macro function test
+@test @transform(df, C = x).C === x # vector assignment, confirming no reallocation
+@test all(@transform(df, C = :A + :B).C .=== df.A + df.B) # basic correctness test
+@test all(@transform(df, C = 1).C .=== 1) # scalar broadcasting
+@test all(@transform(df, C = 1:3).C .=== [1,2,3]) # range assignment
+@test all(@transform(df, C = Ref(x)).C .=== Ref(x)) # Ref broadcasting
+
 @test DataFramesMeta.where(df, 1) == df[1, :]
 
 @test  @where(df, :A .> 1)          == df[df.A .> 1,:]
