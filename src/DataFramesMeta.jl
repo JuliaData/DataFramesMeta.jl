@@ -485,6 +485,8 @@ end
     @transform(d, i...)
 
 Add additional columns or keys based on keyword arguments.
+Broadcasting occurs if the assigned value is not an 
+AbstractArray.
 
 ### Arguments
 
