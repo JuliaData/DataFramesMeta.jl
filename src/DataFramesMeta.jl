@@ -379,6 +379,8 @@ function transform(d::AbstractDataFrame; kwargs...)
         res = isa(v, Function) ? v(d) : v
         if isa(res, AbstractArray)
             result[!, k] = res
+        elseif isa(res, Ref)
+            result[!, k] .= res
         else
             result[!, k] .= Ref(res)
         end
