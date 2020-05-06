@@ -214,21 +214,21 @@ julia> df = DataFrame(x = 1:3, y = [2, 1, 2]);
 julia> x = [2, 1, 0];
 
 julia> @where(df, :x .> 1)
-2×2 DataFrames.DataFrame
+2×2 DataFrame
 │ Row │ x │ y │
 ├─────┼───┼───┤
 │ 1   │ 2 │ 1 │
 │ 2   │ 3 │ 2 │
 
 julia> @where(df, :x .> x)
-2×2 DataFrames.DataFrame
+2×2 DataFrame
 │ Row │ x │ y │
 ├─────┼───┼───┤
 │ 1   │ 2 │ 1 │
 │ 2   │ 3 │ 2 │
 
 julia> @where(df, :x .> x, :y .== 3)
-0×2 DataFrames.DataFrame
+0×2 DataFrame
 
 julia> d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
                                     2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
@@ -236,7 +236,7 @@ julia> d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
 julia> g = groupby(d, :x);
 
 julia> @where(d, :x .== 3)
-5×2 DataFrames.DataFrame
+5×2 DataFrame
 │ Row │ n  │ x │
 ├─────┼────┼───┤
 │ 1   │ 1  │ 3 │
@@ -246,9 +246,9 @@ julia> @where(d, :x .== 3)
 │ 5   │ 17 │ 3 │
 
 julia> @where(g, length(:x) > 5)   # pick out some groups
-DataFrames.GroupedDataFrame  2 groups with keys: Symbol[:x]
+GroupedDataFrame  2 groups with keys: Symbol[:x]
 First Group:
-9×2 DataFrames.SubDataFrame{Array{Int64,1}}
+9×2 SubDataFrame{Array{Int64,1}}
 │ Row │ n  │ x │
 ├─────┼────┼───┤
 │ 1   │ 5  │ 1 │
@@ -262,7 +262,7 @@ First Group:
 │ 9   │ 19 │ 1 │
 ⋮
 Last Group:
-6×2 DataFrames.SubDataFrame{Array{Int64,1}}
+6×2 SubDataFrame{Array{Int64,1}}
 │ Row │ n  │ x │
 ├─────┼────┼───┤
 │ 1   │ 8  │ 2 │
@@ -337,9 +337,9 @@ julia> d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
 julia> g = groupby(d, :x);
 
 julia> @orderby(g, mean(:n))
-DataFrames.GroupedDataFrame  3 groups with keys: Symbol[:x]
+GroupedDataFrame  3 groups with keys: Symbol[:x]
 First Group:
-5×2 DataFrames.SubDataFrame{Array{Int64,1}}
+5×2 SubDataFrame{Array{Int64,1}}
 │ Row │ n  │ x │
 ├─────┼────┼───┤
 │ 1   │ 1  │ 3 │
@@ -349,7 +349,7 @@ First Group:
 │ 5   │ 17 │ 3 │
 ⋮
 Last Group:
-6×2 DataFrames.SubDataFrame{Array{Int64,1}}
+6×2 SubDataFrame{Array{Int64,1}}
 │ Row │ n  │ x │
 ├─────┼────┼───┤
 │ 1   │ 8  │ 2 │
@@ -498,7 +498,7 @@ julia> using DataFramesMeta, DataFrames
 julia> df = DataFrame(A = 1:3, B = [2, 1, 2]);
 
 julia> @transform(df, a = 2 * :A, x = :A .+ :B)
-3×4 DataFrames.DataFrame
+3×4 DataFrame
 │ Row │ A │ B │ a │ x │
 ├─────┼───┼───┼───┼───┤
 │ 1   │ 1 │ 2 │ 2 │ 3 │
@@ -521,7 +521,7 @@ end
 function based_on_helper(x, args...)
     with_args =
         with_anonymous(:($DataFrame($(map(replace_equals_with_kw, args)...))))
-    :( DataFrames.DataFrame(map($with_args, $x)))
+    :(DataFrames.combine($with_args, $x))
 end
 
 """
@@ -546,7 +546,7 @@ julia> d = DataFrame(
 julia> g = groupby(d, :x);
 
 julia> @based_on(g, nsum = sum(:n))
-3×2 DataFrames.DataFrame
+3×2 DataFrame
 │ Row │ x │ nsum │
 ├─────┼───┼──────┤
 │ 1   │ 1 │ 99   │
@@ -554,7 +554,7 @@ julia> @based_on(g, nsum = sum(:n))
 │ 3   │ 3 │ 27   │
 
 julia> @based_on(g, x2 = 2 * :x, nsum = sum(:n))
-20×3 DataFrames.DataFrame
+20×3 DataFrame
 │ Row │ x │ x2 │ nsum │
 ├─────┼───┼────┼──────┤
 │ 1   │ 1 │ 2  │ 99   │
@@ -589,8 +589,8 @@ end
 ##############################################################################
 
 function by_helper(x, what, args...)
-    :($by($x, $what,
-          $(with_anonymous(:($DataFrame($(map(replace_equals_with_kw, args)...)))))))
+    :(DataFrames.combine($(with_anonymous(:($DataFrame($(map(replace_equals_with_kw, args)...))))),
+              DataFrames.groupby($x, $what)))
 end
 
 """
@@ -619,7 +619,7 @@ julia> df = DataFrame(
             c = randn(8));
 
 julia> @by(df, :a, d = sum(:c))
-4×2 DataFrames.DataFrame
+4×2 DataFrame
 │ Row │ a │ d        │
 ├─────┼───┼──────────┤
 │ 1   │ 1 │ 1.27638  │
@@ -628,7 +628,7 @@ julia> @by(df, :a, d = sum(:c))
 │ 4   │ 4 │ -2.42621 │
 
 julia> @by(df, :a, d = 2 * :c)
-8×2 DataFrames.DataFrame
+8×2 DataFrame
 │ Row │ a │ d         │
 ├─────┼───┼───────────┤
 │ 1   │ 1 │ 1.22982   │
@@ -641,7 +641,7 @@ julia> @by(df, :a, d = 2 * :c)
 │ 8   │ 4 │ -1.78806  │
 
 julia> @by(df, :a, c_sum = sum(:c), c_mean = mean(:c))
-4×3 DataFrames.DataFrame
+4×3 DataFrame
 │ Row │ a │ c_sum    │ c_mean   │
 ├─────┼───┼──────────┼──────────┤
 │ 1   │ 1 │ 1.27638  │ 0.63819  │
@@ -650,7 +650,7 @@ julia> @by(df, :a, c_sum = sum(:c), c_mean = mean(:c))
 │ 4   │ 4 │ -2.42621 │ -1.2131  │
 
 julia> @by(df, :a, c = :c, c_mean = mean(:c))
-8×3 DataFrames.DataFrame
+8×3 DataFrame
 │ Row │ a │ c         │ c_mean   │
 ├─────┼───┼───────────┼──────────┤
 │ 1   │ 1 │ 0.61491   │ 0.63819  │
@@ -732,7 +732,7 @@ Select and transform columns.
 julia> using DataFrames, DataFramesMeta
 
 julia> df = DataFrame(a = repeat(1:4, outer = 2), b = repeat(2:-1:1, outer = 4), c = randn(8))
-8×3 DataFrames.DataFrame
+8×3 DataFrame
 │ Row │ a │ b │ c         │
 ├─────┼───┼───┼───────────┤
 │ 1   │ 1 │ 2 │ -0.354685 │
@@ -745,7 +745,7 @@ julia> df = DataFrame(a = repeat(1:4, outer = 2), b = repeat(2:-1:1, outer = 4),
 │ 8   │ 4 │ 1 │ -0.460486 │
 
 julia> @select(df, :c, :a)
-8×2 DataFrames.DataFrame
+8×2 DataFrame
 │ Row │ c         │ a │
 ├─────┼───────────┼───┤
 │ 1   │ -0.354685 │ 1 │
@@ -758,7 +758,7 @@ julia> @select(df, :c, :a)
 │ 8   │ -0.460486 │ 4 │
 
 julia> @select(df, :c, x = :b + :c)
-8×2 DataFrames.DataFrame
+8×2 DataFrame
 │ Row │ c         │ x         │
 ├─────┼───────────┼───────────┤
 │ 1   │ -0.354685 │ 1.64531   │
