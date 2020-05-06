@@ -104,7 +104,7 @@ julia> @byrow! df begin
                 :A = 0
             end
         end
-3×2 DataFrames.DataFrame
+3×2 DataFrame
 │ Row │ A │ B │
 ├─────┼───┼───┤
 │ 1   │ 1 │ 2 │
@@ -115,7 +115,7 @@ julia> df2 = @byrow! df begin
            @newcol colX::Array{Float64}
            :colX = :B == 2 ? pi * :A : :B
        end
-3×3 DataFrames.DataFrame
+3×3 DataFrame
 │ Row │ A │ B │ colX    │
 ├─────┼───┼───┼─────────┤
 │ 1   │ 1 │ 2 │ 3.14159 │

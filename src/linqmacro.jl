@@ -40,7 +40,7 @@ julia> x1 = @linq transform(where(df, :a .> 2, :b .!= "c"), y = 10 * :x);
 julia> x1 = @linq by(x1, :b, meanX = mean(:x), meanY = mean(:y));
 
 julia> @linq select(orderby(x1, :b, -:meanX), var = :b, :meanX, :meanY)
-3×3 DataFrames.DataFrame
+3×3 DataFrame
 │ Row │ var │ meanX    │ meanY   │
 ├─────┼─────┼──────────┼─────────┤
 │ 1   │ "a" │ 0.665682 │ 6.65682 │
@@ -53,7 +53,7 @@ julia> @linq df |>
            by(:b, meanX = mean(:x), meanY = mean(:y)) |>
            orderby(:meanX) |>
            select(:meanX, :meanY, var = :b)
-4×3 DataFrames.DataFrame
+4×3 DataFrame
 │ Row │ meanX    │ meanY   │ var │
 ├─────┼──────────┼─────────┼─────┤
 │ 1   │ 0.353205 │ 3.53205 │ "a" │
