@@ -521,7 +521,7 @@ end
 function based_on_helper(x, args...)
     with_args =
         with_anonymous(:($DataFrame($(map(replace_equals_with_kw, args)...))))
-    :(combine($with_args, $x))
+    :(DataFrames.combine($with_args, $x))
 end
 
 """
@@ -589,8 +589,8 @@ end
 ##############################################################################
 
 function by_helper(x, what, args...)
-    :(combine($(with_anonymous(:($DataFrame($(map(replace_equals_with_kw, args)...))))),
-              groupby($x, $what)))
+    :(DataFrames.combine($(with_anonymous(:($DataFrame($(map(replace_equals_with_kw, args)...))))),
+              DataFrames.groupby($x, $what)))
 end
 
 """
