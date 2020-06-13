@@ -79,6 +79,13 @@ Add additional columns based on keyword arguments.
 @transform(df, newCol = cos.(:x), anotherCol = :x.^2 + 3*:x .+ 4)
 ```
 
+!!! note 
+    
+    Versions of DataFrames.jl `.0.19` and above support the operators `Between`, `All`,
+    and `Not` when selecting and transforming columns. DataFramesMeta does not currently
+    support this syntax. 
+
+
 ## `@byrow!`
 
 Act on a DataFrame row-by-row. Includes support for control flow and `begin end` blocks. Since the "environment" induced by `@byrow! df` is implicitly a single row of `df`, one uses regular operators and comparisons instead of their elementwise counterparts as in `@with`.
