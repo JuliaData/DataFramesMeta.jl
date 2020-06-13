@@ -81,8 +81,8 @@ Add additional columns based on keyword arguments.
 
 !!! note 
     
-    Versions of DataFrames.jl `.0.19` and above support the operators `Between`, `All`,
-    and `Not` when selecting and transforming columns. DataFramesMeta does not currently
+    Versions of DataFrames.jl `0.19` and above support the operators `Between`, `All`,
+    and `Not` when selecting and transforming columns. DataFramesMeta.jl does not currently
     support this syntax. 
 
 
