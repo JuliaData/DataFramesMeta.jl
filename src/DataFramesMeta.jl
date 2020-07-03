@@ -3,10 +3,12 @@ module DataFramesMeta
 using DataFrames, Tables
 
 # Basics:
-export @with, @where, @orderby, @transform, @by, @based_on, @select
+export @with, @where, @orderby, @transform, @by, @based_on, @select,
+    @transform2
 
 include("linqmacro.jl")
 include("byrow.jl")
+include("new_macros.jl")
 
 
 ##############################################################################
