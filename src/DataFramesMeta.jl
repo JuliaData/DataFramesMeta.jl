@@ -4,7 +4,7 @@ using DataFrames, Tables
 
 # Basics:
 export @with, @where, @orderby, @transform, @by, @based_on, @select,
-    @transform2
+    @transform2, @based_on2, @select2
 
 include("linqmacro.jl")
 include("byrow.jl")
