@@ -79,16 +79,16 @@ Add additional columns based on keyword arguments.
 @transform(df, newCol = cos.(:x), anotherCol = :x.^2 + 3*:x .+ 4)
 ```
 
-## `@byrow!`
+## `@byrow`
 
-Act on a DataFrame row-by-row. Includes support for control flow and `begin end` blocks. Since the "environment" induced by `@byrow! df` is implicitly a single row of `df`, one uses regular operators and comparisons instead of their elementwise counterparts as in `@with`.
+Act on a DataFrame row-by-row. Includes support for control flow and `begin end` blocks. Since the "environment" induced by `@byrow df` is implicitly a single row of `df`, one uses regular operators and comparisons instead of their elementwise counterparts as in `@with`. Does not change the input data frame argument.
 
 ```julia
-@byrow! df if :A > :B; :A = :B * :C end
+changed_df = @byrow df if :A > :B; :A = :B * :C end
 ```
 ```julia
 let x = 0.0
-    @byrow! df begin
+    @byrow df begin
         if :A < :B
             x += :B * :C
         end
@@ -98,18 +98,16 @@ end
 ```
 
 Note that the let block is required here to create a scope to allow assignment
-of `x` within `@byrow!`.
+of `x` within `@byrow`.
 
-`byrow!` also supports special syntax for allocating new columns to make
-`byrow!` more useful for data transformations. The syntax `@newcol
+`byrow` also supports special syntax for allocating new columns to make
+`byrow` more useful for data transformations. The syntax `@newcol
 x::Array{Int}` allocates a new column `:x` with an `Array` container with eltype
-`Int`. Note that the returned `AbstractDataFrame` includes these new columns, but
-the original `df` is not affected. Here is an example where two new columns are
-added:
+`Int`. Here is an example where two new columns are added:
 
 ```julia
 df = DataFrame(A = 1:3, B = [2, 1, 2])
-df2 = @byrow! df begin
+df2 = @byrow df begin
     @newcol colX::Array{Float64}
     @newcol colY::Array{Union{Int,Missing}}
     :colX = :B == 2 ? pi * :A : :B
