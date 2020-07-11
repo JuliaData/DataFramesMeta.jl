@@ -1,16 +1,37 @@
-function make_vec_to_fun(kw)
-    output = kw.args[1]
-    membernames = Dict{Any, Symbol}()
-    funname = gensym()
-    body = DataFramesMeta.replace_syms!(kw.args[2], membernames)
-    
-    # inputs = broadcast(s -> s.args[1], keys(membernames))
+function make_vec_to_fun(kw::Expr)
 
-    t = quote
-        $(Expr(:vect, keys(membernames)...)) => function $funname($(values(membernames)...))
-            $body 
-        end => $(QuoteNode(output))
+    @show DataFramesMeta.onearg(kw.args[1], :cols)
+
+    if kw.head == :(=) || kw.head == :kw
+        output = kw.args[1]
+        
+        membernames = Dict{Any, Symbol}()
+        funname = gensym()
+        body = DataFramesMeta.replace_syms!(kw.args[2], membernames)
+        
+        # inputs = broadcast(s -> s.args[1], keys(membernames))
+        if DataFramesMeta.onearg(kw.args[1], :cols)
+            t = quote
+                $(Expr(:vect, keys(membernames)...)) => function $funname($(values(membernames)...))
+                    $body 
+                end => $(output)
+            end
+        else
+            t = quote
+                $(Expr(:vect, keys(membernames)...)) => function $funname($(values(membernames)...))
+                    $body 
+                end =>  $(QuoteNode(output))
+            end   
+        end
+
+        return t
+    else
+        return kw
     end
+end
+
+function make_vec_to_fun(kw::QuoteNode)
+    return kw
 end
 
 function transform_helper2(x, args...)
@@ -48,7 +69,5 @@ function select_helper2(x, args...)
 end
 
 macro select2(x, args...)
-    t = map(DataFramesMeta.expandargs, args)
-
-    esc(select_helper2(x, t...))
+    esc(select_helper2(x, args...))
 end

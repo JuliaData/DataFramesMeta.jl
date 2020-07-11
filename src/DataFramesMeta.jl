@@ -4,12 +4,13 @@ using DataFrames, Tables
 
 # Basics:
 export @with, @where, @orderby, @transform, @by, @based_on, @select,
-    @transform2, @based_on2, @select2
+    @transform2, @based_on2, @select2, cols
 
 include("linqmacro.jl")
 include("byrow.jl")
 include("new_macros.jl")
 
+cols(x) = x
 
 ##############################################################################
 ##
@@ -697,8 +698,12 @@ expandargs(x) = x
 expandargs(q::QuoteNode) = Expr(:kw, q.value, q)
 function expandargs(e::Expr)
     if e.head == :quote
+        @show "ttt"
+        @show e
         Expr(:kw, e.args[1], e)
     else
+        @show "hello"
+        @show e
         replace_equals_with_kw(e)
     end
 end
