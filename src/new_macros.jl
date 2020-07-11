@@ -1,6 +1,6 @@
-function make_vec_to_fun(kw::Expr)
+cos(x) = x
 
-    @show DataFramesMeta.onearg(kw.args[1], :cols)
+function make_vec_to_fun(kw::Expr)
 
     if kw.head == :(=) || kw.head == :kw
         output = kw.args[1]
@@ -8,24 +8,25 @@ function make_vec_to_fun(kw::Expr)
         membernames = Dict{Any, Symbol}()
         funname = gensym()
         body = DataFramesMeta.replace_syms!(kw.args[2], membernames)
-        
+        @show typeof(kw.args[1])
         # inputs = broadcast(s -> s.args[1], keys(membernames))
-        if DataFramesMeta.onearg(kw.args[1], :cols)
+        if kw.args[1] isa Symbol
+            t = quote
+                $(Expr(:vect, keys(membernames)...)) => function $funname($(values(membernames)...))
+                    $body 
+                end => $(QuoteNode(output))
+            end
+        elseif DataFramesMeta.onearg(kw.args[1], :cols)
             t = quote
                 $(Expr(:vect, keys(membernames)...)) => function $funname($(values(membernames)...))
                     $body 
                 end => $(output)
-            end
-        else
-            t = quote
-                $(Expr(:vect, keys(membernames)...)) => function $funname($(values(membernames)...))
-                    $body 
-                end =>  $(QuoteNode(output))
             end   
         end
 
         return t
     else
+        println("hit this branch")
         return kw
     end
 end
@@ -71,3 +72,11 @@ end
 macro select2(x, args...)
     esc(select_helper2(x, args...))
 end
+
+# df = DataFrame(rand(2,2))
+# t = :x2
+# s = :y
+# @transform2(df, y = :x1 .+ :x2)
+# @transform2(df, y = :x1 .+ cols(t))
+# @transform2(df, [:x1, :x2])
+# @transforms(df, [:x1, :x2], y = :x1 .+ :x2)
