@@ -4,7 +4,7 @@ export @byrow
 
 ##############################################################################
 ##
-## @byrow and @byrow!
+## @byrow
 ##
 ##############################################################################
 
@@ -85,7 +85,7 @@ transformations. `_N` is introduced to represent the length of the dataframe,
 `_D` represents the `dataframe` including added columns, and `row` represents
 the index of the current row.
 
-Changes to the rows do not affect `d` but instead the new data frame returned
+Changes to the rows do not affect `d` but instead a freshly allocated data frame is returned
 by `@byrow`. Also note that the returned data frame does not share columns
 with `d`.
 

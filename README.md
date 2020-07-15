@@ -84,7 +84,7 @@ Add additional columns based on keyword arguments.
 Act on a DataFrame row-by-row. Includes support for control flow and `begin end` blocks. Since the "environment" induced by `@byrow df` is implicitly a single row of `df`, one uses regular operators and comparisons instead of their elementwise counterparts as in `@with`. Does not change the input data frame argument.
 
 ```julia
-changed_df = @byrow df if :A > :B; :A = :B * :C end
+df2 = @byrow df if :A > :B; :A = :B * :C end
 ```
 ```julia
 let x = 0.0
