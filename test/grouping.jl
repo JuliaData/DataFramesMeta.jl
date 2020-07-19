@@ -87,7 +87,47 @@ end
     @test_throws LoadError @eval @based_on(gd; n = mean(:i))
 end
 
+@testset "@by" begin
+    @test @by(df, :g, n = mean(:i)).n == [2.0, 4.5]
+    @test @by(df, :g, n = mean(:i) + mean(:g)).n == [3.0, 6.5]
+    @test @by(df, :g, n = first(:t .* string.(:y))).n == ["av", "cy"]
+    @test @by(df, :g, n = first(Symbol.(:y, ^(:t)))).n == [:vt, :yt]
+    @test @by(df, :g, n = first(Symbol.(:y, ^(:body)))).n == [:vbody, :ybody]
+    @test @by(df, :g, body = :i).body == df.i 
+    @test @by(df, :g, transform = :i).transform == df.i
+    @test @by(df, :g, (n1 = [first(:i)], n2 = [first(:y)])).n1 == [1, 4]
 
+    @test @by(df, :g, n = mean(cols(iq))).n == [2.0, 4.5]
+    @test @by(df, :g, n = mean(cols(iq)) + mean(cols(gq))).n == [3.0, 6.5]
+    @test @by(df, :g, n = first(cols(tq) .* string.(cols(yq)))).n == ["av", "cy"]
+    @test @by(df, :g, n = first(Symbol.(cols(yq), ^(:t)))).n == [:vt, :yt]
+    @test @by(df, :g, n = first(Symbol.(cols(yq), ^(:body)))).n == [:vbody, :ybody]
+    @test @by(df, :g, body = cols(iq)).body == df.i 
+    @test @by(df, :g, transform = cols(iq)).transform == df.i
+    @test @by(df, :g, (n1 = [first(cols(iq))], n2 = [first(cols(yq))])).n1 == [1, 4]
+
+    @test @by(df, "g", n = mean(cols(ir))).n == [2.0, 4.5]
+    @test @by(df, "g", n = mean(cols(ir)) + mean(cols(gr))).n == [3.0, 6.5]
+    @test @by(df, "g", n = first(cols(tr) .* string.(cols(yr)))).n == ["av", "cy"]
+    @test @by(df, "g", n = first(Symbol.(cols(yr), ^(:t)))).n == [:vt, :yt]
+    @test @by(df, "g", n = first(Symbol.(cols(yr), ^(:body)))).n == [:vbody, :ybody]
+    @test @by(df, "g", body = cols(ir)).body == df.i 
+    @test @by(df, "g", transform = cols(ir)).transform == df.i
+    @test @by(df, "g", (n1 = [first(cols(ir))], n2 = [first(cols(yr))])).n1 == [1, 4]
+end
+
+@testset "limits of @by" begin
+	@test_throws LoadError @eval @by(df, :g, :i)
+	@test @by(df, :g, [:i, :g]) ≅ DataFrame(g = df.g, x1 = df.i, x2 = df.g)
+	@test_throws ArgumentError @eval @by(df, :g, All())
+	@test_throws MethodError @eval @by(df, :g, Between(:i, :t)).Between == df.i
+	@test_throws ArgumentError @eval @by(df, :g, Not(:i)).Not == df.i
+	@test_throws ArgumentError @eval @by(df, :g, Not([:i, :g]))
+	newvar = :n
+	@test_throws ArgumentError @eval @by(df, :g, cols(newvar) = mean(:i))
+	@test_throws MethodError @eval @by(df, :g, n = sum(Between(:i, :t)))
+	@test_throws LoadError @eval @based_on(gd; n = mean(:i))
+end
 
 @testset "@transform with grouped data frame" begin
 	d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 2, 2, 3, 1, 1, 2])
