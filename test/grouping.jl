@@ -1,5 +1,3 @@
-
-
 module TestGrouping
 
 using Test
@@ -45,6 +43,8 @@ cr = "c"
 
 gd = groupby(df, :g)
 
+newvar = :n
+
 @testset "@based_on" begin
     @test @based_on(gd, n = mean(:i)).n == [2.0, 4.5]
     @test @based_on(gd, n = mean(:i) + mean(:g)).n == [3.0, 6.5]
@@ -76,12 +76,11 @@ end
 
 @testset "Limits of @based_on" begin
     @test_throws LoadError @eval @based_on(gd, :i)
-    @test @based_on(gd, [:i, :g]) ≅ DataFrame(g = df.g, x1 = df.i, x2 = df.g)
+    @test @based_on(gd, [:i, :g]) == DataFrame(g = df.g, x1 = df.i, x2 = df.g)
     @test_throws ArgumentError @eval @based_on(gd, All())
     @test_throws MethodError @eval @based_on(gd, Between(:i, :t)).Between == df.i
     @test_throws ArgumentError @eval @based_on(gd, Not(:i)).Not == df.i
     @test_throws ArgumentError @eval @based_on(gd, Not([:i, :g]))
-    newvar = :n
     @test_throws ArgumentError @eval @based_on(gd, cols(newvar) = mean(:i))
     @test_throws MethodError @eval @based_on(gd, n = sum(Between(:i, :t)))
     @test_throws LoadError @eval @based_on(gd; n = mean(:i))
@@ -126,7 +125,7 @@ end
 	newvar = :n
 	@test_throws ArgumentError @eval @by(df, :g, cols(newvar) = mean(:i))
 	@test_throws MethodError @eval @by(df, :g, n = sum(Between(:i, :t)))
-	@test_throws LoadError @eval @based_on(gd; n = mean(:i))
+	@test_throws LoadError @eval @by(df, :g; n = mean(:i))
 end
 
 @testset "@transform with grouped data frame" begin
