@@ -13,8 +13,7 @@ export @byrow
 function byrow_replace(e::Expr)
     # Traverse the syntax tree of e
     if e.head == :call && e.args[1] == :cols
-        x = e.args[2]
-       return Expr(:ref, :($(e.args[2])), :row)
+       return Expr(:ref, e, :row)
     end
     #dump(e)
     Expr(e.head, (isempty(e.args) ? e.args : map(byrow_replace, e.args))...)
