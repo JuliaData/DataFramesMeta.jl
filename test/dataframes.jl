@@ -8,29 +8,29 @@ using Statistics
 
 const ≅ = isequal
 
-df = DataFrame(
-    g = [1, 1, 1, 2, 2],
-    i = 1:5, 
-    t = ["a", "b", "c", "c", "e"],
-    y = [:v, :w, :x, :y, :z],
-    c = [:g, :quote, :body, :transform, missing]
-    )
-
-m = [100, 200, 300, 400, 500]
-
-gq = :g
-iq = :i
-tq = :t
-yq = :y
-cq = :c
-
-gr = "g"
-ir = "i"
-tr = "t"
-yr = "y"
-cr = "c"
-
 @testset "@transform" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5, 
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing]
+        )
+    
+    m = [100, 200, 300, 400, 500]
+    
+    gq = :g
+    iq = :i
+    tq = :t
+    yq = :y
+    cq = :c
+    
+    gr = "g"
+    ir = "i"
+    tr = "t"
+    yr = "y"
+    cr = "c"
+
     @test @transform(df, n = :i).n == df.i
     @test @transform(df, n = :i .+ :g).n == df.i .+ df.g
     @test @transform(df, n = :t .* string.(:y)).n == df.t .* string.(df.y)
@@ -56,6 +56,29 @@ cr = "c"
     @transform(df, transform = cols(ir)).transform == df.i
 end
 
+# Defined outside of `@testset` due to use of `@eval`
+df = DataFrame(
+    g = [1, 1, 1, 2, 2],
+    i = 1:5, 
+    t = ["a", "b", "c", "c", "e"],
+    y = [:v, :w, :x, :y, :z],
+    c = [:g, :quote, :body, :transform, missing]
+    )
+
+m = [100, 200, 300, 400, 500]
+
+gq = :g
+iq = :i
+tq = :t
+yq = :y
+cq = :c
+
+gr = "g"
+ir = "i"
+tr = "t"
+yr = "y"
+cr = "c"
+
 @testset "limits of @transform" begin
     ## Test for not-implemented or strange behavior
     @test_throws LoadError @eval @transform(df, :i)
@@ -70,6 +93,29 @@ end
 end
 
 @testset "@select" begin
+    # Defined outside of `@testset` due to use of `@eval`
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5, 
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing]
+        )
+    
+    m = [100, 200, 300, 400, 500]
+    
+    gq = :g
+    iq = :i
+    tq = :t
+    yq = :y
+    cq = :c
+    
+    gr = "g"
+    ir = "i"
+    tr = "t"
+    yr = "y"
+    cr = "c"
+
     @test @select(df, :i) == df[!, [:i]]
     @test @select(df, :i, :g) == df[!, [:i, :g]]
     df2 = copy(df)
@@ -102,6 +148,29 @@ end
 
     @test DataFramesMeta.select(df, :i) == df.i
 end
+
+# Defined outside of `@testset` due to use of `@eval`
+df = DataFrame(
+    g = [1, 1, 1, 2, 2],
+    i = 1:5, 
+    t = ["a", "b", "c", "c", "e"],
+    y = [:v, :w, :x, :y, :z],
+    c = [:g, :quote, :body, :transform, missing]
+    )
+
+m = [100, 200, 300, 400, 500]
+
+gq = :g
+iq = :i
+tq = :t
+yq = :y
+cq = :c
+
+gr = "g"
+ir = "i"
+tr = "t"
+yr = "y"
+cr = "c"
 
 @testset "limits of @select" begin
     ## Test for not-implemented or strange behavior

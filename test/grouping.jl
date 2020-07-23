@@ -19,33 +19,34 @@ g = groupby(d, :x, sort=true)
 
 @test @based_on(g, nsum = sum(:n)).nsum == [99, 84, 27]
 
-df = DataFrame(
-    g = [1, 1, 1, 2, 2],
-    i = 1:5, 
-    t = ["a", "b", "c", "c", "e"],
-    y = [:v, :w, :x, :y, :z],
-    c = [:g, :quote, :body, :transform, missing]
-    )
-
-m = [100, 200, 300, 400, 500]
-
-gq = :g
-iq = :i
-tq = :t
-yq = :y
-cq = :c
-
-gr = "g"
-ir = "i"
-tr = "t"
-yr = "y"
-cr = "c"
-
-gd = groupby(df, :g)
-
-newvar = :n
 
 @testset "@based_on" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5, 
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing]
+        )
+    
+    m = [100, 200, 300, 400, 500]
+    
+    gq = :g
+    iq = :i
+    tq = :t
+    yq = :y
+    cq = :c
+    
+    gr = "g"
+    ir = "i"
+    tr = "t"
+    yr = "y"
+    cr = "c"
+    
+    gd = groupby(df, :g)
+    
+    newvar = :n
+
     @test @based_on(gd, n = mean(:i)).n == [2.0, 4.5]
     @test @based_on(gd, n = mean(:i) + mean(:g)).n == [3.0, 6.5]
     @test @based_on(gd, n = first(:t .* string.(:y))).n == ["av", "cy"]
@@ -74,6 +75,33 @@ newvar = :n
     @test @based_on(gd, (n1 = [first(cols(ir))], n2 = [first(cols(yr))])).n1 == [1, 4]
 end
 
+# Defined outside of `@testset` due to use of `@eval`
+df = DataFrame(
+    g = [1, 1, 1, 2, 2],
+    i = 1:5, 
+    t = ["a", "b", "c", "c", "e"],
+    y = [:v, :w, :x, :y, :z],
+    c = [:g, :quote, :body, :transform, missing]
+    )
+
+m = [100, 200, 300, 400, 500]
+
+gq = :g
+iq = :i
+tq = :t
+yq = :y
+cq = :c
+
+gr = "g"
+ir = "i"
+tr = "t"
+yr = "y"
+cr = "c"
+
+gd = groupby(df, :g)
+
+newvar = :n
+
 @testset "Limits of @based_on" begin
     @test_throws LoadError @eval @based_on(gd, :i)
     @test @based_on(gd, [:i, :g]) == DataFrame(g = df.g, x1 = df.i, x2 = df.g)
@@ -87,6 +115,31 @@ end
 end
 
 @testset "@by" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5, 
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing]
+        )
+    
+    m = [100, 200, 300, 400, 500]
+    
+    gq = :g
+    iq = :i
+    tq = :t
+    yq = :y
+    cq = :c
+    
+    gr = "g"
+    ir = "i"
+    tr = "t"
+    yr = "y"
+    cr = "c"
+    
+    gd = groupby(df, :g)
+    
+    newvar = :n
     @test @by(df, :g, n = mean(:i)).n == [2.0, 4.5]
     @test @by(df, :g, n = mean(:i) + mean(:g)).n == [3.0, 6.5]
     @test @by(df, :g, n = first(:t .* string.(:y))).n == ["av", "cy"]
@@ -114,6 +167,33 @@ end
     @test @by(df, "g", transform = cols(ir)).transform == df.i
     @test @by(df, "g", (n1 = [first(cols(ir))], n2 = [first(cols(yr))])).n1 == [1, 4]
 end
+
+# Defined outside of `@testset` due to use of `@eval`
+df = DataFrame(
+    g = [1, 1, 1, 2, 2],
+    i = 1:5, 
+    t = ["a", "b", "c", "c", "e"],
+    y = [:v, :w, :x, :y, :z],
+    c = [:g, :quote, :body, :transform, missing]
+    )
+
+m = [100, 200, 300, 400, 500]
+
+gq = :g
+iq = :i
+tq = :t
+yq = :y
+cq = :c
+
+gr = "g"
+ir = "i"
+tr = "t"
+yr = "y"
+cr = "c"
+
+gd = groupby(df, :g)
+
+newvar = :n
 
 @testset "limits of @by" begin
 	@test_throws LoadError @eval @by(df, :g, :i)
