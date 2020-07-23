@@ -15,7 +15,7 @@ function byrow_replace(e::Expr)
     if e.head == :call && e.args[1] == :cols
        return Expr(:ref, e, :row)
     end
-    #dump(e)
+
     Expr(e.head, (isempty(e.args) ? e.args : map(byrow_replace, e.args))...)
 end
 
@@ -51,9 +51,6 @@ function byrow_helper(df, body, deprecation_warning)
     # byrow itself because then it will be displayed when the macro is evaluated.
     deprecation_warning && @warn "`@byrow!` is deprecated, use `@byrow` instead."
     e_body, e_newcols = byrow_find_newcols(body, Any[])
-
-    t = byrow_replace(e_body)
-    @show t
     quote
         _N = length($df[!, 1])
         _DF = @transform($df, $(e_newcols...))
