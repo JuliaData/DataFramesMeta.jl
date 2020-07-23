@@ -39,21 +39,26 @@ const ≅ = isequal
     @test @transform(df, body = :i).body == df.i 
     @test @transform(df, transform = :i).transform == df.i
     
-    @transform(df, n = cols(iq)).n == df.i
-    @transform(df, n = cols(iq) .+ cols(gq)).n == df.i .+ df.g
-    @transform(df, n = cols(tq) .* string.(cols(yq))).n == df.t .* string.(df.y)
-    @transform(df, n = Symbol.(cols(yq), ^(:t))).n == Symbol.(df.y, :t)
-    @transform(df, n = Symbol.(cols(yq), ^(:body))).n == Symbol.(df.y, :body)
-    @transform(df, body = cols(iq)).body == df.i 
-    @transform(df, transform = cols(iq)).transform == df.i
+    @test @transform(df, n = cols(iq)).n == df.i
+    @test @transform(df, n = cols(iq) .+ cols(gq)).n == df.i .+ df.g
+    @test @transform(df, n = cols(tq) .* string.(cols(yq))).n == df.t .* string.(df.y)
+    @test @transform(df, n = Symbol.(cols(yq), ^(:t))).n == Symbol.(df.y, :t)
+    @test @transform(df, n = Symbol.(cols(yq), ^(:body))).n == Symbol.(df.y, :body)
+    @test @transform(df, body = cols(iq)).body == df.i 
+    @test @transform(df, transform = cols(iq)).transform == df.i
     
-    @transform(df, n = cols(ir)).n == df.i
-    @transform(df, n = cols(ir) .+ cols(gr)).n == df.i .+ df.g
-    @transform(df, n = cols(tr) .* string.(cols(yr))).n == df.t .* string.(df.y)
-    @transform(df, n = Symbol.(cols(yr), ^(:t))).n == Symbol.(df.y, :t)
-    @transform(df, n = Symbol.(cols(yr), ^(:body))).n == Symbol.(df.y, :body)
-    @transform(df, body = cols(ir)).body == df.i 
-    @transform(df, transform = cols(ir)).transform == df.i
+    @test @transform(df, n = cols(ir)).n == df.i
+    @test @transform(df, n = cols(ir) .+ cols(gr)).n == df.i .+ df.g
+    @test @transform(df, n = cols(tr) .* string.(cols(yr))).n == df.t .* string.(df.y)
+    @test @transform(df, n = Symbol.(cols(yr), ^(:t))).n == Symbol.(df.y, :t)
+    @test @transform(df, n = Symbol.(cols(yr), ^(:body))).n == Symbol.(df.y, :body)
+    @test @transform(df, body = cols(ir)).body == df.i 
+    @test @transform(df, transform = cols(ir)).transform == df.i
+
+    @test @transform(df, n = :i).g !== df.g
+
+    newdf = @transform(df, n = :i)
+    @test newdf[:, Not(:n)] ≅ df
 end
 
 # Defined outside of `@testset` due to use of `@eval`
@@ -90,6 +95,8 @@ cr = "c"
     newvar = :n
     @test_throws ErrorException @eval @transform(df, cols(newvar) = :i)
     @test_throws MethodError @eval @transform(df, n = sum(Between(:i, :t)))
+
+    @test @transform(df, n = :i).n === df.i
 end
 
 @testset "@select" begin
@@ -182,6 +189,7 @@ cr = "c"
     newvar = :n
     @test_throws ArgumentError @select(df, cols(newvar) = :i)
     @test_throws MethodError @eval @select(df, n = sum(Between(:i, :t)))
+    @test @select(df, n = :i).n === df.i
 end
 
 @testset "Keyword arguments failure" begin
