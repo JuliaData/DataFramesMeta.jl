@@ -84,6 +84,8 @@ tr = "t"
 yr = "y"
 cr = "c"
 
+s = [:i, :g]
+
 @testset "limits of @transform" begin
     ## Test for not-implemented or strange behavior
     @test_throws LoadError @eval @transform(df, :i)
@@ -95,8 +97,8 @@ cr = "c"
     newvar = :n
     @test_throws ErrorException @eval @transform(df, cols(newvar) = :i)
     @test_throws MethodError @eval @transform(df, n = sum(Between(:i, :t)))
-
     @test @transform(df, n = :i).n === df.i
+    @test @transform(df, n = cols(s).i) == df.i
 end
 
 @testset "@select" begin
