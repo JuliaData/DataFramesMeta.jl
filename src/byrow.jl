@@ -1,9 +1,10 @@
 
 export @byrow!
+export @byrow
 
 ##############################################################################
 ##
-## @byrow!
+## @byrow
 ##
 ##############################################################################
 
@@ -41,7 +42,10 @@ end
 
 byrow_find_newcols(x, newcol_decl) = (x, Any[])
 
-function byrow_helper(df, body)
+function byrow_helper(df, body, deprecation_warning)
+    # @deprecate cannot be used because byrow is a macro, and the @warn should not be in
+    # byrow itself because then it will be displayed when the macro is evaluated.
+    deprecation_warning && @warn "`@byrow!` is deprecated, use `@byrow` instead."
     e_body, e_newcols = byrow_find_newcols(body, Any[])
     quote
         _N = length($df[!, 1])
@@ -56,22 +60,34 @@ end
 """
     @byrow!(d, expr)
 
+Deprecated version of `@byrow`, see: [`@byrow`](@ref)
+
+Acts the exact same way. It does not change the input argument `d` in-place.
+"""
+macro byrow!(df, body)
+    esc(byrow_helper(df, body, true))
+end
+
+"""
+    @byrow(d, expr)
+
 Act on a DataFrame row-by-row.
 
 Includes support for control flow and `begin end` blocks. Since the
-"environment" induced by `@byrow! df` is implicitly a single row of `df`,
+"environment" induced by `@byrow df` is implicitly a single row of `df`,
 use regular operators and comparisons instead of their elementwise counterparts
-as in `@with`. Note that the scope within `@byrow!` is a hard scope.
+as in `@with`. Note that the scope within `@byrow` is a hard scope.
 
-`byrow!` also supports special syntax for allocating new columns. The syntax
+`byrow` also supports special syntax for allocating new columns. The syntax
 `@newcol x::Array{Int}` allocates a new column `:x` with an `Array` container
-with eltype `Int`. Note that the returned `AbstractDataFrame` includes these new
-columns, but the original `d` is not affected. This feature makes it easier to
-use `byrow!` for data transformations. `_N` is introduced to represent the
-length of the dataframe, `_D` represents the `dataframe` including added columns,
-and `row` represents the index of the current row.
+with eltype `Int`.This feature makes it easier to use `byrow` for data
+transformations. `_N` is introduced to represent the length of the dataframe,
+`_D` represents the `dataframe` including added columns, and `row` represents
+the index of the current row.
 
-Also note that the returned data frame does not share columns with `d`.
+Changes to the rows do not affect `d` but instead a freshly allocated data frame is returned
+by `@byrow`. Also note that the returned data frame does not share columns
+with `d`.
 
 ### Arguments
 
@@ -90,7 +106,7 @@ julia> using DataFrames, DataFramesMeta
 julia> df = DataFrame(A = 1:3, B = [2, 1, 2]);
 
 julia> let x = 0
-            @byrow! df begin
+            @byrow df begin
                 if :A + :B == 3
                     x += 1
                 end
@@ -99,7 +115,7 @@ julia> let x = 0
         end
 2
 
-julia> @byrow! df begin
+julia> @byrow df begin
             if :A > :B
                 :A = 0
             end
@@ -111,7 +127,7 @@ julia> @byrow! df begin
 │ 2   │ 0 │ 1 │
 │ 3   │ 0 │ 2 │
 
-julia> df2 = @byrow! df begin
+julia> df2 = @byrow df begin
            @newcol colX::Array{Float64}
            :colX = :B == 2 ? pi * :A : :B
        end
@@ -124,6 +140,6 @@ julia> df2 = @byrow! df begin
 ```
 
 """
-macro byrow!(df, body)
-    esc(byrow_helper(df, body))
+macro byrow(df, body)
+    esc(byrow_helper(df, body, false))
 end
