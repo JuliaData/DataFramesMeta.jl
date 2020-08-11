@@ -69,6 +69,21 @@ df2 = @byrow df begin
     end
 end
 
+@testset "cols with @byrow" begin
+    df = DataFrame(A = 1:3, B = [2, 1, 2])
+    n = :A
+    df2 = @byrow df begin
+        :B = cols(n)
+    end
+    @test df2 == DataFrame(A = 1:3, B = 1:3)
+
+    n = "A"
+    df2 = @byrow df begin
+        :B = cols(n)
+    end
+    @test df2 == DataFrame(A = 1:3, B = 1:3)
+end
+
 @test  df2.colX == [pi, 1.0, 3pi]
 @test  df2[2, :colY] == 2
 

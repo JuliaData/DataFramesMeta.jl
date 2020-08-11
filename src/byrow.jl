@@ -12,7 +12,7 @@ export @byrow
 # ":(:(x))" with ":x[row]".
 function byrow_replace(e::Expr)
     # Traverse the syntax tree of e
-    if e.head == :call && e.args[1] == :cols
+    if onearg(e, :cols)
        return Expr(:ref, e, :row)
     end
 
