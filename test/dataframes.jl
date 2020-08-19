@@ -101,8 +101,6 @@ df = DataFrame(A = 1:3, B = [2, 1, 2])
     @test_throws ArgumentError @eval @byrow df begin cols(n) end
 end
 
-
-
 @test  df2.colX == [pi, 1.0, 3pi]
 @test  df2[2, :colY] == 2
 
