@@ -69,6 +69,38 @@ df2 = @byrow df begin
     end
 end
 
+df = DataFrame(A = 1:3, B = [2, 1, 2])
+
+@testset "cols with @byrow" begin
+    df = DataFrame(A = 1:3, B = [2, 1, 2])
+    n = :A
+    df2 = @byrow df begin
+        :B = cols(n)
+    end
+    @test df2 == DataFrame(A = 1:3, B = 1:3)
+
+    n = "A"
+    df2 = @byrow df begin
+        :B = cols(n)
+    end
+    @test df2 == DataFrame(A = 1:3, B = 1:3)
+
+    n = 1
+    df2 = @byrow df begin
+        :B = cols(n)
+    end
+    @test df2 == DataFrame(A = 1:3, B = 1:3)
+
+    @eval TestDataFrames n = ["A", "B"]
+    @test_throws ArgumentError @eval @byrow df begin cols(n) end
+
+    @eval TestDataFrames n = [:A, :B]
+    @test_throws ArgumentError @eval @byrow df begin cols(n) end
+
+    @eval TestDataFrames n = [1, 2]
+    @test_throws ArgumentError @eval @byrow df begin cols(n) end
+end
+
 @test  df2.colX == [pi, 1.0, 3pi]
 @test  df2[2, :colY] == 2
 

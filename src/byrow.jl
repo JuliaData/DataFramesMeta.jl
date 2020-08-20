@@ -12,8 +12,17 @@ export @byrow
 # ":(:(x))" with ":x[row]".
 function byrow_replace(e::Expr)
     # Traverse the syntax tree of e
+    if onearg(e, :cols)
+        return Expr(:call, :(DataFramesMeta.getsingleindex), e, :row)
+    end
+
     Expr(e.head, (isempty(e.args) ? e.args : map(byrow_replace, e.args))...)
 end
+
+getsingleindex(df::AbstractDataFrame, idx) =
+    throw(ArgumentError("`cols` inside `@byrow` is reserved"))
+
+getsingleindex(x::AbstractVector, idx) = x[idx]
 
 byrow_replace(e::QuoteNode) = Expr(:ref, e, :row)
 
@@ -89,6 +98,10 @@ Changes to the rows do not affect `d` but instead a freshly allocated data frame
 by `@byrow`. Also note that the returned data frame does not share columns
 with `d`.
 
+Like with `@transform`, `@byrow` supports the use of `cols` to work with column names
+stored as variables. Using `cols` with a multi-column selector, such as a `Vector` of 
+`Symbol`s, is currently unsupported. 
+
 ### Arguments
 
 * `d` : an `AbstractDataFrame`
@@ -130,6 +143,19 @@ julia> @byrow df begin
 julia> df2 = @byrow df begin
            @newcol colX::Array{Float64}
            :colX = :B == 2 ? pi * :A : :B
+       end
+3×3 DataFrame
+│ Row │ A │ B │ colX    │
+├─────┼───┼───┼─────────┤
+│ 1   │ 1 │ 2 │ 3.14159 │
+│ 2   │ 0 │ 1 │ 1.0     │
+│ 3   │ 0 │ 2 │ 0.0     │
+
+julia> varA = :A; varB = :B; 
+
+julia> df2 = @byrow df begin
+           @newcol colX::Array{Float64}
+           :colX = cols(varB) == 2 ? pi * cols(varA) : cols(varB)
        end
 3×3 DataFrame
 │ Row │ A │ B │ colX    │
