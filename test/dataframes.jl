@@ -244,6 +244,7 @@ end
 
 @test DataFramesMeta.orderby(df, df[[1, 3, 2], :]) == df[[1, 3, 2], :]
 
+# `y` needs to be in global scope here because the testset relies on `y`
 y = 0
 @testset "byrow" begin
     df = DataFrame(A = 1:3, B = [2, 1, 2])
