@@ -98,7 +98,7 @@ s = [:i, :g]
     @test_throws ErrorException @eval @transform(df, cols(newvar) = :i)
     @test_throws MethodError @eval @transform(df, n = sum(Between(:i, :t)))
     @test @transform(df, n = :i).n === df.i
-    @test @transform(df, n = cols(s).i) == df.i
+    @test @transform(df, n = cols(s).i).n == df.i
 end
 
 @testset "@select" begin
@@ -244,36 +244,38 @@ end
 
 @test DataFramesMeta.orderby(df, df[[1, 3, 2], :]) == df[[1, 3, 2], :]
 
-@test @byrow(df, if :A > :B; :A = 0 end) == DataFrame(A = [1, 0, 0], B = [2, 1, 2])
-
-# No test for checking if the `@byrow!` deprecation warning exists because it
-# seems like Test.@test_logs (or Test.collect_test_logs) does not play nice
-# with macros.  The existence of the deprecation can be confirmed, however,
-# from the fact it appears a single time (because of the test below) when
-# `] test` is run.
-@test @byrow(df, if :A > :B; :A = 0 end) == @byrow!(df, if :A > :B; :A = 0 end)
-
-@test  df == DataFrame(A = [1, 2, 3], B = [2, 1, 2])
-
-df = DataFrame(A = 1:3, B = [2, 1, 2])  # Restore df
 y = 0
-@byrow(df, if :A + :B == 3; global y += 1 end)
-@test  y == 2
+@testset "byrow" begin
+    df = DataFrame(A = 1:3, B = [2, 1, 2])
 
-df = DataFrame(A = 1:3, B = [2, 1, 2])
-df2 = @byrow df begin
-    @newcol colX::Array{Float64}
-    @newcol colY::Array{Float64}
-    :colX = :B == 2 ? pi * :A : :B
-    if :A > 1
-        :colY = :A * :B
+    @test @byrow(df, if :A > :B; :A = 0 end) == DataFrame(A = [1, 0, 0], B = [2, 1, 2])
+
+    # No test for checking if the `@byrow!` deprecation warning exists because it
+    # seems like Test.@test_logs (or Test.collect_test_logs) does not play nice
+    # with macros.  The existence of the deprecation can be confirmed, however,
+    # from the fact it appears a single time (because of the test below) when
+    # `] test` is run.
+    @test @byrow(df, if :A > :B; :A = 0 end) == @byrow!(df, if :A > :B; :A = 0 end)
+
+    @test  df == DataFrame(A = [1, 2, 3], B = [2, 1, 2])
+
+    df = DataFrame(A = 1:3, B = [2, 1, 2])  # Restore df
+    @byrow(df, if :A + :B == 3; global y += 1 end)
+    @test  y == 2
+
+    df = DataFrame(A = 1:3, B = [2, 1, 2])
+    df2 = @byrow df begin
+        @newcol colX::Array{Float64}
+        @newcol colY::Array{Float64}
+        :colX = :B == 2 ? pi * :A : :B
+        if :A > 1
+            :colY = :A * :B
+        end
     end
-    
+        
     @test  df2.colX == [pi, 1.0, 3pi]
     @test  df2[2, :colY] == 2
 end
-
-df = DataFrame(A = 1:3, B = [2, 1, 2])
 
 @testset "cols with @byrow" begin
     df = DataFrame(A = 1:3, B = [2, 1, 2])
@@ -294,7 +296,11 @@ df = DataFrame(A = 1:3, B = [2, 1, 2])
         :B = cols(n)
     end
     @test df2 == DataFrame(A = 1:3, B = 1:3)
+end
 
+df = DataFrame(A = 1:3, B = [2, 1, 2])
+
+@testset "limits of @byrow" begin
     @eval TestDataFrames n = ["A", "B"]
     @test_throws ArgumentError @eval @byrow df begin cols(n) end
 
@@ -302,10 +308,7 @@ df = DataFrame(A = 1:3, B = [2, 1, 2])
     @test_throws ArgumentError @eval @byrow df begin cols(n) end
 
     @eval TestDataFrames n = [1, 2]
-    @test_throws ArgumentError @eval @byrow df begin cols(n) end
+    @test_throws ArgumentError @eval @byrow df begin cols(n) end    
 end
-
-@test  df2.colX == [pi, 1.0, 3pi]
-@test  df2[2, :colY] == 2
 
 end # module
