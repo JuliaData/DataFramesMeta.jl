@@ -191,15 +191,15 @@ x_thread = @> begin
 end
 ```
 
-Please note that `Lazy.jl` exports the function `groupby` which would clash
+Please note that Lazy.jl exports the function `groupby` which would clash
 with `DataFrames.groupby`. Hence, it is recommended that you only import a
 select number of functions into the namespace by only importing `@>` e.g. 
 `using Lazy: @>` instead of `using Lazy`.
 
-Another alternative is `Pipe.jl` which exports the `@pipe` macro for piping. 
-The piping mechanism in `Pipe.jl` requires explicit specification of the piped
+Another alternative is Pipe.jl which exports the `@pipe` macro for piping. 
+The piping mechanism in Pipe.jl requires explicit specification of the piped
 object via `_` instead of assuming it is the first argument to the next function.
-The `Pipe.jl` equivalent of the above is:
+The Pipe.jl equivalent of the above is:
 
 ```julia
 using Pipe
