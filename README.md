@@ -180,6 +180,7 @@ use `@linq` or only support the set of linq-like macros.
 Alternatively you can use Lazy.jl `@>` macro like this:
 
 ```julia
+using Lazy: @>
 x_thread = @> begin
     df
     @transform(y = 10 * :x)
@@ -188,6 +189,26 @@ x_thread = @> begin
     @orderby(:meanX)
     @select(:meanX, :meanY, var = :b)
 end
+```
+
+Please note that `Lazy.jl` exports the function `groupby` which would clash
+with `DataFrames.groupby`. Hence, it is recommended that you only import a
+select number of functions into the namespace by only importing `@>` e.g. 
+`using Lazy: @>` instead of `using Lazy`.
+
+Another alternative is `Pipe.jl` which exports the `@pipe` macro for piping. 
+The piping mechanism in `Pipe.jl` requires explicit specification of the piped
+object via `_` instead of assuming it is the first argument to the next function.
+The `Pipe.jl` equivalent of the above is:
+
+```julia
+using Pipe
+x_thread = @pipe df |>
+    @transform(_, y = 10 * :x) |>
+    @where(_, :a .> 2) |>
+    @by(_, :b, meanX = mean(:x), meanY = mean(:y)) |>
+    @orderby(_, :meanX) |>
+    @select(_, :meanX, :meanY, var = :b)
 ```
 ## Operations on GroupedDataFrames
 
