@@ -424,20 +424,18 @@ df = DataFrame(
     t = ["a", "b", "c", "c", "e"],
     y = [:v, :w, :x, :y, :z],
     c = [:g, :quote, :body, :transform, missing]
-    )
+)
     
 @testset "limits of @cols and @row" begin
     @test_throws MethodError @eval DataFrames.transform(df, @col n = sum(All()))
     @test_throws MethodError @eval DataFrames.transform(df, @col n = sum(Between(:g, :i)))
     @test_throws MethodError @eval DataFrames.transform(df, @col n = sum(Not([:t, :y, :c])))
     @test_throws ArgumentError @eval DataFrames.transform(df, @col n = sum(cols([:g, :i])))
-    @test_throws UndefError @eval DataFrames.transform(df, @col n = g)
 
-    @test_throws MethodError @eval DataFrames.transform(df, @row n = sum(All()))
+    @test_throws ArgumentError @eval DataFrames.transform(df, @row n = sum(All()))
     @test_throws MethodError @eval DataFrames.transform(df, @row n = sum(Between(:g, :i)))
     @test_throws MethodError @eval DataFrames.transform(df, @row n = sum(Not([:t, :y, :c])))
     @test_throws ArgumentError @eval DataFrames.transform(df, @row n = sum(cols([:g, :i])))
-    @test_throws UndefError @eval DataFrames.transform(df, @row n = g)
 end
 
 end # module
