@@ -312,4 +312,132 @@ df = DataFrame(A = 1:3, B = [2, 1, 2])
     @test_throws ArgumentError @eval @byrow df begin cols(n) end    
 end
 
+@testset "@col" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5, 
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing]
+        )
+    
+    m = [100, 200, 300, 400, 500]
+    
+    gq = :g
+    iq = :i
+    tq = :t
+    yq = :y
+    cq = :c
+    
+    gr = "g"
+    ir = "i"
+    tr = "t"
+    yr = "y"
+    cr = "c"
+
+    nname = :n
+
+    @test DataFrames.transform(df, @col n = :i).n == df.i
+    @test DataFrames.transform(df, @col n = :i .+ :g).n == df.i .+ df.g
+    @test DataFrames.transform(df, @col n = :t .* string.(:y)).n == df.t .* string.(df.y)
+    @test DataFrames.transform(df, @col n = Symbol.(:y, ^(:t))).n == Symbol.(df.y, :t)
+    @test DataFrames.transform(df, @col n = Symbol.(:y, ^(:body))).n == Symbol.(df.y, :body)
+    @test DataFrames.transform(df, @col body = :i).body == df.i 
+    @test DataFrames.transform(df, @col transform = :i).transform == df.i    
+
+    @test DataFrames.transform(df, @col n = cols(iq)).n == df.i
+    @test DataFrames.transform(df, @col n = cols(iq) .+ cols(gq)).n == df.i .+ df.g
+    @test DataFrames.transform(df, @col n = cols(tq) .* string.(cols(yq))).n == df.t .* string.(df.y)
+    @test DataFrames.transform(df, @col n = Symbol.(cols(yq), ^(:t))).n == Symbol.(df.y, :t)
+    @test DataFrames.transform(df, @col n = Symbol.(cols(yq), ^(:body))).n == Symbol.(df.y, :body)
+    @test DataFrames.transform(df, @col body = cols(iq)).body == df.i 
+    @test DataFrames.transform(df, @col transform = cols(iq)).transform == df.i
+    
+    @test DataFrames.transform(df, @col n = cols(ir)).n == df.i
+    @test DataFrames.transform(df, @col n = cols(ir) .+ cols(gr)).n == df.i .+ df.g
+    @test DataFrames.transform(df, @col n = cols(tr) .* string.(cols(yr))).n == df.t .* string.(df.y)
+    @test DataFrames.transform(df, @col n = Symbol.(cols(yr), ^(:t))).n == Symbol.(df.y, :t)
+    @test DataFrames.transform(df, @col n = Symbol.(cols(yr), ^(:body))).n == Symbol.(df.y, :body)
+    @test DataFrames.transform(df, @col body = cols(ir)).body == df.i 
+
+    @test DataFrames.transform(df, @col cols(nname) = :i).n == df.i
+    @test DataFrames.transform(df, @col cols("body") = :i).body == df.i 
+    @test DataFrames.transform(df, @col cols(:transform) = :i).transform == df.i   
+end
+
+@testset "@row" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5, 
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing]
+        )
+    
+    m = [100, 200, 300, 400, 500]
+    
+    gq = :g
+    iq = :i
+    tq = :t
+    yq = :y
+    cq = :c
+    
+    gr = "g"
+    ir = "i"
+    tr = "t"
+    yr = "y"
+    cr = "c"
+
+    nname = :n
+
+    @test DataFrames.transform(df, @row n = :i).n == df.i
+    @test DataFrames.transform(df, @row n = :i + :g).n == df.i .+ df.g
+    @test DataFrames.transform(df, @row n = :t * string(:y)).n == df.t .* string.(df.y)
+    @test DataFrames.transform(df, @row n = Symbol(:y, ^(:t))).n == Symbol.(df.y, :t)
+    @test DataFrames.transform(df, @row n = Symbol(:y, ^(:body))).n == Symbol.(df.y, :body)
+    @test DataFrames.transform(df, @row body = :i).body == df.i 
+    @test DataFrames.transform(df, @row transform = :i).transform == df.i    
+
+    @test DataFrames.transform(df, @row n = cols(iq)).n == df.i
+    @test DataFrames.transform(df, @row n = cols(iq) + cols(gq)).n == df.i .+ df.g
+    @test DataFrames.transform(df, @row n = cols(tq) * string.(cols(yq))).n == df.t .* string.(df.y)
+    @test DataFrames.transform(df, @row n = Symbol(cols(yq), ^(:t))).n == Symbol.(df.y, :t)
+    @test DataFrames.transform(df, @row n = Symbol(cols(yq), ^(:body))).n == Symbol.(df.y, :body)
+    @test DataFrames.transform(df, @row body = cols(iq)).body == df.i 
+    @test DataFrames.transform(df, @row transform = cols(iq)).transform == df.i
+    
+    @test DataFrames.transform(df, @row n = cols(ir)).n == df.i
+    @test DataFrames.transform(df, @row n = cols(ir) + cols(gr)).n == df.i .+ df.g
+    @test DataFrames.transform(df, @row n = cols(tr) * string.(cols(yr))).n == df.t .* string.(df.y)
+    @test DataFrames.transform(df, @row n = Symbol(cols(yr), ^(:t))).n == Symbol.(df.y, :t)
+    @test DataFrames.transform(df, @row n = Symbol(cols(yr), ^(:body))).n == Symbol.(df.y, :body)
+    @test DataFrames.transform(df, @row body = cols(ir)).body == df.i 
+
+    @test DataFrames.transform(df, @row cols(nname) = :i).n == df.i
+    @test DataFrames.transform(df, @row cols("body") = :i).body == df.i 
+    @test DataFrames.transform(df, @row cols(:transform) = :i).transform == df.i   
+end
+
+df = DataFrame(
+    g = [1, 1, 1, 2, 2],
+    i = 1:5, 
+    t = ["a", "b", "c", "c", "e"],
+    y = [:v, :w, :x, :y, :z],
+    c = [:g, :quote, :body, :transform, missing]
+    )
+    
+@testset "limits of @cols and @row" begin
+    @test_throws MethodError @eval DataFrames.transform(df, @col n = sum(All()))
+    @test_throws MethodError @eval DataFrames.transform(df, @col n = sum(Between(:g, :i)))
+    @test_throws MethodError @eval DataFrames.transform(df, @col n = sum(Not([:t, :y, :c])))
+    @test_throws ArgumentError @eval DataFrames.transform(df, @col n = sum(cols([:g, :i])))
+    @test_throws UndefError @eval DataFrames.transform(df, @col n = g)
+
+    @test_throws MethodError @eval DataFrames.transform(df, @row n = sum(All()))
+    @test_throws MethodError @eval DataFrames.transform(df, @row n = sum(Between(:g, :i)))
+    @test_throws MethodError @eval DataFrames.transform(df, @row n = sum(Not([:t, :y, :c])))
+    @test_throws ArgumentError @eval DataFrames.transform(df, @row n = sum(cols([:g, :i])))
+    @test_throws UndefError @eval DataFrames.transform(df, @row n = g)
+end
+
 end # module

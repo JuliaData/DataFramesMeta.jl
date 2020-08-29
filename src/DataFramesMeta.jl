@@ -3,7 +3,7 @@ module DataFramesMeta
 using DataFrames, Tables
 
 # Basics:
-export @with, @where, @orderby, @transform, @by, @based_on, @select
+export @with, @where, @orderby, @transform, @by, @based_on, @select, @col, @row
 
 include("linqmacro.jl")
 include("byrow.jl")
@@ -43,6 +43,178 @@ replace_syms!(e::Expr, membernames) =
     else
         mapexpr(x -> replace_syms!(x, membernames), e)
     end
+
+"""
+    @col(kw)
+
+    
+`@col` transforms an expression of the form `z = :x + :y` into it's equivalent in 
+DataFrames's "mini-language". Functions act column-wise. For a row-wise functions, see 
+`@row`
+
+### Details
+
+Parsing follows the same convention as other DataFramesMeta macros, such as `@with`. All 
+terms in the expression that are `Symbols` are treated as columns in the DataFrame, except 
+`Symbol`s wrapped in `^`. To use a variable representing a column name, wrap the variable 
+in `cols`. 
+
+`@col` constructs an anonymous function based off the given expression. It then creates
+a `source => fun => destination` pair that is suitable for the `select`, `transform`, and 
+`combine` functions in DataFrames. 
+
+### Examples
+
+```
+julia> @col z = :x + :y
+[:x, :y] => (##595 => :z)
+```
+
+In the above example, `##595` is an anonymous function equivelent to the following 
+
+```
+(_x, _y) -> _x + _y
+```
+
+```
+julia> df = DataFrame(x = [1, 2], y = [3, 4]);
+
+julia> DataFrames.transform(df, @col z = :x .* :y)
+2×3 DataFrame
+│ Row │ x     │ y     │ z     │
+│     │ Int64 │ Int64 │ Int64 │
+├─────┼───────┼───────┼───────┤
+│ 1   │ 1     │ 3     │ 3     │
+│ 2   │ 2     │ 4     │ 8     │
+
+julia> DataFrames.transform(df, [:x, :y] => ((_x, _y) -> _x .* _y) => :z)
+2×3 DataFrame
+│ Row │ x     │ y     │ z     │
+│     │ Int64 │ Int64 │ Int64 │
+├─────┼───────┼───────┼───────┤
+│ 1   │ 1     │ 3     │ 3     │
+│ 2   │ 2     │ 4     │ 8     │
+
+```
+
+"""
+macro col(kw)
+    esc(fun_to_vec(kw; byrow = false))
+end
+
+"""
+    @row(kw)
+
+    
+`@row` transforms an expression of the form `z = :x + :y` into it's equivalent in 
+DataFrames's "mini-language". Functions act row-wise. For column-wise functions, see 
+`@col`
+
+### Details
+
+Parsing follows the same convention as other DataFramesMeta macros, such as `@with`. All 
+terms in the expression that are `Symbols` are treated as columns in the DataFrame, except 
+`Symbol`s wrapped in `^`. To use a variable representing a column name, wrap the variable 
+in `cols`. 
+
+`@row` constructs an anonymous function based off the given expression. It then creates
+a `source => fun => destination` pair that is suitable for the `select`, `transform`, and 
+`combine` functions in DataFrames. 
+
+### Examples
+
+```
+julia> @row z = :x + :y
+[:x, :y] => (ByRow{var"###607"}(##607) => :z)
+
+```
+
+In the above example, `##607` is an anonymous function equivelent to the following 
+
+```
+(_x, _y) -> _x + _y
+```
+
+The function is wrapped in `ByRow` indicating that DataFrames applies the function 
+to each row of the data frame.  
+
+```
+julia> df = DataFrame(x = [1, 2], y = [3, 4]);
+
+julia> DataFrames.transform(df, @row z = :x * :y)
+2×3 DataFrame
+│ Row │ x     │ y     │ z     │
+│     │ Int64 │ Int64 │ Int64 │
+├─────┼───────┼───────┼───────┤
+│ 1   │ 1     │ 3     │ 3     │
+│ 2   │ 2     │ 4     │ 8     │
+
+julia> DataFrames.transform(df, [:x, :y] => ByRow((_x, _y) -> _x * _y) => :z)
+2×3 DataFrame
+│ Row │ x     │ y     │ z     │
+│     │ Int64 │ Int64 │ Int64 │
+├─────┼───────┼───────┼───────┤
+│ 1   │ 1     │ 3     │ 3     │
+│ 2   │ 2     │ 4     │ 8     │
+"""
+macro row(kw)
+    esc(fun_to_vec(kw; byrow = true))
+end
+
+
+function fun_to_vec(kw::Expr; byrow = false)
+    # z = :x + :y
+    if kw.head == :(=) || kw.head == :kw
+        # New column to be created
+        output = kw.args[1]
+
+        # membernames:
+        # Dict(:x => _x, :y => _y)
+        #
+        # body:
+        # :(function(_x, _y) _x + _y end) 
+        membernames = Dict{Any, Symbol}()
+        funname = gensym()
+        body = replace_syms!(kw.args[2], membernames)
+
+        if byrow == false
+            # z = :x + :y
+            if kw.args[1] isa Symbol
+                t = quote
+                    $(Expr(:vect, keys(membernames)...)) => function $funname($(values(membernames)...))
+                        $body 
+                    end => $(QuoteNode(output))
+                end
+            # n = :z
+            # cols(n) = :x + :y
+            elseif DataFramesMeta.onearg(kw.args[1], :cols)
+                t = quote
+                    $(Expr(:vect, keys(membernames)...)) => function $funname($(values(membernames)...))
+                        $body 
+                    end => $(output.args[2])
+                end   
+            end
+        else 
+            if kw.args[1] isa Symbol
+                t = quote
+                    $(Expr(:vect, keys(membernames)...)) => $(ByRow)(function $funname($(values(membernames)...))
+                        $body 
+                    end) => $(QuoteNode(output))
+                end
+            elseif DataFramesMeta.onearg(kw.args[1], :cols)
+                t = quote
+                    $(Expr(:vect, keys(membernames)...)) => $(ByRow)(function $funname($(values(membernames)...))
+                        $body 
+                    end) => $(output.args[2])
+                end   
+            end
+        end
+        return t
+    else
+        Throw(ArgumentError("Invalid expression input"))
+    end
+end
+
 
 protect_replace_syms!(e, membernames) = e
 function protect_replace_syms!(e::Expr, membernames)
