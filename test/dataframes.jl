@@ -59,6 +59,9 @@ const ≅ = isequal
 
     newdf = @transform(df, n = :i)
     @test newdf[:, Not(:n)] ≅ df
+
+    @test @transform(df, :i) ≅ df[!, [:i]]
+    @test @transform(df, :i, :g) ≅ df[!, [:i, :g]]
 end
 
 # Defined outside of `@testset` due to use of `@eval`
@@ -88,13 +91,19 @@ s = [:i, :g]
 
 @testset "limits of @transform" begin
     ## Test for not-implemented or strange behavior
-    @test_throws ErrorException @eval @transform(df, [:i, :g])
+    # @test_throws throws a `LoadError` when it
+    # should throw an `ArgumentError`. Regardless,
+    # the following should error so these tests are
+    # left in.
+    @test_throws LoadError @eval @transform(df, [:i, :g])
     @test_throws LoadError @eval @transform(df, All())
-    @test_throws ArgumentError @eval @transform(df, Not([:i, :g]))
+    @test_throws LoadError @eval @transform(df, Between(:i, :t)).Between == df.i
+    @test_throws LoadError @eval  @transform(df, Not(:i)).Not == df.i
+    @test_throws LoadError @eval @transform(df, Not([:i, :g]))
     newvar = :n
-    @test_throws ErrorException @eval @transform(df, cols(newvar) = :i)
+    @test_throws ArgumentError @eval @transform(df, cols(newvar) = :i)
     @test_throws MethodError @eval @transform(df, n = sum(Between(:i, :t)))
-    @test @transform(df, n = :i).n === df.i
+    @test_throws ArgumentError @eval @transform(df, n = sum(cols(s)))
 end
 
 @testset "@select" begin
@@ -308,6 +317,7 @@ df = DataFrame(A = 1:3, B = [2, 1, 2])
     @test_throws ArgumentError @eval @byrow df begin cols(n) end
 end
 
+import DataFramesMeta: @col
 @testset "@col" begin
     df = DataFrame(
         g = [1, 1, 1, 2, 2],
@@ -361,58 +371,6 @@ end
     @test DataFrames.transform(df, @col cols(:transform) = :i).transform == df.i
 end
 
-@testset "@row" begin
-    df = DataFrame(
-        g = [1, 1, 1, 2, 2],
-        i = 1:5,
-        t = ["a", "b", "c", "c", "e"],
-        y = [:v, :w, :x, :y, :z],
-        c = [:g, :quote, :body, :transform, missing]
-        )
-
-    m = [100, 200, 300, 400, 500]
-
-    gq = :g
-    iq = :i
-    tq = :t
-    yq = :y
-    cq = :c
-
-    gr = "g"
-    ir = "i"
-    tr = "t"
-    yr = "y"
-    cr = "c"
-
-    nname = :n
-
-    @test DataFrames.transform(df, @row n = :i).n == df.i
-    @test DataFrames.transform(df, @row n = :i + :g).n == df.i .+ df.g
-    @test DataFrames.transform(df, @row n = :t * string(:y)).n == df.t .* string.(df.y)
-    @test DataFrames.transform(df, @row n = Symbol(:y, ^(:t))).n == Symbol.(df.y, :t)
-    @test DataFrames.transform(df, @row n = Symbol(:y, ^(:body))).n == Symbol.(df.y, :body)
-    @test DataFrames.transform(df, @row body = :i).body == df.i
-    @test DataFrames.transform(df, @row transform = :i).transform == df.i
-
-    @test DataFrames.transform(df, @row n = cols(iq)).n == df.i
-    @test DataFrames.transform(df, @row n = cols(iq) + cols(gq)).n == df.i .+ df.g
-    @test DataFrames.transform(df, @row n = cols(tq) * string.(cols(yq))).n == df.t .* string.(df.y)
-    @test DataFrames.transform(df, @row n = Symbol(cols(yq), ^(:t))).n == Symbol.(df.y, :t)
-    @test DataFrames.transform(df, @row n = Symbol(cols(yq), ^(:body))).n == Symbol.(df.y, :body)
-    @test DataFrames.transform(df, @row body = cols(iq)).body == df.i
-    @test DataFrames.transform(df, @row transform = cols(iq)).transform == df.i
-
-    @test DataFrames.transform(df, @row n = cols(ir)).n == df.i
-    @test DataFrames.transform(df, @row n = cols(ir) + cols(gr)).n == df.i .+ df.g
-    @test DataFrames.transform(df, @row n = cols(tr) * string.(cols(yr))).n == df.t .* string.(df.y)
-    @test DataFrames.transform(df, @row n = Symbol(cols(yr), ^(:t))).n == Symbol.(df.y, :t)
-    @test DataFrames.transform(df, @row n = Symbol(cols(yr), ^(:body))).n == Symbol.(df.y, :body)
-    @test DataFrames.transform(df, @row body = cols(ir)).body == df.i
-
-    @test DataFrames.transform(df, @row cols(nname) = :i).n == df.i
-    @test DataFrames.transform(df, @row cols("body") = :i).body == df.i
-    @test DataFrames.transform(df, @row cols(:transform) = :i).transform == df.i
-end
 
 df = DataFrame(
     g = [1, 1, 1, 2, 2],
@@ -427,11 +385,6 @@ df = DataFrame(
     @test_throws MethodError @eval DataFrames.transform(df, @col n = sum(Between(:g, :i)))
     @test_throws MethodError @eval DataFrames.transform(df, @col n = sum(Not([:t, :y, :c])))
     @test_throws ArgumentError @eval DataFrames.transform(df, @col n = sum(cols([:g, :i])))
-
-    @test_throws ArgumentError @eval DataFrames.transform(df, @row n = sum(All()))
-    @test_throws MethodError @eval DataFrames.transform(df, @row n = sum(Between(:g, :i)))
-    @test_throws MethodError @eval DataFrames.transform(df, @row n = sum(Not([:t, :y, :c])))
-    @test_throws ArgumentError @eval DataFrames.transform(df, @row n = sum(cols([:g, :i])))
 end
 
 end # module

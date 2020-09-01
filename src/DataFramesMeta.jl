@@ -95,60 +95,7 @@ macro col(kw)
     esc(fun_to_vec(kw; byrow = false))
 end
 
-"""
-    @row(kw)
-
-
-`@row` transforms an expression of the form `z = :x + :y` into it's equivalent in
-DataFrames's "mini-language". Functions act row-wise. For column-wise functions, see
-`@col`
-
-### Details
-
-Parsing follows the same convention as other DataFramesMeta macros, such as `@with`. All
-terms in the expression that are `Symbols` are treated as columns in the DataFrame, except
-`Symbol`s wrapped in `^`. To use a variable representing a column name, wrap the variable
-in `cols`.
-
-`@row` constructs an anonymous function based off the given expression. It then creates
-a `source => fun => destination` pair that is suitable for the `select`, `transform`, and
-`combine` functions in DataFrames.
-
-### Examples
-
-```julia
-julia> @row z = :x + :y
-[:x, :y] => (ByRow{var"###607"}(##607) => :z)
-
-```
-
-In the above example, `##607` is an anonymous function equivalent to the following
-
-```julia
-(_x, _y) -> _x + _y
-```
-
-The function is wrapped in `ByRow` indicating that DataFrames applies the function
-to each row of the data frame.
-
-```julia
-julia> df = DataFrame(x = [1, 2], y = [3, 4]);
-
-julia> DataFrames.transform(df, @row z = :x * :y)
-2×3 DataFrame
-│ Row │ x     │ y     │ z     │
-│     │ Int64 │ Int64 │ Int64 │
-├─────┼───────┼───────┼───────┤
-│ 1   │ 1     │ 3     │ 3     │
-│ 2   │ 2     │ 4     │ 8     │
-
-"""
-macro row(kw)
-    esc(fun_to_vec(kw; byrow = true))
-end
-
-
-function fun_to_vec(kw::Expr; byrow = false)
+function fun_to_vec(kw::Expr)
     # If expression is of the form
     #
     # `z = :x + :y` or
@@ -171,19 +118,11 @@ function fun_to_vec(kw::Expr; byrow = false)
         funname = gensym()
         body = replace_syms!(kw.args[2], membernames)
 
-        if byrow == false
-           t = quote
-               $(Expr(:vect, keys(membernames)...)) => function $funname($(values(membernames)...))
-                   $body
-               end => $(QuoteNode(output))
-           end
-        else
-            t = quote
-                $(Expr(:vect, keys(membernames)...)) => $(ByRow)(function $funname($(values(membernames)...))
-                    $body
-                end) => $(QuoteNode(output))
-            end
-        end
+        t = quote
+            $(Expr(:vect, keys(membernames)...)) => (function $funname($(values(membernames)...))
+                $body
+            end) => $(QuoteNode(output))
+    end
         return t
     else
         throw(ArgumentError("Expressions not of the form `y = f(:x)` currently disallowed."))
@@ -574,9 +513,11 @@ end
 ##############################################################################
 
 function based_on_helper(x, args...)
-    with_args =
-        with_anonymous(:($DataFrame($(map(replace_equals_with_kw, args)...))))
-    :(DataFrames.combine($with_args, $x))
+    t = [fun_to_vec(arg) for arg in args]
+
+    quote
+        $DataFrames.combine($x, $(t...))
+    end
 end
 
 """
@@ -644,8 +585,11 @@ end
 ##############################################################################
 
 function by_helper(x, what, args...)
-    :(DataFrames.combine($(with_anonymous(:($DataFrame($(map(replace_equals_with_kw, args)...))))),
-              DataFrames.groupby($x, $what)))
+    t = [fun_to_vec(arg) for arg in args]
+
+    quote
+        $DataFrames.combine($groupby($x, $what), $(t...))
+    end
 end
 
 """
@@ -729,40 +673,11 @@ end
 ##
 ##############################################################################
 
-
-function select(d::AbstractDataFrame; kwargs...)
-    result = typeof(d)()
-    for (k, v) in kwargs
-        result[!, k] = v
-    end
-    return result
-end
-
-function replace_equals_with_kw(e)
-    if e.head == :(=)
-        Expr(:kw, e.args[1], e.args[2])
-    else
-        e
-    end
-end
-
-expandargs(x) = x
-expandargs(q::QuoteNode) = Expr(:kw, q.value, q)
-function expandargs(e::Expr)
-    if e.head == :quote
-        Expr(:kw, e.args[1], e)
-    else
-        replace_equals_with_kw(e)
-    end
-end
-
 function select_helper(x, args...)
-    DF = gensym()
-    select_args = with_helper(DF, :($select($DF, $(map(expandargs, args)...))))
+    t = [fun_to_vec(arg) for arg in args]
+
     quote
-        let $DF = $x
-            $(with_helper(DF, :($select($DF, $(map(expandargs, args)...)))))
-        end
+        $DataFrames.select($x, $(t...))
     end
 end
 
