@@ -23,28 +23,28 @@ g = groupby(d, :x, sort=true)
 @testset "@based_on" begin
     df = DataFrame(
         g = [1, 1, 1, 2, 2],
-        i = 1:5, 
+        i = 1:5,
         t = ["a", "b", "c", "c", "e"],
         y = [:v, :w, :x, :y, :z],
         c = [:g, :quote, :body, :transform, missing]
         )
-    
+
     m = [100, 200, 300, 400, 500]
-    
+
     gq = :g
     iq = :i
     tq = :t
     yq = :y
     cq = :c
-    
+
     gr = "g"
     ir = "i"
     tr = "t"
     yr = "y"
     cr = "c"
-    
+
     gd = groupby(df, :g)
-    
+
     newvar = :n
 
     @test @based_on(gd, n = mean(:i)).n == [2.0, 4.5]
@@ -52,7 +52,7 @@ g = groupby(d, :x, sort=true)
     @test @based_on(gd, n = first(:t .* string.(:y))).n == ["av", "cy"]
     @test @based_on(gd, n = first(Symbol.(:y, ^(:t)))).n == [:vt, :yt]
     @test @based_on(gd, n = first(Symbol.(:y, ^(:body)))).n == [:vbody, :ybody]
-    @test @based_on(gd, body = :i).body == df.i 
+    @test @based_on(gd, body = :i).body == df.i
     @test @based_on(gd, transform = :i).transform == df.i
     @test @based_on(gd, (n1 = [first(:i)], n2 = [first(:y)])).n1 == [1, 4]
 
@@ -61,7 +61,7 @@ g = groupby(d, :x, sort=true)
     @test @based_on(gd, n = first(cols(tq) .* string.(cols(yq)))).n == ["av", "cy"]
     @test @based_on(gd, n = first(Symbol.(cols(yq), ^(:t)))).n == [:vt, :yt]
     @test @based_on(gd, n = first(Symbol.(cols(yq), ^(:body)))).n == [:vbody, :ybody]
-    @test @based_on(gd, body = cols(iq)).body == df.i 
+    @test @based_on(gd, body = cols(iq)).body == df.i
     @test @based_on(gd, transform = cols(iq)).transform == df.i
     @test @based_on(gd, (n1 = [first(cols(iq))], n2 = [first(cols(yq))])).n1 == [1, 4]
 
@@ -70,15 +70,18 @@ g = groupby(d, :x, sort=true)
     @test @based_on(gd, n = first(cols(tr) .* string.(cols(yr)))).n == ["av", "cy"]
     @test @based_on(gd, n = first(Symbol.(cols(yr), ^(:t)))).n == [:vt, :yt]
     @test @based_on(gd, n = first(Symbol.(cols(yr), ^(:body)))).n == [:vbody, :ybody]
-    @test @based_on(gd, body = cols(ir)).body == df.i 
+    @test @based_on(gd, body = cols(ir)).body == df.i
     @test @based_on(gd, transform = cols(ir)).transform == df.i
     @test @based_on(gd, (n1 = [first(cols(ir))], n2 = [first(cols(yr))])).n1 == [1, 4]
+
+    @test @based_on(gd, :i).i == df.i
+    @test @based_on(gd,:i, :g).g == df.g
 end
 
 # Defined outside of `@testset` due to use of `@eval`
 df = DataFrame(
     g = [1, 1, 1, 2, 2],
-    i = 1:5, 
+    i = 1:5,
     t = ["a", "b", "c", "c", "e"],
     y = [:v, :w, :x, :y, :z],
     c = [:g, :quote, :body, :transform, missing]
@@ -103,12 +106,10 @@ gd = groupby(df, :g)
 newvar = :n
 
 @testset "Limits of @based_on" begin
-    @test_throws LoadError @eval @based_on(gd, :i)
-    @test @based_on(gd, [:i, :g]) == DataFrame(g = df.g, x1 = df.i, x2 = df.g)
-    @test_throws ArgumentError @eval @based_on(gd, All())
-    @test_throws MethodError @eval @based_on(gd, Between(:i, :t)).Between == df.i
-    @test_throws ArgumentError @eval @based_on(gd, Not(:i)).Not == df.i
-    @test_throws ArgumentError @eval @based_on(gd, Not([:i, :g]))
+    @test @based_on(gd, [:i, :g]).i_g_function isa Vector{<:SubArray}
+    @test @based_on(gd, All()).function isa Vector{<:All}
+    @test @based_on(gd, Not(:i)).i_function isa Vector{<:InvertedIndex}
+    @test @based_on(gd, Not([:i, :g])).g == [1, 2]
     @test_throws ArgumentError @eval @based_on(gd, cols(newvar) = mean(:i))
     @test_throws MethodError @eval @based_on(gd, n = sum(Between(:i, :t)))
     @test_throws LoadError @eval @based_on(gd; n = mean(:i))
@@ -117,35 +118,35 @@ end
 @testset "@by" begin
     df = DataFrame(
         g = [1, 1, 1, 2, 2],
-        i = 1:5, 
+        i = 1:5,
         t = ["a", "b", "c", "c", "e"],
         y = [:v, :w, :x, :y, :z],
         c = [:g, :quote, :body, :transform, missing]
         )
-    
+
     m = [100, 200, 300, 400, 500]
-    
+
     gq = :g
     iq = :i
     tq = :t
     yq = :y
     cq = :c
-    
+
     gr = "g"
     ir = "i"
     tr = "t"
     yr = "y"
     cr = "c"
-    
+
     gd = groupby(df, :g)
-    
+
     newvar = :n
     @test @by(df, :g, n = mean(:i)).n == [2.0, 4.5]
     @test @by(df, :g, n = mean(:i) + mean(:g)).n == [3.0, 6.5]
     @test @by(df, :g, n = first(:t .* string.(:y))).n == ["av", "cy"]
     @test @by(df, :g, n = first(Symbol.(:y, ^(:t)))).n == [:vt, :yt]
     @test @by(df, :g, n = first(Symbol.(:y, ^(:body)))).n == [:vbody, :ybody]
-    @test @by(df, :g, body = :i).body == df.i 
+    @test @by(df, :g, body = :i).body == df.i
     @test @by(df, :g, transform = :i).transform == df.i
     @test @by(df, :g, (n1 = [first(:i)], n2 = [first(:y)])).n1 == [1, 4]
 
@@ -154,7 +155,7 @@ end
     @test @by(df, :g, n = first(cols(tq) .* string.(cols(yq)))).n == ["av", "cy"]
     @test @by(df, :g, n = first(Symbol.(cols(yq), ^(:t)))).n == [:vt, :yt]
     @test @by(df, :g, n = first(Symbol.(cols(yq), ^(:body)))).n == [:vbody, :ybody]
-    @test @by(df, :g, body = cols(iq)).body == df.i 
+    @test @by(df, :g, body = cols(iq)).body == df.i
     @test @by(df, :g, transform = cols(iq)).transform == df.i
     @test @by(df, :g, (n1 = [first(cols(iq))], n2 = [first(cols(yq))])).n1 == [1, 4]
 
@@ -163,15 +164,18 @@ end
     @test @by(df, "g", n = first(cols(tr) .* string.(cols(yr)))).n == ["av", "cy"]
     @test @by(df, "g", n = first(Symbol.(cols(yr), ^(:t)))).n == [:vt, :yt]
     @test @by(df, "g", n = first(Symbol.(cols(yr), ^(:body)))).n == [:vbody, :ybody]
-    @test @by(df, "g", body = cols(ir)).body == df.i 
+    @test @by(df, "g", body = cols(ir)).body == df.i
     @test @by(df, "g", transform = cols(ir)).transform == df.i
     @test @by(df, "g", (n1 = [first(cols(ir))], n2 = [first(cols(yr))])).n1 == [1, 4]
+
+    @test @by(df, :g, :i).i == df.i
+    @test @by(df, :g, :i, :g).g == df.g
 end
 
 # Defined outside of `@testset` due to use of `@eval`
 df = DataFrame(
     g = [1, 1, 1, 2, 2],
-    i = 1:5, 
+    i = 1:5,
     t = ["a", "b", "c", "c", "e"],
     y = [:v, :w, :x, :y, :z],
     c = [:g, :quote, :body, :transform, missing]
@@ -196,22 +200,19 @@ gd = groupby(df, :g)
 newvar = :n
 
 @testset "limits of @by" begin
-	@test_throws LoadError @eval @by(df, :g, :i)
-	@test @by(df, :g, [:i, :g]) ≅ DataFrame(g = df.g, x1 = df.i, x2 = df.g)
-	@test_throws ArgumentError @eval @by(df, :g, All())
-	@test_throws MethodError @eval @by(df, :g, Between(:i, :t)).Between == df.i
-	@test_throws ArgumentError @eval @by(df, :g, Not(:i)).Not == df.i
-	@test_throws ArgumentError @eval @by(df, :g, Not([:i, :g]))
-	newvar = :n
-	@test_throws ArgumentError @eval @by(df, :g, cols(newvar) = mean(:i))
-	@test_throws MethodError @eval @by(df, :g, n = sum(Between(:i, :t)))
-	@test_throws LoadError @eval @by(df, :g; n = mean(:i))
+    @test @by(df, :g, [:i, :g]).i_g_function isa Vector{<:SubArray}
+    @test @by(df, :g, All()).function isa Vector{<:All}
+    @test @by(df, :g, Not(:i)).i_function isa Vector{<:InvertedIndex}
+    @test @by(df, :g, Not([:i, :g])).g == [1, 2]
+    @test_throws ArgumentError @eval @by(df, :g, cols(newvar) = mean(:i))
+    @test_throws MethodError @eval @by(df, :g, n = sum(Between(:i, :t)))
+    @test_throws MethodError @eval @by(df, :g; n = mean(:i))
 end
 
 @testset "@transform with grouped data frame" begin
 	d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 2, 2, 3, 1, 1, 2])
 	g = groupby(d, :x, sort=true)
-	
+
 	@test  (@transform(g, y = :n .- median(:n)))[1,:y] == -5.0
 
 	d = DataFrame(a = [1,1,1,2,2,3,3,1],

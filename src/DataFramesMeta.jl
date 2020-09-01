@@ -514,8 +514,8 @@ function based_on_helper(x, args...)
     if length(args) == 1 &&
         !(first(args) isa QuoteNode) &&
         !(first(args).head == :(=) || first(args).head == :kw)
+
         t = fun_to_vec(first(args); combinefun = true)
-        @show t
         quote
             $DataFrames.combine($t, $x)
         end
@@ -595,6 +595,7 @@ function by_helper(x, what, args...)
     if length(args) == 1 &&
         !(first(args) isa QuoteNode) &&
         !(first(args).head == :(=) || first(args).head == :kw)
+
         t = fun_to_vec(first(args); combinefun = true)
         quote
             $DataFrames.combine($t, $groupby($x, $what))
