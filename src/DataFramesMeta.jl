@@ -172,42 +172,25 @@ function fun_to_vec(kw::Expr; byrow = false)
         body = replace_syms!(kw.args[2], membernames)
 
         if byrow == false
-            # z = :x + :y
-            if kw.args[1] isa Symbol
-                t = quote
-                    $(Expr(:vect, keys(membernames)...)) => function $funname($(values(membernames)...))
-                        $body
-                    end => $(QuoteNode(output))
-                end
-            # n = :z
-            # cols(n) = :x + :y
-            elseif DataFramesMeta.onearg(kw.args[1], :cols)
-                t = quote
-                    $(Expr(:vect, keys(membernames)...)) => function $funname($(values(membernames)...))
-                        $body
-                    end => $(output.args[2])
-                end
-            end
+           t = quote
+               $(Expr(:vect, keys(membernames)...)) => function $funname($(values(membernames)...))
+                   $body
+               end => $(QuoteNode(output))
+           end
         else
-            if kw.args[1] isa Symbol
-                t = quote
-                    $(Expr(:vect, keys(membernames)...)) => $(ByRow)(function $funname($(values(membernames)...))
-                        $body
-                    end) => $(QuoteNode(output))
-                end
-            elseif DataFramesMeta.onearg(kw.args[1], :cols)
-                t = quote
-                    $(Expr(:vect, keys(membernames)...)) => $(ByRow)(function $funname($(values(membernames)...))
-                        $body
-                    end) => $(output.args[2])
-                end
+            t = quote
+                $(Expr(:vect, keys(membernames)...)) => $(ByRow)(function $funname($(values(membernames)...))
+                    $body
+                end) => $(QuoteNode(output))
             end
         end
         return t
     else
-        return kw
+        throw(ArgumentError("Expressions not of the form `y = f(:x)` currently disallowed."))
     end
 end
+
+fun_to_vec(kw::QuoteNode) = kw
 
 
 protect_replace_syms!(e, membernames) = e
