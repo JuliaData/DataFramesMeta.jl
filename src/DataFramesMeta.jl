@@ -92,37 +92,35 @@ julia> DataFrames.transform(df, @col z = :x .* :y)
 
 """
 macro col(kw)
-    esc(fun_to_vec(kw; byrow = false))
+    esc(fun_to_vec(kw))
 end
 
-function fun_to_vec(kw::Expr)
-    # If expression is of the form
-    #
-    # `z = :x + :y` or
-    # `cols(x) = :x + :y`.
-    #
-    # Then we do the DataFramesMeta replacement etc.
-    # If not, then the expression is passed normally, allowing for
-    # conventional DataFrames usage.
-    if kw.head == :(=) || kw.head == :kw
-        # New column to be created, can be a
-        # `Symbol` or `cols`
-        output = kw.args[1]
-
-        # membernames:
-        # Dict(:x => _x, :y => _y)
-        #
-        # body:
-        # :(function(_x, _y) _x + _y end)
+function fun_to_vec(kw::Expr; combinefun = false)
+    if kw.head == :(=) || kw.head == :kw || combinefun == true
         membernames = Dict{Any, Symbol}()
         funname = gensym()
-        body = replace_syms!(kw.args[2], membernames)
-
-        t = quote
-            $(Expr(:vect, keys(membernames)...)) => (function $funname($(values(membernames)...))
-                $body
-            end) => $(QuoteNode(output))
-    end
+        if combinefun == false
+            body = replace_syms!(kw.args[2], membernames)
+        else
+            body = replace_syms!(kw, membernames)
+        end
+        if combinefun == false
+            output = kw.args[1]
+            t = quote
+                $(Expr(:vect, keys(membernames)...)) =>
+                (function $funname($(values(membernames)...))
+                    $body
+                end) =>
+                $(QuoteNode(output))
+            end
+        else
+            t = quote
+                $(Expr(:vect, keys(membernames)...)) =>
+                (function $funname($(values(membernames)...))
+                    $body
+                end)
+            end
+        end
         return t
     else
         throw(ArgumentError("Expressions not of the form `y = f(:x)` currently disallowed."))
@@ -513,10 +511,19 @@ end
 ##############################################################################
 
 function based_on_helper(x, args...)
-    t = [fun_to_vec(arg) for arg in args]
-
-    quote
-        $DataFrames.combine($x, $(t...))
+    if length(args) == 1 &&
+        !(first(args) isa QuoteNode) &&
+        !(first(args).head == :(=) || first(args).head == :kw)
+        t = fun_to_vec(first(args); combinefun = true)
+        @show t
+        quote
+            $DataFrames.combine($t, $x)
+        end
+    else
+        t = [fun_to_vec(arg) for arg in args]
+        quote
+            $DataFrames.combine($x, $(t...))
+        end
     end
 end
 
@@ -585,10 +592,18 @@ end
 ##############################################################################
 
 function by_helper(x, what, args...)
-    t = [fun_to_vec(arg) for arg in args]
-
-    quote
-        $DataFrames.combine($groupby($x, $what), $(t...))
+    if length(args) == 1 &&
+        !(first(args) isa QuoteNode) &&
+        !(first(args).head == :(=) || first(args).head == :kw)
+        t = fun_to_vec(first(args); combinefun = true)
+        quote
+            $DataFrames.combine($t, $groupby($x, $what))
+        end
+    else
+        t = [fun_to_vec(arg) for arg in args]
+        quote
+            $DataFrames.combine($groupby($x, $what), $(t...))
+        end
     end
 end
 
