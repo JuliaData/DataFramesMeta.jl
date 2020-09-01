@@ -149,9 +149,14 @@ end
 
 
 function fun_to_vec(kw::Expr; byrow = false)
-    # Expression needs to be of the form
+    # If expression is of the form
+    #
     # `z = :x + :y` or
     # `cols(x) = :x + :y`.
+    #
+    # Then we do the DataFramesMeta replacement etc.
+    # If not, then the expression is passed normally, allowing for
+    # conventional DataFrames usage.
     if kw.head == :(=) || kw.head == :kw
         # New column to be created, can be a
         # `Symbol` or `cols`
@@ -200,7 +205,7 @@ function fun_to_vec(kw::Expr; byrow = false)
         end
         return t
     else
-        Throw(ArgumentError("Invalid expression input"))
+        return kw
     end
 end
 
@@ -534,106 +539,12 @@ end
 ##
 ##############################################################################
 
-function transform(d::AbstractDataFrame; kwargs...)
-    result = copy(d)
-    for (k, v) in kwargs
-        result[!, k] = isa(v, Function) ? v(d) : v
-    end
-    return result
-end
-
-function transform(g::GroupedDataFrame; kwargs...)
-    result = DataFrame(g)
-    ends = cumsum(Int[size(g[i],1) for i in 1:length(g)])
-    starts = [1; 1 .+ ends[1:end-1]]
-    lengths = [ends[i] - starts[i] + 1 for i in 1:length(starts)]
-    for (k, v) in kwargs
-        first = v(g[1])
-        if first isa AbstractVector
-            t = _transform!(Tables.allocatecolumn(eltype(first), size(result, 1)),
-                            first, 1, g, v, starts, ends)
-        else
-            t = _transform!(Tables.allocatecolumn(typeof(first), size(result, 1)),
-                            first, 1, g, v, starts, ends)
-        end
-        result[!, k] = t
-    end
-    return result
-end
-
-function _transform!(t::AbstractVector, first::AbstractVector, start::Int,
-                     g::GroupedDataFrame, v::Function, starts::Vector, ends::Vector)
-    @inline function fill_column!(t::AbstractVector, out, startpoint::Int, endpoint::Int,
-                                      len::Int)
-        if !(out isa AbstractVector)
-            throw(ArgumentError("Return value must be an `AbstractVector` for all groups or" *
-                                "for none of them"))
-        elseif length(out) != len
-            throw(ArgumentError("If a function returns a vector, the result " *
-                                "must have the same length as the groups it operates on"))
-        end
-        eltypout = eltype(out)
-        T = eltype(t)
-        if eltypout <: T || (newtype = promote_type(eltypout, T)) <: T
-           t[startpoint:endpoint] = out
-            return nothing
-        else
-            return newtype
-        end
-        return nothing
-    end
-
-    # handle the first case
-    newtype_first = fill_column!(t, first, starts[start], ends[start], size(g[start], 1))
-    @assert newtype_first === nothing
-    @inbounds for i in (start+1):length(g)
-        out = v(g[i])
-        newtype = fill_column!(t, out, starts[i], ends[i], size(g[i], 1))
-        if newtype !== nothing
-             t = copyto!(Tables.allocatecolumn(newtype, length(t)),
-                         1, t, 1, ends[i-1])
-             _transform!(t, out, i, g, v, starts, ends)
-         end
-    end
-    return t
-end
-
-function _transform!(t::AbstractVector, first::Any, start::Int,
-                     g::GroupedDataFrame, v::Function, starts::Vector, ends::Vector)
-    @inline function fill_column!(t::AbstractVector, out, startpoint::Int, endpoint::Int)
-        if out isa AbstractVector
-            throw(ArgumentError("Return value must be an `AbstractVector` for all groups or" *
-                                 "for none of them"))
-        end
-        typout = typeof(out)
-        T = eltype(t)
-        if typout <: T || (newtype = promote_type(typout, T)) <: T
-            t[startpoint:endpoint] .= Ref(out)
-            return nothing
-        else
-            return newtype
-        end
-    end
-    # handle the first case
-    newtype_first = fill_column!(t, first, starts[start], ends[start])
-    @assert newtype_first === nothing
-    @inbounds for i in (start+1):length(g)
-        out = v(g[i])
-        newtype = fill_column!(t, out, starts[i], ends[i])
-        if newtype !== nothing
-             t = copyto!(Tables.allocatecolumn(newtype, length(t)),
-                         1, t, 1, ends[i-1])
-             _transform!(t, out, i, g, v, starts, ends)
-         end
-    end
-    return t
-end
 
 function transform_helper(x, args...)
+    t = [fun_to_vec(arg) for arg in args]
+
     quote
-        $transform($x, $(map(args) do kw
-            Expr(:kw, kw.args[1], with_anonymous(kw.args[2]))
-        end...) )
+        $DataFrames.transform($x, $(t...))
     end
 end
 
