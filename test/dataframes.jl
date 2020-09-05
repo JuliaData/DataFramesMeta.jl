@@ -97,6 +97,9 @@ s = [:i, :g]
     # should throw an `ArgumentError`. Regardless,
     # the following should error so these tests are
     # left in.
+    #
+    # This behavior is part of `@test_throws` and
+    # not part of DataFramesMeta.
     @test_throws LoadError @eval @transform(df, [:i, :g])
     @test_throws LoadError @eval @transform(df, All())
     @test_throws LoadError @eval @transform(df, Between(:i, :t)).Between == df.i
