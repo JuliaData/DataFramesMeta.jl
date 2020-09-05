@@ -460,7 +460,7 @@ function transform_helper(x, args...)
     quote
         out = $DataFrames.transform($x, $(t...))
         if $x isa GroupedDataFrame
-            sort!(out, $groupcols($x))
+            out = out[$x.idx, :]
         end
         out
     end
