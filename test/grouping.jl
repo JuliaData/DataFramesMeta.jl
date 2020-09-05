@@ -77,7 +77,7 @@ g = groupby(d, :x, sort=true)
     @test @based_on(gd, :i).i == df.i
     @test @based_on(gd,:i, :g).g == df.g
 
-    @test @based_on(gd, :i, :n = 1).n == fill(1, nrow(df))
+    @test @based_on(gd, :i, n = 1).n == fill(1, nrow(df))
 end
 
 # Defined outside of `@testset` due to use of `@eval`
@@ -173,7 +173,7 @@ end
     @test @by(df, :g, :i).i == df.i
     @test @by(df, :g, :i, :g).g == df.g
 
-    @test @by(df, :g, :i, :n = 1).n == fill(1, nrow(df))
+    @test @by(df, :g, :i, n = 1).n == fill(1, nrow(df))
 end
 
 # Defined outside of `@testset` due to use of `@eval`
