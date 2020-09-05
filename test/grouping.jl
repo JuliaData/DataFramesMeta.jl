@@ -213,12 +213,13 @@ end
 	d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 2, 2, 3, 1, 1, 2])
 	g = groupby(d, :x, sort=true)
 
-	@test  (@transform(g, y = :n .- median(:n)))[1,:y] == -5.0
+	@test (@transform(g, y = :n .- median(:n)))[1,:y] == -5.0
 
 	d = DataFrame(a = [1,1,1,2,2,3,3,1],
 	              b = Any[1,2,3,missing,missing,6.0,5.0,4],
 	              c = CategoricalArray([1,2,3,1,2,3,1,2]))
-	g = groupby(d, :a)
+
+    g = groupby(d, :a)
 	## Scalar output
 	# Type promotion Int -> Float
 	t = @transform(g, t = :b[1]).t
