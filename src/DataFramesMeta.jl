@@ -98,7 +98,6 @@ end
 function fun_to_vec(kw::Expr; combinefun = false)
     if kw.head == :(=) || kw.head == :kw || combinefun == true
         membernames = Dict{Any, Symbol}()
-        funname = gensym()
         if combinefun == false
             body = replace_syms!(kw.args[2], membernames)
         else
@@ -108,17 +107,13 @@ function fun_to_vec(kw::Expr; combinefun = false)
             output = kw.args[1]
             t = quote
                 $(Expr(:vect, keys(membernames)...)) =>
-                (function $funname($(values(membernames)...))
-                    $body
-                end) =>
+                ($(Expr(:tuple, values(membernames)...)) -> $body) =>
                 $(QuoteNode(output))
             end
         else
             t = quote
                 $(Expr(:vect, keys(membernames)...)) =>
-                (function $funname($(values(membernames)...))
-                    $body
-                end)
+                ($(Expr(:tuple, values(membernames)...)) -> $body)
             end
         end
         return t
