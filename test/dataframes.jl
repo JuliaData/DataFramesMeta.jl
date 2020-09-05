@@ -62,6 +62,8 @@ const ≅ = isequal
 
     @test @transform(df, :i) ≅ df
     @test @transform(df, :i, :g) ≅ df
+
+    @test @transform(df, :n = 1).n == fill(1, nrow(df))
 end
 
 # Defined outside of `@testset` due to use of `@eval`
@@ -161,6 +163,8 @@ end
     @test @select(df, transform = cols(ir)).transform == df.i
 
     @test DataFramesMeta.select(df, :i) == df.i
+
+    @test @select(df, :n = 1).n == fill(1, nrow(df))
 end
 
 # Defined outside of `@testset` due to use of `@eval`
