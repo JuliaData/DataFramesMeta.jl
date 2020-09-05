@@ -3,7 +3,7 @@ module DataFramesMeta
 using DataFrames, Tables
 
 # Basics:
-export @with, @where, @orderby, @transform, @by, @based_on, @select, @col
+export @with, @where, @orderby, @transform, @by, @based_on, @select
 
 include("linqmacro.jl")
 include("byrow.jl")
@@ -47,15 +47,13 @@ replace_syms!(e::Expr, membernames) =
 """
     @col(kw)
 
-
 `@col` transforms an expression of the form `z = :x + :y` into it's equivalent in
-DataFrames's "mini-language". Functions act column-wise. For a row-wise functions, see
-`@row`
+DataFrames's "mini-language".
 
 ### Details
 
 Parsing follows the same convention as other DataFramesMeta macros, such as `@with`. All
-terms in the expression that are `Symbols` are treated as columns in the DataFrame, except
+terms in the expression that are `Symbols` are treated as columns in the data frame, except
 `Symbol`s wrapped in `^`. To use a variable representing a column name, wrap the variable
 in `cols`.
 
@@ -98,22 +96,23 @@ end
 function fun_to_vec(kw::Expr; combinefun = false)
     if kw.head == :(=) || kw.head == :kw || combinefun == true
         membernames = Dict{Any, Symbol}()
-        if combinefun == false
-            body = replace_syms!(kw.args[2], membernames)
-        else
+        if combinefun
             body = replace_syms!(kw, membernames)
+        else
+            body = replace_syms!(kw.args[2], membernames)
         end
-        if combinefun == false
+
+        if combinefun
+            t = quote
+                $(Expr(:vect, keys(membernames)...)) =>
+                ($(Expr(:tuple, values(membernames)...)) -> $body)
+            end
+         else
             output = kw.args[1]
             t = quote
                 $(Expr(:vect, keys(membernames)...)) =>
                 ($(Expr(:tuple, values(membernames)...)) -> $body) =>
                 $(QuoteNode(output))
-            end
-        else
-            t = quote
-                $(Expr(:vect, keys(membernames)...)) =>
-                ($(Expr(:tuple, values(membernames)...)) -> $body)
             end
         end
         return t
@@ -447,7 +446,6 @@ macro orderby(d, args...)
     esc(orderby_helper(d, args...))
 end
 
-
 ##############################################################################
 ##
 ## transform & @transform
@@ -457,7 +455,7 @@ end
 
 function transform_helper(x, args...)
 
-    t = [fun_to_vec(arg) for arg in args]
+    t = (fun_to_vec(arg) for arg in args)
 
     quote
         out = $DataFrames.transform($x, $(t...))
@@ -511,6 +509,7 @@ end
 ##############################################################################
 
 function based_on_helper(x, args...)
+    # Only alow one argument when returning a Table object
     if length(args) == 1 &&
         !(first(args) isa QuoteNode) &&
         !(first(args).head == :(=) || first(args).head == :kw)
@@ -520,7 +519,7 @@ function based_on_helper(x, args...)
             $DataFrames.combine($t, $x)
         end
     else
-        t = [fun_to_vec(arg) for arg in args]
+        t = (fun_to_vec(arg) for arg in args)
         quote
             $DataFrames.combine($x, $(t...))
         end
@@ -592,6 +591,7 @@ end
 ##############################################################################
 
 function by_helper(x, what, args...)
+    # Only alow one argument when returning a Table object
     if length(args) == 1 &&
         !(first(args) isa QuoteNode) &&
         !(first(args).head == :(=) || first(args).head == :kw)
@@ -601,7 +601,7 @@ function by_helper(x, what, args...)
             $DataFrames.combine($t, $groupby($x, $what))
         end
     else
-        t = [fun_to_vec(arg) for arg in args]
+        t = (fun_to_vec(arg) for arg in args)
         quote
             $DataFrames.combine($groupby($x, $what), $(t...))
         end
@@ -690,7 +690,7 @@ end
 ##############################################################################
 
 function select_helper(x, args...)
-    t = [fun_to_vec(arg) for arg in args]
+    t = (fun_to_vec(arg) for arg in args)
 
     quote
         $DataFrames.select($x, $(t...))

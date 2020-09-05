@@ -100,7 +100,7 @@ s = [:i, :g]
     @test_throws LoadError @eval @transform(df, [:i, :g])
     @test_throws LoadError @eval @transform(df, All())
     @test_throws LoadError @eval @transform(df, Between(:i, :t)).Between == df.i
-    @test_throws LoadError @eval  @transform(df, Not(:i)).Not == df.i
+    @test_throws LoadError @eval @transform(df, Not(:i)).Not == df.i
     @test_throws LoadError @eval @transform(df, Not([:i, :g]))
     newvar = :n
     @test_throws ArgumentError @eval @transform(df, cols(newvar) = :i)
