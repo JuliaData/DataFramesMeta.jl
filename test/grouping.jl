@@ -222,9 +222,9 @@ end
 	d = DataFrame(a = [1,1,1,2,2,3,3,1],
 	              b = Any[1,2,3,missing,missing,6.0,5.0,4],
 	              c = CategoricalArray([1,2,3,1,2,3,1,2]))
-    g = groupby(d, :a)
+      g = groupby(d, :a)
 
-    ## Scalar output
+      ## Scalar output
 	# Type promotion Int -> Float
 	t = @transform(g, t = :b[1]).t
 	@test isequal(t, [1.0, 1.0, 1.0, 1.0, missing, missing, 6.0, 6.0]) &&
