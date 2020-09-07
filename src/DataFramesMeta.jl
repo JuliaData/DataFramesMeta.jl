@@ -464,7 +464,9 @@ function transform_helper(x, args...)
     quote
         out = $DataFrames.transform($x, $(t...))
         if $x isa GroupedDataFrame
-            out = out[$x.idx, :]
+            for col in eachcol(out)
+                permute!(col, x.idx)
+            end
         end
         out
     end
