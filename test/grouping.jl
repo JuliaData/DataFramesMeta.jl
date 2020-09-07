@@ -75,7 +75,7 @@ g = groupby(d, :x, sort=true)
     @test @based_on(gd, (n1 = [first(cols(ir))], n2 = [first(cols(yr))])).n1 == [1, 4]
 
     @test @based_on(gd, :i).i == df.i
-    @test @based_on(gd,:i, :g).g == df.g
+    @test @based_on(gd, :i, :g).g == df.g
 
     @test @based_on(gd, :i, n = 1).n == fill(1, nrow(df))
 end

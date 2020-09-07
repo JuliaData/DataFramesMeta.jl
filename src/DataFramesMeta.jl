@@ -48,7 +48,7 @@ replace_syms!(e::Expr, membernames) =
     @col(kw)
 
 `@col` transforms an expression of the form `z = :x + :y` into it's equivalent in
-DataFrames's "mini-language".
+DataFrames's `source => fun => destination` syntax.
 
 ### Details
 
@@ -93,16 +93,20 @@ macro col(kw)
     esc(fun_to_vec(kw))
 end
 
-function fun_to_vec(kw::Expr; combinefun = false)
-    if kw.head == :(=) || kw.head == :kw || combinefun == true
+# `combinetable` needs to be `true` when we have syntax of the form
+# `@based_on(gd, fun(:x, :y))` where `fun` returns a `table` object.
+# We don't create the "new name" pair because new names are given
+# by the table.
+function fun_to_vec(kw::Expr; combinetable = false)
+    if kw.head === :(=) || kw.head === :kw || combinetable
         membernames = Dict{Any, Symbol}()
-        if combinefun
+        if combinetable
             body = replace_syms!(kw, membernames)
         else
             body = replace_syms!(kw.args[2], membernames)
         end
 
-        if combinefun
+        if combinetable
             t = quote
                 $(Expr(:vect, keys(membernames)...)) =>
                 ($(Expr(:tuple, values(membernames)...)) -> $body)
@@ -509,12 +513,12 @@ end
 ##############################################################################
 
 function based_on_helper(x, args...)
-    # Only alow one argument when returning a Table object
+    # Only allow one argument when returning a Table object
     if length(args) == 1 &&
         !(first(args) isa QuoteNode) &&
         !(first(args).head == :(=) || first(args).head == :kw)
 
-        t = fun_to_vec(first(args); combinefun = true)
+        t = fun_to_vec(first(args); combinetable = true)
         quote
             $DataFrames.combine($t, $x)
         end
@@ -591,12 +595,12 @@ end
 ##############################################################################
 
 function by_helper(x, what, args...)
-    # Only alow one argument when returning a Table object
+    # Only allow one argument when returning a Table object
     if length(args) == 1 &&
         !(first(args) isa QuoteNode) &&
         !(first(args).head == :(=) || first(args).head == :kw)
 
-        t = fun_to_vec(first(args); combinefun = true)
+        t = fun_to_vec(first(args); combinetable = true)
         quote
             $DataFrames.combine($t, $groupby($x, $what))
         end
