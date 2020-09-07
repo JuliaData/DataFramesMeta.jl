@@ -74,8 +74,8 @@ g = groupby(d, :x, sort=true)
     @test @based_on(gd, transform = cols(ir)).transform == df.i
     @test @based_on(gd, (n1 = [first(cols(ir))], n2 = [first(cols(yr))])).n1 == [1, 4]
 
-    @test @based_on(gd, :i).i == df.i
-    @test @based_on(gd, :i, :g).g == df.g
+    @test @based_on(gd, :i) == select(df, :g, :i)
+    @test @based_on(gd, :i, :g) ≅ select(df, :g, :i)
 
     @test @based_on(gd, :i, n = 1).n == fill(1, nrow(df))
 end
@@ -108,7 +108,9 @@ gd = groupby(df, :g)
 newvar = :n
 
 @testset "Limits of @based_on" begin
-    @test @based_on(gd, [:i, :g]).i_g_function isa Vector{<:SubArray}
+    t = @based_on(gd, [:i, :g]).i_g_function
+    @test t == [[1, 2, 3], [1, 1, 1], [4, 5], [2, 2]]
+    @test t isa Vector{SubArray{Int64,1,Array{Int64,1},Tuple{Array{Int64,1}},false}}
     @test @based_on(gd, All()).function isa Vector{<:All}
     @test @based_on(gd, Not(:i)).i_function isa Vector{<:InvertedIndex}
     @test @based_on(gd, Not([:i, :g])).g == [1, 2]
@@ -170,8 +172,8 @@ end
     @test @by(df, "g", transform = cols(ir)).transform == df.i
     @test @by(df, "g", (n1 = [first(cols(ir))], n2 = [first(cols(yr))])).n1 == [1, 4]
 
-    @test @by(df, :g, :i).i == df.i
-    @test @by(df, :g, :i, :g).g == df.g
+    @test @by(df, :g, :i) == select(df, :g, :i)
+    @test @by(df, :g, :i, :g) ≅ select(df, :g, :i)
 
     @test @by(df, :g, :i, n = 1).n == fill(1, nrow(df))
 end
@@ -204,7 +206,9 @@ gd = groupby(df, :g)
 newvar = :n
 
 @testset "limits of @by" begin
-    @test @by(df, :g, [:i, :g]).i_g_function isa Vector{<:SubArray}
+    t = @by(df, :g, [:i, :g]).i_g_function
+    @test t == [[1, 2, 3], [1, 1, 1], [4, 5], [2, 2]]
+    @test t isa Vector{SubArray{Int64,1,Array{Int64,1},Tuple{Array{Int64,1}},false}}
     @test @by(df, :g, All()).function isa Vector{<:All}
     @test @by(df, :g, Not(:i)).i_function isa Vector{<:InvertedIndex}
     @test @by(df, :g, Not([:i, :g])).g == [1, 2]
