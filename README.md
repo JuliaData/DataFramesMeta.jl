@@ -138,7 +138,7 @@ functions.
     @select           select           Select
 
 
-## LINQ macro
+## Chaining macros
 
 There is also a `@linq` macro that supports chaining and all of the
 functionality defined in other macros. Here is an example of `@linq`:
@@ -210,6 +210,7 @@ x_thread = @pipe df |>
     @orderby(_, :meanX) |>
     @select(_, :meanX, :meanY, var = :b)
 ```
+
 ## Operations on GroupedDataFrames
 
 The following operations are now included:
