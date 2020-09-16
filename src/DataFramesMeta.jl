@@ -52,14 +52,14 @@ DataFrames's `source => fun => destination` syntax.
 
 ### Details
 
-Parsing follows the same convention as other DataFramesMeta macros, such as `@with`. All
-terms in the expression that are `Symbols` are treated as columns in the data frame, except
+Parsing follows the same convention as other DataFramesMeta.jl macros, such as `@with`. All
+terms in the expression that are `Symbol`s are treated as columns in the data frame, except
 `Symbol`s wrapped in `^`. To use a variable representing a column name, wrap the variable
 in `cols`.
 
-`@col` constructs an anonymous function based off the given expression. It then creates
+`@col` constructs an anonymous function `fun` based on the given expression. It then creates
 a `source => fun => destination` pair that is suitable for the `select`, `transform`, and
-`combine` functions in DataFrames.
+`combine` functions in DataFrames.jl.
 
 ### Examples
 
