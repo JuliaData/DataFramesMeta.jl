@@ -116,7 +116,7 @@ function fun_to_vec(kw::Expr; nolhs = false)
             t = quote
                 $(Expr(:vect, keys(membernames)...)) =>
                 ($(Expr(:tuple, values(membernames)...)) -> $body) =>
-                $(output)
+                $(QuoteNode(output))
             end
         end
         return t
