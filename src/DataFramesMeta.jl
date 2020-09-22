@@ -93,20 +93,20 @@ macro col(kw)
     esc(fun_to_vec(kw))
 end
 
-# `combinetable` needs to be `true` when we have syntax of the form
+# `nolhs` needs to be `true` when we have syntax of the form
 # `@based_on(gd, fun(:x, :y))` where `fun` returns a `table` object.
 # We don't create the "new name" pair because new names are given
 # by the table.
-function fun_to_vec(kw::Expr; combinetable = false)
-    if kw.head === :(=) || kw.head === :kw || combinetable
+function fun_to_vec(kw::Expr; nolhs = false)
+    if kw.head === :(=) || nolhs
         membernames = Dict{Any, Symbol}()
-        if combinetable
+        if nolhs
             body = replace_syms!(kw, membernames)
         else
             body = replace_syms!(kw.args[2], membernames)
         end
 
-        if combinetable
+        if nolhs
             t = quote
                 $(Expr(:vect, keys(membernames)...)) =>
                 ($(Expr(:tuple, values(membernames)...)) -> $body)
@@ -116,7 +116,7 @@ function fun_to_vec(kw::Expr; combinetable = false)
             t = quote
                 $(Expr(:vect, keys(membernames)...)) =>
                 ($(Expr(:tuple, values(membernames)...)) -> $body) =>
-                $(QuoteNode(output))
+                $(output)
             end
         end
         return t
@@ -518,7 +518,7 @@ function based_on_helper(x, args...)
         !(first(args) isa QuoteNode) &&
         !(first(args).head == :(=) || first(args).head == :kw)
 
-        t = fun_to_vec(first(args); combinetable = true)
+        t = fun_to_vec(first(args); nolhs = true)
         quote
             $DataFrames.combine($t, $x)
         end
@@ -600,7 +600,7 @@ function by_helper(x, what, args...)
         !(first(args) isa QuoteNode) &&
         !(first(args).head == :(=) || first(args).head == :kw)
 
-        t = fun_to_vec(first(args); combinetable = true)
+        t = fun_to_vec(first(args); nolhs = true)
         quote
             $DataFrames.combine($t, $groupby($x, $what))
         end
