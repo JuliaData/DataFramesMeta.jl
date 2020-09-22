@@ -98,7 +98,7 @@ end
 # We don't create the "new name" pair because new names are given
 # by the table.
 function fun_to_vec(kw::Expr; nolhs = false)
-    if kw.head === :(=) || nolhs
+    if kw.head === :(=) || kw.head === :kw || nolhs
         membernames = Dict{Any, Symbol}()
         if nolhs
             body = replace_syms!(kw, membernames)
