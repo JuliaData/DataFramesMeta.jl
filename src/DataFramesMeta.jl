@@ -44,6 +44,90 @@ replace_syms!(e::Expr, membernames) =
         mapexpr(x -> replace_syms!(x, membernames), e)
     end
 
+"""
+    @col(kw)
+
+`@col` transforms an expression of the form `z = :x + :y` into it's equivalent in
+DataFrames's `source => fun => destination` syntax.
+
+### Details
+
+Parsing follows the same convention as other DataFramesMeta.jl macros, such as `@with`. All
+terms in the expression that are `Symbol`s are treated as columns in the data frame, except
+`Symbol`s wrapped in `^`. To use a variable representing a column name, wrap the variable
+in `cols`.
+
+`@col` constructs an anonymous function `fun` based on the given expression. It then creates
+a `source => fun => destination` pair that is suitable for the `select`, `transform`, and
+`combine` functions in DataFrames.jl.
+
+### Examples
+
+```julia
+julia> @col z = :x + :y
+[:x, :y] => (##595 => :z)
+```
+
+In the above example, `##595` is an anonymous function equivalent to the following
+
+```julia
+(_x, _y) -> _x + _y
+```
+
+```julia
+julia> df = DataFrame(x = [1, 2], y = [3, 4]);
+
+julia> DataFrames.transform(df, @col z = :x .* :y)
+2×3 DataFrame
+│ Row │ x     │ y     │ z     │
+│     │ Int64 │ Int64 │ Int64 │
+├─────┼───────┼───────┼───────┤
+│ 1   │ 1     │ 3     │ 3     │
+│ 2   │ 2     │ 4     │ 8     │
+
+
+```
+
+"""
+macro col(kw)
+    esc(fun_to_vec(kw))
+end
+
+# `nolhs` needs to be `true` when we have syntax of the form
+# `@based_on(gd, fun(:x, :y))` where `fun` returns a `table` object.
+# We don't create the "new name" pair because new names are given
+# by the table.
+function fun_to_vec(kw::Expr; nolhs = false)
+    if kw.head === :(=) || nolhs
+        membernames = Dict{Any, Symbol}()
+        if nolhs
+            body = replace_syms!(kw, membernames)
+        else
+            body = replace_syms!(kw.args[2], membernames)
+        end
+
+        if nolhs
+            t = quote
+                $(Expr(:vect, keys(membernames)...)) =>
+                ($(Expr(:tuple, values(membernames)...)) -> $body)
+            end
+         else
+            output = kw.args[1]
+            t = quote
+                $(Expr(:vect, keys(membernames)...)) =>
+                ($(Expr(:tuple, values(membernames)...)) -> $body) =>
+                $(QuoteNode(output))
+            end
+        end
+        return t
+    else
+        throw(ArgumentError("Expressions not of the form `y = f(:x)` currently disallowed."))
+    end
+end
+
+fun_to_vec(kw::QuoteNode) = kw
+
+
 protect_replace_syms!(e, membernames) = e
 function protect_replace_syms!(e::Expr, membernames)
     if e.head == :quote
@@ -366,113 +450,23 @@ macro orderby(d, args...)
     esc(orderby_helper(d, args...))
 end
 
-
 ##############################################################################
 ##
 ## transform & @transform
 ##
 ##############################################################################
 
-function transform(d::AbstractDataFrame; kwargs...)
-    result = copy(d)
-    for (k, v) in kwargs
-        result[!, k] = isa(v, Function) ? v(d) : v
-    end
-    return result
-end
-
-function transform(g::GroupedDataFrame; kwargs...)
-    result = DataFrame(g)
-    ends = cumsum(Int[size(g[i],1) for i in 1:length(g)])
-    starts = [1; 1 .+ ends[1:end-1]]
-    lengths = [ends[i] - starts[i] + 1 for i in 1:length(starts)]
-    for (k, v) in kwargs
-        first = v(g[1])
-        if first isa AbstractVector
-            t = _transform!(Tables.allocatecolumn(eltype(first), size(result, 1)),
-                            first, 1, g, v, starts, ends)
-        else
-            t = _transform!(Tables.allocatecolumn(typeof(first), size(result, 1)),
-                            first, 1, g, v, starts, ends)
-        end
-        result[!, k] = t
-    end
-    return result
-end
-
-function _transform!(t::AbstractVector, first::AbstractVector, start::Int,
-                     g::GroupedDataFrame, v::Function, starts::Vector, ends::Vector)
-    @inline function fill_column!(t::AbstractVector, out, startpoint::Int, endpoint::Int,
-                                      len::Int)
-        if !(out isa AbstractVector)
-            throw(ArgumentError("Return value must be an `AbstractVector` for all groups or" *
-                                "for none of them"))
-        elseif length(out) != len
-            throw(ArgumentError("If a function returns a vector, the result " *
-                                "must have the same length as the groups it operates on"))
-        end
-        eltypout = eltype(out)
-        T = eltype(t)
-        if eltypout <: T || (newtype = promote_type(eltypout, T)) <: T
-           t[startpoint:endpoint] = out
-            return nothing
-        else
-            return newtype
-        end
-        return nothing
-    end
-
-    # handle the first case
-    newtype_first = fill_column!(t, first, starts[start], ends[start], size(g[start], 1))
-    @assert newtype_first === nothing
-    @inbounds for i in (start+1):length(g)
-        out = v(g[i])
-        newtype = fill_column!(t, out, starts[i], ends[i], size(g[i], 1))
-        if newtype !== nothing
-             t = copyto!(Tables.allocatecolumn(newtype, length(t)),
-                         1, t, 1, ends[i-1])
-             _transform!(t, out, i, g, v, starts, ends)
-         end
-    end
-    return t
-end
-
-function _transform!(t::AbstractVector, first::Any, start::Int,
-                     g::GroupedDataFrame, v::Function, starts::Vector, ends::Vector)
-    @inline function fill_column!(t::AbstractVector, out, startpoint::Int, endpoint::Int)
-        if out isa AbstractVector
-            throw(ArgumentError("Return value must be an `AbstractVector` for all groups or" *
-                                 "for none of them"))
-        end
-        typout = typeof(out)
-        T = eltype(t)
-        if typout <: T || (newtype = promote_type(typout, T)) <: T
-            t[startpoint:endpoint] .= Ref(out)
-            return nothing
-        else
-            return newtype
-        end
-    end
-    # handle the first case
-    newtype_first = fill_column!(t, first, starts[start], ends[start])
-    @assert newtype_first === nothing
-    @inbounds for i in (start+1):length(g)
-        out = v(g[i])
-        newtype = fill_column!(t, out, starts[i], ends[i])
-        if newtype !== nothing
-             t = copyto!(Tables.allocatecolumn(newtype, length(t)),
-                         1, t, 1, ends[i-1])
-             _transform!(t, out, i, g, v, starts, ends)
-         end
-    end
-    return t
-end
 
 function transform_helper(x, args...)
+
+    t = (fun_to_vec(arg) for arg in args)
+
     quote
-        $transform($x, $(map(args) do kw
-            Expr(:kw, kw.args[1], with_anonymous(kw.args[2]))
-        end...) )
+        out = $DataFrames.transform($x, $(t...))
+        if $x isa GroupedDataFrame
+            out = out[$x.idx, :]
+        end
+        out
     end
 end
 
@@ -519,9 +513,21 @@ end
 ##############################################################################
 
 function based_on_helper(x, args...)
-    with_args =
-        with_anonymous(:($DataFrame($(map(replace_equals_with_kw, args)...))))
-    :(DataFrames.combine($with_args, $x))
+    # Only allow one argument when returning a Table object
+    if length(args) == 1 &&
+        !(first(args) isa QuoteNode) &&
+        !(first(args).head == :(=) || first(args).head == :kw)
+
+        t = fun_to_vec(first(args); nolhs = true)
+        quote
+            $DataFrames.combine($t, $x)
+        end
+    else
+        t = (fun_to_vec(arg) for arg in args)
+        quote
+            $DataFrames.combine($x, $(t...))
+        end
+    end
 end
 
 """
@@ -589,8 +595,21 @@ end
 ##############################################################################
 
 function by_helper(x, what, args...)
-    :(DataFrames.combine($(with_anonymous(:($DataFrame($(map(replace_equals_with_kw, args)...))))),
-              DataFrames.groupby($x, $what)))
+    # Only allow one argument when returning a Table object
+    if length(args) == 1 &&
+        !(first(args) isa QuoteNode) &&
+        !(first(args).head == :(=) || first(args).head == :kw)
+
+        t = fun_to_vec(first(args); nolhs = true)
+        quote
+            $DataFrames.combine($t, $groupby($x, $what))
+        end
+    else
+        t = (fun_to_vec(arg) for arg in args)
+        quote
+            $DataFrames.combine($groupby($x, $what), $(t...))
+        end
+    end
 end
 
 """
@@ -674,40 +693,11 @@ end
 ##
 ##############################################################################
 
-
-function select(d::AbstractDataFrame; kwargs...)
-    result = typeof(d)()
-    for (k, v) in kwargs
-        result[!, k] = v
-    end
-    return result
-end
-
-function replace_equals_with_kw(e)
-    if e.head == :(=)
-        Expr(:kw, e.args[1], e.args[2])
-    else
-        e
-    end
-end
-
-expandargs(x) = x
-expandargs(q::QuoteNode) = Expr(:kw, q.value, q)
-function expandargs(e::Expr)
-    if e.head == :quote
-        Expr(:kw, e.args[1], e)
-    else
-        replace_equals_with_kw(e)
-    end
-end
-
 function select_helper(x, args...)
-    DF = gensym()
-    select_args = with_helper(DF, :($select($DF, $(map(expandargs, args)...))))
+    t = (fun_to_vec(arg) for arg in args)
+
     quote
-        let $DF = $x
-            $(with_helper(DF, :($select($DF, $(map(expandargs, args)...)))))
-        end
+        $DataFrames.select($x, $(t...))
     end
 end
 

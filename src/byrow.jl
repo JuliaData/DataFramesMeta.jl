@@ -34,7 +34,7 @@ function byrow_find_newcols(e::Expr, newcol_decl)
     if e.head == :macrocall && e.args[1] == Symbol("@newcol")
         ea = e.args[3]
         # expression to assign a new column to df
-        return (nothing, Any[Expr(:kw, ea.args[1], Expr(:call, ea.args[2], :undef, :_N))])
+        return (nothing, Any[Expr(:(=), ea.args[1], Expr(:call, ea.args[2], :undef, :_N))])
     else
         if isempty(e.args)
             return (e.args, Any[])
@@ -99,8 +99,8 @@ by `@byrow`. Also note that the returned data frame does not share columns
 with `d`.
 
 Like with `@transform`, `@byrow` supports the use of `cols` to work with column names
-stored as variables. Using `cols` with a multi-column selector, such as a `Vector` of 
-`Symbol`s, is currently unsupported. 
+stored as variables. Using `cols` with a multi-column selector, such as a `Vector` of
+`Symbol`s, is currently unsupported.
 
 ### Arguments
 
@@ -151,7 +151,7 @@ julia> df2 = @byrow df begin
 │ 2   │ 0 │ 1 │ 1.0     │
 │ 3   │ 0 │ 2 │ 0.0     │
 
-julia> varA = :A; varB = :B; 
+julia> varA = :A; varB = :B;
 
 julia> df2 = @byrow df begin
            @newcol colX::Array{Float64}
