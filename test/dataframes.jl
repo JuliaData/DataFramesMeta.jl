@@ -115,8 +115,6 @@ s = [:i, :g]
     @test_throws LoadError @eval @transform(df, Between(:i, :t)).Between == df.i
     @test_throws LoadError @eval @transform(df, Not(:i)).Not == df.i
     @test_throws LoadError @eval @transform(df, Not([:i, :g]))
-    newvar = :n
-    @test_throws ArgumentError @eval @transform(df, cols(newvar) = :i)
     @test_throws MethodError @eval @transform(df, n = sum(Between(:i, :t)))
     @test_throws ArgumentError @eval @transform(df, n = sum(cols(s)))
 end
@@ -144,6 +142,10 @@ end
     tr = "t"
     yr = "y"
     cr = "c"
+
+    n_str = "new_column"
+    n_sym = :new_column
+    n_space = "new column"
 
     @test @select(df, :i) == df[!, [:i]]
     @test @select(df, :i, :g) == df[!, [:i, :g]]
@@ -178,6 +180,13 @@ end
     @test DataFramesMeta.select(df, :i) == df.i
 
     @test @select(df, n = 1).n == fill(1, nrow(df))
+
+    @test @select(df, cols("new_column") = :i).new_column == df.i
+    @test @select(df, cols(n_str) = :i).new_column == df.i
+    @test @select(df, cols(n_sym) = :i).new_column == df.i
+    @test @select(df, cols(n_space) = :i)."new column" == df.i
+    @test @select(df, cols("new" * "_" * "column") = :i).new_column == df.i
+
 end
 
 # Defined outside of `@testset` due to use of `@eval`
@@ -210,8 +219,6 @@ cr = "c"
     @test_throws LoadError @eval @select(df, Between(:i, :t)).Between == df.i
     @test_throws LoadError @eval  @select(df, Not(:i)).Not == df.i
     @test_throws LoadError @eval @select(df, Not([:i, :g]))
-    newvar = :n
-    @test_throws ArgumentError @eval @select(df, cols(newvar) = :i)
     @test_throws MethodError @eval @select(df, n = sum(Between(:i, :t)))
     @test_throws ArgumentError @eval @select(df, n = sum(cols(s)))
 end
