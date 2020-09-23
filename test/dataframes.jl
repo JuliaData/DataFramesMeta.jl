@@ -31,6 +31,10 @@ const ≅ = isequal
     yr = "y"
     cr = "c"
 
+    n_str = "new_column"
+    n_sym = :new_column
+    n_space = "new column"
+
     @test @transform(df, n = :i).n == df.i
     @test @transform(df, n = :i .+ :g).n == df.i .+ df.g
     @test @transform(df, n = :t .* string.(:y)).n == df.t .* string.(df.y)
@@ -62,6 +66,12 @@ const ≅ = isequal
 
     @test @transform(df, :i) ≅ df
     @test @transform(df, :i, :g) ≅ df
+
+    @test @transform(df, cols("new_column") = :i).new_column == df.i
+    @test @transform(df, cols(n_str) = :i).new_column == df.i
+    @test @transform(df, cols(n_sym) = :i).new_column == df.i
+    @test @transform(df, cols(n_space) = :i)."new column" == df.i
+    @test @transform(df, cols("new" * "_" * "column") = :i).new_column == df.i
 
     @test @transform(df, n = 1).n == fill(1, nrow(df))
 end
