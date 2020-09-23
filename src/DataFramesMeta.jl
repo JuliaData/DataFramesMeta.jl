@@ -112,11 +112,15 @@ function fun_to_vec(kw::Expr; nolhs = false)
                 ($(Expr(:tuple, values(membernames)...)) -> $body)
             end
          else
-            output = kw.args[1]
+            if onearg(kw.args[1], :cols)
+                output = kw.args[1].args[2]
+            else
+                output = QuoteNode(kw.args[1])
+            end
             t = quote
                 $(Expr(:vect, keys(membernames)...)) =>
                 ($(Expr(:tuple, values(membernames)...)) -> $body) =>
-                $(QuoteNode(output))
+                $(output)
             end
         end
         return t
