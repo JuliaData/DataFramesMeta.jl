@@ -19,8 +19,10 @@ function byrow_replace(e::Expr)
     Expr(e.head, (isempty(e.args) ? e.args : map(byrow_replace, e.args))...)
 end
 
+# If we see `cols([:x1, :x2])` this gets subsetted as `df[:, [:x1, :x2]]`
+# so here we make sure we aren't subsetting into a DataFrame.
 getsingleindex(df::AbstractDataFrame, idx) =
-    throw(ArgumentError("`cols` inside `@byrow` is reserved"))
+    throw(ArgumentError("`cols` inside `@byrow` with multiple columns is reserved"))
 
 getsingleindex(x::AbstractVector, idx) = x[idx]
 
