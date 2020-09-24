@@ -13,18 +13,11 @@ export @byrow
 function byrow_replace(e::Expr)
     # Traverse the syntax tree of e
     if onearg(e, :cols)
-        return Expr(:call, :(DataFramesMeta.getsingleindex), e, :row)
+        return Expr(:ref, Expr(:call, :cols, e.args[2]), :row)
     end
 
     Expr(e.head, (isempty(e.args) ? e.args : map(byrow_replace, e.args))...)
 end
-
-# If we see `cols([:x1, :x2])` this gets subsetted as `df[:, [:x1, :x2]]`
-# so here we make sure we aren't subsetting into a DataFrame.
-getsingleindex(df::AbstractDataFrame, idx) =
-    throw(ArgumentError("`cols` inside `@byrow` with multiple columns is reserved"))
-
-getsingleindex(x::AbstractVector, idx) = x[idx]
 
 byrow_replace(e::QuoteNode) = Expr(:ref, e, :row)
 

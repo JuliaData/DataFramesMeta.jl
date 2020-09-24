@@ -23,6 +23,7 @@ function addkey!(membernames, nam)
 end
 
 onearg(e, f) = e.head == :call && length(e.args) == 2 && e.args[1] == f
+
 mapexpr(f, e) = Expr(e.head, map(f, e.args)...)
 
 replace_syms!(x, membernames) = x
@@ -112,10 +113,10 @@ function fun_to_vec(kw::Expr; nolhs = false)
                 ($(Expr(:tuple, values(membernames)...)) -> $body)
             end
          else
-            if onearg(kw.args[1], :cols)
-                output = kw.args[1].args[2]
-            else
+            if kw.args[1] isa Symbol
                 output = QuoteNode(kw.args[1])
+            elseif onearg(kw.args[1], :cols)
+                output = kw.args[1].args[2]
             end
             t = quote
                 $(Expr(:vect, keys(membernames)...)) =>
@@ -147,6 +148,10 @@ function replace_dotted!(e, membernames)
     Expr(:., x_new, y_new)
 end
 
+getsinglecolumn(df, s::DataFrames.ColumnIndex) = df[!, s]
+getsinglecolumn(df, s) = throw(ArgumentError("Only indexing with Symbols and Strings" *
+    "Is currently allowed with cols"))
+
 function with_helper(d, body)
     membernames = Dict{Any, Symbol}()
     funname = gensym()
@@ -158,7 +163,7 @@ function with_helper(d, body)
             function $funname($(values(membernames)...))
                 $body
             end
-            $funname($((:($d[!, $key]) for key in keys(membernames))...))
+            $funname($((:($getsinglecolumn($d, $key)) for key in keys(membernames))...))
         end
     end
 end
