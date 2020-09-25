@@ -326,6 +326,24 @@ end
         :B = cols(n)
     end
     @test df2 == DataFrame(A = 1:3, B = 1:3)
+
+    n = :A
+    df2 = @byrow df begin
+        cols(n) = :B
+    end
+    @test df2 == DataFrame(A = [2, 1, 2], B = [2, 1, 2])
+
+    n = "A"
+    df2 = @byrow df begin
+        cols(n) = :B
+    end
+    @test df2 == DataFrame(A = [2, 1, 2], B = [2, 1, 2])
+
+    n = 1
+    df2 = @byrow df begin
+        cols(n) = :B
+    end
+    @test df2 == DataFrame(A = [2, 1, 2], B = [2, 1, 2])
 end
 
 df = DataFrame(A = 1:3, B = [2, 1, 2])
