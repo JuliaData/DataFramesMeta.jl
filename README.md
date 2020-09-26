@@ -38,8 +38,6 @@ end
 
 @with(df, df[:x .> 1, ^(:y)]) # The ^ means leave the :y alone
 
-colref = :x
-@with(df, :y + cols(colref)) # Equivalent to df[:y] + df[colref]
 ```
 
 `@with` is the fundamental macro used by the other metaprogramming
@@ -125,6 +123,40 @@ df2 = @byrow df begin
     end
 end
 ```
+
+## Working with column names programmatically with `cols`
+
+DataFramesMeta provides the special syntax, `cols`, for referring to 
+columns in a DataFrame via a `Symbol`, `String`, or column position. 
+
+```julia
+
+df = DataFrame(A = 1:3, B = [2, 1, 2])
+
+nameA = :A
+
+df2 = @transform(df, C = :B - cols(nameA))
+
+nameB = "B"
+df3 = @byrow df begin 
+    :A = cols(nameB)
+end
+
+```
+
+`cols` can also be used to create new columns in a DataFrame. 
+
+```julia
+df = DataFrame(A = 1:3, B = [2, 1, 2])
+
+newcol = "C"
+@select(df, cols(newcol) = :A + :B)
+
+@by(df, :B, cols("A complicated"  * " new name") = first(:A))
+
+```
+
+
 
 ## LINQ-Style Queries and Transforms
 
