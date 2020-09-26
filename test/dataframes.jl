@@ -344,6 +344,21 @@ end
         cols(n) = :B
     end
     @test df2 == DataFrame(A = [2, 1, 2], B = [2, 1, 2])
+
+
+    n = :C
+    df2 = @byrow df begin
+        @newcol cols(n)::Vector{Int}
+        cols(n) = :B
+    end
+    @test df2 == DataFrame(A = [1, 2, 3], B = [2, 1, 2], C = [2, 1, 2])
+
+    n = "C"
+    df2 = @byrow df begin
+        @newcol cols(n)::Vector{Int}
+        cols(n) = :B
+    end
+    @test df2 == DataFrame(A = [1, 2, 3], B = [2, 1, 2], C = [2, 1, 2])
 end
 
 df = DataFrame(A = 1:3, B = [2, 1, 2])
