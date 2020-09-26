@@ -154,7 +154,16 @@ newcol = "C"
 
 @by(df, :B, cols("A complicated"  * " new name") = first(:A))
 
+nameC = "C"
+df3 = @byrow df begin 
+    @newcol cols(nameC)::Vector{Int}
+    cols(nameC) = :A
+end
+
 ```
+
+Note that `cols` is *not* a standard Julia function. It is only used to modify the 
+way that macros in DataFramesMeta escape arguments and has no behavior of its own. 
 
 
 
