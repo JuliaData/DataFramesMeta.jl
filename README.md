@@ -134,7 +134,6 @@ columns in a DataFrame via a `Symbol`, `String`, or column position.
 df = DataFrame(A = 1:3, B = [2, 1, 2])
 
 nameA = :A
-
 df2 = @transform(df, C = :B - cols(nameA))
 
 nameB = "B"
@@ -164,7 +163,6 @@ end
 
 Note that `cols` is *not* a standard Julia function. It is only used to modify the 
 way that macros in DataFramesMeta escape arguments and has no behavior of its own. 
-
 
 
 ## LINQ-Style Queries and Transforms
