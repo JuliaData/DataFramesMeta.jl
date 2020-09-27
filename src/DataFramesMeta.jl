@@ -99,23 +99,30 @@ end
 # We don't create the "new name" pair because new names are given
 # by the table.
 function fun_to_vec(kw::Expr; nolhs = false)
+    # nolhs: f(:x) where f returns a Table
+    # !nolhs, y = g(:x)
     if kw.head === :(=) || kw.head === :kw || nolhs
         membernames = Dict{Any, Symbol}()
         if nolhs
+            # act on f(:x)
             body = replace_syms!(kw, membernames)
         else
+            # act on g(:x)
             body = replace_syms!(kw.args[2], membernames)
         end
 
         if nolhs
+            # [:x] => _f
             t = quote
                 $(Expr(:vect, keys(membernames)...)) =>
                 ($(Expr(:tuple, values(membernames)...)) -> $body)
             end
          else
             if kw.args[1] isa Symbol
+                # cols(n) = f(:x) becomes [:x] => _f => n
                 output = QuoteNode(kw.args[1])
             elseif onearg(kw.args[1], :cols)
+                # y = f(:x) becomes [:x] => _f => :y
                 output = kw.args[1].args[2]
             end
             t = quote
