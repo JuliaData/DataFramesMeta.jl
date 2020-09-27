@@ -13,6 +13,7 @@ export @byrow
 function byrow_replace(e::Expr)
     # Traverse the syntax tree of e
     if onearg(e, :cols)
+        # cols(:x) becomes cols(:x)[row]
         return Expr(:ref, Expr(:call, :cols, e.args[2]), :row)
     end
 
