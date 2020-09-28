@@ -693,15 +693,11 @@ end
 ##
 ##############################################################################
 
-_select(x::AbstractDataFrame, args...) = DataFrames.select(x, args...)
-
-_select(x::GroupedDataFrame, args...) = throw(ArgumentError("@select with a grouped data frame is reserved"))
-
 function select_helper(x, args...)
     t = (fun_to_vec(arg) for arg in args)
 
     quote
-        $_select($x, $(t...))
+        $DataFrames.select($x, $(t...))
     end
 end
 
