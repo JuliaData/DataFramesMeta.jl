@@ -456,17 +456,17 @@ end
 ##
 ##############################################################################
 
+_transform(x::AbstractDataFrame, args...) = DataFrames.transform(x, args...)
+
+_transform(x::GroupedDataFrame, args...) = DataFrames.transform(x, args...)[x.idx, :]
+
 
 function transform_helper(x, args...)
 
     t = (fun_to_vec(arg) for arg in args)
 
     quote
-        out = $DataFrames.transform($x, $(t...))
-        if $x isa GroupedDataFrame
-            out = out[$x.idx, :]
-        end
-        out
+        $_transform($x, $(t...))
     end
 end
 
@@ -693,11 +693,15 @@ end
 ##
 ##############################################################################
 
+_select(x::AbstractDataFrame, args...) = DataFrames.select(x, args...)
+
+_select(x::GroupedDataFrame, args...) = throw(ArgumentError("@select with a grouped data frame is reserved"))
+
 function select_helper(x, args...)
     t = (fun_to_vec(arg) for arg in args)
 
     quote
-        $DataFrames.select($x, $(t...))
+        $_select($x, $(t...))
     end
 end
 

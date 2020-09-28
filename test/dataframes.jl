@@ -324,4 +324,17 @@ df = DataFrame(A = 1:3, B = [2, 1, 2])
     @test_throws ArgumentError @eval @byrow df begin cols(n) end
 end
 
+@testset "nested macros" begin
+    df = DataFrame(a = [1, 1, 2, 2, 3, 3], b = [1, 2, 3, 4, 5, 6])
+
+    @test @transform(@transform(df, c1 = :a .* 2), c2 = :b .*2).c2 == df.b .*2
+    @test @select(@select(df, c1 = :a .* 2, :b), c2 = :b .*2).c2 == df.b .*2
+
+    @test @transform(@by(df, :a, c1 = first(:b)), c2 = 1).c2 == [1, 1, 1]
+    @test @by(@transform(df, c1 = 1), :a, c2 = first(:b)).c2 == [1, 3, 5]
+
+    @test @transform(@based_on(groupby(df, :a), c1 = first(:b)), c2 = 1).c2 == [1, 1, 1]
+    @test @based_on(groupby(@transform(df, c1 = 1), :a), c2 = first(:b)).c2 == [1, 3, 5]
+end
+
 end # module
