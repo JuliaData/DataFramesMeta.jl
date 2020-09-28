@@ -53,4 +53,24 @@ xlinq3 = @linq df  |>
 
 @test (@linq df |> with(:a)) == df.a
 
+@testset "@linq with `cols`" begin
+    df = DataFrame(
+            a = [1, 2, 3, 4],
+            b = ["a", "b", "c", "d"],
+            x = [10, 20, 30, 40],
+            y = [40, 50, 60, 70]
+        )
+
+    a_sym = :a
+    b_str = "b"
+    x_sym = :x
+    y_str = "y"
+    xlinq3 = @linq df  |>
+        where(cols(a_sym) .> 2, :b .!= "c")  |>
+        transform(cols(y_str) = 10 * cols(x_sym))  |>
+        DataFrames.groupby(cols(b_str)) |>
+        orderby(-mean(cols(x_str)))  |>
+        based_on(cols("meanY") = mean(:x), meanY = mean(:y))
 end
+
+end # module
