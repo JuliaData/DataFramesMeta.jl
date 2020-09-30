@@ -127,10 +127,10 @@ end
 ## Working with column names programmatically with `cols`
 
 DataFramesMeta provides the special syntax, `cols`, for referring to 
-columns in a DataFrame via a `Symbol`, `String`, or column position. 
+columns in a data frame via a `Symbol`, string, or column position as either
+a literal or a variable. 
 
 ```julia
-
 df = DataFrame(A = 1:3, B = [2, 1, 2])
 
 nameA = :A
@@ -140,10 +140,9 @@ nameB = "B"
 df3 = @byrow df begin 
     :A = cols(nameB)
 end
-
 ```
 
-`cols` can also be used to create new columns in a DataFrame. 
+`cols` can also be used to create new columns in a data frame. 
 
 ```julia
 df = DataFrame(A = 1:3, B = [2, 1, 2])
@@ -158,11 +157,11 @@ df3 = @byrow df begin
     @newcol cols(nameC)::Vector{Int}
     cols(nameC) = :A
 end
-
 ```
 
 Note that `cols` is *not* a standard Julia function. It is only used to modify the 
-way that macros in DataFramesMeta escape arguments and has no behavior of its own. 
+way that macros in DataFramesMeta escape arguments and has no behavior of its own 
+outside of DataFramesMeta macros.
 
 
 ## LINQ-Style Queries and Transforms

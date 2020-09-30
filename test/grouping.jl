@@ -163,7 +163,6 @@ end
     @test @by(df, :g, n = first(Symbol.(:y, ^(:body)))).n == [:vbody, :ybody]
     @test @by(df, :g, body = :i).body == df.i
     @test @by(df, :g, transform = :i).transform == df.i
-    # TODO: Make `t = :n1; (cols(t) = ...,)` work
     @test @by(df, :g, (n1 = [first(:i)], n2 = [first(:y)])).n1 == [1, 4]
 
     @test @by(df, :g, n = mean(cols(iq))).n == [2.0, 4.5]
