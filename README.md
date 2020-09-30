@@ -126,7 +126,7 @@ end
 
 ## Working with column names programmatically with `cols`
 
-DataFramesMeta provides the special syntax, `cols`, for referring to 
+DataFramesMeta provides the special syntax `cols`, for referring to 
 columns in a DataFrame via a `Symbol`, `String`, or column position. 
 
 ```julia
@@ -151,7 +151,7 @@ df = DataFrame(A = 1:3, B = [2, 1, 2])
 newcol = "C"
 @select(df, cols(newcol) = :A + :B)
 
-@by(df, :B, cols("A complicated"  * " new name") = first(:A))
+@by(df, :B, cols("A complicated" * " new name") = first(:A))
 
 nameC = "C"
 df3 = @byrow df begin 
@@ -162,7 +162,7 @@ end
 ```
 
 Note that `cols` is *not* a standard Julia function. It is only used to modify the 
-way that macros in DataFramesMeta escape arguments and has no behavior of its own. 
+way that macros in DataFramesMeta.jl escape arguments and has no behavior of its own. 
 
 
 ## LINQ-Style Queries and Transforms
