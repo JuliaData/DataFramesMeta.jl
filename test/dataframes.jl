@@ -186,7 +186,6 @@ end
     @test @select(df, cols(n_sym) = :i).new_column == df.i
     @test @select(df, cols(n_space) = :i)."new column" == df.i
     @test @select(df, cols("new" * "_" * "column") = :i).new_column == df.i
-
 end
 
 # Defined outside of `@testset` due to use of `@eval`

@@ -86,7 +86,6 @@ g = groupby(d, :x, sort=true)
     @test @based_on(gd, cols(n_sym) = 2).new_column == [2, 2]
     @test @based_on(gd, cols(n_space) = 2)."new column" == [2, 2]
     @test @based_on(gd, cols("new" * "_" * "column") = 2)."new_column" == [2, 2]
-
 end
 
 # Defined outside of `@testset` due to use of `@eval`
