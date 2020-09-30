@@ -13,16 +13,12 @@ export @byrow
 function byrow_replace(e::Expr)
     # Traverse the syntax tree of e
     if onearg(e, :cols)
-        return Expr(:call, :(DataFramesMeta.getsingleindex), e, :row)
+        # cols(:x) becomes cols(:x)[row]
+        return Expr(:ref, Expr(:call, :cols, e.args[2]), :row)
     end
 
     Expr(e.head, (isempty(e.args) ? e.args : map(byrow_replace, e.args))...)
 end
-
-getsingleindex(df::AbstractDataFrame, idx) =
-    throw(ArgumentError("`cols` inside `@byrow` is reserved"))
-
-getsingleindex(x::AbstractVector, idx) = x[idx]
 
 byrow_replace(e::QuoteNode) = Expr(:ref, e, :row)
 

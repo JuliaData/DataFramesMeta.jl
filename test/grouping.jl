@@ -45,7 +45,9 @@ g = groupby(d, :x, sort=true)
 
     gd = groupby(df, :g)
 
-    newvar = :n
+    n_str = "new_column"
+    n_sym = :new_column
+    n_space = "new column"
 
     @test @based_on(gd, n = mean(:i)).n == [2.0, 4.5]
     @test @based_on(gd, n = mean(:i) + mean(:g)).n == [3.0, 6.5]
@@ -78,6 +80,12 @@ g = groupby(d, :x, sort=true)
     @test @based_on(gd, :i, :g) ≅ select(df, :g, :i)
 
     @test @based_on(gd, :i, n = 1).n == fill(1, nrow(df))
+
+    @test @based_on(gd, cols("new_column") = 2).new_column == [2, 2]
+    @test @based_on(gd, cols(n_str) = 2).new_column == [2, 2]
+    @test @based_on(gd, cols(n_sym) = 2).new_column == [2, 2]
+    @test @based_on(gd, cols(n_space) = 2)."new column" == [2, 2]
+    @test @based_on(gd, cols("new" * "_" * "column") = 2)."new_column" == [2, 2]
 end
 
 # Defined outside of `@testset` due to use of `@eval`
@@ -114,7 +122,6 @@ newvar = :n
     @test @based_on(gd, All()).function isa Vector{<:All}
     @test @based_on(gd, Not(:i)).i_function isa Vector{<:InvertedIndex}
     @test @based_on(gd, Not([:i, :g])).g == [1, 2]
-    @test_throws ArgumentError @eval @based_on(gd, cols(newvar) = mean(:i))
     @test_throws MethodError @eval @based_on(gd, n = sum(Between(:i, :t)))
     @test_throws LoadError @eval @based_on(gd; n = mean(:i))
 end
@@ -144,7 +151,10 @@ end
 
     gd = groupby(df, :g)
 
-    newvar = :n
+    n_str = "new_column"
+    n_sym = :new_column
+    n_space = "new column"
+
     @test @by(df, :g, n = mean(:i)).n == [2.0, 4.5]
     @test @by(df, :g, n = mean(:i) + mean(:g)).n == [3.0, 6.5]
     @test @by(df, :g, n = first(:t .* string.(:y))).n == ["av", "cy"]
@@ -176,6 +186,12 @@ end
     @test @by(df, :g, :i, :g) ≅ select(df, :g, :i)
 
     @test @by(df, :g, :i, n = 1).n == fill(1, nrow(df))
+
+    @test @by(df, :g, cols("new_column") = 2).new_column == [2, 2]
+    @test @by(df, :g, cols(n_str) = 2).new_column == [2, 2]
+    @test @by(df, :g, cols(n_sym) = 2).new_column == [2, 2]
+    @test @by(df, :g, cols(n_space) = 2)."new column" == [2, 2]
+    @test @by(df, :g, cols("new" * "_" * "column") = 2)."new_column" == [2, 2]
 end
 
 # Defined outside of `@testset` due to use of `@eval`
@@ -212,7 +228,6 @@ newvar = :n
     @test @by(df, :g, All()).function isa Vector{<:All}
     @test @by(df, :g, Not(:i)).i_function isa Vector{<:InvertedIndex}
     @test @by(df, :g, Not([:i, :g])).g == [1, 2]
-    @test_throws ArgumentError @eval @by(df, :g, cols(newvar) = mean(:i))
     @test_throws MethodError @eval @by(df, :g, n = sum(Between(:i, :t)))
     @test_throws MethodError @eval @by(df, :g; n = mean(:i))
 end

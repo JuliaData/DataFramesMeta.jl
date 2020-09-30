@@ -38,8 +38,6 @@ end
 
 @with(df, df[:x .> 1, ^(:y)]) # The ^ means leave the :y alone
 
-colref = :x
-@with(df, :y + cols(colref)) # Equivalent to df[:y] + df[colref]
 ```
 
 `@with` is the fundamental macro used by the other metaprogramming
@@ -125,6 +123,45 @@ df2 = @byrow df begin
     end
 end
 ```
+
+## Working with column names programmatically with `cols`
+
+DataFramesMeta.jl provides the special syntax `cols` for referring to 
+columns in a data frame via a `Symbol`, string, or column position as either
+a literal or a variable. 
+
+```julia
+df = DataFrame(A = 1:3, B = [2, 1, 2])
+
+nameA = :A
+df2 = @transform(df, C = :B - cols(nameA))
+
+nameB = "B"
+df3 = @byrow df begin 
+    :A = cols(nameB)
+end
+```
+
+`cols` can also be used to create new columns in a data frame. 
+
+```julia
+df = DataFrame(A = 1:3, B = [2, 1, 2])
+
+newcol = "C"
+@select(df, cols(newcol) = :A + :B)
+
+@by(df, :B, cols("A complicated" * " new name") = first(:A))
+
+nameC = "C"
+df3 = @byrow df begin 
+    @newcol cols(nameC)::Vector{Int}
+    cols(nameC) = :A
+end
+```
+
+Note that `cols` is *not* a standard Julia function. It is only used to modify the 
+way that macros in DataFramesMeta.jl escape arguments and has no behavior of its own 
+outside of DataFramesMeta macros.
 
 ## LINQ-Style Queries and Transforms
 
