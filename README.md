@@ -126,7 +126,7 @@ end
 
 ## Working with column names programmatically with `cols`
 
-DataFramesMeta.jl provides the special syntax, `cols`, for referring to 
+DataFramesMeta.jl provides the special syntax `cols` for referring to 
 columns in a data frame via a `Symbol`, string, or column position as either
 a literal or a variable. 
 
