@@ -268,8 +268,8 @@ end
 	@test t ≅ s ≅ [1, 2, 3, 1, 2, 3, 1, 2] &&
 	      t isa CategoricalVector{Int}
 
-    @test @transform(g, t = :c).a ≅ df.a
-    @test @select(g, :a, t = :c).a ≅ df.a
+    @test @transform(g, t = :c).a ≅ d.a
+    @test @select(g, :a, t = :c).a ≅ d.a
 end
 
 end # module
