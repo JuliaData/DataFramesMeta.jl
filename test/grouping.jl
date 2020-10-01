@@ -234,6 +234,7 @@ end
     s = @select(g, t = :b[1]).t
 	@test t ≅ s ≅ [1.0, 1.0, 1.0, missing, missing, 6.0, 6.0, 1.0] &&
 	      t isa Vector{Union{Float64, Missing}}
+
 	# Type promotion Number -> Any
 	t = @transform(g, t = isequal(:b[1], 1) ? :b[1] : "a").t
     s = @select(g, t = isequal(:b[1], 1) ? :b[1] : "a").t
@@ -266,6 +267,9 @@ end
     s = @transform(g, t = :c).t
 	@test t ≅ s ≅ [1, 2, 3, 1, 2, 3, 1, 2] &&
 	      t isa CategoricalVector{Int}
+
+    @test @transform(g, t = :c).a ≅ df.a
+    @test @select(g, :a, t = :c).a ≅ df.a
 end
 
 end # module
