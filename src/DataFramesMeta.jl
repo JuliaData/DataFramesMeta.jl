@@ -478,11 +478,7 @@ function transform_helper(x, args...)
     t = (fun_to_vec(arg) for arg in args)
 
     quote
-        out = $DataFrames.transform($x, $(t...))
-        if $x isa GroupedDataFrame
-            out = out[$x.idx, :]
-        end
-        out
+        $DataFrames.transform($x, $(t...))
     end
 end
 
