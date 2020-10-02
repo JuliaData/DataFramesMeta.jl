@@ -59,6 +59,12 @@ y = 0
         :b = row
     end
     @test df3.b == [1]
+
+    x = (a = 400, b = 600)
+    df4 = @byrow df begin
+        :b = x.a
+    end
+    @test df4.b == [400]
 end
 
 @testset "cols with @byrow" begin

@@ -17,9 +17,13 @@ function byrow_replace(e::Expr)
         return Expr(:ref, Expr(:call, :cols, e.args[2]), :row)
     end
 
-    if e.head == :. && e.args[1] isa QuoteNode
-        e.args[1] = Expr(:ref, e.args[1], :row)
-        return e
+    if e.head == :.
+        if e.args[1] isa QuoteNode
+            e.args[1] = Expr(:ref, e.args[1], :row)
+            return e
+        else
+            return e
+        end
     end
 
     Expr(e.head, (isempty(e.args) ? e.args : map(byrow_replace, e.args))...)
