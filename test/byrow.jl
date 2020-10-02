@@ -124,13 +124,13 @@ end
 df = DataFrame(A = 1:3, B = [2, 1, 2])
 
 @testset "limits of @byrow" begin
-    @eval TestDataFrames n = ["A", "B"]
+    @eval Testbyrow n = ["A", "B"]
     @test_throws ArgumentError @eval @byrow df begin cols(n) end
 
-    @eval TestDataFrames n = [:A, :B]
+    @eval Testbyrow n = [:A, :B]
     @test_throws ArgumentError @eval @byrow df begin cols(n) end
 
-    @eval TestDataFrames n = [1, 2]
+    @eval Testbyrow n = [1, 2]
     @test_throws ArgumentError @eval @byrow df begin cols(n) end
 end
 
