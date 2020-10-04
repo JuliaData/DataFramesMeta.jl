@@ -111,10 +111,12 @@ function fun_to_vec(kw::Expr; nolhs = false)
             body = replace_syms!(kw.args[2], membernames)
         end
 
+        source = Expr(:vect, keys(membernames)...)
+
         if nolhs
             # [:x] => _f
             t = quote
-                $(Expr(:vect, keys(membernames)...)) =>
+                Symbol.($(source)) =>
                 ($(Expr(:tuple, values(membernames)...)) -> $body)
             end
          else
@@ -126,7 +128,7 @@ function fun_to_vec(kw::Expr; nolhs = false)
                 output = kw.args[1].args[2]
             end
             t = quote
-                $(Expr(:vect, keys(membernames)...)) =>
+                 Symbol.($(source)) =>
                 ($(Expr(:tuple, values(membernames)...)) -> $body) =>
                 $(output)
             end

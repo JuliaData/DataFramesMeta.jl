@@ -136,8 +136,11 @@ df = DataFrame(A = 1:3, B = [2, 1, 2])
 nameA = :A
 df2 = @transform(df, C = :B - cols(nameA))
 
+nameA_string = "A"
+df2 = @transform(df, C = :B - cols(nameA_string))
+
 nameB = "B"
-df3 = @byrow df begin 
+df4 = @byrow df begin 
     :A = cols(nameB)
 end
 ```

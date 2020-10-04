@@ -75,6 +75,7 @@ g = groupby(d, :x, sort=true)
     @test @based_on(gd, body = cols(ir)).body == df.i
     @test @based_on(gd, transform = cols(ir)).transform == df.i
     @test @based_on(gd, (n1 = [first(cols(ir))], n2 = [first(cols(yr))])).n1 == [1, 4]
+    @test @based_on(gd, n = mean(cols("i")) + 0 * first(cols(:g))).n == [2.0, 4.5]
 
     @test @based_on(gd, :i) == select(df, :g, :i)
     @test @based_on(gd, :i, :g) ≅ select(df, :g, :i)
@@ -181,6 +182,7 @@ end
     @test @by(df, "g", body = cols(ir)).body == df.i
     @test @by(df, "g", transform = cols(ir)).transform == df.i
     @test @by(df, "g", (n1 = [first(cols(ir))], n2 = [first(cols(yr))])).n1 == [1, 4]
+    @test @by(df, "g", n = mean(cols("i")) + 0 * first(cols(:g))).n == [2.0, 4.5]
 
     @test @by(df, :g, :i) == select(df, :g, :i)
     @test @by(df, :g, :i, :g) ≅ select(df, :g, :i)

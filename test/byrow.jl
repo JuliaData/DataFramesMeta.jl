@@ -87,6 +87,11 @@ end
     end
     @test df2 == DataFrame(A = 1:3, B = 1:3)
 
+    df2 = @byrow df begin
+        :A = cols(:A) + cols("B")
+    end
+    @test df2.A == df.A + df.B
+
     n = :A
     df2 = @byrow df begin
         cols(n) = :B

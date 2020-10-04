@@ -58,6 +58,7 @@ const ≅ = isequal
     @test @transform(df, n = Symbol.(cols(yr), ^(:body))).n == Symbol.(df.y, :body)
     @test @transform(df, body = cols(ir)).body == df.i
     @test @transform(df, transform = cols(ir)).transform == df.i
+    @test @transform(df, n = cols("g") + cols(:i)).n == df.g + df.i
 
     @test @transform(df, n = :i).g !== df.g
 
@@ -176,6 +177,7 @@ end
     @test @select(df, n = Symbol.(cols(yr), ^(:body))).n == Symbol.(df.y, :body)
     @test @select(df, body = cols(ir)).body == df.i
     @test @select(df, transform = cols(ir)).transform == df.i
+    @test @select(df, n = cols("g") + cols(:i)).n == df.g + df.i
 
     @test DataFramesMeta.select(df, :i) == df.i
 
