@@ -17,6 +17,15 @@ function byrow_replace(e::Expr)
         return Expr(:ref, Expr(:call, :cols, e.args[2]), :row)
     end
 
+    if e.head == :.
+        if e.args[1] isa QuoteNode
+            e.args[1] = Expr(:ref, e.args[1], :row)
+            return e
+        else
+            return e
+        end
+    end
+
     Expr(e.head, (isempty(e.args) ? e.args : map(byrow_replace, e.args))...)
 end
 
@@ -52,13 +61,16 @@ function byrow_helper(df, body, deprecation_warning)
     # byrow itself because then it will be displayed when the macro is evaluated.
     deprecation_warning && @warn "`@byrow!` is deprecated, use `@byrow` instead."
     e_body, e_newcols = byrow_find_newcols(body, Any[])
+    _df = gensym()
     quote
-        _N = length($df[!, 1])
-        _DF = @transform($df, $(e_newcols...))
-        $(with_helper(:_DF, :(for row = 1:_N
-            $(byrow_replace(e_body))
-        end)))
-        _DF
+        let $_df = $df
+            local _N = nrow($_df)
+            local _DF = @transform($_df, $(e_newcols...))
+            $(with_helper(:_DF, :(for row = 1:_N
+                $(byrow_replace(e_body))
+            end)))
+            _DF
+        end
     end
 end
 

@@ -156,7 +156,7 @@ function replace_dotted!(e, membernames)
 end
 
 getsinglecolumn(df, s::DataFrames.ColumnIndex) = df[!, s]
-getsinglecolumn(df, s) = throw(ArgumentError("Only indexing with Symbols, strings and integers" *
+getsinglecolumn(df, s) = throw(ArgumentError("Only indexing with Symbols, strings and integers " *
     "is currently allowed with cols"))
 
 function with_helper(d, body)

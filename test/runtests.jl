@@ -3,6 +3,7 @@ anyerrors = false
 quiet = false
 
 my_tests = ["dataframes.jl",
+            "byrow.jl",
             "grouping.jl",
             "chaining.jl",
             "linqmacro.jl"]
