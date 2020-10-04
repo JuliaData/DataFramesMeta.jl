@@ -137,7 +137,7 @@ nameA = :A
 df2 = @transform(df, C = :B - cols(nameA))
 
 nameA_string = "A"
-df2 = @transform(df, C = :B - cols(nameA_string))
+df3 = @transform(df, C = :B - cols(nameA_string))
 
 nameB = "B"
 df4 = @byrow df begin 
