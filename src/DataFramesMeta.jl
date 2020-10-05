@@ -116,7 +116,7 @@ function fun_to_vec(kw::Expr; nolhs = false)
         if nolhs
             # [:x] => _f
             t = quote
-                Symbol.($(source)) =>
+                DataFramesMeta.repair_source($(source)) =>
                 ($(Expr(:tuple, values(membernames)...)) -> $body)
             end
          else
@@ -128,7 +128,7 @@ function fun_to_vec(kw::Expr; nolhs = false)
                 output = kw.args[1].args[2]
             end
             t = quote
-                 Symbol.($(source)) =>
+                DataFramesMeta.repair_source($(source)) =>
                 ($(Expr(:tuple, values(membernames)...)) -> $body) =>
                 $(output)
             end
@@ -141,6 +141,16 @@ end
 
 fun_to_vec(kw::QuoteNode) = kw
 
+function repair_source(x)
+    if isconcretetype(eltype(x))
+        return x
+    elseif all(t -> t isa Union{AbstractString, Symbol}, x)
+        return [xi isa AbstractString ? Symbol(xi) : xi for xi in x]
+    else
+        # DataFrames can throw the error
+        return x
+    end
+end
 
 protect_replace_syms!(e, membernames) = e
 function protect_replace_syms!(e::Expr, membernames)

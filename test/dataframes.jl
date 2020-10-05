@@ -59,6 +59,7 @@ const ≅ = isequal
     @test @transform(df, body = cols(ir)).body == df.i
     @test @transform(df, transform = cols(ir)).transform == df.i
     @test @transform(df, n = cols("g") + cols(:i)).n == df.g + df.i
+    @test @transform(df, n = cols(1) + cols(2)).n == df.g + df.i
 
     @test @transform(df, n = :i).g !== df.g
 
@@ -118,6 +119,7 @@ s = [:i, :g]
     @test_throws LoadError @eval @transform(df, Not([:i, :g]))
     @test_throws MethodError @eval @transform(df, n = sum(Between(:i, :t)))
     @test_throws ArgumentError @eval @transform(df, n = sum(cols(s)))
+    @test_throws ArgumentError @eval @transform(df, y = :i + cols(1))
 end
 
 @testset "@select" begin
@@ -178,6 +180,8 @@ end
     @test @select(df, body = cols(ir)).body == df.i
     @test @select(df, transform = cols(ir)).transform == df.i
     @test @select(df, n = cols("g") + cols(:i)).n == df.g + df.i
+    @test @select(df, n = cols(1) + cols(2)).n == df.g + df.i
+
 
     @test DataFramesMeta.select(df, :i) == df.i
 
@@ -222,6 +226,7 @@ cr = "c"
     @test_throws LoadError @eval @select(df, Not([:i, :g]))
     @test_throws MethodError @eval @select(df, n = sum(Between(:i, :t)))
     @test_throws ArgumentError @eval @select(df, n = sum(cols(s)))
+    @test_throws ArgumentError @eval @select(df, y = :i + cols(1))
 end
 
 @testset "Keyword arguments failure" begin
