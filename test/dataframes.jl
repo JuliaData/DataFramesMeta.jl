@@ -254,6 +254,9 @@ end
     @test  @with(df, cols(idx) .+ :B)  ==  df.A .+ df.B
     idx2 = :B
     @test  @with(df, cols(idx) .+ cols(idx2))  ==  df.A .+ df.B
+    @test  @with(df, cols(:A) .+ cols("B"))  ==  df.A .+ df.B
+
+    @test_throws ArgumentError @with(df, :A + cols(2))
 
     @test  x == sum(df.A .* df.B)
     @test  @with(df, df[:A .> 1, ^([:B, :A])]) == df[df.A .> 1, [:B, :A]]

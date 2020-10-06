@@ -142,13 +142,13 @@ end
 fun_to_vec(kw::QuoteNode) = kw
 
 function repair_source(x)
-    if isconcretetype(eltype(x))
+    if isempty(x) || isconcretetype(eltype(x))
         return x
     elseif all(t -> t isa Union{AbstractString, Symbol}, x)
         return [xi isa AbstractString ? Symbol(xi) : xi for xi in x]
     else
-        # DataFrames can throw the error
-        return x
+        throw(ArgumentError("Inputs to anonymous function must be either all the same " *
+                            "type or a a combination of `Symbol`s and strings"))
     end
 end
 
@@ -175,15 +175,14 @@ function with_helper(d, body)
     membernames = Dict{Any, Symbol}()
     funname = gensym()
     body = replace_syms!(body, membernames)
-    if isempty(membernames)
-        body
-    else
-        quote
-            function $funname($(values(membernames)...))
-                $body
-            end
-            $funname($((:($getsinglecolumn($d, $key)) for key in keys(membernames))...))
+    source = Expr(:vect, keys(membernames)...)
+    _d = gensym()
+    quote
+        $_d = $d
+        function $funname($(values(membernames)...))
+            $body
         end
+        $funname([DataFramesMeta.getsinglecolumn($_d, s) for s in  DataFramesMeta.repair_source($source)]...)
     end
 end
 

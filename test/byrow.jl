@@ -81,12 +81,6 @@ end
     end
     @test df2 == DataFrame(A = 1:3, B = 1:3)
 
-    n = 1
-    df2 = @byrow df begin
-        :B = cols(n)
-    end
-    @test df2 == DataFrame(A = 1:3, B = 1:3)
-
     df2 = @byrow df begin
         :A = cols(:A) + cols("B")
     end
@@ -103,13 +97,6 @@ end
         cols(n) = :B
     end
     @test df2 == DataFrame(A = [2, 1, 2], B = [2, 1, 2])
-
-    n = 1
-    df2 = @byrow df begin
-        cols(n) = :B
-    end
-    @test df2 == DataFrame(A = [2, 1, 2], B = [2, 1, 2])
-
 
     n = :C
     df2 = @byrow df begin
@@ -137,6 +124,8 @@ df = DataFrame(A = 1:3, B = [2, 1, 2])
 
     @eval Testbyrow n = [1, 2]
     @test_throws ArgumentError @eval @byrow df begin cols(n) end
+
+    @test_throws ArgumentError @byrow df cols(1) + cols(:A)
 end
 
 end # module
