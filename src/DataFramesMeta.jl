@@ -145,7 +145,7 @@ function repair_source(x)
     if isempty(x) || isconcretetype(eltype(x))
         return x
     elseif all(t -> t isa Union{AbstractString, Symbol}, x)
-        return [xi isa AbstractString ? Symbol(xi) : xi for xi in x]
+        return Symbol.(x)
     else
         throw(ArgumentError("Column references must be either all the same " *
                             "type or a a combination of `Symbol`s and strings"))
