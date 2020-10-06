@@ -147,7 +147,7 @@ function repair_source(x)
     elseif all(t -> t isa Union{AbstractString, Symbol}, x)
         return [xi isa AbstractString ? Symbol(xi) : xi for xi in x]
     else
-        throw(ArgumentError("Inputs to anonymous function must be either all the same " *
+        throw(ArgumentError("Column references must be either all the same " *
                             "type or a a combination of `Symbol`s and strings"))
     end
 end
@@ -182,7 +182,7 @@ function with_helper(d, body)
         function $funname($(values(membernames)...))
             $body
         end
-        $funname([DataFramesMeta.getsinglecolumn($_d, s) for s in  DataFramesMeta.repair_source($source)]...)
+        $funname((DataFramesMeta.getsinglecolumn($_d, s) for s in  DataFramesMeta.repair_source($source))...)
     end
 end
 
