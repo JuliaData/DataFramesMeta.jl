@@ -1,6 +1,8 @@
 module DataFramesMeta
 
-using DataFrames, Tables
+using Tables, Reexport
+
+@reexport using DataFrames
 
 # Basics:
 export @with, @where, @orderby, @transform, @by, @based_on, @select
