@@ -177,8 +177,6 @@ end
     @test @select(df, body = cols(ir)).body == df.i
     @test @select(df, transform = cols(ir)).transform == df.i
 
-    @test DataFramesMeta.select(df, :i) == df.i
-
     @test @select(df, n = 1).n == fill(1, nrow(df))
 
     @test @select(df, cols("new_column") = :i).new_column == df.i
