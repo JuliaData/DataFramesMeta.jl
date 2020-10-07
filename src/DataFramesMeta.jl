@@ -1,6 +1,8 @@
 module DataFramesMeta
 
-using DataFrames, Tables
+using Tables, Reexport
+
+@reexport using DataFrames
 
 # Basics:
 export @with, @where, @orderby, @transform, @by, @based_on, @select
@@ -376,15 +378,6 @@ Last Group:
 macro where(d, args...)
     esc(where_helper(d, args...))
 end
-
-
-##############################################################################
-##
-## select - select columns
-##
-##############################################################################
-
-select(d::AbstractDataFrame, arg) = d[!, arg]
 
 
 ##############################################################################
