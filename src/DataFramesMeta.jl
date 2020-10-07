@@ -1,6 +1,6 @@
 module DataFramesMeta
 
-using Tables, Reexport
+using Reexport
 
 @reexport using DataFrames
 
