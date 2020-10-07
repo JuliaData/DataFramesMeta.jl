@@ -141,7 +141,7 @@ end
 
 fun_to_vec(kw::QuoteNode) = kw
 
-function repair_source(x)
+function repair_source(x::AbstractVector)
     if isempty(x) || isconcretetype(eltype(x))
         return x
     elseif all(t -> t isa Union{AbstractString, Symbol}, x)
