@@ -4,7 +4,6 @@ using Test
 using DataFrames
 using DataFramesMeta
 using Statistics
-using Tables
 
 const ≅ = isequal
 
