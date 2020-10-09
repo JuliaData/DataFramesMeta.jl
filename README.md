@@ -162,6 +162,59 @@ df3 = @byrow df begin
 end
 ```
 
+DataFramesMeta macros do not allow mixing of integer column references with references 
+of other types. This means `@transform(df, y = :A + cols(2))`, attempting to add the columns 
+`df[!, :A]` and `df[!, 2]`, will fail. This is because in DataFrames, the command 
+
+```julia
+transform(df, [:A, 2] => (+) => :y)
+``` 
+
+will fail, as DataFrames requires the "source" column identifiers in a 
+`source => fun => dest` pair to all have the same type. DataFramesMeta adds one exception
+to this rule. `Symbol`s and strings are allowed to be mixed inside DataFramesMeta macros. 
+Consequently, 
+
+```
+@transform(df, y = :A + cols("B"))
+```
+
+will not error even though 
+
+```
+transform(df, [:A, "B"] => (+) => :y)
+```
+
+will error in DataFrames. 
+
+For consistency, this restriction in the input column types also applies to `@with`
+and `@byrow`. You cannot mix integer column references with `Symbol` or string column 
+references in `@with` and `@byrow` in any part of the expression, but you can mix 
+`Symbol`s and strings. The following will fail:
+
+```julia
+df = DataFrame(A = 1:3, B = [2, 1, 2])
+@byrow df begin 
+    :A = cols(2)
+end
+
+@with df begin 
+    cols(1) + cols("A")
+end
+```
+
+while the following will work without error
+
+```julia
+@byrow df begin 
+    cols(1) = cols(2)
+end
+
+@with df begin 
+    cols(1) + cols(2)
+end
+```
+
 Note that `cols` is *not* a standard Julia function. It is only used to modify the 
 way that macros in DataFramesMeta.jl escape arguments and has no behavior of its own 
 outside of DataFramesMeta macros.
