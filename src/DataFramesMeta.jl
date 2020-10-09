@@ -116,7 +116,7 @@ function fun_to_vec(kw::Expr; nolhs = false)
         if nolhs
             # [:x] => _f
             t = quote
-                DataFramesMeta.repair_source($(source)) =>
+                DataFramesMeta.make_source_concrete($(source)) =>
                 ($(Expr(:tuple, values(membernames)...)) -> $body)
             end
          else
@@ -128,7 +128,7 @@ function fun_to_vec(kw::Expr; nolhs = false)
                 output = kw.args[1].args[2]
             end
             t = quote
-                DataFramesMeta.repair_source($(source)) =>
+                DataFramesMeta.make_source_concrete($(source)) =>
                 ($(Expr(:tuple, values(membernames)...)) -> $body) =>
                 $(output)
             end
@@ -141,7 +141,7 @@ end
 
 fun_to_vec(kw::QuoteNode) = kw
 
-function repair_source(x::AbstractVector)
+function make_source_concrete(x::AbstractVector)
     if isempty(x) || isconcretetype(eltype(x))
         return x
     elseif all(t -> t isa Union{AbstractString, Symbol}, x)
@@ -182,7 +182,7 @@ function with_helper(d, body)
         function $funname($(values(membernames)...))
             $body
         end
-        $funname((DataFramesMeta.getsinglecolumn($_d, s) for s in  DataFramesMeta.repair_source($source))...)
+        $funname((DataFramesMeta.getsinglecolumn($_d, s) for s in  DataFramesMeta.make_source_concrete($source))...)
     end
 end
 
