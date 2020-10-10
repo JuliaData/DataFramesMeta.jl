@@ -387,8 +387,14 @@ end
 ##
 ##############################################################################
 
+# takes calls `:a` and makes them `identity(:a)` so
+# that we always get new column names and can
+# discard the key columns when doing `sortperm`.
+_make_expr(e::Expr) = e
+_make_expr(e::QuoteNode) = Expr(:call, :identity, e)
+
 function orderby_helper(x, args...)
-    t = (fun_to_vec(arg; nolhs = true) for arg in args)
+    t = (fun_to_vec(_make_expr(arg); nolhs = true) for arg in args)
     quote
         $DataFramesMeta.orderby($x, $(t...))
     end
@@ -401,11 +407,13 @@ end
 
 
 function orderby(x::GroupedDataFrame, args...)
-    out_df = DataFrames.combine(x, args...; keepkeys = false)
-    if nrow(out_df) != length(x)
-        throw(ArgumentError("All inputs to `@orderby` should return a scalar"))
-    end
-    x[sortperm(out_df)]
+    out_gd = DataFrames.combine(x, args...; ungroup = false)
+
+
+   # if nrow(out_df) != length(x)
+   #     throw(ArgumentError("All inputs to `@orderby` should return a scalar"))
+   # end
+    x[sortperm([eachcol(sdf[!, Not(out_gd.cols)]) for sdf in out_gd])]
 end
 
 """
