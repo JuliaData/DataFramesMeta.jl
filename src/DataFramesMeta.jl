@@ -4,6 +4,8 @@ using Reexport
 
 @reexport using DataFrames
 
+using MacroTools
+
 # Basics:
 export @with, @where, @orderby, @transform, @by, @based_on, @select
 
@@ -121,10 +123,10 @@ function fun_to_vec(kw::Expr; nolhs = false)
             end
          else
             if kw.args[1] isa Symbol
-                # cols(n) = f(:x) becomes [:x] => _f => n
+                # y = f(:x) becomes [:x] => _f => :y
                 output = QuoteNode(kw.args[1])
             elseif onearg(kw.args[1], :cols)
-                # y = f(:x) becomes [:x] => _f => :y
+                # cols(n) = f(:x) becomes [:x] => _f => n
                 output = kw.args[1].args[2]
             end
             t = quote
@@ -139,8 +141,7 @@ function fun_to_vec(kw::Expr; nolhs = false)
     end
 end
 
-fun_to_vec(kw::QuoteNode) = kw
-
+fun_to_vec(kw::QuoteNode; nolhs = false) = kw
 
 protect_replace_syms!(e, membernames) = e
 function protect_replace_syms!(e::Expr, membernames)
@@ -386,27 +387,25 @@ end
 ##
 ##############################################################################
 
-# needed on Julia 1.0 till #1489 in DataFrames is merged
-orderby(d::DataFrame, arg::DataFrame) = d[sortperm(arg), :]
-
-function orderby(d::AbstractDataFrame, args...)
-    D = typeof(d)(args...)
-    d[sortperm(D), :]
+function orderby_helper(x, args...)
+    t = (fun_to_vec(arg; nolhs = true) for arg in args)
+    quote
+        $DataFramesMeta.orderby($x, $(t...))
+    end
 end
 
-orderby(d::AbstractDataFrame, f::Function) = d[sortperm(f(d)), :]
-orderby(g::GroupedDataFrame, f::Function) = g[sortperm([f(x) for x in g])]
+function orderby(x::AbstractDataFrame, args...)
+    t = DataFrames.select(x, args...; copycols = false)
+    x[sortperm(t), :]
+end
 
-orderbyconstructor(d::AbstractDataFrame) = (x...) -> DataFrame(Any[x...], Symbol.(1:length(x)))
-orderbyconstructor(d) = x -> x
 
-function orderby_helper(d, args...)
-    _D = gensym()
-    quote
-        let $_D = $d
-            $orderby($_D, $(with_anonymous(:($orderbyconstructor($_D)($(args...))))))
-        end
+function orderby(x::GroupedDataFrame, args...)
+    out_df = DataFrames.combine(x, args...; keepkeys = false)
+    if nrow(out_df) != length(x)
+        throw(ArgumentError("All inputs to `@orderby` should return a scalar"))
     end
+    x[sortperm(out_df)]
 end
 
 """
@@ -455,7 +454,6 @@ Last Group:
 
 """
 macro orderby(d, args...)
-    # I don't esc just the input because I want _DF to be visible to the user
     esc(orderby_helper(d, args...))
 end
 

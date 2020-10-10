@@ -268,6 +268,4 @@ end
 end
 
 
-@test DataFramesMeta.orderby(df, df[[1, 3, 2], :]) == df[[1, 3, 2], :]
-
 end # module
