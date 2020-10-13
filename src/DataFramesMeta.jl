@@ -143,6 +143,7 @@ function fun_to_vec(kw::Expr; nolhs = false)
     end
 end
 
+fun_to_vec(kw::QuoteNode; nolhs = false) = kw
 
 function make_source_concrete(x::AbstractVector)
     if isempty(x) || isconcretetype(eltype(x))
