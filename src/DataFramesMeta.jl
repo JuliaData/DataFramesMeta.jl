@@ -387,39 +387,28 @@ end
 ##
 ##############################################################################
 
-# takes calls `:a` and makes them `identity(:a)` so
-# that we always get new column names and can
-# discard the key columns when doing `sortperm`.
-_make_expr(e::Expr) = e
-_make_expr(e::QuoteNode) = Expr(:call, :identity, e)
-
 function orderby_helper(x, args...)
-    t = (fun_to_vec(_make_expr(arg); nolhs = true) for arg in args)
+    t = (fun_to_vec(arg; nolhs = true) for arg in args)
     quote
         $DataFramesMeta.orderby($x, $(t...))
     end
 end
 
-function orderby(x::AbstractDataFrame, args...)
+function orderby(x::AbstractDataFrame, @nospecialize(args...))
     t = DataFrames.select(x, args...; copycols = false)
     x[sortperm(t), :]
 end
 
-
-function orderby(x::GroupedDataFrame, args...)
-    out_gd = DataFrames.combine(x, args...; ungroup = false)
-
-
-   # if nrow(out_df) != length(x)
-   #     throw(ArgumentError("All inputs to `@orderby` should return a scalar"))
-   # end
-    x[sortperm([eachcol(sdf[!, Not(out_gd.cols)]) for sdf in out_gd])]
+function orderby(x::GroupedDataFrame, @nospecialize(args...))
+    t = DataFrames.select(x, args...; copycols = false)
+    parent(x)[sortperm(t), :]
 end
 
 """
     @orderby(d, i...)
 
-Sort by criteria. Normally used to sort groups in GroupedDataFrames.
+Sort by criteria. When using a grouped data frame, operation
+is performed at the group level.
 
 ### Arguments
 
@@ -431,33 +420,64 @@ Sort by criteria. Normally used to sort groups in GroupedDataFrames.
 ```jldoctest
 julia> using DataFrames, DataFramesMeta, Statistics
 
+
+
 julia> d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
                                     2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
 
+julia> @orderby(d, :x - :n)
+20×2 DataFrame
+│ Row │ n     │ x     │
+│     │ Int64 │ Int64 │
+├─────┼───────┼───────┤
+│ 1   │ 19    │ 1     │
+│ 2   │ 20    │ 2     │
+│ 3   │ 18    │ 1     │
+│ 4   │ 16    │ 2     │
+│ 5   │ 17    │ 3     │
+│ 6   │ 15    │ 2     │
+│ 7   │ 13    │ 1     │
+│ 8   │ 14    │ 2     │
+│ 9   │ 12    │ 1     │
+│ 10  │ 10    │ 1     │
+│ 11  │ 11    │ 2     │
+│ 12  │ 9     │ 1     │
+│ 13  │ 7     │ 1     │
+│ 14  │ 8     │ 2     │
+│ 15  │ 6     │ 1     │
+│ 16  │ 5     │ 1     │
+│ 17  │ 4     │ 3     │
+│ 18  │ 3     │ 3     │
+│ 19  │ 2     │ 3     │
+│ 20  │ 1     │ 3     │
+
 julia> g = groupby(d, :x);
 
-julia> @orderby(g, mean(:n))
-GroupedDataFrame  3 groups with keys: Symbol[:x]
-First Group:
-5×2 SubDataFrame{Array{Int64,1}}
-│ Row │ n  │ x │
-├─────┼────┼───┤
-│ 1   │ 1  │ 3 │
-│ 2   │ 2  │ 3 │
-│ 3   │ 3  │ 3 │
-│ 4   │ 4  │ 3 │
-│ 5   │ 17 │ 3 │
-⋮
-Last Group:
-6×2 SubDataFrame{Array{Int64,1}}
-│ Row │ n  │ x │
-├─────┼────┼───┤
-│ 1   │ 8  │ 2 │
-│ 2   │ 11 │ 2 │
-│ 3   │ 14 │ 2 │
-│ 4   │ 15 │ 2 │
-│ 5   │ 16 │ 2 │
-│ 6   │ 20 │ 2 │
+julia> @orderby(g, mean(:x))
+20×2 DataFrame
+│ Row │ n     │ x     │
+│     │ Int64 │ Int64 │
+├─────┼───────┼───────┤
+│ 1   │ 5     │ 1     │
+│ 2   │ 6     │ 1     │
+│ 3   │ 7     │ 1     │
+│ 4   │ 9     │ 1     │
+│ 5   │ 10    │ 1     │
+│ 6   │ 12    │ 1     │
+│ 7   │ 13    │ 1     │
+│ 8   │ 18    │ 1     │
+│ 9   │ 19    │ 1     │
+│ 10  │ 8     │ 2     │
+│ 11  │ 11    │ 2     │
+│ 12  │ 14    │ 2     │
+│ 13  │ 15    │ 2     │
+│ 14  │ 16    │ 2     │
+│ 15  │ 20    │ 2     │
+│ 16  │ 1     │ 3     │
+│ 17  │ 2     │ 3     │
+│ 18  │ 3     │ 3     │
+│ 19  │ 4     │ 3     │
+│ 20  │ 17    │ 3     │
 ```
 
 """
