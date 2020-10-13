@@ -264,7 +264,7 @@ The following operations are now included:
   GroupedDataFrame.
 
 - `orderby(g, d -> mean(d[:a]))` and `@orderby(g, mean(:a))` -- Sort
-  groups based on the given criteria. Returns a GroupedDataFrame.
+  observations by a given criteria. 
 
 - `DataFrame(g)` -- Convert groups back to a DataFrame with the same
   group orderings.
