@@ -115,10 +115,12 @@ function fun_to_vec(kw::Expr; nolhs = false)
             body = replace_syms!(kw.args[2], membernames)
         end
 
+        source = Expr(:vect, keys(membernames)...)
+
         if nolhs
             # [:x] => _f
             t = quote
-                $(Expr(:vect, keys(membernames)...)) =>
+                DataFramesMeta.make_source_concrete($(source)) =>
                 ($(Expr(:tuple, values(membernames)...)) -> $body)
             end
          else
@@ -130,7 +132,7 @@ function fun_to_vec(kw::Expr; nolhs = false)
                 output = kw.args[1].args[2]
             end
             t = quote
-                $(Expr(:vect, keys(membernames)...)) =>
+                DataFramesMeta.make_source_concrete($(source)) =>
                 ($(Expr(:tuple, values(membernames)...)) -> $body) =>
                 $(output)
             end
@@ -141,7 +143,17 @@ function fun_to_vec(kw::Expr; nolhs = false)
     end
 end
 
-fun_to_vec(kw::QuoteNode; nolhs = false) = kw
+
+function make_source_concrete(x::AbstractVector)
+    if isempty(x) || isconcretetype(eltype(x))
+        return x
+    elseif all(t -> t isa Union{AbstractString, Symbol}, x)
+        return Symbol.(x)
+    else
+        throw(ArgumentError("Column references must be either all the same " *
+                            "type or a a combination of `Symbol`s and strings"))
+    end
+end
 
 protect_replace_syms!(e, membernames) = e
 function protect_replace_syms!(e::Expr, membernames)
@@ -166,15 +178,14 @@ function with_helper(d, body)
     membernames = Dict{Any, Symbol}()
     funname = gensym()
     body = replace_syms!(body, membernames)
-    if isempty(membernames)
-        body
-    else
-        quote
-            function $funname($(values(membernames)...))
-                $body
-            end
-            $funname($((:($getsinglecolumn($d, $key)) for key in keys(membernames))...))
+    source = Expr(:vect, keys(membernames)...)
+    _d = gensym()
+    quote
+        $_d = $d
+        function $funname($(values(membernames)...))
+            $body
         end
+        $funname((DataFramesMeta.getsinglecolumn($_d, s) for s in  DataFramesMeta.make_source_concrete($source))...)
     end
 end
 

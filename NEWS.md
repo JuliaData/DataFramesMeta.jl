@@ -7,3 +7,5 @@
 * `@orderby(gd::GroupedDataFrame, args...)` now returns a `DataFrame` instead 
   of a `GroupedDataFrame`. Operations are performed by group similar to `@transform` 
   and `@select`. 
+* Restrictions are imposed on the types of column references allowed when using `cols`. 
+  Mixing integer column references with other types now errors. ([#183])

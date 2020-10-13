@@ -71,6 +71,9 @@ g = groupby(d, :x, sort=true)
     @test @based_on(gd, body = cols(ir)).body == df.i
     @test @based_on(gd, transform = cols(ir)).transform == df.i
     @test @based_on(gd, (n1 = [first(cols(ir))], n2 = [first(cols(yr))])).n1 == [1, 4]
+    @test @based_on(gd, n = mean(cols("i")) + 0 * first(cols(:g))).n == [2.0, 4.5]
+    @test @based_on(gd, n = mean(cols(2)) + first(cols(1))).n == [3.0, 6.5]
+
 
     @test @based_on(gd, :i) == select(df, :g, :i)
     @test @based_on(gd, :i, :g) ≅ select(df, :g, :i)
@@ -120,6 +123,7 @@ newvar = :n
     @test @based_on(gd, Not([:i, :g])).g == [1, 2]
     @test_throws MethodError @eval @based_on(gd, n = sum(Between(:i, :t)))
     @test_throws LoadError @eval @based_on(gd; n = mean(:i))
+    @test_throws ArgumentError @eval @based_on(gd, n = mean(:i) + mean(cols(1)))
 end
 
 @testset "@by" begin
@@ -177,6 +181,9 @@ end
     @test @by(df, "g", body = cols(ir)).body == df.i
     @test @by(df, "g", transform = cols(ir)).transform == df.i
     @test @by(df, "g", (n1 = [first(cols(ir))], n2 = [first(cols(yr))])).n1 == [1, 4]
+    @test @by(df, "g", n = mean(cols("i")) + 0 * first(cols(:g))).n == [2.0, 4.5]
+    @test @by(df, "g", n = mean(cols(2)) + first(cols(1))).n == [3.0, 6.5]
+
 
     @test @by(df, :g, :i) == select(df, :g, :i)
     @test @by(df, :g, :i, :g) ≅ select(df, :g, :i)
@@ -226,6 +233,7 @@ newvar = :n
     @test @by(df, :g, Not([:i, :g])).g == [1, 2]
     @test_throws MethodError @eval @by(df, :g, n = sum(Between(:i, :t)))
     @test_throws MethodError @eval @by(df, :g; n = mean(:i))
+    @test_throws ArgumentError @eval @by(df, :g, n = mean(:i) + mean(cols(1)))
 end
 
 @testset "@transform with grouped data frame" begin
