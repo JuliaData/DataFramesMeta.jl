@@ -6,11 +6,9 @@ using DataFramesMeta
 using Statistics
 using Random
 
-Random.seed!(100)
-n = 100
-df = DataFrame(a = rand(1:3, n),
-               b = ["a","b","c","d"][rand(1:4, n)],
-               x = rand(n))
+df = DataFrame(a = repeat(1:5, outer = 20),
+               b = repeat(["a", "b", "c", "d"], inner = 25),
+               x = repeat(1:20, inner = 5))
 
 x = @where(df, :a .> 2, :b .!= "c")
 x = @transform(x, y = 10 * :x)

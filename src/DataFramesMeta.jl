@@ -400,7 +400,7 @@ function orderby(x::AbstractDataFrame, @nospecialize(args...))
 end
 
 function orderby(x::GroupedDataFrame, @nospecialize(args...))
-    t = DataFrames.select(x, args...; copycols = false)
+    t = DataFrames.select(x, args...; copycols = false, keepkeys = false)
     parent(x)[sortperm(t), :]
 end
 
