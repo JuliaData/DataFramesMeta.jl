@@ -39,8 +39,6 @@ xlinq2 = @linq df  |>
     groupby(:b) |>
     based_on(meanX = mean(:x), meanY = mean(:y))
 
-xlinq2[!, [:meanX, :meanY]] == xlinq[!, [:meanX, :meanY]]
-
 @test xlinq2[!, [:meanX, :meanY]] == xlinq[!, [:meanX, :meanY]]
 
 xlinq3 = @linq df  |>

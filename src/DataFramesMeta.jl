@@ -4,8 +4,6 @@ using Reexport
 
 @reexport using DataFrames
 
-using MacroTools
-
 # Basics:
 export @with, @where, @orderby, @transform, @by, @based_on, @select
 
@@ -431,8 +429,6 @@ is performed at the group level.
 
 ```jldoctest
 julia> using DataFrames, DataFramesMeta, Statistics
-
-
 
 julia> d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
                                     2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
