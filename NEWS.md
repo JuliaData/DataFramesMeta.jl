@@ -4,3 +4,6 @@
   order of rows returned after `DataFrames.transform(gd::GroupedDataFrame, args...)`. 
 * `@select` now supports `GroupedDataFrame` with the same behavior as 
   `DataFrames.select(df::GroupedDataFrame, args...)` ([#180])
+* `@orderby(gd::GroupedDataFrame, args...)` now returns a `DataFrame` instead 
+  of a `GroupedDataFrame`. Operations are performed by group similar to `@transform` 
+  and `@select`. 
