@@ -267,5 +267,24 @@ end
     @test  @where(df, :A .> 1, :A .< 4, :B .> 1) == df[map(&, df.A .> 1, df.A .< 4, df.B .> 1),:]
 end
 
+@testset "orderby" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5,
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing]
+        )
+
+    gd = groupby(df, :g)
+
+    @test @orderby(df, :c).i == [3, 1, 2, 4, 5]
+    @test @orderby(df, -:g).i == [4, 5, 1, 2, 3]
+    @test @orderby(df, :t).i == [1, 2, 3, 4, 5]
+
+    @test @orderby(gd, mean(:i)).i == [1, 2, 3, 4, 5]
+    @test @orderby(df, std(:i) .- :i).i == [5, 4, 3, 2, 1]
+end
+
 
 end # module
