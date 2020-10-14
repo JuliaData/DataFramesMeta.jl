@@ -410,6 +410,10 @@ function orderby(x::AbstractDataFrame, @nospecialize(args...))
 end
 
 function orderby(x::GroupedDataFrame, @nospecialize(args...))
+
+    @warn "orderby behavior now returns a `DataFrame` instead of a `GroupedDataFrame`. " *
+          "Group the returned data frame to restore old behavior" maxlog = 5
+
     t = DataFrames.select(x, args...; copycols = false, keepkeys = false)
     parent(x)[sortperm(t), :]
 end
