@@ -124,6 +124,17 @@ df2 = @byrow df begin
 end
 ```
 
+## `@orderby`
+
+Re-order rows of a data frame 
+
+```julia
+d = DataFrame(x = [3, 3, 3, 2, 1, 1, 1, 2, 1, 1], n = 1:10);
+@orderby(d, -1 .* :n)
+g = groupby(d, :x);
+@orderby(g, :x, :n .- mean(:n))
+```
+
 ## Working with column names programmatically with `cols`
 
 DataFramesMeta.jl provides the special syntax `cols` for referring to 

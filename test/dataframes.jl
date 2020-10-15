@@ -291,9 +291,6 @@ end
     @test @orderby(df, :c).i == [3, 1, 2, 4, 5]
     @test @orderby(df, -:g).i == [4, 5, 1, 2, 3]
     @test @orderby(df, :t).i == [1, 2, 3, 4, 5]
-
-    @test @orderby(gd, mean(:i)).i == [1, 2, 3, 4, 5]
-    @test @orderby(df, std(:i) .- :i).i == [5, 4, 3, 2, 1]
 end
 
 

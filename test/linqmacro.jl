@@ -12,20 +12,20 @@ df = DataFrame(a = repeat(1:5, outer = 20),
 
 x = @where(df, :a .> 2, :b .!= "c")
 x = @transform(x, y = 10 * :x)
+x = @orderby(x, :x .- mean(:x))
 x = @by(x, :b, meanX = mean(:x), meanY = mean(:y))
-x = @orderby(x, -:meanX)
 x = @select(x, var = :b, :meanX, :meanY)
 
 x1 = @linq transform(where(df, :a .> 2, :b .!= "c"), y = 10 * :x)
-x1 = @linq by(x1, :b, meanX = mean(:x), meanY = mean(:y))
-x1 = @linq select(orderby(x1, -:meanX), var = :b, :meanX, :meanY)
+x1 = @linq by(orderby(x1, :x .- mean(:x)), :b, meanX = mean(:x), meanY = mean(:y))
+x1 = @linq select(x1, var = :b, :meanX, :meanY)
 
 ## chaining
 xlinq = @linq df  |>
     where(:a .> 2, :b .!= "c")  |>
     transform(y = 10 * :x)  |>
+    orderby(:x .- mean(:x)) |>
     by(:b, meanX = mean(:x), meanY = mean(:y))  |>
-    orderby(-:meanX)  |>
     select(var = :b, :meanX, :meanY)
 
 @test x == x1
@@ -34,8 +34,7 @@ xlinq = @linq df  |>
 xlinq2 = @linq df  |>
     where(:a .> 2, :b .!= "c")  |>
     transform(y = 10 * :x)  |>
-    groupby(:b) |>
-    orderby(-mean(:x))  |>
+    orderby(:x .- mean(:x)) |>
     groupby(:b) |>
     based_on(meanX = mean(:x), meanY = mean(:y))
 
@@ -44,9 +43,8 @@ xlinq2 = @linq df  |>
 xlinq3 = @linq df  |>
     where(:a .> 2, :b .!= "c")  |>
     transform(y = 10 * :x)  |>
+    orderby(:x .- mean(:x)) |>
     DataFrames.groupby(:b) |>
-    orderby(-mean(:x))  |>
-    groupby(:b) |>
     based_on(meanX = mean(:x), meanY = mean(:y))
 
 @test xlinq3[!, [:meanX, :meanY]] == xlinq[!, [:meanX, :meanY]]

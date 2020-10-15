@@ -410,19 +410,36 @@ function orderby(x::AbstractDataFrame, @nospecialize(args...))
 end
 
 function orderby(x::GroupedDataFrame, @nospecialize(args...))
-
     @warn "orderby behavior now returns a `DataFrame` instead of a `GroupedDataFrame`. " *
           "Group the returned data frame to restore old behavior" maxlog = 2
 
     t = DataFrames.select(x, args...; copycols = false, keepkeys = false)
+    @assert nrow(parent(x)) == nrow(t)
     parent(x)[sortperm(t), :]
 end
 
 """
     @orderby(d, i...)
 
-Sort by criteria. When using a grouped data frame, operation
-is performed at the group level.
+Sort by criteria. When given a `GroupedDataFrame`, operation
+is performed at the group level.`@orderby` always returns a fresh
+`DataFrame` regardless of whether the input is a `DataFrame` or a
+`GroupedDataFrame`.
+
+When given a `DataFrame`, `@orderby` applies the transformation
+given by its arguments (but does not create new columns) and sorts
+the given `DataFrame` on the result, returning a new `DataFrame`.
+
+When given a `GroupedDataFrame`, `@orderby` applies the transformation
+given by its arguments *by group*. Then it returns the `parent` of the
+input `GroupedDataFrame` which has been sorted by the transformations.
+The second example below shows the logic of `@orderby` with a
+`GroupedDataFrame`.
+
+When inputting a `GroupedDataFrame`, to return a `DataFrame` sorted
+first by group and then sorted by the tranformation, use the
+grouping columns of the the `GroupedDataFrame` as the first arguments
+of the`@orderby` call. See the final example below for a demonstration.
 
 ### Arguments
 
@@ -434,62 +451,60 @@ is performed at the group level.
 ```jldoctest
 julia> using DataFrames, DataFramesMeta, Statistics
 
-julia> d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
-                                    2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
+julia> d = DataFrame(x = [3, 3, 3, 2, 1, 1, 1, 2, 1, 1], n = 1:10);
 
-julia> @orderby(d, :x - :n)
-20×2 DataFrame
-│ Row │ n     │ x     │
+julia> @orderby(d, -1 .* :n)
+10×2 DataFrame
+│ Row │ x     │ n     │
 │     │ Int64 │ Int64 │
 ├─────┼───────┼───────┤
-│ 1   │ 19    │ 1     │
-│ 2   │ 20    │ 2     │
-│ 3   │ 18    │ 1     │
-│ 4   │ 16    │ 2     │
-│ 5   │ 17    │ 3     │
-│ 6   │ 15    │ 2     │
-│ 7   │ 13    │ 1     │
-│ 8   │ 14    │ 2     │
-│ 9   │ 12    │ 1     │
-│ 10  │ 10    │ 1     │
-│ 11  │ 11    │ 2     │
-│ 12  │ 9     │ 1     │
-│ 13  │ 7     │ 1     │
-│ 14  │ 8     │ 2     │
-│ 15  │ 6     │ 1     │
-│ 16  │ 5     │ 1     │
-│ 17  │ 4     │ 3     │
-│ 18  │ 3     │ 3     │
-│ 19  │ 2     │ 3     │
-│ 20  │ 1     │ 3     │
+│ 1   │ 1     │ 10    │
+│ 2   │ 1     │ 9     │
+│ 3   │ 2     │ 8     │
+│ 4   │ 1     │ 7     │
+│ 5   │ 1     │ 6     │
+│ 6   │ 1     │ 5     │
+│ 7   │ 2     │ 4     │
+│ 8   │ 3     │ 3     │
+│ 9   │ 3     │ 2     │
+│ 10  │ 3     │ 1     │
 
 julia> g = groupby(d, :x);
 
-julia> @orderby(g, mean(:x))
-20×2 DataFrame
+julia> @linq g |>
+       transform(t = :n .- mean(:n)) |>
+       orderby(:n .- mean(:n))
+
+10×3 DataFrame
+│ Row │ x     │ n     │ t       │
+│     │ Int64 │ Int64 │ Float64 │
+├─────┼───────┼───────┼─────────┤
+│ 1   │ 3     │ 1     │ -1.0    │
+│ 2   │ 3     │ 2     │ 0.0     │
+│ 3   │ 3     │ 3     │ 1.0     │
+│ 4   │ 2     │ 4     │ -2.0    │
+│ 5   │ 1     │ 5     │ -2.4    │
+│ 6   │ 1     │ 6     │ -1.4    │
+│ 7   │ 1     │ 7     │ -0.4    │
+│ 8   │ 2     │ 8     │ 2.0     │
+│ 9   │ 1     │ 9     │ 1.6     │
+│ 10  │ 1     │ 10    │ 2.6     │
+
+julia> @orderby(d, :x, -1 .* :n)
+10×2 DataFrame
 │ Row │ n     │ x     │
 │     │ Int64 │ Int64 │
 ├─────┼───────┼───────┤
-│ 1   │ 5     │ 1     │
-│ 2   │ 6     │ 1     │
+│ 1   │ 10    │ 1     │
+│ 2   │ 9     │ 1     │
 │ 3   │ 7     │ 1     │
-│ 4   │ 9     │ 1     │
-│ 5   │ 10    │ 1     │
-│ 6   │ 12    │ 1     │
-│ 7   │ 13    │ 1     │
-│ 8   │ 18    │ 1     │
-│ 9   │ 19    │ 1     │
-│ 10  │ 8     │ 2     │
-│ 11  │ 11    │ 2     │
-│ 12  │ 14    │ 2     │
-│ 13  │ 15    │ 2     │
-│ 14  │ 16    │ 2     │
-│ 15  │ 20    │ 2     │
-│ 16  │ 1     │ 3     │
-│ 17  │ 2     │ 3     │
-│ 18  │ 3     │ 3     │
-│ 19  │ 4     │ 3     │
-│ 20  │ 17    │ 3     │
+│ 4   │ 6     │ 1     │
+│ 5   │ 5     │ 1     │
+│ 6   │ 8     │ 2     │
+│ 7   │ 4     │ 2     │
+│ 8   │ 3     │ 3     │
+│ 9   │ 2     │ 3     │
+│ 10  │ 1     │ 3     │
 ```
 
 """
