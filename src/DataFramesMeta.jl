@@ -434,7 +434,10 @@ When given a `GroupedDataFrame`, `@orderby` applies the transformation
 given by its arguments *by group*. Then it returns the `parent` of the
 input `GroupedDataFrame` which has been sorted by the transformations.
 The second example below shows the logic of `@orderby` with a
-`GroupedDataFrame`.
+`GroupedDataFrame`. Note that the column `:t` is arranged from
+lowest to highest after the `@orderby` command. This shows that
+`@orderby` is equivelent to a transformation by group followed
+by ordering on the subsequent transformation.
 
 When inputting a `GroupedDataFrame`, to return a `DataFrame` sorted
 first by group and then sorted by the tranformation, use the
@@ -490,21 +493,22 @@ julia> @linq g |>
 │ 9   │ 1     │ 9     │ 1.6     │
 │ 10  │ 1     │ 10    │ 2.6     │
 
+
 julia> @orderby(d, :x, -1 .* :n)
 10×2 DataFrame
-│ Row │ n     │ x     │
+│ Row │ x     │ n     │
 │     │ Int64 │ Int64 │
 ├─────┼───────┼───────┤
-│ 1   │ 10    │ 1     │
-│ 2   │ 9     │ 1     │
-│ 3   │ 7     │ 1     │
-│ 4   │ 6     │ 1     │
-│ 5   │ 5     │ 1     │
-│ 6   │ 8     │ 2     │
-│ 7   │ 4     │ 2     │
+│ 1   │ 1     │ 10    │
+│ 2   │ 1     │ 9     │
+│ 3   │ 1     │ 7     │
+│ 4   │ 1     │ 6     │
+│ 5   │ 1     │ 5     │
+│ 6   │ 2     │ 8     │
+│ 7   │ 2     │ 4     │
 │ 8   │ 3     │ 3     │
-│ 9   │ 2     │ 3     │
-│ 10  │ 1     │ 3     │
+│ 9   │ 3     │ 2     │
+│ 10  │ 3     │ 1     │
 ```
 
 """
