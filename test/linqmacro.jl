@@ -66,9 +66,8 @@ xlinq3 = @linq df  |>
     xlinq3 = @linq df  |>
         where(cols(a_sym) .> 2, :b .!= "c")  |>
         transform(cols(y_str) = 10 * cols(x_sym))  |>
-        DataFrames.groupby(b_str) |>
-        orderby(-mean(cols(x_sym)))  |>
-        groupby(:b) |>
+        orderby(cols(x_sym) .- mean(cols(x_sym)))  |>
+        groupby(b_str) |>
         based_on(cols("meanX") = mean(:x), meanY = mean(:y))
 
     @test isequal(xlinq3, DataFrame(b = "d", meanX = 40.0, meanY = 400.0))

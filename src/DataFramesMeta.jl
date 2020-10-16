@@ -430,15 +430,6 @@ When given a `DataFrame`, `@orderby` applies the transformation
 given by its arguments (but does not create new columns) and sorts
 the given `DataFrame` on the result, returning a new `DataFrame`.
 
-When given a `GroupedDataFrame`, `@orderby` applies the transformation
-given by its arguments *by group*. Then it returns the `parent` of the
-input `GroupedDataFrame` which has been sorted by the transformations.
-The second example below shows the logic of `@orderby` with a
-`GroupedDataFrame`. Note that the column `:t` is arranged from
-lowest to highest after the `@orderby` command. This shows that
-`@orderby` is equivelent to a transformation by group followed
-by ordering on the subsequent transformation.
-
 When inputting a `GroupedDataFrame`, to return a `DataFrame` sorted
 first by group and then sorted by the tranformation, use the
 grouping columns of the the `GroupedDataFrame` as the first arguments
@@ -471,7 +462,18 @@ julia> @orderby(d, -1 .* :n)
 │ 8   │ 3     │ 3     │
 │ 9   │ 3     │ 2     │
 │ 10  │ 3     │ 1     │
+```
 
+When given a `GroupedDataFrame`, `@orderby` applies the transformation
+given by its arguments *by group*. Then it returns the `parent` of the
+input `GroupedDataFrame` which has been sorted by the transformations.
+The second example below shows the logic of `@orderby` with a
+`GroupedDataFrame`. Note that the column `:t` is arranged from
+lowest to highest after the `@orderby` command. This shows that
+`@orderby` is equivelent to a transformation by group followed
+by ordering on the subsequent transformation.
+
+```jldoctest
 julia> g = groupby(d, :x);
 
 julia> @linq g |>
