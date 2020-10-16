@@ -421,9 +421,8 @@ end
 """
     @orderby(d, i...)
 
-Sort by criteria. When given a `GroupedDataFrame`, operation
-is performed at the group level.`@orderby` always returns a fresh
-`DataFrame` regardless of whether the input is a `DataFrame` or a
+Sort rows by values in one of several columns or a transformation of columns.
+Always returns a fresh `DataFrame` regardless of whether the input is a `DataFrame` or a
 `GroupedDataFrame`.
 
 When given a `DataFrame`, `@orderby` applies the transformation
@@ -431,8 +430,8 @@ given by its arguments (but does not create new columns) and sorts
 the given `DataFrame` on the result, returning a new `DataFrame`.
 
 When given a `GroupedDataFrame`, `@orderby` applies the transformation
-given by its arguments *by group*. Then it returns the `parent` of the
-input `GroupedDataFrame` which has been sorted by the transformations.
+given by its arguments *by group*. Then it returns rows of the
+input `GroupedDataFrame` sorted by the transformations.
 The second example below shows the logic of `@orderby` with a
 `GroupedDataFrame`. Note that the column `:t` is arranged from
 lowest to highest after the `@orderby` command. This shows that

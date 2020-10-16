@@ -126,7 +126,7 @@ end
 
 ## `@orderby`
 
-Re-order rows of a data frame 
+Sort rows by values in one of several columns or a transformation of columns.
 
 ```julia
 d = DataFrame(x = [3, 3, 3, 2, 1, 1, 1, 2, 1, 1], n = 1:10);
@@ -331,7 +331,7 @@ The following operations are now included:
   GroupedDataFrame.
 
 - `orderby(g, d -> mean(d[:a]))` and `@orderby(g, mean(:a))` -- Sort
-  observations by a given criteria. 
+  rows by a given criteria. Returns a `DataFrame`.
 
 - `DataFrame(g)` -- Convert groups back to a DataFrame with the same
   group orderings.
