@@ -295,20 +295,25 @@ end
 ##
 ##############################################################################
 
-where(d::AbstractDataFrame, arg) = d[arg, :]
-where(d::AbstractDataFrame, f::Function) = d[f(d), :]
-where(g::GroupedDataFrame, f::Function) = g[Bool[f(x) for x in g]]
+function where_helper(x, args...)
+    t = (fun_to_vec(arg; nolhs = true) for arg in args)
+    quote
+        $where($x, $(t...))
+    end
+end
 
-and(x, y) = :($x .& $y)
+and(x, y) = x .& y
 
-function where_helper(d, args...)
-    :($where($d, $(with_anonymous(reduce(and, args)))))
+function where(x, args...)
+    res = DataFrames.select(x, args...; copycols = false, keepkeys = false)
+    tokeep = replace!(reduce(and, eachcol(res)), missing => false)
+    parent(x)[tokeep, :]
 end
 
 """
     @where(d, i...)
 
-Select row subsets in AbstractDataFrames or groups in GroupedDataFrames.
+Select row subsets in AbstractDataFrames and GroupedDataFrames.
 
 ### Arguments
 
@@ -346,48 +351,35 @@ julia> @where(df, :x .> x, :y .== 3)
 julia> d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
                                     2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
 
-julia> g = groupby(d, :x);
+julia> g = groupby(d, :x)
 
-julia> @where(d, :x .== 3)
-5×2 DataFrame
-│ Row │ n  │ x │
-├─────┼────┼───┤
-│ 1   │ 1  │ 3 │
-│ 2   │ 2  │ 3 │
-│ 3   │ 3  │ 3 │
-│ 4   │ 4  │ 3 │
-│ 5   │ 17 │ 3 │
+julia> @where(g, :n .> mean(:n))
+8×2 DataFrame
+│ Row │ n     │ x     │
+│     │ Int64 │ Int64 │
+├─────┼───────┼───────┤
+│ 1   │ 12    │ 1     │
+│ 2   │ 13    │ 1     │
+│ 3   │ 15    │ 2     │
+│ 4   │ 16    │ 2     │
+│ 5   │ 17    │ 3     │
+│ 6   │ 18    │ 1     │
+│ 7   │ 19    │ 1     │
+│ 8   │ 20    │ 2     │
 
-julia> @where(g, length(:x) > 5)   # pick out some groups
-GroupedDataFrame  2 groups with keys: Symbol[:x]
-First Group:
-9×2 SubDataFrame{Array{Int64,1}}
-│ Row │ n  │ x │
-├─────┼────┼───┤
-│ 1   │ 5  │ 1 │
-│ 2   │ 6  │ 1 │
-│ 3   │ 7  │ 1 │
-│ 4   │ 9  │ 1 │
-│ 5   │ 10 │ 1 │
-│ 6   │ 12 │ 1 │
-│ 7   │ 13 │ 1 │
-│ 8   │ 18 │ 1 │
-│ 9   │ 19 │ 1 │
-⋮
-Last Group:
-6×2 SubDataFrame{Array{Int64,1}}
-│ Row │ n  │ x │
-├─────┼────┼───┤
-│ 1   │ 8  │ 2 │
-│ 2   │ 11 │ 2 │
-│ 3   │ 14 │ 2 │
-│ 4   │ 15 │ 2 │
-│ 5   │ 16 │ 2 │
-│ 6   │ 20 │ 2 │
+julia> @where(g, :n .== first(:n))
+3×2 DataFrame
+│ Row │ n     │ x     │
+│     │ Int64 │ Int64 │
+├─────┼───────┼───────┤
+│ 1   │ 1     │ 3     │
+│ 2   │ 5     │ 1     │
+│ 3   │ 8     │ 2     │
+
 ```
 """
-macro where(d, args...)
-    esc(where_helper(d, args...))
+macro where(x, args...)
+    esc(where_helper(x, args...))
 end
 
 
