@@ -4,8 +4,6 @@
   order of rows returned after `DataFrames.transform(gd::GroupedDataFrame, args...)`. 
 * `@select` now supports `GroupedDataFrame` with the same behavior as 
   `DataFrames.select(df::GroupedDataFrame, args...)` ([#180])
-* `@orderby(gd::GroupedDataFrame, args...)` now returns a `DataFrame` instead 
-  of a `GroupedDataFrame`. Operations are performed by group similar to `@transform` 
-  and `@select`. 
+* `@orderby(gd::GroupedDataFrame, args...)` is now reserved and will error.
 * Restrictions are imposed on the types of column references allowed when using `cols`. 
   Mixing integer column references with other types now errors. ([#183])

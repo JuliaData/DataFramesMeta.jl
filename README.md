@@ -126,7 +126,8 @@ end
 
 ## `@orderby`
 
-Sort rows by values in one of several columns or a transformation of columns.
+Sort rows in a `DataFrame` by values in one of several columns or a 
+transformation of columns.
 
 ```julia
 d = DataFrame(x = [3, 3, 3, 2, 1, 1, 1, 2, 1, 1], n = 1:10);
