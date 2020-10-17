@@ -131,8 +131,7 @@ Sort rows by values in one of several columns or a transformation of columns.
 ```julia
 d = DataFrame(x = [3, 3, 3, 2, 1, 1, 1, 2, 1, 1], n = 1:10);
 @orderby(d, -1 .* :n)
-g = groupby(d, :x);
-@orderby(g, :x, :n .- mean(:n))
+@orderby(d, :x, :n .- mean(:x))
 ```
 
 ## Working with column names programmatically with `cols`

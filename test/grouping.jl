@@ -291,30 +291,4 @@ end
 	@test @select(g, :a, t = :c).a ≅ d.a
 end
 
-
-@testset "orderby with a grouped data frame" begin
-    df = DataFrame(
-        g = [1, 1, 1, 2, 2],
-        i = 1:5,
-        t = ["a", "b", "c", "c", "e"],
-        y = [:v, :w, :x, :y, :z],
-        c = [:g, :quote, :body, :transform, missing]
-        )
-
-    gd = groupby(df, :g)
-
-    @test @orderby(gd, mean(:i)).i ==
-        @orderby(@select(gd, :i, m = mean(:i)), :m).i ==
-        [1, 2, 3, 4, 5]
-
-    @test @orderby(gd, std(:i) .- :i).i ==
-        @orderby(@select(gd, :i, m = std(:i) .- :i), :m).i ==
-        [5, 4, 3, 2, 1]
-
-    @test @orderby(gd, :g, -1 .* (:i .- mean(:i))).i ==
-        @orderby(@select(gd, :i, m = -1 .* (:i .- mean(:i))), :g, :m).i ==
-        [3, 2, 1, 5, 4]
-end
-
-
 end # module

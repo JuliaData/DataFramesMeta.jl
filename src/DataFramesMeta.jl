@@ -410,33 +410,22 @@ function orderby(x::AbstractDataFrame, @nospecialize(args...))
 end
 
 function orderby(x::GroupedDataFrame, @nospecialize(args...))
-    @warn "orderby behavior now returns a `DataFrame` instead of a `GroupedDataFrame`. " *
-          "Group the returned data frame to restore old behavior" maxlog = 2
-
-    t = DataFrames.select(x, args...; copycols = false, keepkeys = false)
-    @assert nrow(parent(x)) == nrow(t)
-    parent(x)[sortperm(t), :]
+    throw(ArgumentError("@orderby with a GroupedDataFrame is reserved"))
 end
 
 """
     @orderby(d, i...)
 
 Sort rows by values in one of several columns or a transformation of columns.
-Always returns a fresh `DataFrame` regardless of whether the input is a `DataFrame` or a
-`GroupedDataFrame`.
+Always returns a fresh `DataFrame`. Does not accept a `GroupedDataFrame`.
 
 When given a `DataFrame`, `@orderby` applies the transformation
 given by its arguments (but does not create new columns) and sorts
 the given `DataFrame` on the result, returning a new `DataFrame`.
 
-When inputting a `GroupedDataFrame`, to return a `DataFrame` sorted
-first by group and then sorted by the tranformation, use the
-grouping columns of the the `GroupedDataFrame` as the first arguments
-of the`@orderby` call. See the final example below for a demonstration.
-
 ### Arguments
 
-* `d` : an AbstractDataFrame or GroupedDataFrame
+* `d` : an AbstractDataFrame
 * `i...` : expression for sorting
 
 ### Examples
@@ -461,54 +450,23 @@ julia> @orderby(d, -1 .* :n)
 │ 8   │ 3     │ 3     │
 │ 9   │ 3     │ 2     │
 │ 10  │ 3     │ 1     │
-```
 
-The second example below shows the logic of `@orderby` with a
-`GroupedDataFrame`. Note that the column `:t` is arranged from
-lowest to highest after the `@orderby` command. This shows that
-`@orderby` is equivelent to a transformation by group followed
-by ordering on the subsequent transformation.
-
-```jldoctest
-julia> g = groupby(d, :x);
-
-julia> @linq g |>
-       transform(t = :n .- mean(:n)) |>
-       orderby(:n .- mean(:n))
-
-10×3 DataFrame
-│ Row │ x     │ n     │ t       │
-│     │ Int64 │ Int64 │ Float64 │
-├─────┼───────┼───────┼─────────┤
-│ 1   │ 3     │ 1     │ -1.0    │
-│ 2   │ 3     │ 2     │ 0.0     │
-│ 3   │ 3     │ 3     │ 1.0     │
-│ 4   │ 2     │ 4     │ -2.0    │
-│ 5   │ 1     │ 5     │ -2.4    │
-│ 6   │ 1     │ 6     │ -1.4    │
-│ 7   │ 1     │ 7     │ -0.4    │
-│ 8   │ 2     │ 8     │ 2.0     │
-│ 9   │ 1     │ 9     │ 1.6     │
-│ 10  │ 1     │ 10    │ 2.6     │
-
-
-julia> @orderby(d, :x, -1 .* :n)
+julia> @orderby(d, :x, :n .- mean(:n))
 10×2 DataFrame
 │ Row │ x     │ n     │
 │     │ Int64 │ Int64 │
 ├─────┼───────┼───────┤
-│ 1   │ 1     │ 10    │
-│ 2   │ 1     │ 9     │
+│ 1   │ 1     │ 5     │
+│ 2   │ 1     │ 6     │
 │ 3   │ 1     │ 7     │
-│ 4   │ 1     │ 6     │
-│ 5   │ 1     │ 5     │
-│ 6   │ 2     │ 8     │
-│ 7   │ 2     │ 4     │
-│ 8   │ 3     │ 3     │
+│ 4   │ 1     │ 9     │
+│ 5   │ 1     │ 10    │
+│ 6   │ 2     │ 4     │
+│ 7   │ 2     │ 8     │
+│ 8   │ 3     │ 1     │
 │ 9   │ 3     │ 2     │
-│ 10  │ 3     │ 1     │
+│ 10  │ 3     │ 3     │
 ```
-
 """
 macro orderby(d, args...)
     esc(orderby_helper(d, args...))
