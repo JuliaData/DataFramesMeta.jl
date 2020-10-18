@@ -124,6 +124,17 @@ df2 = @byrow df begin
 end
 ```
 
+## `@orderby`
+
+Sort rows in a `DataFrame` by values in one of several columns or a 
+transformation of columns.
+
+```julia
+d = DataFrame(x = [3, 3, 3, 2, 1, 1, 1, 2, 1, 1], n = 1:10);
+@orderby(d, -1 .* :n)
+@orderby(d, :x, :n .- mean(:x))
+```
+
 ## Working with column names programmatically with `cols`
 
 DataFramesMeta.jl provides the special syntax `cols` for referring to 
@@ -320,7 +331,7 @@ The following operations are now included:
   GroupedDataFrame.
 
 - `orderby(g, d -> mean(d[:a]))` and `@orderby(g, mean(:a))` -- Sort
-  groups based on the given criteria. Returns a GroupedDataFrame.
+  rows by a given criteria. Returns a `DataFrame`.
 
 - `DataFrame(g)` -- Convert groups back to a DataFrame with the same
   group orderings.

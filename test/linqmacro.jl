@@ -6,28 +6,26 @@ using DataFramesMeta
 using Statistics
 using Random
 
-Random.seed!(100)
-n = 100
-df = DataFrame(a = rand(1:3, n),
-               b = ["a","b","c","d"][rand(1:4, n)],
-               x = rand(n))
+df = DataFrame(a = repeat(1:5, outer = 20),
+               b = repeat(["a", "b", "c", "d"], inner = 25),
+               x = repeat(1:20, inner = 5))
 
 x = @where(df, :a .> 2, :b .!= "c")
 x = @transform(x, y = 10 * :x)
+x = @orderby(x, :x .- mean(:x))
 x = @by(x, :b, meanX = mean(:x), meanY = mean(:y))
-x = @orderby(x, -:meanX)
 x = @select(x, var = :b, :meanX, :meanY)
 
 x1 = @linq transform(where(df, :a .> 2, :b .!= "c"), y = 10 * :x)
-x1 = @linq by(x1, :b, meanX = mean(:x), meanY = mean(:y))
-x1 = @linq select(orderby(x1, -:meanX), var = :b, :meanX, :meanY)
+x1 = @linq by(orderby(x1, :x .- mean(:x)), :b, meanX = mean(:x), meanY = mean(:y))
+x1 = @linq select(x1, var = :b, :meanX, :meanY)
 
 ## chaining
 xlinq = @linq df  |>
     where(:a .> 2, :b .!= "c")  |>
     transform(y = 10 * :x)  |>
+    orderby(:x .- mean(:x)) |>
     by(:b, meanX = mean(:x), meanY = mean(:y))  |>
-    orderby(-:meanX)  |>
     select(var = :b, :meanX, :meanY)
 
 @test x == x1
@@ -36,8 +34,8 @@ xlinq = @linq df  |>
 xlinq2 = @linq df  |>
     where(:a .> 2, :b .!= "c")  |>
     transform(y = 10 * :x)  |>
+    orderby(:x .- mean(:x)) |>
     groupby(:b) |>
-    orderby(-mean(:x))  |>
     based_on(meanX = mean(:x), meanY = mean(:y))
 
 @test xlinq2[!, [:meanX, :meanY]] == xlinq[!, [:meanX, :meanY]]
@@ -45,8 +43,8 @@ xlinq2 = @linq df  |>
 xlinq3 = @linq df  |>
     where(:a .> 2, :b .!= "c")  |>
     transform(y = 10 * :x)  |>
+    orderby(:x .- mean(:x)) |>
     DataFrames.groupby(:b) |>
-    orderby(-mean(:x))  |>
     based_on(meanX = mean(:x), meanY = mean(:y))
 
 @test xlinq3[!, [:meanX, :meanY]] == xlinq[!, [:meanX, :meanY]]
@@ -68,8 +66,8 @@ xlinq3 = @linq df  |>
     xlinq3 = @linq df  |>
         where(cols(a_sym) .> 2, :b .!= "c")  |>
         transform(cols(y_str) = 10 * cols(x_sym))  |>
-        DataFrames.groupby(b_str) |>
-        orderby(-mean(cols(x_sym)))  |>
+        orderby(cols(x_sym) .- mean(cols(x_sym)))  |>
+        groupby(b_str) |>
         based_on(cols("meanX") = mean(:x), meanY = mean(:y))
 
     @test isequal(xlinq3, DataFrame(b = "d", meanX = 40.0, meanY = 400.0))

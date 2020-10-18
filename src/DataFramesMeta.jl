@@ -123,10 +123,10 @@ function fun_to_vec(kw::Expr; nolhs = false)
             end
          else
             if kw.args[1] isa Symbol
-                # cols(n) = f(:x) becomes [:x] => _f => n
+                # y = f(:x) becomes [:x] => _f => :y
                 output = QuoteNode(kw.args[1])
             elseif onearg(kw.args[1], :cols)
-                # y = f(:x) becomes [:x] => _f => :y
+                # cols(n) = f(:x) becomes [:x] => _f => n
                 output = kw.args[1].args[2]
             end
             t = quote
@@ -141,7 +141,7 @@ function fun_to_vec(kw::Expr; nolhs = false)
     end
 end
 
-fun_to_vec(kw::QuoteNode) = kw
+fun_to_vec(kw::QuoteNode; nolhs = false) = kw
 
 function make_source_concrete(x::AbstractVector)
     if isempty(x) || isconcretetype(eltype(x))
@@ -397,37 +397,35 @@ end
 ##
 ##############################################################################
 
-# needed on Julia 1.0 till #1489 in DataFrames is merged
-orderby(d::DataFrame, arg::DataFrame) = d[sortperm(arg), :]
-
-function orderby(d::AbstractDataFrame, args...)
-    D = typeof(d)(args...)
-    d[sortperm(D), :]
+function orderby_helper(x, args...)
+    t = (fun_to_vec(arg; nolhs = true) for arg in args)
+    quote
+        $DataFramesMeta.orderby($x, $(t...))
+    end
 end
 
-orderby(d::AbstractDataFrame, f::Function) = d[sortperm(f(d)), :]
-orderby(g::GroupedDataFrame, f::Function) = g[sortperm([f(x) for x in g])]
+function orderby(x::AbstractDataFrame, @nospecialize(args...))
+    t = DataFrames.select(x, args...; copycols = false)
+    x[sortperm(t), :]
+end
 
-orderbyconstructor(d::AbstractDataFrame) = (x...) -> DataFrame(Any[x...], Symbol.(1:length(x)))
-orderbyconstructor(d) = x -> x
-
-function orderby_helper(d, args...)
-    _D = gensym()
-    quote
-        let $_D = $d
-            $orderby($_D, $(with_anonymous(:($orderbyconstructor($_D)($(args...))))))
-        end
-    end
+function orderby(x::GroupedDataFrame, @nospecialize(args...))
+    throw(ArgumentError("@orderby with a GroupedDataFrame is reserved"))
 end
 
 """
     @orderby(d, i...)
 
-Sort by criteria. Normally used to sort groups in GroupedDataFrames.
+Sort rows by values in one of several columns or a transformation of columns.
+Always returns a fresh `DataFrame`. Does not accept a `GroupedDataFrame`.
+
+When given a `DataFrame`, `@orderby` applies the transformation
+given by its arguments (but does not create new columns) and sorts
+the given `DataFrame` on the result, returning a new `DataFrame`.
 
 ### Arguments
 
-* `d` : an AbstractDataFrame or GroupedDataFrame
+* `d` : an AbstractDataFrame
 * `i...` : expression for sorting
 
 ### Examples
@@ -435,38 +433,42 @@ Sort by criteria. Normally used to sort groups in GroupedDataFrames.
 ```jldoctest
 julia> using DataFrames, DataFramesMeta, Statistics
 
-julia> d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
-                                    2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
+julia> d = DataFrame(x = [3, 3, 3, 2, 1, 1, 1, 2, 1, 1], n = 1:10);
 
-julia> g = groupby(d, :x);
+julia> @orderby(d, -1 .* :n)
+10×2 DataFrame
+│ Row │ x     │ n     │
+│     │ Int64 │ Int64 │
+├─────┼───────┼───────┤
+│ 1   │ 1     │ 10    │
+│ 2   │ 1     │ 9     │
+│ 3   │ 2     │ 8     │
+│ 4   │ 1     │ 7     │
+│ 5   │ 1     │ 6     │
+│ 6   │ 1     │ 5     │
+│ 7   │ 2     │ 4     │
+│ 8   │ 3     │ 3     │
+│ 9   │ 3     │ 2     │
+│ 10  │ 3     │ 1     │
 
-julia> @orderby(g, mean(:n))
-GroupedDataFrame  3 groups with keys: Symbol[:x]
-First Group:
-5×2 SubDataFrame{Array{Int64,1}}
-│ Row │ n  │ x │
-├─────┼────┼───┤
-│ 1   │ 1  │ 3 │
-│ 2   │ 2  │ 3 │
-│ 3   │ 3  │ 3 │
-│ 4   │ 4  │ 3 │
-│ 5   │ 17 │ 3 │
-⋮
-Last Group:
-6×2 SubDataFrame{Array{Int64,1}}
-│ Row │ n  │ x │
-├─────┼────┼───┤
-│ 1   │ 8  │ 2 │
-│ 2   │ 11 │ 2 │
-│ 3   │ 14 │ 2 │
-│ 4   │ 15 │ 2 │
-│ 5   │ 16 │ 2 │
-│ 6   │ 20 │ 2 │
+julia> @orderby(d, :x, :n .- mean(:n))
+10×2 DataFrame
+│ Row │ x     │ n     │
+│     │ Int64 │ Int64 │
+├─────┼───────┼───────┤
+│ 1   │ 1     │ 5     │
+│ 2   │ 1     │ 6     │
+│ 3   │ 1     │ 7     │
+│ 4   │ 1     │ 9     │
+│ 5   │ 1     │ 10    │
+│ 6   │ 2     │ 4     │
+│ 7   │ 2     │ 8     │
+│ 8   │ 3     │ 1     │
+│ 9   │ 3     │ 2     │
+│ 10  │ 3     │ 3     │
 ```
-
 """
 macro orderby(d, args...)
-    # I don't esc just the input because I want _DF to be visible to the user
     esc(orderby_helper(d, args...))
 end
 

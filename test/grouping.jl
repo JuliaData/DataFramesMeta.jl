@@ -14,10 +14,7 @@ g = groupby(d, :x, sort=true)
 @test  DataFrame(@where(g, length(:x) > 5)) == DataFrame(DataFramesMeta.where(g, x -> length(x.x) > 5))
 @test  DataFrame(@where(g, length(:x) > 5))[!, :n][1:3] == [5, 6, 7]
 
-@test  DataFrame(DataFramesMeta.orderby(g, x -> mean(x.n))) == DataFrame(@orderby(g, mean(:n)))
-
 @test @based_on(g, nsum = sum(:n)).nsum == [99, 84, 27]
-
 
 @testset "@based_on" begin
     df = DataFrame(
