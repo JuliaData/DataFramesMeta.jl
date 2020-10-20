@@ -266,13 +266,21 @@ end
 
     x = [2, 1, 0, 0]
 
-    @test  @where(df, :A .> 1)          == df[(df.A .> 1) .=== true,:]
-    @test  @where(df, :B .> 1)          == df[df.B .> 1,:]
-    @test  @where(df, :A .> x)          == df[(df.A .> x) .=== true,:]
-    @test  isequal(@where(df, :B .> x), df[df.B .> x,:])
-    @test  @where(df, :A .> :B, :B .> -Inf)         == df[(df.A .> df.B) .=== true,:]
+    @test  @where(df, :A .> 1) == df[(df.A .> 1) .=== true,:]
+    @test  @where(df, :B .> 1) == df[df.B .> 1,:]
+    @test  @where(df, :A .> x) == df[(df.A .> x) .=== true,:]
+    @test  @where(df, :B .> x) ≅ df[df.B .> x,:]
+    @test  @where(df, :A .> :B, :B .> mean(:B)) == DataFrame(A = 3, B = 2)
     @test  @where(df, :A .> 1, :B .> 1) == df[map(&, df.A .> 1, df.B .> 1),:]
     @test  @where(df, :A .> 1, :A .< 4, :B .> 1) == df[map(&, df.A .> 1, df.A .< 4, df.B .> 1),:]
+
+    @test  @where(df, cols(:A) .> 1) == df[(df.A .> 1) .=== true,:]
+    @test  @where(df, cols(:B) .> 1) == df[df.B .> 1,:]
+    @test  @where(df, cols(:A) .> x) == df[(df.A .> x) .=== true,:]
+    @test  @where(df, cols(:B) .> x) ≅ df[df.B .> x,:]
+    @test  @where(df, cols(:A) .> :B, cols(:B) .> mean(:B)) == DataFrame(A = 3, B = 2)
+    @test  @where(df, cols(:A) .> 1, :B .> 1) == df[map(&, df.A .> 1, df.B .> 1),:]
+    @test  @where(df, cols(:A) .> 1, :A .< 4, :B .> 1) == df[map(&, df.A .> 1, df.A .< 4, df.B .> 1),:]
 end
 
 @testset "orderby" begin

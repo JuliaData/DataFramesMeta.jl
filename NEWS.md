@@ -7,3 +7,6 @@
 * `@orderby(gd::GroupedDataFrame, args...)` is now reserved and will error.
 * Restrictions are imposed on the types of column references allowed when using `cols`. 
   Mixing integer column references with other types now errors. ([#183])
+* `@where` with a grouped data frame will now perform operations by group and filter
+  rows in the parent `DataFrame`. The operation no longer filters groups. Return a 
+  fresh `DataFrame`.
