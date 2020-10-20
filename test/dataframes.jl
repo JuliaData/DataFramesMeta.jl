@@ -266,21 +266,23 @@ end
 
     x = [2, 1, 0, 0]
 
-    @test  @where(df, :A .> 1) == df[(df.A .> 1) .=== true,:]
-    @test  @where(df, :B .> 1) == df[df.B .> 1,:]
-    @test  @where(df, :A .> x) == df[(df.A .> x) .=== true,:]
-    @test  @where(df, :B .> x) ≅ df[df.B .> x,:]
-    @test  @where(df, :A .> :B, :B .> mean(:B)) == DataFrame(A = 3, B = 2)
-    @test  @where(df, :A .> 1, :B .> 1) == df[map(&, df.A .> 1, df.B .> 1),:]
-    @test  @where(df, :A .> 1, :A .< 4, :B .> 1) == df[map(&, df.A .> 1, df.A .< 4, df.B .> 1),:]
+    @test @where(df, :A .> 1) == df[(df.A .> 1) .=== true,:]
+    @test @where(df, :B .> 1) == df[df.B .> 1,:]
+    @test @where(df, :A .> x) == df[(df.A .> x) .=== true,:]
+    @test @where(df, :B .> x) ≅ df[df.B .> x,:]
+    @test @where(df, :A .> :B, :B .> mean(:B)) == DataFrame(A = 3, B = 2)
+    @test @where(df, :A .> 1, :B .> 1) == df[map(&, df.A .> 1, df.B .> 1),:]
+    @test @where(df, :A .> 1, :A .< 4, :B .> 1) == df[map(&, df.A .> 1, df.A .< 4, df.B .> 1),:]
 
-    @test  @where(df, cols(:A) .> 1) == df[(df.A .> 1) .=== true,:]
-    @test  @where(df, cols(:B) .> 1) == df[df.B .> 1,:]
-    @test  @where(df, cols(:A) .> x) == df[(df.A .> x) .=== true,:]
-    @test  @where(df, cols(:B) .> x) ≅ df[df.B .> x,:]
-    @test  @where(df, cols(:A) .> :B, cols(:B) .> mean(:B)) == DataFrame(A = 3, B = 2)
-    @test  @where(df, cols(:A) .> 1, :B .> 1) == df[map(&, df.A .> 1, df.B .> 1),:]
-    @test  @where(df, cols(:A) .> 1, :A .< 4, :B .> 1) == df[map(&, df.A .> 1, df.A .< 4, df.B .> 1),:]
+    @test @where(df, cols(:A) .> 1) == df[(df.A .> 1) .=== true,:]
+    @test @where(df, cols(:B) .> 1) == df[df.B .> 1,:]
+    @test @where(df, cols(:A) .> x) == df[(df.A .> x) .=== true,:]
+    @test @where(df, cols(:B) .> x) ≅ df[df.B .> x,:]
+    @test @where(df, cols(:A) .> :B, cols(:B) .> mean(:B)) == DataFrame(A = 3, B = 2)
+    @test @where(df, cols(:A) .> 1, :B .> 1) == df[map(&, df.A .> 1, df.B .> 1),:]
+    @test @where(df, cols(:A) .> 1, :A .< 4, :B .> 1) == df[map(&, df.A .> 1, df.A .< 4, df.B .> 1),:]
+
+    @test @where(df, :A .> 1, :A .<= 2) == DataFrame(A = 2, B = 1)
 end
 
 @testset "orderby" begin
@@ -292,11 +294,11 @@ end
         c = [:g, :quote, :body, :transform, missing]
         )
 
-    gd = groupby(df, :g)
-
     @test @orderby(df, :c).i == [3, 1, 2, 4, 5]
     @test @orderby(df, -:g).i == [4, 5, 1, 2, 3]
     @test @orderby(df, :t).i == [1, 2, 3, 4, 5]
+
+    @test @orderby(df, identity(:g), :g.^2).i == [1, 2, 3, 4, 5]
 end
 
 

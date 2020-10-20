@@ -414,7 +414,7 @@ end
 ##############################################################################
 
 function orderby_helper(x, args...)
-    t = (fun_to_vec(arg; nolhs = true) for arg in args)
+    t = (fun_to_vec(arg; nolhs = true, gensym_names = true) for arg in args)
     quote
         $DataFramesMeta.orderby($x, $(t...))
     end
