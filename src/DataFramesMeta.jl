@@ -346,6 +346,17 @@ Select row subsets in AbstractDataFrames and GroupedDataFrames.
 
 Multiple `i` expressions are "and-ed" together.
 
+If given a `GroupedDataFrame`, `@where` applies transformations by
+group, but does not store the result. `@where` returns a fresh
+`DataFrame` where the rows generated from the transformations are all
+`true`.
+
+!!! note
+    `@where` treats `missing` values as `false` when filtering rows.
+    Unlike `DataFrames.filter` and other boolean operations with
+    `missing`, `@where` will *not* error on missing values, and
+    will only keep `true` values.
+
 ### Examples
 
 ```jldoctest
@@ -400,6 +411,14 @@ julia> @where(g, :n .== first(:n))
 │ 2   │ 5     │ 1     │
 │ 3   │ 8     │ 2     │
 
+julia> d = DataFrame(a = [1, 2, missing], b = ["x", "y", missing]);
+
+julia> @where(d, :a .== 1)
+1×2 DataFrame
+│ Row │ a      │ b       │
+│     │ Int64? │ String? │
+├─────┼────────┼─────────┤
+│ 1   │ 1      │ x       │
 ```
 """
 macro where(x, args...)
