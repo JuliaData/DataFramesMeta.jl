@@ -123,6 +123,7 @@ function fun_to_vec(kw::Expr; nolhs = false, gensym_names = false)
                     ($(Expr(:tuple, values(membernames)...)) -> $body)
                 end
             else
+                # [:x] => _f => Symbol("###343")
                 t = quote
                     DataFramesMeta.make_source_concrete($(source)) =>
                     ($(Expr(:tuple, values(membernames)...)) -> $body) =>
@@ -149,7 +150,7 @@ function fun_to_vec(kw::Expr; nolhs = false, gensym_names = false)
     end
 end
 
-fun_to_vec(kw::QuoteNode; nolhs = false) = kw
+fun_to_vec(kw::QuoteNode; nolhs = false, gensym_names = false) = kw
 
 function make_source_concrete(x::AbstractVector)
     if isempty(x) || isconcretetype(eltype(x))
@@ -311,7 +312,6 @@ function where_helper(x, args...)
 end
 
 and(x, y) = x .& y
-and(x) = x
 
 function df_to_bool(res)
     if any(t -> !(t isa Union{Vector{<:Union{Missing, Bool}}, BitArray{1}}), eachcol(res))
