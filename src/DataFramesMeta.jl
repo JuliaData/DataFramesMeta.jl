@@ -100,7 +100,7 @@ end
 # `@based_on(gd, fun(:x, :y))` where `fun` returns a `table` object.
 # We don't create the "new name" pair because new names are given
 # by the table.
-function fun_to_vec(kw::Expr; nolhs = false, gensym_names = false)
+function fun_to_vec(kw::Expr; nolhs::Bool = false, gensym_names::Bool = false)
     # nolhs: f(:x) where f returns a Table
     # !nolhs, y = g(:x)
     if kw.head === :(=) || kw.head === :kw || nolhs
@@ -116,18 +116,18 @@ function fun_to_vec(kw::Expr; nolhs = false, gensym_names = false)
         source = Expr(:vect, keys(membernames)...)
 
         if nolhs
-            if gensym_names == false
-                # [:x] => _f
-                t = quote
-                    DataFramesMeta.make_source_concrete($(source)) =>
-                    ($(Expr(:tuple, values(membernames)...)) -> $body)
-                end
-            else
+            if gensym_names
                 # [:x] => _f => Symbol("###343")
                 t = quote
                     DataFramesMeta.make_source_concrete($(source)) =>
                     ($(Expr(:tuple, values(membernames)...)) -> $body) =>
                     $(QuoteNode(gensym()))
+                end
+            else
+                # [:x] => _f
+                t = quote
+                    DataFramesMeta.make_source_concrete($(source)) =>
+                    ($(Expr(:tuple, values(membernames)...)) -> $body)
                 end
             end
          else
@@ -150,7 +150,7 @@ function fun_to_vec(kw::Expr; nolhs = false, gensym_names = false)
     end
 end
 
-fun_to_vec(kw::QuoteNode; nolhs = false, gensym_names = false) = kw
+fun_to_vec(kw::QuoteNode; nolhs::Bool = false, gensym_names::Bool = false) = kw
 
 function make_source_concrete(x::AbstractVector)
     if isempty(x) || isconcretetype(eltype(x))
@@ -195,11 +195,6 @@ function with_helper(d, body)
         end
         $funname((DataFramesMeta.getsinglecolumn($_d, s) for s in  DataFramesMeta.make_source_concrete($source))...)
     end
-end
-
-function with_anonymous(body)
-    d = gensym()
-    :($d -> $(with_helper(d, body)))
 end
 
 """
@@ -314,9 +309,9 @@ end
 and(x, y) = x .& y
 
 function df_to_bool(res)
-    if any(t -> !(t isa Union{Vector{<:Union{Missing, Bool}}, BitArray{1}}), eachcol(res))
+    if any(t -> !(t isa Union{AbstractVector{<:Union{Missing, Bool}}, BitArray{1}}), eachcol(res))
         throw(ArgumentError("All arguments in @where must return a " *
-                            "Vector{<:Union{Missing, Bool} or a BitArray{1}"))
+                            "AbstractVector{<:Union{Missing, Bool} or a BitArray{1}"))
     end
 
     return reduce(and, eachcol(res)) .=== true
@@ -332,6 +327,12 @@ function where(gd::GroupedDataFrame, @nospecialize(args...))
     res = DataFrames.select(gd, args...; copycols = false, keepkeys = false)
     tokeep = df_to_bool(res)
     parent(gd)[tokeep, :]
+end
+
+function where(df::SubDataFrame, @nospecialize(args...))
+    res = DataFrames.select(df, args...)
+    tokeep = df_to_bool(res)
+    df[tokeep, :]
 end
 
 """
@@ -446,6 +447,11 @@ end
 
 function orderby(x::GroupedDataFrame, @nospecialize(args...))
     throw(ArgumentError("@orderby with a GroupedDataFrame is reserved"))
+end
+
+function orderby(x::SubDataFrame, @nospecialize(args...))
+    t = DataFrames.select(x, args...)
+    x[sortperm(t), :]
 end
 
 """
