@@ -262,17 +262,15 @@ end
 end
 
 @testset "where" begin
-    df = DataFrame(A = 1:3, B = [2, 1, 2])
+    df = DataFrame(A = [1, 2, 3, missing], B = [2, 1, 2, 1])
 
-    x = [2, 1, 0]
+    x = [2, 1, 0, 0]
 
-    @test DataFramesMeta.where(df, 1) == df[1, :]
-
-    @test  @where(df, :A .> 1)          == df[df.A .> 1,:]
+    @test  @where(df, :A .> 1)          == df[(df.A .> 1) .=== true,:]
     @test  @where(df, :B .> 1)          == df[df.B .> 1,:]
-    @test  @where(df, :A .> x)          == df[df.A .> x,:]
-    @test  @where(df, :B .> x)          == df[df.B .> x,:]
-    @test  @where(df, :A .> :B)         == df[df.A .> df.B,:]
+    @test  @where(df, :A .> x)          == df[(df.A .> x) .=== true,:]
+    @test  isequal(@where(df, :B .> x), df[df.B .> x,:])
+    @test  @where(df, :A .> :B, :B .> -Inf)         == df[(df.A .> df.B) .=== true,:]
     @test  @where(df, :A .> 1, :B .> 1) == df[map(&, df.A .> 1, df.B .> 1),:]
     @test  @where(df, :A .> 1, :A .< 4, :B .> 1) == df[map(&, df.A .> 1, df.A .< 4, df.B .> 1),:]
 end

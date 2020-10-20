@@ -10,10 +10,6 @@ const ≅ = isequal
 d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 2, 2, 3, 1, 1, 2])
 g = groupby(d, :x, sort=true)
 
-@test  @where(d, :x .== 3) == DataFramesMeta.where(d, x -> x.x .== 3)
-@test  DataFrame(@where(g, length(:x) > 5)) == DataFrame(DataFramesMeta.where(g, x -> length(x.x) > 5))
-@test  DataFrame(@where(g, length(:x) > 5))[!, :n][1:3] == [5, 6, 7]
-
 @test @based_on(g, nsum = sum(:n)).nsum == [99, 84, 27]
 
 @testset "@based_on" begin
@@ -291,4 +287,19 @@ end
 	@test @select(g, :a, t = :c).a ≅ d.a
 end
 
+@testset "@where with a grouped data frame" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5,
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing]
+    )
+
+    gd = groupby(df, :g)
+
+    @test @where(gd, :i .== first(:i)).t == ["a", "c"]
+    @test @where(gd, cols(:i) .> mean(cols(:i)), :t .== "c").t == ["c"]
+    @test @where(gd, :c == :g).i == Int[]
+end
 end # module

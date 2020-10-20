@@ -100,7 +100,7 @@ end
 # `@based_on(gd, fun(:x, :y))` where `fun` returns a `table` object.
 # We don't create the "new name" pair because new names are given
 # by the table.
-function fun_to_vec(kw::Expr; nolhs = false)
+function fun_to_vec(kw::Expr; nolhs = false, gensym_names = false)
     # nolhs: f(:x) where f returns a Table
     # !nolhs, y = g(:x)
     if kw.head === :(=) || kw.head === :kw || nolhs
@@ -116,10 +116,18 @@ function fun_to_vec(kw::Expr; nolhs = false)
         source = Expr(:vect, keys(membernames)...)
 
         if nolhs
-            # [:x] => _f
-            t = quote
-                DataFramesMeta.make_source_concrete($(source)) =>
-                ($(Expr(:tuple, values(membernames)...)) -> $body)
+            if gensym_names == false
+                # [:x] => _f
+                t = quote
+                    DataFramesMeta.make_source_concrete($(source)) =>
+                    ($(Expr(:tuple, values(membernames)...)) -> $body)
+                end
+            else
+                t = quote
+                    DataFramesMeta.make_source_concrete($(source)) =>
+                    ($(Expr(:tuple, values(membernames)...)) -> $body) =>
+                    $(QuoteNode(gensym()))
+                end
             end
          else
             if kw.args[1] isa Symbol
@@ -296,18 +304,34 @@ end
 ##############################################################################
 
 function where_helper(x, args...)
-    t = (fun_to_vec(arg; nolhs = true) for arg in args)
+    t = (fun_to_vec(arg; nolhs = true, gensym_names = true) for arg in args)
     quote
         $where($x, $(t...))
     end
 end
 
 and(x, y) = x .& y
+and(x) = x
 
-function where(x, args...)
-    res = DataFrames.select(x, args...; copycols = false, keepkeys = false)
-    tokeep = replace!(reduce(and, eachcol(res)), missing => false)
-    parent(x)[tokeep, :]
+function df_to_bool(res)
+    if any(t -> !(t isa Union{Vector{<:Union{Missing, Bool}}, BitArray{1}}), eachcol(res))
+        throw(ArgumentError("All arguments in @where must return a " *
+                            "Vector{<:Union{Missing, Bool} or a BitArray{1}"))
+    end
+
+    return reduce(and, eachcol(res)) .=== true
+end
+
+function where(df::AbstractDataFrame, @nospecialize(args...))
+    res = DataFrames.select(df, args...; copycols = false)
+    tokeep = df_to_bool(res)
+    df[tokeep, :]
+end
+
+function where(gd::GroupedDataFrame, @nospecialize(args...))
+    res = DataFrames.select(gd, args...; copycols = false, keepkeys = false)
+    tokeep = df_to_bool(res)
+    parent(gd)[tokeep, :]
 end
 
 """
