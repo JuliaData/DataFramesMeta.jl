@@ -308,10 +308,10 @@ end
 
 and(x, y) = x .& y
 
-function df_to_bool(res)
-    if any(t -> !(t isa Union{AbstractVector{<:Union{Missing, Bool}}, BitArray{1}}), eachcol(res))
-        throw(ArgumentError("All arguments in @where must return a " *
-                            "AbstractVector{<:Union{Missing, Bool} or a BitArray{1}"))
+function df_to_bool(res::AbstractDataFrame)
+    if any(t -> !(t isa AbstractVector{<:Union{Missing, Bool}}), eachcol(res))
+        throw(ArgumentError("All arguments in @where must return an " *
+                            "AbstractVector{<:Union{Missing, Bool}}"))
     end
 
     return reduce(and, eachcol(res)) .=== true
@@ -338,7 +338,7 @@ end
 """
     @where(d, i...)
 
-Select row subsets in AbstractDataFrames and GroupedDataFrames.
+Select row subsets in `AbstractDataFrame`s and `GroupedDataFrame`s.
 
 ### Arguments
 
@@ -348,9 +348,8 @@ Select row subsets in AbstractDataFrames and GroupedDataFrames.
 Multiple `i` expressions are "and-ed" together.
 
 If given a `GroupedDataFrame`, `@where` applies transformations by
-group, but does not store the result. `@where` returns a fresh
-`DataFrame` where the rows generated from the transformations are all
-`true`.
+group, and returns a fresh `DataFrame` containing the rows
+for which the generated values are all `true`.
 
 !!! note
     `@where` treats `missing` values as `false` when filtering rows.
