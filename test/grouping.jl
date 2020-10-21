@@ -298,8 +298,8 @@ end
 
     gd = groupby(df, :g)
 
-    @test @where(gd, :i .== first(:i)).t == ["a", "c"]
-    @test @where(gd, cols(:i) .> mean(cols(:i)), :t .== "c").t == ["c"]
-    @test @where(gd, :c == :g).i == Int[]
+    @test @where(gd, :i .== first(:i)) ≅ df[[1, 4], :]
+    @test @where(gd, cols(:i) .> mean(cols(:i)), :t .== "c") ≅ df[[3], :]
+    @test @where(gd, :c .== :g) ≅ df[[], :]
 end
 end # module
