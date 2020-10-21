@@ -306,15 +306,13 @@ function where_helper(x, args...)
     end
 end
 
-and(x, y) = x .& y
-
 function df_to_bool(res::AbstractDataFrame)
     if any(t -> !(t isa AbstractVector{<:Union{Missing, Bool}}), eachcol(res))
         throw(ArgumentError("All arguments in @where must return an " *
                             "AbstractVector{<:Union{Missing, Bool}}"))
     end
 
-    return reduce(and, eachcol(res)) .=== true
+    return reduce((x, y) -> x .& y, eachcol(res)) .=== true
 end
 
 function where(df::AbstractDataFrame, @nospecialize(args...))
