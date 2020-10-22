@@ -105,7 +105,8 @@ function fun_to_vec(kw::Expr; nolhs::Bool = false, gensym_names::Bool = false)
     # !nolhs, y = g(:x)
     if kw.head === :(=) || kw.head === :kw || nolhs
         rhs = kw.args[2]
-        if rhs.head == :call && all(s -> s isa QuoteNode, rhs.args[2:end])
+        # rhs of form f(:x, :y)
+        if VERSION <= v"1.6.0-DEV" && rhs.head == :call && all(s -> s isa QuoteNode, rhs.args[2:end])
             source = Expr(:vect, rhs.args[2:end]...)
             fun = rhs.args[1]
         else
