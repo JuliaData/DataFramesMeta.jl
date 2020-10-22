@@ -100,7 +100,7 @@ end
 # `@based_on(gd, fun(:x, :y))` where `fun` returns a `table` object.
 # We don't create the "new name" pair because new names are given
 # by the table.
-function fun_to_vec(kw::Expr; nolhs = false)
+function fun_to_vec(kw::Expr; nolhs::Bool = false, gensym_names::Bool = false)
     # nolhs: f(:x) where f returns a Table
     # !nolhs, y = g(:x)
     if kw.head === :(=) || kw.head === :kw || nolhs
@@ -116,10 +116,19 @@ function fun_to_vec(kw::Expr; nolhs = false)
         source = Expr(:vect, keys(membernames)...)
 
         if nolhs
-            # [:x] => _f
-            t = quote
-                DataFramesMeta.make_source_concrete($(source)) =>
-                ($(Expr(:tuple, values(membernames)...)) -> $body)
+            if gensym_names
+                # [:x] => _f => Symbol("###343")
+                t = quote
+                    DataFramesMeta.make_source_concrete($(source)) =>
+                    ($(Expr(:tuple, values(membernames)...)) -> $body) =>
+                    $(QuoteNode(gensym()))
+                end
+            else
+                # [:x] => _f
+                t = quote
+                    DataFramesMeta.make_source_concrete($(source)) =>
+                    ($(Expr(:tuple, values(membernames)...)) -> $body)
+                end
             end
          else
             if kw.args[1] isa Symbol
@@ -141,7 +150,7 @@ function fun_to_vec(kw::Expr; nolhs = false)
     end
 end
 
-fun_to_vec(kw::QuoteNode; nolhs = false) = kw
+fun_to_vec(kw::QuoteNode; nolhs::Bool = false, gensym_names::Bool = false) = kw
 
 function make_source_concrete(x::AbstractVector)
     if isempty(x) || isconcretetype(eltype(x))
@@ -186,11 +195,6 @@ function with_helper(d, body)
         end
         $funname((DataFramesMeta.getsinglecolumn($_d, s) for s in  DataFramesMeta.make_source_concrete($source))...)
     end
-end
-
-function with_anonymous(body)
-    d = gensym()
-    :($d -> $(with_helper(d, body)))
 end
 
 """
@@ -295,20 +299,44 @@ end
 ##
 ##############################################################################
 
-where(d::AbstractDataFrame, arg) = d[arg, :]
-where(d::AbstractDataFrame, f::Function) = d[f(d), :]
-where(g::GroupedDataFrame, f::Function) = g[Bool[f(x) for x in g]]
+function where_helper(x, args...)
+    t = (fun_to_vec(arg; nolhs = true, gensym_names = true) for arg in args)
+    quote
+        $where($x, $(t...))
+    end
+end
 
-and(x, y) = :($x .& $y)
+function df_to_bool(res::AbstractDataFrame)
+    if any(t -> !(t isa AbstractVector{<:Union{Missing, Bool}}), eachcol(res))
+        throw(ArgumentError("All arguments in @where must return an " *
+                            "AbstractVector{<:Union{Missing, Bool}}"))
+    end
 
-function where_helper(d, args...)
-    :($where($d, $(with_anonymous(reduce(and, args)))))
+    return reduce((x, y) -> x .& y, eachcol(res)) .=== true
+end
+
+function where(df::AbstractDataFrame, @nospecialize(args...))
+    res = DataFrames.select(df, args...; copycols = false)
+    tokeep = df_to_bool(res)
+    df[tokeep, :]
+end
+
+function where(gd::GroupedDataFrame, @nospecialize(args...))
+    res = DataFrames.select(gd, args...; copycols = false, keepkeys = false)
+    tokeep = df_to_bool(res)
+    parent(gd)[tokeep, :]
+end
+
+function where(df::SubDataFrame, @nospecialize(args...))
+    res = DataFrames.select(df, args...)
+    tokeep = df_to_bool(res)
+    df[tokeep, :]
 end
 
 """
     @where(d, i...)
 
-Select row subsets in AbstractDataFrames or groups in GroupedDataFrames.
+Select row subsets in `AbstractDataFrame`s and `GroupedDataFrame`s.
 
 ### Arguments
 
@@ -316,6 +344,16 @@ Select row subsets in AbstractDataFrames or groups in GroupedDataFrames.
 * `i...` : expression for selecting rows
 
 Multiple `i` expressions are "and-ed" together.
+
+If given a `GroupedDataFrame`, `@where` applies transformations by
+group, and returns a fresh `DataFrame` containing the rows
+for which the generated values are all `true`.
+
+!!! note
+    `@where` treats `missing` values as `false` when filtering rows.
+    Unlike `DataFrames.filter` and other boolean operations with
+    `missing`, `@where` will *not* error on missing values, and
+    will only keep `true` values.
 
 ### Examples
 
@@ -346,48 +384,43 @@ julia> @where(df, :x .> x, :y .== 3)
 julia> d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
                                     2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
 
-julia> g = groupby(d, :x);
+julia> g = groupby(d, :x)
 
-julia> @where(d, :x .== 3)
-5×2 DataFrame
-│ Row │ n  │ x │
-├─────┼────┼───┤
-│ 1   │ 1  │ 3 │
-│ 2   │ 2  │ 3 │
-│ 3   │ 3  │ 3 │
-│ 4   │ 4  │ 3 │
-│ 5   │ 17 │ 3 │
+julia> @where(g, :n .> mean(:n))
+8×2 DataFrame
+│ Row │ n     │ x     │
+│     │ Int64 │ Int64 │
+├─────┼───────┼───────┤
+│ 1   │ 12    │ 1     │
+│ 2   │ 13    │ 1     │
+│ 3   │ 15    │ 2     │
+│ 4   │ 16    │ 2     │
+│ 5   │ 17    │ 3     │
+│ 6   │ 18    │ 1     │
+│ 7   │ 19    │ 1     │
+│ 8   │ 20    │ 2     │
 
-julia> @where(g, length(:x) > 5)   # pick out some groups
-GroupedDataFrame  2 groups with keys: Symbol[:x]
-First Group:
-9×2 SubDataFrame{Array{Int64,1}}
-│ Row │ n  │ x │
-├─────┼────┼───┤
-│ 1   │ 5  │ 1 │
-│ 2   │ 6  │ 1 │
-│ 3   │ 7  │ 1 │
-│ 4   │ 9  │ 1 │
-│ 5   │ 10 │ 1 │
-│ 6   │ 12 │ 1 │
-│ 7   │ 13 │ 1 │
-│ 8   │ 18 │ 1 │
-│ 9   │ 19 │ 1 │
-⋮
-Last Group:
-6×2 SubDataFrame{Array{Int64,1}}
-│ Row │ n  │ x │
-├─────┼────┼───┤
-│ 1   │ 8  │ 2 │
-│ 2   │ 11 │ 2 │
-│ 3   │ 14 │ 2 │
-│ 4   │ 15 │ 2 │
-│ 5   │ 16 │ 2 │
-│ 6   │ 20 │ 2 │
+julia> @where(g, :n .== first(:n))
+3×2 DataFrame
+│ Row │ n     │ x     │
+│     │ Int64 │ Int64 │
+├─────┼───────┼───────┤
+│ 1   │ 1     │ 3     │
+│ 2   │ 5     │ 1     │
+│ 3   │ 8     │ 2     │
+
+julia> d = DataFrame(a = [1, 2, missing], b = ["x", "y", missing]);
+
+julia> @where(d, :a .== 1)
+1×2 DataFrame
+│ Row │ a      │ b       │
+│     │ Int64? │ String? │
+├─────┼────────┼─────────┤
+│ 1   │ 1      │ x       │
 ```
 """
-macro where(d, args...)
-    esc(where_helper(d, args...))
+macro where(x, args...)
+    esc(where_helper(x, args...))
 end
 
 
@@ -398,7 +431,7 @@ end
 ##############################################################################
 
 function orderby_helper(x, args...)
-    t = (fun_to_vec(arg; nolhs = true) for arg in args)
+    t = (fun_to_vec(arg; nolhs = true, gensym_names = true) for arg in args)
     quote
         $DataFramesMeta.orderby($x, $(t...))
     end
@@ -411,6 +444,11 @@ end
 
 function orderby(x::GroupedDataFrame, @nospecialize(args...))
     throw(ArgumentError("@orderby with a GroupedDataFrame is reserved"))
+end
+
+function orderby(x::SubDataFrame, @nospecialize(args...))
+    t = DataFrames.select(x, args...)
+    x[sortperm(t), :]
 end
 
 """

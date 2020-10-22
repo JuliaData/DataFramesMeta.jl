@@ -262,19 +262,33 @@ end
 end
 
 @testset "where" begin
-    df = DataFrame(A = 1:3, B = [2, 1, 2])
+    df = DataFrame(A = [1, 2, 3, missing], B = [2, 1, 2, 1])
 
-    x = [2, 1, 0]
+    x = [2, 1, 0, 0]
 
-    @test DataFramesMeta.where(df, 1) == df[1, :]
+    @test @where(df, :A .> 1) == df[(df.A .> 1) .=== true,:]
+    @test @where(df, :B .> 1) == df[df.B .> 1,:]
+    @test @where(df, :A .> x) == df[(df.A .> x) .=== true,:]
+    @test @where(df, :B .> x) ≅ df[df.B .> x,:]
+    @test @where(df, :A .> :B, :B .> mean(:B)) == DataFrame(A = 3, B = 2)
+    @test @where(df, :A .> 1, :B .> 1) == df[map(&, df.A .> 1, df.B .> 1),:]
+    @test @where(df, :A .> 1, :A .< 4, :B .> 1) == df[map(&, df.A .> 1, df.A .< 4, df.B .> 1),:]
 
-    @test  @where(df, :A .> 1)          == df[df.A .> 1,:]
-    @test  @where(df, :B .> 1)          == df[df.B .> 1,:]
-    @test  @where(df, :A .> x)          == df[df.A .> x,:]
-    @test  @where(df, :B .> x)          == df[df.B .> x,:]
-    @test  @where(df, :A .> :B)         == df[df.A .> df.B,:]
-    @test  @where(df, :A .> 1, :B .> 1) == df[map(&, df.A .> 1, df.B .> 1),:]
-    @test  @where(df, :A .> 1, :A .< 4, :B .> 1) == df[map(&, df.A .> 1, df.A .< 4, df.B .> 1),:]
+    @test @where(df, :A .> 1).A isa Vector{Union{Missing, Int}}
+
+    @test @where(df, cols(:A) .> 1) == df[(df.A .> 1) .=== true,:]
+    @test @where(df, cols(:B) .> 1) == df[df.B .> 1,:]
+    @test @where(df, cols(:A) .> x) == df[(df.A .> x) .=== true,:]
+    @test @where(df, cols(:B) .> x) ≅ df[df.B .> x,:]
+    @test @where(df, cols(:A) .> :B, cols(:B) .> mean(:B)) == DataFrame(A = 3, B = 2)
+    @test @where(df, cols(:A) .> 1, :B .> 1) == df[map(&, df.A .> 1, df.B .> 1),:]
+    @test @where(df, cols(:A) .> 1, :A .< 4, :B .> 1) == df[map(&, df.A .> 1, df.A .< 4, df.B .> 1),:]
+
+    @test @where(df, :A .> 1, :A .<= 2) == DataFrame(A = 2, B = 1)
+
+    subdf = @view df[df.B .== 2, :]
+
+    @test @where(subdf, :A .== 3) == DataFrame(A = 3, B = 2)
 end
 
 @testset "orderby" begin
@@ -286,11 +300,15 @@ end
         c = [:g, :quote, :body, :transform, missing]
         )
 
-    gd = groupby(df, :g)
+    @test @orderby(df, :c) ≅ df[[3, 1, 2, 4, 5], :]
+    @test @orderby(df, -:g) ≅ df[[4, 5, 1, 2, 3], :]
+    @test @orderby(df, :t) ≅ df[[1, 2, 3, 4, 5], :]
 
-    @test @orderby(df, :c).i == [3, 1, 2, 4, 5]
-    @test @orderby(df, -:g).i == [4, 5, 1, 2, 3]
-    @test @orderby(df, :t).i == [1, 2, 3, 4, 5]
+    @test @orderby(df, identity(:g), :g.^2) ≅ df[[1, 2, 3, 4, 5], :]
+
+    subdf = @view df[1:3, :]
+
+    @test @orderby(subdf, -:i) == df[[3, 2, 1], :]
 end
 
 
