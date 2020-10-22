@@ -104,44 +104,58 @@ function fun_to_vec(kw::Expr; nolhs::Bool = false, gensym_names::Bool = false)
     # nolhs: f(:x) where f returns a Table
     # !nolhs, y = g(:x)
     if kw.head === :(=) || kw.head === :kw || nolhs
-        membernames = Dict{Any, Symbol}()
-        if nolhs
-            # act on f(:x)
-            body = replace_syms!(kw, membernames)
+        rhs = kw.args[2]
+        if rhs.head == :call && all(s -> s isa QuoteNode, rhs.args[2:end])
+            source = Expr(:vect, rhs.args[2:end]...)
+            fun = rhs.args[1]
         else
-            # act on g(:x)
-            body = replace_syms!(kw.args[2], membernames)
-        end
+            membernames = Dict{Any, Symbol}()
+            if nolhs
+                # act on f(:x)
+                body = replace_syms!(kw, membernames)
+            else
+                # act on g(:x)
+                body = replace_syms!(kw.args[2], membernames)
+            end
 
-        source = Expr(:vect, keys(membernames)...)
+            source = Expr(:vect, keys(membernames)...)
+            inputargs = Expr(:tuple, values(membernames)...)
+            fun = quote
+                (@nospecialize args...) -> begin
+                    $inputargs = args
+                    $body
+                end
+            end
+        end
 
         if nolhs
             if gensym_names
                 # [:x] => _f => Symbol("###343")
+                dest = QuoteNode(gensym())
                 t = quote
                     DataFramesMeta.make_source_concrete($(source)) =>
-                    ($(Expr(:tuple, values(membernames)...)) -> $body) =>
-                    $(QuoteNode(gensym()))
+                    $fun =>
+                    $dest
                 end
             else
                 # [:x] => _f
                 t = quote
                     DataFramesMeta.make_source_concrete($(source)) =>
-                    ($(Expr(:tuple, values(membernames)...)) -> $body)
+                    $fun
                 end
             end
          else
             if kw.args[1] isa Symbol
                 # y = f(:x) becomes [:x] => _f => :y
-                output = QuoteNode(kw.args[1])
+                dest = QuoteNode(kw.args[1])
             elseif onearg(kw.args[1], :cols)
                 # cols(n) = f(:x) becomes [:x] => _f => n
-                output = kw.args[1].args[2]
+                dest = kw.args[1].args[2]
             end
             t = quote
                 DataFramesMeta.make_source_concrete($(source)) =>
-                ($(Expr(:tuple, values(membernames)...)) -> $body) =>
-                $(output)
+                $fun =>
+                $dest
             end
         end
         return t
