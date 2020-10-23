@@ -104,10 +104,18 @@ function fun_to_vec(kw::Expr; nolhs::Bool = false, gensym_names::Bool = false)
     # nolhs: f(:x) where f returns a Table
     # !nolhs, y = g(:x)
     if kw.head === :(=) || kw.head === :kw || nolhs
-        rhs = kw.args[2]
-        # rhs of form f(:x, :y)
-        if VERSION <= v"1.6.0-DEV" && rhs.head == :call && all(s -> s isa QuoteNode, rhs.args[2:end])
-            source = Expr(:vect, rhs.args[2:end]...)
+        # kw.args[2] is RHS of kw
+        # this checks if the RHS is of form f(:x, :y),
+        # in wihch case we generate [:x, :y] => f => ...
+        # to avoid compilation cost of anonymous function.
+        #
+        # Restrict version due to https://github.com/JuliaLang/julia/pull/37583
+        if VERSION > v"1.6.0-DEV" &&
+            nolhs == false &&
+            headmatch(kw.args[2], :call) &&
+            all(s -> s isa QuoteNode, kw.args[2].args[2:end])
+
+            source = Expr(:vect, kw.args[2].args[2:end]...)
             fun = rhs.args[1]
         else
             membernames = Dict{Any, Symbol}()
@@ -166,6 +174,9 @@ function fun_to_vec(kw::Expr; nolhs::Bool = false, gensym_names::Bool = false)
 end
 
 fun_to_vec(kw::QuoteNode; nolhs::Bool = false, gensym_names::Bool = false) = kw
+
+headmatch(kw::Expr, m) = kw.head == m
+headmatch(kw, m) = false
 
 function make_source_concrete(x::AbstractVector)
     if isempty(x) || isconcretetype(eltype(x))
