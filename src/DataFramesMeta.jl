@@ -116,7 +116,7 @@ function fun_to_vec(kw::Expr; nolhs::Bool = false, gensym_names::Bool = false)
             all(s -> s isa QuoteNode, kw.args[2].args[2:end])
 
             source = Expr(:vect, kw.args[2].args[2:end]...)
-            fun = rhs.args[1]
+            fun = kw.args[2].args[1]
         else
             membernames = Dict{Any, Symbol}()
             if nolhs
