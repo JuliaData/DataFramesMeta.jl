@@ -88,12 +88,12 @@ function DataFramesMeta_timings(df, gd)
 		res6b = begin
 			d = Vector{Float64}(undef, length(:v1))
 			for i in eachindex(d)
-				d[i] = :v1[i] + :v2[i] * :v3[i] * :v3[i] + :v1[i]
+				d[i] = a[i] + b[i] * c[i] * c[i] + a[i]
 			end
-			return d
+			d
+
 		end
 	)
-
 
 	gd_res = @based_on(gd,
 		res7 = mean(:v1),
