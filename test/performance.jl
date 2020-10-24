@@ -53,7 +53,17 @@ function DataFrames_timings(df, gd)
 		[:v1, :v2] => (+) => :res3,
 		:id4 => string => :res4,
 		[:v1, :v2, :v3] => complicated_vec => :res5,
-		[:v1, :v2, :v3] => ((a, b, c) -> @. a + b * c * c + a) => :res6
+		[:v1, :v2, :v3] => ((a, b, c) -> @. a + b * c * c + a) => :res6a,
+		[:v1, :v2, :v3] =>
+		(
+			(a, b, c) -> begin
+				d = Vector{Float64}(undef, length(a))
+				for i in eachindex(d)
+					d[i] = a[i] + b[i] * c[i] * c[i] + a[i]
+				end
+				d
+			end
+		) => :res6b
 	)
 
 	gd_res = combine(gd,
@@ -61,7 +71,7 @@ function DataFrames_timings(df, gd)
 		:v2 => mean => :res8,
 		[:v1, :v2] => ((t, s) -> std(t) + std(s)) => :res9,
 		[:v1, :v2, :v3] => complicated_scalar => :res10,
-		[:v1, :v2, :v3] => ((a, b, c)  -> first(a) + mean(b) * std(a) + last(c)) => :res11
+		[:v1, :v2, :v3] => ((a, b, c)  -> first(a) + mean(b) * std(a) + last(c)) => :res11,
 	)
 
 	return(df_res, gd_res)
@@ -74,8 +84,16 @@ function DataFramesMeta_timings(df, gd)
 		res3 = :v1 + :v2,
 		res4 = string(:id4),
 		res5 = complicated_vec(:v1, :v2, :v3),
-		res6 = @. :v1 + :v2 + :v3 * :v3 + :v1
+		res6a = @.(:v1 + :v2 + :v3 * :v3 + :v1),
+		res6b = begin
+			d = Vector{Float64}(undef, length(:v1))
+			for i in eachindex(d)
+				d[i] = :v1[i] + :v2[i] * :v3[i] * :v3[i] + :v1[i]
+			end
+			return d
+		end
 	)
+
 
 	gd_res = @based_on(gd,
 		res7 = mean(:v1),
@@ -93,11 +111,7 @@ println("DataFrames benchmark timings")
 println("DataFramesMeta benchmark, timings")
 @btime DataFramesMeta_timings($df, $gd);
 
-println()
-
 println("DataFrames raw timing")
 @time DataFrames_timings(df, gd);
 println("DataFramesMeta raw timing")
-@time DataFrames_timings(df, gd);
-
-nothing
+@time DataFramesMeta_timings(df, gd);
