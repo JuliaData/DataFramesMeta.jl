@@ -4,6 +4,7 @@ using Test
 using DataFrames
 using DataFramesMeta
 using Statistics
+using CategoricalArrays
 
 const ≅ = isequal
 
