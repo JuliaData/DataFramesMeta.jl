@@ -110,30 +110,21 @@ function fun_to_vec(kw::Expr; nolhs::Bool = false, gensym_names::Bool = false)
         # to avoid compilation cost of anonymous function.
         #
         # Restrict version due to https://github.com/JuliaLang/julia/pull/37583
-        if VERSION > v"1.6.0-DEV" &&
-            nolhs == false &&
-            headmatch(kw.args[2], :call) &&
-            all(s -> s isa QuoteNode, kw.args[2].args[2:end])
-
-            source = Expr(:vect, kw.args[2].args[2:end]...)
-            fun = kw.args[2].args[1]
+        membernames = Dict{Any, Symbol}()
+        if nolhs
+            # act on f(:x)
+            body = replace_syms!(kw, membernames)
         else
-            membernames = Dict{Any, Symbol}()
-            if nolhs
-                # act on f(:x)
-                body = replace_syms!(kw, membernames)
-            else
-                # act on g(:x)
-                body = replace_syms!(kw.args[2], membernames)
-            end
+            # act on g(:x)
+            body = replace_syms!(kw.args[2], membernames)
+        end
 
-            source = Expr(:vect, keys(membernames)...)
-            inputargs = Expr(:tuple, values(membernames)...)
-            fun = quote
-                (@nospecialize args...) -> begin
-                    $inputargs = args
-                    $body
-                end
+        source = Expr(:vect, keys(membernames)...)
+        inputargs = Expr(:tuple, values(membernames)...)
+        fun = quote
+            (@nospecialize args...) -> begin
+                $inputargs = args
+                $body
             end
         end
 
@@ -172,11 +163,7 @@ function fun_to_vec(kw::Expr; nolhs::Bool = false, gensym_names::Bool = false)
         throw(ArgumentError("Expressions not of the form `y = f(:x)` currently disallowed."))
     end
 end
-
 fun_to_vec(kw::QuoteNode; nolhs::Bool = false, gensym_names::Bool = false) = kw
-
-headmatch(kw::Expr, m) = kw.head == m
-headmatch(kw, m) = false
 
 function make_source_concrete(x::AbstractVector)
     if isempty(x) || isconcretetype(eltype(x))
