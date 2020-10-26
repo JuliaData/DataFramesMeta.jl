@@ -86,12 +86,16 @@ function DataFramesMeta_timings(df, gd)
 		res5 = complicated_vec(:v1, :v2, :v3),
 		res6a = @.(:v1 + :v2 + :v3 * :v3 + :v1),
 		res6b = begin
-			d = Vector{Float64}(undef, length(:v1))
-			for i in eachindex(d)
-				d[i] = a[i] + b[i] * c[i] * c[i] + a[i]
-			end
-			d
-
+			# This zero-argument anonymous function
+			# should fix any performance costs from the
+			# @nospecialize
+			(() -> begin
+				d = Vector{Float64}(undef, length(:v1))
+				for i in eachindex(d)
+					d[i] = :v1[i] + :v2[i] * :v3[i] * :v3[i] + :v1[i]
+				end
+				d
+			end)()
 		end
 	)
 
