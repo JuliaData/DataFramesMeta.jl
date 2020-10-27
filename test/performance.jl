@@ -111,15 +111,15 @@ function DataFramesMeta_timings(df, gd)
 end
 
 println("DataFrames benchmark timings")
-@btime DataFrames_timings($df, $gd);
+#@btime DataFrames_timings($df, $gd);
 println("DataFramesMeta benchmark, timings")
-@btime DataFramesMeta_timings($df, $gd);
+#@btime DataFramesMeta_timings($df, $gd);
 
 
-N = 100
+N = 10
 K = 10
 
-df = DataFrame(
+df2 = DataFrame(
   id1 = rand([Symbol("id", i) for i=1:K], N),          # large groups (char)
   id2 = rand([string("id", i) for i=1:K], N),          # large groups (char)
   id3 = rand([string("id", i) for i=1:N÷K], N),        # small groups (char)
@@ -131,38 +131,15 @@ df = DataFrame(
   v3 =  rand(N)                                # numeric e.g. 23.5749
 );
 
-gd = groupby(df, :id1)
-
-println("DataFrames raw timing")
-@time begin
-	select(df,:v1 => (t -> t .- mean(t)) => :res1)
-	select(df, :v2 => demean => :res2)
-	select(df, [:v1, :v2] => (+) => :res3)
-	select(df, :id4 => string => :res4)
-	select(df, [:v1, :v2, :v3] => complicated_vec => :res5)
-	select(df, [:v1, :v2, :v3] => ((a, b, c) -> @. a + b * c * c + a) => :res6a)
-	select(df, [:v1, :v2, :v3] =>
-		(
-			(a, b, c) -> begin
-				d = Vector{Float64}(undef, length(a))
-				for i in eachindex(d)
-					d[i] = a[i] + b[i] * c[i] * c[i] + a[i]
-				end
-				d
-			end
-		) => :res6b
-	)
-end
-
 println("DataFramesMeta raw timing")
 @time begin
-	@select(df, res1 = :v1 .- mean(:v1))
-	@select(df, res2 = demean(:v2))
-	@select(df, res3 = :v1 + :v2)
-	@select(df, res4 = string(:id4))
-	@select(df, res5 = complicated_vec(:v1, :v2, :v3))
-	@select(df, res6a = @.(:v1 + :v2 + :v3 * :v3 + :v1))
-	@select(df, res6b = begin
+	@select(df2, res1 = :v1 .- mean(:v1))
+	@select(df2, res2 = demean(:v2))
+	@select(df2, res3 = :v1 + :v2)
+	@select(df2, res4 = string(:id4))
+	@select(df2, res5 = complicated_vec(:v1, :v2, :v3))
+	@select(df2, res6a = @.(:v1 + :v2 + :v3 * :v3 + :v1))
+	@select(df2, res6b = begin
 			# This zero-argument anonymous function
 			# should fix any performance costs from the
 			# @nospecialize
@@ -176,4 +153,20 @@ println("DataFramesMeta raw timing")
 		end
 	)
 end
+
+a = df.v1;
+b = df.v2;
+c = df.v3;
+println("Anonymous function without `@nospecialize`")
+@time ((v1, v2, v3) -> begin
+	@.(v1 + v2 + v3 * v3 + v1)
+end)(a, b, c);
+
+println("Anonymous function with `@nospecialize`")
+@time ((@nospecialize args...) -> begin
+	v1, v2, v3 = args
+	@.(v1 + v2 + v3 * v3 + v1)
+end)(a, b, c);
+
 nothing
+
