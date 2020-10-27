@@ -115,7 +115,65 @@ println("DataFrames benchmark timings")
 println("DataFramesMeta benchmark, timings")
 @btime DataFramesMeta_timings($df, $gd);
 
+
+N = 100
+K = 10
+
+df = DataFrame(
+  id1 = rand([Symbol("id", i) for i=1:K], N),          # large groups (char)
+  id2 = rand([string("id", i) for i=1:K], N),          # large groups (char)
+  id3 = rand([string("id", i) for i=1:N÷K], N),        # small groups (char)
+  id4 = rand(1:K, N),                          # large groups (int)
+  id5 = rand(1:K, N),                          # large groups (int)
+  id6 = rand(1:N÷K, N),                        # small groups (int)
+  v1 =  rand(1:5, N),                          # int in range [1,5]
+  v2 =  rand(1:5, N),                          # int in range [1,5]
+  v3 =  rand(N)                                # numeric e.g. 23.5749
+);
+
+gd = groupby(df, :id1)
+
 println("DataFrames raw timing")
-@time DataFrames_timings(df, gd);
+@time begin
+	select(df,:v1 => (t -> t .- mean(t)) => :res1)
+	select(df, :v2 => demean => :res2)
+	select(df, [:v1, :v2] => (+) => :res3)
+	select(df, :id4 => string => :res4)
+	select(df, [:v1, :v2, :v3] => complicated_vec => :res5)
+	select(df, [:v1, :v2, :v3] => ((a, b, c) -> @. a + b * c * c + a) => :res6a)
+	select(df, [:v1, :v2, :v3] =>
+		(
+			(a, b, c) -> begin
+				d = Vector{Float64}(undef, length(a))
+				for i in eachindex(d)
+					d[i] = a[i] + b[i] * c[i] * c[i] + a[i]
+				end
+				d
+			end
+		) => :res6b
+	)
+end
+
 println("DataFramesMeta raw timing")
-@time DataFramesMeta_timings(df, gd);
+@time begin
+	@select(df, res1 = :v1 .- mean(:v1))
+	@select(df, res2 = demean(:v2))
+	@select(df, res3 = :v1 + :v2)
+	@select(df, res4 = string(:id4))
+	@select(df, res5 = complicated_vec(:v1, :v2, :v3))
+	@select(df, res6a = @.(:v1 + :v2 + :v3 * :v3 + :v1))
+	@select(df, res6b = begin
+			# This zero-argument anonymous function
+			# should fix any performance costs from the
+			# @nospecialize
+			(() -> begin
+				d = Vector{Float64}(undef, length(:v1))
+				for i in eachindex(d)
+					d[i] = :v1[i] + :v2[i] * :v3[i] * :v3[i] + :v1[i]
+				end
+				d
+			end)()
+		end
+	)
+end
+nothing
