@@ -104,12 +104,6 @@ function fun_to_vec(kw::Expr; nolhs::Bool = false, gensym_names::Bool = false)
     # nolhs: f(:x) where f returns a Table
     # !nolhs, y = g(:x)
     if kw.head === :(=) || kw.head === :kw || nolhs
-        # kw.args[2] is RHS of kw
-        # this checks if the RHS is of form f(:x, :y),
-        # in wihch case we generate [:x, :y] => f => ...
-        # to avoid compilation cost of anonymous function.
-        #
-        # Restrict version due to https://github.com/JuliaLang/julia/pull/37583
         membernames = Dict{Any, Symbol}()
         if nolhs
             # act on f(:x)
