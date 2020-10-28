@@ -116,8 +116,7 @@ function fun_to_vec(kw::Expr; nolhs::Bool = false, gensym_names::Bool = false)
         source = Expr(:vect, keys(membernames)...)
         inputargs = Expr(:tuple, values(membernames)...)
         fun = quote
-            (@nospecialize args...) -> begin
-                $inputargs = args
+            $inputargs -> begin
                 $body
             end
         end

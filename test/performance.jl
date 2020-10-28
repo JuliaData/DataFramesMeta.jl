@@ -151,21 +151,5 @@ println("DataFramesMeta raw timing")
 			end)()
 		end
 	);
-
-
-a = df.v1;
-b = df.v2;
-c = df.v3;
-println("Anonymous function without `@nospecialize`")
-@time ((v1, v2, v3) -> begin
-	@.(v1 + v2 + v3 * v3 + v1)
-end)(a, b, c);
-
-println("Anonymous function with `@nospecialize`")
-@time ((@nospecialize args...) -> begin
-	v1, v2, v3 = args
-	@.(v1 + v2 + v3 * v3 + v1)
-end)(a, b, c);
-
 nothing
 
