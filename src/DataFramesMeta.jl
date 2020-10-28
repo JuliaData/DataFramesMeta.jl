@@ -114,34 +114,41 @@ function fun_to_vec(kw::Expr; nolhs::Bool = false, gensym_names::Bool = false)
         end
 
         source = Expr(:vect, keys(membernames)...)
+        inputargs = Expr(:tuple, values(membernames)...)
+        fun = quote
+            $inputargs -> begin
+                $body
+            end
+        end
 
         if nolhs
             if gensym_names
                 # [:x] => _f => Symbol("###343")
+                dest = QuoteNode(gensym())
                 t = quote
                     DataFramesMeta.make_source_concrete($(source)) =>
-                    ($(Expr(:tuple, values(membernames)...)) -> $body) =>
-                    $(QuoteNode(gensym()))
+                    $fun =>
+                    $dest
                 end
             else
                 # [:x] => _f
                 t = quote
                     DataFramesMeta.make_source_concrete($(source)) =>
-                    ($(Expr(:tuple, values(membernames)...)) -> $body)
+                    $fun
                 end
             end
          else
             if kw.args[1] isa Symbol
                 # y = f(:x) becomes [:x] => _f => :y
-                output = QuoteNode(kw.args[1])
+                dest = QuoteNode(kw.args[1])
             elseif onearg(kw.args[1], :cols)
                 # cols(n) = f(:x) becomes [:x] => _f => n
-                output = kw.args[1].args[2]
+                dest = kw.args[1].args[2]
             end
             t = quote
                 DataFramesMeta.make_source_concrete($(source)) =>
-                ($(Expr(:tuple, values(membernames)...)) -> $body) =>
-                $(output)
+                $fun =>
+                $dest
             end
         end
         return t
@@ -149,7 +156,6 @@ function fun_to_vec(kw::Expr; nolhs::Bool = false, gensym_names::Bool = false)
         throw(ArgumentError("Expressions not of the form `y = f(:x)` currently disallowed."))
     end
 end
-
 fun_to_vec(kw::QuoteNode; nolhs::Bool = false, gensym_names::Bool = false) = kw
 
 function make_source_concrete(x::AbstractVector)
