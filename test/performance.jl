@@ -111,9 +111,9 @@ function DataFramesMeta_timings(df, gd)
 end
 
 println("DataFrames benchmark timings")
-#@btime DataFrames_timings($df, $gd);
+@btime DataFrames_timings($df, $gd);
 println("DataFramesMeta benchmark, timings")
-#@btime DataFramesMeta_timings($df, $gd);
+@btime DataFramesMeta_timings($df, $gd);
 
 
 N = 10
@@ -132,14 +132,13 @@ df2 = DataFrame(
 );
 
 println("DataFramesMeta raw timing")
-@time begin
-	@select(df2, res1 = :v1 .- mean(:v1))
-	@select(df2, res2 = demean(:v2))
-	@select(df2, res3 = :v1 + :v2)
-	@select(df2, res4 = string(:id4))
-	@select(df2, res5 = complicated_vec(:v1, :v2, :v3))
-	@select(df2, res6a = @.(:v1 + :v2 + :v3 * :v3 + :v1))
-	@select(df2, res6b = begin
+@time @select(df2, res1 = :v1 .- mean(:v1));
+@time @select(df2, res2 = demean(:v2));
+@time @select(df2, res3 = :v1 + :v2);
+@time @select(df2, res4 = string(:id4));
+@time @select(df2, res5 = complicated_vec(:v1, :v2, :v3));
+@time @select(df2, res6a = @.(:v1 + :v2 + :v3 * :v3 + :v1));
+@time @select(df2, res6b = begin
 			# This zero-argument anonymous function
 			# should fix any performance costs from the
 			# @nospecialize
@@ -151,8 +150,8 @@ println("DataFramesMeta raw timing")
 				d
 			end)()
 		end
-	)
-end
+	);
+
 
 a = df.v1;
 b = df.v2;
