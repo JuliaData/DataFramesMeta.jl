@@ -36,7 +36,7 @@ xlinq2 = @linq df  |>
     transform(y = 10 * :x)  |>
     orderby(:x .- mean(:x)) |>
     groupby(:b) |>
-    based_on(meanX = mean(:x), meanY = mean(:y))
+    combine(meanX = mean(:x), meanY = mean(:y))
 
 @test xlinq2[!, [:meanX, :meanY]] == xlinq[!, [:meanX, :meanY]]
 
@@ -45,7 +45,7 @@ xlinq3 = @linq df  |>
     transform(y = 10 * :x)  |>
     orderby(:x .- mean(:x)) |>
     DataFrames.groupby(:b) |>
-    based_on(meanX = mean(:x), meanY = mean(:y))
+    combine(meanX = mean(:x), meanY = mean(:y))
 
 @test xlinq3[!, [:meanX, :meanY]] == xlinq[!, [:meanX, :meanY]]
 
@@ -68,7 +68,7 @@ xlinq3 = @linq df  |>
         transform(cols(y_str) = 10 * cols(x_sym))  |>
         orderby(cols(x_sym) .- mean(cols(x_sym)))  |>
         groupby(b_str) |>
-        based_on(cols("meanX") = mean(:x), meanY = mean(:y))
+        combine(cols("meanX") = mean(:x), meanY = mean(:y))
 
     @test isequal(xlinq3, DataFrame(b = "d", meanX = 40.0, meanY = 400.0))
 end

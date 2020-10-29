@@ -89,7 +89,7 @@ function DataFramesMeta_timings(df, gd)
 		end
 	)
 
-	gd_res = @based_on(gd,
+	gd_res = @combine(gd,
 		res7 = mean(:v1),
 		res8 = (t -> mean(t))(:v2),
 		res9 = std(:v1) + std(:v2),

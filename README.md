@@ -8,20 +8,121 @@
 Metaprogramming tools for DataFrames.jl objects.
 These macros improve performance and provide more convenient syntax.
 
-# Features
+DataFrames.jl has the functions `select`, `transform`, and `combine` 
+for manipulating data frames. DataFramesMeta provides the macros 
+`@select`, `@transform`, and `@combine` that provides an easier syntax, 
+inspired by [dplyr](https://dplyr.tidyverse.org/) in R for interfacing with 
+their corresponding DataFrames functions. 
+
+In addition, DataFramesMeta provides 
+
+* `@orderby`, for sorting data frames
+* `@where`, for keeping rows of a DataFrame matching a given condition
+* `@by`, for grouping and combining a data frame in a single step
+* `@with`, for working with the columns of a data frame with high performance and 
+  convenient syntax
+* `@eachrow`, for looping through rows in data frame, again with high performance and 
+  convenient syntax. 
+* `@linq`, for piping the above macros together, similar to [magittr](https://cran.r-project.org/web/packages/magrittr/vignettes/magrittr.html)'s
+  `%>%` in R. 
+
+To reference columns inside DataFramesMeta macros, use `Symbol`s. For example, use `:x`
+to refer to the column `df.x`. To use a variable `varname` representing a `Symbol` to refer to 
+a column, use the syntax `cols(varname)`. Details below: 
+
+# Details
+
+## `@select`
+
+Column selections and transformations. Only newly created columns are kept. 
+Operates on both a `DataFrame` and a `GroupedDataFrame`. 
+
+```julia
+df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+gd = groupby(df, :x);
+@select(df, :x, :y)
+@select(df, x2 = 2 * :x, :y)
+@select(gd, x2 = 2 .* :y .* first(:y))
+```
+
+!!! note 
+    
+    Versions of DataFrames.jl `0.19` and above support the operators `Between`, `All`,
+    and `Not` when selecting and transforming columns. DataFramesMeta.jl does not currently
+    support this syntax. 
+
+!!! note
+    To refer to `Symbol`s without aliasing the column in a DataFame, use `^`. 
+
+    ```
+    df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+    @select(df, :x2 = :x, :x3 = ^(:x))
+    ```
+
+    This rule applies to all DataFramesMeta macros.
+
+## `@transform`
+
+Add additional columns based on keyword arguments. Operates on both a 
+`DataFrame` and a `GroupedDataFrame`. 
+
+```julia
+df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+gd = groupby(df, :x);
+@transform(df, :x, :y)
+@transform(df, x2 = 2 * :x, :y)
+@transform(gd, x2 = 2 .* :y .* first(:y))
+```
+
+## `@where`
+
+Select row subsets. Operates on both a `DataFrame` and a `GroupedDataFrame`. 
+
+```julia
+df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+gd = groupby(df, :x);
+x = 1;
+@where(df, :x .> 1)
+@where(df, :x .> x)
+@where(df, :x .> x, :y .< 102)  # the two expressions are "and-ed"
+@where(gd, :x .> mean(:x))
+```
+
+## `@combine`
+
+Summarize or collapse, a grouped data frame by perforing transformations at the group level and 
+collecting the result into a single data frame. Also works on a `DataFrame`, which 
+acts like a `GroupedDataFrame` with one group. 
+
+Does not allow input in first argument like `combine` from DataFrames.jl. But an argument
+returning a `Table`-like object can be input for the first argument. 
+
+```julia
+df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+gd = groupby(df, :x);
+using Statistics
+@combine(gd, x2 = mean(:y))
+@combine(gd, x2 = :y .- mean(:y))
+@combine(gd, @combine(gd, (n1 = mean(:y), n2 = first(:y))))
+```
+
+## `@orderby`
+
+Sort rows in a `DataFrame` by values in one of several columns or a 
+transformation of columns. Only operates on `DataFrame`s and not `GroupedDataFrame`s. 
+
+```julia
+df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+@orderby(df, -1 .* :x)
+@orderby(df, :x, :y .- mean(:y))
+```
 
 ## `@with`
 
-`@with` allows DataFrame columns to be referenced as symbols like
-`:colX` in expressions. If an expression is wrapped in `^(expr)`,
-`expr` gets passed through untouched. If an expression is wrapped in
-`cols(expr)`, the column is referenced by the variable `expr` rather than
-a symbol. Here are some examples:
+`@with` creates a scope in which all symbols that appear are aliases for the columns
+in a DataFrame. 
 
 ```julia
-using DataFrames
-using DataFramesMeta
-
 df = DataFrame(x = 1:3, y = [2, 1, 2])
 x = [2, 1, 0]
 
@@ -40,60 +141,49 @@ end
 
 ```
 
-`@with` is the fundamental macro used by the other metaprogramming
-utilities.
-
-`@with` creates a function, so scope within `@with` is a local scope.
-Variables in the parent can be read. Writing to variables in the parent scope
-differs depending on the type of scope of the parent. If the parent scope is a
-global scope, then a variable cannot be assigned without using the `global` keyword.
-If the parent scope is a local scope (inside a function or let block for example),
-the `global` keyword is not needed to assign to that parent scope.
-
-## `@where`
-
-Select row subsets.
-
-```julia
-@where(df, :x .> 1)
-@where(df, :x .> x)
-@where(df, :x .> x, :y .== 3)  # the two expressions are "and-ed"
-```
-
-## `@select`
-
-Column selections and transformations.
-
-```julia
-@select(df, :x, :y)
-@select(df, x2 = 2 * :x, :y)
-```
-
-## `@transform`
-
-Add additional columns based on keyword arguments.
-
-```julia
-@transform(df, newCol = cos.(:x), anotherCol = :x.^2 + 3*:x .+ 4)
-```
-
 !!! note 
-    
-    Versions of DataFrames.jl `0.19` and above support the operators `Between`, `All`,
-    and `Not` when selecting and transforming columns. DataFramesMeta.jl does not currently
-    support this syntax. 
+    `@with` creates a function, so scope within `@with` is a local scope.
+    Variables in the parent can be read. Writing to variables in the parent scope
+    differs depending on the type of scope of the parent. If the parent scope is a
+    global scope, then a variable cannot be assigned without using the `global` keyword.
+    If the parent scope is a local scope (inside a function or let block for example),
+    the `global` keyword is not needed to assign to that parent scope.
+
+!!! note
+    Because `@with` creates a function, be careful with the use of `return`. 
+
+    ```
+    function data_transform(df; returnearly = false)
+        if returnearly
+            @with df begin 
+                z = :x + :y
+                return z
+            end
+        else 
+            return [1, 2, 3]
+        end
+
+        return [4, 5, 6]
+    end
+    ```
+
+    The above function will return `[4, 5, 6]` because the `return` inside the `@with`
+    applies to the anonymous function created by `@with`. 
+
+    Given that `@eachrow` (below) is implemented with `@with`, the same caveat applies to 
+    `@eachrow` blocks. 
 
 
-## `@byrow`
+## `@eachrow`
 
-Act on a DataFrame row-by-row. Includes support for control flow and `begin end` blocks. Since the "environment" induced by `@byrow df` is implicitly a single row of `df`, one uses regular operators and comparisons instead of their elementwise counterparts as in `@with`. Does not change the input data frame argument.
+Act each row of a data frame. Includes support for control flow and `begin end` blocks. Since the "environment" induced by `@eachrow df` is implicitly a single row of `df`, one uses regular operators and comparisons instead of their elementwise counterparts as in `@with`. Does not change the input data frame argument.
 
 ```julia
-df2 = @byrow df if :A > :B; :A = :B * :C end
+df2 = @eachrow df if :A > :B; :A = :B * :C end
 ```
 ```julia
 let x = 0.0
-    @byrow df begin
+    @eachrow df begin
         if :A < :B
             x += :B * :C
         end
@@ -103,16 +193,16 @@ end
 ```
 
 Note that the let block is required here to create a scope to allow assignment
-of `x` within `@byrow`.
+of `x` within `@eachrow`.
 
-`byrow` also supports special syntax for allocating new columns to make
-`byrow` more useful for data transformations. The syntax `@newcol
+`eachrow` also supports special syntax for allocating new columns to make
+`eachrow` more useful for data transformations. The syntax `@newcol
 x::Array{Int}` allocates a new column `:x` with an `Array` container with eltype
 `Int`. Here is an example where two new columns are added:
 
 ```julia
 df = DataFrame(A = 1:3, B = [2, 1, 2])
-df2 = @byrow df begin
+df2 = @eachrow df begin
     @newcol colX::Array{Float64}
     @newcol colY::Array{Union{Int,Missing}}
     :colX = :B == 2 ? pi * :A : :B
@@ -122,17 +212,6 @@ df2 = @byrow df begin
         :colY = Missing
     end
 end
-```
-
-## `@orderby`
-
-Sort rows in a `DataFrame` by values in one of several columns or a 
-transformation of columns.
-
-```julia
-d = DataFrame(x = [3, 3, 3, 2, 1, 1, 1, 2, 1, 1], n = 1:10);
-@orderby(d, -1 .* :n)
-@orderby(d, :x, :n .- mean(:x))
 ```
 
 ## Working with column names programmatically with `cols`
@@ -151,7 +230,7 @@ nameA_string = "A"
 df3 = @transform(df, C = :B - cols(nameA_string))
 
 nameB = "B"
-df4 = @byrow df begin 
+df4 = @eachrow df begin 
     :A = cols(nameB)
 end
 ```
@@ -167,7 +246,7 @@ newcol = "C"
 @by(df, :B, cols("A complicated" * " new name") = first(:A))
 
 nameC = "C"
-df3 = @byrow df begin 
+df3 = @eachrow df begin 
     @newcol cols(nameC)::Vector{Int}
     cols(nameC) = :A
 end
@@ -199,13 +278,13 @@ transform(df, [:A, "B"] => (+) => :y)
 will error in DataFrames. 
 
 For consistency, this restriction in the input column types also applies to `@with`
-and `@byrow`. You cannot mix integer column references with `Symbol` or string column 
-references in `@with` and `@byrow` in any part of the expression, but you can mix 
+and `@eachrow`. You cannot mix integer column references with `Symbol` or string column 
+references in `@with` and `@eachrow` in any part of the expression, but you can mix 
 `Symbol`s and strings. The following will fail:
 
 ```julia
 df = DataFrame(A = 1:3, B = [2, 1, 2])
-@byrow df begin 
+@eachrow df begin 
     :A = cols(2)
 end
 
@@ -217,7 +296,7 @@ end
 while the following will work without error
 
 ```julia
-@byrow df begin 
+@eachrow df begin 
     cols(1) = cols(2)
 end
 
@@ -244,12 +323,12 @@ functions.
     @transform        mutate           Select (?)
     @by                                GroupBy
     groupby           group_by
-    @based_on         summarise/do
+    @combine         summarise/do
     @orderby          arrange          OrderBy
     @select           select           Select
 
 
-## Chaining macros
+## `@linq` and other chaining macros
 
 There is also a `@linq` macro that supports chaining and all of the
 functionality defined in other macros. Here is an example of `@linq`:
@@ -321,50 +400,6 @@ x_thread = @pipe df |>
     @orderby(_, :meanX) |>
     @select(_, :meanX, :meanY, var = :b)
 ```
-
-## Operations on GroupedDataFrames
-
-The following operations are now included:
-
-- `where(g, d -> mean(d[:a]) > 0)` and `@where(g, mean(:a) > 0)` --
-  Filter groups based on the given criteria. Returns a
-  GroupedDataFrame.
-
-- `orderby(g, d -> mean(d[:a]))` and `@orderby(g, mean(:a))` -- Sort
-  rows by a given criteria. Returns a `DataFrame`.
-
-- `DataFrame(g)` -- Convert groups back to a DataFrame with the same
-  group orderings.
-
-- `@based_on(g, z = mean(:a))` -- Summarize results within groups.
-  Returns a DataFrame.
-
-- `transform(g, d -> y = d[:a] - mean(d[:a]))` and
-  `@transform(g, y = :a - mean(:a))` -- Transform a DataFrame based
-  on operations within a group. Returns a DataFrame.
-
-You can also index on GroupedDataFrames. `g[1]` is the first group,
-returned as a SubDataFrame. `g[[1,4,5]]` or
-`g[[true, false, true, false, false]]` return subsets of groups as a
-GroupedDataFrame. You can also iterate over GroupedDataFrames.
-
-The most general split-apply-combine approach is based on `map`.
-`map(fun, g)` returns a GroupApplied object with keys and vals. This
-can be used with `combine`.
-
-
-# Performance
-
-`@with` works by parsing the expression body for all columns indicated
-by symbols (e.g. `:colA`). Then, a function is created that wraps the
-body and passes the columns as function arguments. This function is
-then called. Operations are efficient because:
-
-- A pseudo-anonymous function is defined, so types are stable.
-- Columns are passed as references, eliminating DataFrame indexing.
-
-All of the other macros are based on `@with`.
-
 
 # Package Maintenance
 

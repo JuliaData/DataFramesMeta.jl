@@ -22,7 +22,7 @@ The following embedded function calls are equivalent to their macro version:
 - `by`
 - `groupby`
 - `orderby`
-- `based_on`
+- `combine`
 
 ### Examples
 
@@ -123,8 +123,8 @@ function linq(::SymbolParameter{:transform}, x, args...)
     transform_helper(x, args...)
 end
 
-function linq(::SymbolParameter{:based_on}, x, args...)
-    based_on_helper(x, args...)
+function linq(::SymbolParameter{:combine}, x, args...)
+    combine_helper(x, args...)
 end
 
 function linq(::SymbolParameter{:by}, x, what, args...)
