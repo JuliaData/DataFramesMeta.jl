@@ -10,9 +10,10 @@ These macros improve performance and provide more convenient syntax.
 
 DataFrames.jl has the functions `select`, `transform`, and `combine` 
 for manipulating data frames. DataFramesMeta provides the macros 
-`@select`, `@transform`, and `@combine` that provides an easier syntax, 
-inspired by [dplyr](https://dplyr.tidyverse.org/) in R for interfacing with 
-their corresponding DataFrames functions. 
+`@select`, `@transform`, and `@combine` to mirror these functions with 
+more convenient syntax. Inspired by [dplyr](https://dplyr.tidyverse.org/) in R 
+and [LINQ](https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/linq/)
+from C#. 
 
 In addition, DataFramesMeta provides 
 
@@ -28,7 +29,12 @@ In addition, DataFramesMeta provides
 
 To reference columns inside DataFramesMeta macros, use `Symbol`s. For example, use `:x`
 to refer to the column `df.x`. To use a variable `varname` representing a `Symbol` to refer to 
-a column, use the syntax `cols(varname)`. Details below: 
+a column, use the syntax `cols(varname)`. 
+
+Use `passmissing` from [Missings.jl](https://github.com/JuliaData/Missings.jl) to 
+propagate `missing` values more easily. 
+
+Details below: 
 
 # Details
 
@@ -179,9 +185,17 @@ end
 Act each row of a data frame. Includes support for control flow and `begin end` blocks. Since the "environment" induced by `@eachrow df` is implicitly a single row of `df`, one uses regular operators and comparisons instead of their elementwise counterparts as in `@with`. Does not change the input data frame argument.
 
 ```julia
-df2 = @eachrow df if :A > :B; :A = :B * :C end
+df = DataFrame(A = 1:3, B = [2, 1, 2])
+df2 = @eachrow df begin 
+    :A = :B + 1
+end
 ```
+
+`@byrow` introduces a function scope, so `let` block is required here to create 
+a scope to allow assignment of variables within `@eachrow`. 
+
 ```julia
+df = DataFrame(A = 1:3, B = [2, 1, 2])
 let x = 0.0
     @eachrow df begin
         if :A < :B
@@ -192,11 +206,8 @@ let x = 0.0
 end
 ```
 
-Note that the let block is required here to create a scope to allow assignment
-of `x` within `@eachrow`.
-
-`eachrow` also supports special syntax for allocating new columns to make
-`eachrow` more useful for data transformations. The syntax `@newcol
+`@eachrow` also supports special syntax for allocating new columns to make
+`@eachrow` more useful for data transformations. The syntax `@newcol
 x::Array{Int}` allocates a new column `:x` with an `Array` container with eltype
 `Int`. Here is an example where two new columns are added:
 
@@ -334,6 +345,10 @@ There is also a `@linq` macro that supports chaining and all of the
 functionality defined in other macros. Here is an example of `@linq`:
 
 ```julia
+df = DataFrame(a = repeat(1:5, outer = 20),
+               b = repeat(["a", "b", "c", "d"], inner = 25),
+               x = repeat(1:20, inner = 5))
+
 x_thread = @linq df |>
     transform(y = 10 * :x) |>
     where(:a .> 2) |>
@@ -351,13 +366,14 @@ This method is extensible. Here is a comparison of the macro and
 `@linq` versions of `with`.
 
 ```julia
-macro with(d, body)
-    esc(with_helper(d, body))
-end
-
-function linq(::SymbolParameter{:with}, d, body)
+function linq(::DataFramesMeta.SymbolParameter{:with}, d, body)
     with_helper(d, body)
 end
+
+df = DataFrame(A = 1:3, B = [2, 1, 2])
+
+@linq df |>
+    with(:A .* :B)
 ```
 
 The `linq` method above registers the expression-replacement method
@@ -371,6 +387,11 @@ Alternatively you can use Lazy.jl `@>` macro like this:
 
 ```julia
 using Lazy: @>
+
+df = DataFrame(a = repeat(1:5, outer = 20),
+               b = repeat(["a", "b", "c", "d"], inner = 25),
+               x = repeat(1:20, inner = 5))
+
 x_thread = @> begin
     df
     @transform(y = 10 * :x)
@@ -393,6 +414,11 @@ The Pipe.jl equivalent of the above is:
 
 ```julia
 using Pipe
+
+df = DataFrame(a = repeat(1:5, outer = 20),
+               b = repeat(["a", "b", "c", "d"], inner = 25),
+               x = repeat(1:20, inner = 5))
+
 x_thread = @pipe df |>
     @transform(_, y = 10 * :x) |>
     @where(_, :a .> 2) |>

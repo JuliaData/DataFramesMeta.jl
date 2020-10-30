@@ -84,6 +84,20 @@ g = groupby(d, :x, sort=true)
     @test @combine(gd, cols("new" * "_" * "column") = 2)."new_column" == [2, 2]
 end
 
+@testset "based_on" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5,
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing]
+        )
+
+    gd = groupby(df, :g)
+
+    @test @based_on(gd, n = mean(:i)).n == [2.0, 4.5]
+end
+
 # Defined outside of `@testset` due to use of `@eval`
 df = DataFrame(
     g = [1, 1, 1, 2, 2],

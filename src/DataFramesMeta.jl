@@ -5,7 +5,8 @@ using Reexport
 @reexport using DataFrames
 
 # Basics:
-export @with, @where, @orderby, @transform, @by, @combine, @select
+export @with, @where, @orderby, @transform, @by, @combine, @select,
+       @byrow, @byrow!, @based_on # deprecated
 
 include("linqmacro.jl")
 include("eachrow.jl")
@@ -574,7 +575,9 @@ end
 ##
 ##############################################################################
 
-function combine_helper(x, args...)
+function combine_helper(x, args...; deprecation_warning = false)
+    deprecation_warning && @warn "`@based_on` is deprecated. Use `@combine` instead."
+
     # Only allow one argument when returning a Table object
     if length(args) == 1 &&
         !(first(args) isa QuoteNode) &&
@@ -649,6 +652,15 @@ macro combine(x, args...)
     esc(combine_helper(x, args...))
 end
 
+
+"""
+    @based_on(d, args...)
+
+Deprecated version of `@combine`, see: [`@combine`](@ref)
+"""
+macro based_on(x, args...)
+    esc(combine_helper(x, args...; deprecation_warning = true))
+end
 
 ##############################################################################
 ##

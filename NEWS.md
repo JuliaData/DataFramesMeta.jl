@@ -10,3 +10,5 @@
 * `@where` with a grouped data frame will now perform operations by group and filter
   rows in the parent `DataFrame`. The operation no longer filters groups. Returns a 
   fresh `DataFrame`.
+ * `@based_on` has been renamed to `@combine`
+ * `@byrow` has been renamed to `@eachrow`

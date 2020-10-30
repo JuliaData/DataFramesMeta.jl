@@ -81,7 +81,7 @@ Deprecated version of `@eachrow`, see: [`@eachrow`](@ref)
 
 Acts the exact same way. It does not change the input argument `d` in-place.
 """
-macro eachrow!(df, body)
+macro byrow!(df, body)
     esc(eachrow_helper(df, body, true))
 end
 
