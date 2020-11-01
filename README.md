@@ -13,7 +13,7 @@ for manipulating data frames. DataFramesMeta provides the macros
 `@select`, `@transform`, and `@combine` to mirror these functions with 
 more convenient syntax. Inspired by [dplyr](https://dplyr.tidyverse.org/) in R 
 and [LINQ](https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/linq/)
-from C#. 
+in C#. 
 
 In addition, DataFramesMeta provides 
 
@@ -24,7 +24,7 @@ In addition, DataFramesMeta provides
   convenient syntax
 * `@eachrow`, for looping through rows in data frame, again with high performance and 
   convenient syntax. 
-* `@linq`, for piping the above macros together, similar to [magittr](https://cran.r-project.org/web/packages/magrittr/vignettes/magrittr.html)'s
+* `@linq`, for piping the above macros together, similar to [magrittr](https://cran.r-project.org/web/packages/magrittr/vignettes/magrittr.html)'s
   `%>%` in R. 
 
 To reference columns inside DataFramesMeta macros, use `Symbol`s. For example, use `:x`
@@ -34,22 +34,7 @@ a column, use the syntax `cols(varname)`.
 Use `passmissing` from [Missings.jl](https://github.com/JuliaData/Missings.jl) to 
 propagate `missing` values more easily. 
 
-Details below: 
-
-# Details
-
-## `@select`
-
-Column selections and transformations. Only newly created columns are kept. 
-Operates on both a `DataFrame` and a `GroupedDataFrame`. 
-
-```julia
-df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
-gd = groupby(df, :x);
-@select(df, :x, :y)
-@select(df, x2 = 2 * :x, :y)
-@select(gd, x2 = 2 .* :y .* first(:y))
-```
+# Provided macros
 
 !!! note 
     
@@ -67,6 +52,18 @@ gd = groupby(df, :x);
 
     This rule applies to all DataFramesMeta macros.
 
+## `@select`
+
+Column selections and transformations. Only newly created columns are kept. 
+Operates on both a `DataFrame` and a `GroupedDataFrame`. 
+
+```julia
+df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+gd = groupby(df, :x);
+@select(df, :x, :y)
+@select(df, x2 = 2 * :x, :y)
+@select(gd, x2 = 2 .* :y .* first(:y))
+```
 ## `@transform`
 
 Add additional columns based on keyword arguments. Operates on both a 
@@ -182,7 +179,7 @@ end
 
 ## `@eachrow`
 
-Act each row of a data frame. Includes support for control flow and `begin end` blocks. Since the "environment" induced by `@eachrow df` is implicitly a single row of `df`, one uses regular operators and comparisons instead of their elementwise counterparts as in `@with`. Does not change the input data frame argument.
+Act on each row of a data frame. Includes support for control flow and `begin end` blocks. Since the "environment" induced by `@eachrow df` is implicitly a single row of `df`, one uses regular operators and comparisons instead of their elementwise counterparts as in `@with`. Does not change the input data frame argument.
 
 ```julia
 df = DataFrame(A = 1:3, B = [2, 1, 2])
@@ -191,7 +188,7 @@ df2 = @eachrow df begin
 end
 ```
 
-`@byrow` introduces a function scope, so `let` block is required here to create 
+`@eachrow` introduces a function scope, so `let` block is required here to create 
 a scope to allow assignment of variables within `@eachrow`. 
 
 ```julia
@@ -333,8 +330,8 @@ functions.
     @where            filter           Where
     @transform        mutate           Select (?)
     @by                                GroupBy
-    groupby           group_by
-    @combine         summarise/do
+    groupby           group_by         GroupBy
+    @combine          summarise/do
     @orderby          arrange          OrderBy
     @select           select           Select
 
