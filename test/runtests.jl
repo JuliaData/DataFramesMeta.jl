@@ -6,7 +6,8 @@ my_tests = ["dataframes.jl",
             "eachrow.jl",
             "grouping.jl",
             "chaining.jl",
-            "linqmacro.jl"]
+            "linqmacro.jl",
+            "deprecated.jl"]
 
 println("Running tests:")
 
