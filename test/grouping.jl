@@ -112,7 +112,7 @@ gd = groupby(df, :g)
 newvar = :n
 
 @testset "Limits of @combine" begin
-    t = @combine(gd, [:i, :g]).i_g_function
+    t = @combine(gd, [:i, :g])[!, 2]
     @test t == [[1, 2, 3], [1, 1, 1], [4, 5], [2, 2]]
     @test t isa Vector{SubArray{Int64,1,Array{Int64,1},Tuple{Array{Int64,1}},false}}
     @test @combine(gd, All()).function isa Vector{<:All}
@@ -222,7 +222,7 @@ gd = groupby(df, :g)
 newvar = :n
 
 @testset "limits of @by" begin
-    t = @by(df, :g, [:i, :g]).i_g_function
+    t = @by(df, :g, [:i, :g])[!, 2]
     @test t == [[1, 2, 3], [1, 1, 1], [4, 5], [2, 2]]
     @test t isa Vector{SubArray{Int64,1,Array{Int64,1},Tuple{Array{Int64,1}},false}}
     @test @by(df, :g, All()).function isa Vector{<:All}
