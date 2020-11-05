@@ -31,8 +31,9 @@ To reference columns inside DataFramesMeta macros, use `Symbol`s. For example, u
 to refer to the column `df.x`. To use a variable `varname` representing a `Symbol` to refer to 
 a column, use the syntax `cols(varname)`. 
 
-Use `passmissing` from [Missings.jl](https://github.com/JuliaData/Missings.jl) to 
-propagate `missing` values more easily. 
+Use `passmissing`  to propagate `missing` values more easily. See `?passmissing` for 
+details. `passmissing` is defined in [Missings.jl](https://github.com/JuliaData/Missings.jl)
+but exported by DataFramesMeta for convenience. 
 
 # Provided macros
 
@@ -57,6 +58,10 @@ propagate `missing` values more easily.
 Column selections and transformations. Only newly created columns are kept. 
 Operates on both a `DataFrame` and a `GroupedDataFrame`. 
 
+When given a `GroupedDataFrame`, performs a transformation by group and then 
+"spreads" the result to a vector of the same length as vectors in the input 
+data frame. 
+
 ```julia
 df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
 gd = groupby(df, :x);
@@ -68,6 +73,10 @@ gd = groupby(df, :x);
 
 Add additional columns based on keyword arguments. Operates on both a 
 `DataFrame` and a `GroupedDataFrame`. 
+
+When given a `GroupedDataFrame`, performs a transformation by group and then 
+"spreads" the result to a vector of the same length as vectors in the input 
+data frame. 
 
 ```julia
 df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
@@ -84,21 +93,50 @@ Select row subsets. Operates on both a `DataFrame` and a `GroupedDataFrame`.
 ```julia
 df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
 gd = groupby(df, :x);
-x = 1;
+outside_var = 1;
 @where(df, :x .> 1)
-@where(df, :x .> x)
-@where(df, :x .> x, :y .< 102)  # the two expressions are "and-ed"
+@where(df, :x .> outside_var)
+@where(df, :x .> outside_var, :y .< 102)  # the two expressions are "and-ed"
 @where(gd, :x .> mean(:x))
 ```
 
 ## `@combine`
 
-Summarize or collapse, a grouped data frame by perforing transformations at the group level and 
+Summarize, or collapse, a grouped data frame by performing transformations at the group level and 
 collecting the result into a single data frame. Also works on a `DataFrame`, which 
 acts like a `GroupedDataFrame` with one group. 
 
-Does not allow input in first argument like `combine` from DataFrames.jl. But an argument
-returning a `Table`-like object can be input for the first argument. 
+Requires a `DataFrame` or `GroupedDataFrame` as the first argument, unlike 
+`combine` from DataFrames.jl. For example, the following code runs:
+
+```
+df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+gd = groupby(df, :x);
+combine(d -> (a = sum(d.x), b = sum(d.y)), gd)
+```
+
+However `@combine((a = sum(:x), b = sum(:y)), gd)` will fail because `@combine` requires a 
+`GroupedDataFrame` or a `DataFrame` as the first argument. The following is equivalent
+to the `combine` call above
+
+```
+df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+gd = groupby(df, :x);
+@combine(gd, (a = sum(:x), b = sum(:y)))
+```
+
+For arguments which return a table-like object, such as `(a = sum(:x), b = sum(:y))`, above
+`@combine` only allows *one* argument and it must be the *second* positional argument. 
+Consider the call 
+
+```
+@combine(gd, (a = sum(:x), b = sum(:y)), c = first(:x))
+```
+
+the above will fail because `@combine` does not accept a "keyword argument"-style column 
+creation after a "return a table"-style column creation call. 
+
+Examples:
 
 ```julia
 df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
@@ -106,7 +144,7 @@ gd = groupby(df, :x);
 using Statistics
 @combine(gd, x2 = mean(:y))
 @combine(gd, x2 = :y .- mean(:y))
-@combine(gd, @combine(gd, (n1 = mean(:y), n2 = first(:y))))
+@combine(gd, (n1 = mean(:y), n2 = first(:y)))
 ```
 
 ## `@orderby`
