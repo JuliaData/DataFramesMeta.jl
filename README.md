@@ -39,12 +39,12 @@ but exported by DataFramesMeta for convenience.
 
 !!! note 
     
-    Versions of DataFrames.jl `0.19` and above support the operators `Between`, `All`,
+    Newer versions of DataFrames.jl support the operators `Between`, `All`, `Cols`,
     and `Not` when selecting and transforming columns. DataFramesMeta.jl does not currently
     support this syntax. 
 
 !!! note
-    To refer to `Symbol`s without aliasing the column in a DataFame, use `^`. 
+    To refer to `Symbol`s without aliasing the column in a data frame, use `^`. 
 
     ```
     df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
