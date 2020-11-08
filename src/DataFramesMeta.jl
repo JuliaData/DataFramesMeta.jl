@@ -5,10 +5,11 @@ using Reexport
 @reexport using DataFrames
 
 # Basics:
-export @with, @where, @orderby, @transform, @by, @based_on, @select
+export @with, @where, @orderby, @transform, @by, @combine, @select,
+       @byrow, @byrow!, @based_on # deprecated
 
 include("linqmacro.jl")
-include("byrow.jl")
+include("eachrow.jl")
 
 
 ##############################################################################
@@ -97,7 +98,7 @@ macro col(kw)
 end
 
 # `nolhs` needs to be `true` when we have syntax of the form
-# `@based_on(gd, fun(:x, :y))` where `fun` returns a `table` object.
+# `@combine(gd, fun(:x, :y))` where `fun` returns a `table` object.
 # We don't create the "new name" pair because new names are given
 # by the table.
 function fun_to_vec(kw::Expr; nolhs::Bool = false, gensym_names::Bool = false)
@@ -570,11 +571,13 @@ end
 
 ##############################################################################
 ##
-## @based_on - summarize a grouping operation
+## @combine - summarize a grouping operation
 ##
 ##############################################################################
 
-function based_on_helper(x, args...)
+function combine_helper(x, args...; deprecation_warning = false)
+    deprecation_warning && @warn "`@based_on` is deprecated. Use `@combine` instead."
+
     # Only allow one argument when returning a Table object
     if length(args) == 1 &&
         !(first(args) isa QuoteNode) &&
@@ -593,7 +596,7 @@ function based_on_helper(x, args...)
 end
 
 """
-    @based_on(g, i...)
+    @combine(g, i...)
 
 Summarize a grouping operation
 
@@ -613,7 +616,7 @@ julia> d = DataFrame(
 
 julia> g = groupby(d, :x);
 
-julia> @based_on(g, nsum = sum(:n))
+julia> @combine(g, nsum = sum(:n))
 3×2 DataFrame
 │ Row │ x │ nsum │
 ├─────┼───┼──────┤
@@ -621,7 +624,7 @@ julia> @based_on(g, nsum = sum(:n))
 │ 2   │ 2 │ 84   │
 │ 3   │ 3 │ 27   │
 
-julia> @based_on(g, x2 = 2 * :x, nsum = sum(:n))
+julia> @combine(g, x2 = 2 * :x, nsum = sum(:n))
 20×3 DataFrame
 │ Row │ x │ x2 │ nsum │
 ├─────┼───┼────┼──────┤
@@ -645,10 +648,19 @@ julia> @based_on(g, x2 = 2 * :x, nsum = sum(:n))
 │ 20  │ 3 │ 6  │ 27   │
 ```
 """
-macro based_on(x, args...)
-    esc(based_on_helper(x, args...))
+macro combine(x, args...)
+    esc(combine_helper(x, args...))
 end
 
+
+"""
+    @based_on(d, args...)
+
+Deprecated version of `@combine`, see: [`@combine`](@ref)
+"""
+macro based_on(x, args...)
+    esc(combine_helper(x, args...; deprecation_warning = true))
+end
 
 ##############################################################################
 ##

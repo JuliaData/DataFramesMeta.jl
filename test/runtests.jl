@@ -3,10 +3,11 @@ anyerrors = false
 quiet = false
 
 my_tests = ["dataframes.jl",
-            "byrow.jl",
+            "eachrow.jl",
             "grouping.jl",
             "chaining.jl",
-            "linqmacro.jl"]
+            "linqmacro.jl",
+            "deprecated.jl"]
 
 println("Running tests:")
 

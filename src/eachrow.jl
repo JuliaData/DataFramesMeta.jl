@@ -1,16 +1,16 @@
 
-export @byrow!
-export @byrow
+export @eachrow!
+export @eachrow
 
 ##############################################################################
 ##
-## @byrow
+## @eachrow
 ##
 ##############################################################################
 
 # Recursive function that traverses the syntax tree of e, replaces instances of
 # ":(:(x))" with ":x[row]".
-function byrow_replace(e::Expr)
+function eachrow_replace(e::Expr)
     # Traverse the syntax tree of e
     if onearg(e, :cols)
         # cols(:x) becomes cols(:x)[row]
@@ -26,16 +26,16 @@ function byrow_replace(e::Expr)
         end
     end
 
-    Expr(e.head, (isempty(e.args) ? e.args : map(byrow_replace, e.args))...)
+    Expr(e.head, (isempty(e.args) ? e.args : map(eachrow_replace, e.args))...)
 end
 
-byrow_replace(e::QuoteNode) = Expr(:ref, e, :row)
+eachrow_replace(e::QuoteNode) = Expr(:ref, e, :row)
 
 # Set the base case for helper, i.e. for when expand hits an object of type
 # other than Expr (generally a Symbol or a literal).
-byrow_replace(x) = x
+eachrow_replace(x) = x
 
-function byrow_find_newcols(e::Expr, newcol_decl)
+function eachrow_find_newcols(e::Expr, newcol_decl)
     if e.head == :macrocall && e.args[1] == Symbol("@newcol")
         ea = e.args[3]
         # expression to assign a new column to df
@@ -46,7 +46,7 @@ function byrow_find_newcols(e::Expr, newcol_decl)
         end
         newargs = Any[]
         for ea in e.args
-            (nea, newcol) = byrow_find_newcols(ea, newcol_decl)
+            (nea, newcol) = eachrow_find_newcols(ea, newcol_decl)
             nea != nothing && push!(newargs, nea)
             nea == nothing && length(newcol) > 0 && append!(newcol_decl, newcol)
         end
@@ -54,20 +54,20 @@ function byrow_find_newcols(e::Expr, newcol_decl)
     end
 end
 
-byrow_find_newcols(x, newcol_decl) = (x, Any[])
+eachrow_find_newcols(x, newcol_decl) = (x, Any[])
 
-function byrow_helper(df, body, deprecation_warning)
-    # @deprecate cannot be used because byrow is a macro, and the @warn should not be in
-    # byrow itself because then it will be displayed when the macro is evaluated.
-    deprecation_warning && @warn "`@byrow!` is deprecated, use `@byrow` instead."
-    e_body, e_newcols = byrow_find_newcols(body, Any[])
+function eachrow_helper(df, body, deprecation_warning)
+    # @deprecate cannot be used because eachrow is a macro, and the @warn should not be in
+    # eachrow itself because then it will be displayed when the macro is evaluated.
+    deprecation_warning && @warn "`@byrow!` and `@byrow` are deprecated, use `@eachrow` instead."
+    e_body, e_newcols = eachrow_find_newcols(body, Any[])
     _df = gensym()
     quote
         let $_df = $df
             local _N = nrow($_df)
             local _DF = @transform($_df, $(e_newcols...))
             $(with_helper(:_DF, :(for row = 1:_N
-                $(byrow_replace(e_body))
+                $(eachrow_replace(e_body))
             end)))
             _DF
         end
@@ -77,36 +77,53 @@ end
 """
     @byrow!(d, expr)
 
-Deprecated version of `@byrow`, see: [`@byrow`](@ref)
+Deprecated version of `@eachrow`, see: [`@eachrow`](@ref)
 
 Acts the exact same way. It does not change the input argument `d` in-place.
 """
 macro byrow!(df, body)
-    esc(byrow_helper(df, body, true))
+    esc(eachrow_helper(df, body, true))
 end
 
 """
     @byrow(d, expr)
 
-Act on a DataFrame row-by-row.
+Deprecated version of `@eachrow`, see: [`@eachrow`](@ref)
+
+Acts the exact same way.
+"""
+macro byrow(df, body)
+    esc(eachrow_helper(df, body, true))
+end
+
+"""
+    @eachrow(d, expr)
+
+Act on each row of a data frame, similar to
+
+```
+for row in eachrow(df)
+    ...
+end
+```
 
 Includes support for control flow and `begin end` blocks. Since the
-"environment" induced by `@byrow df` is implicitly a single row of `df`,
+"environment" induced by `@eachrow df` is implicitly a single row of `df`,
 use regular operators and comparisons instead of their elementwise counterparts
-as in `@with`. Note that the scope within `@byrow` is a hard scope.
+as in `@with`. Note that the scope within `@eachrow` is a hard scope.
 
-`byrow` also supports special syntax for allocating new columns. The syntax
+`eachrow` also supports special syntax for allocating new columns. The syntax
 `@newcol x::Array{Int}` allocates a new column `:x` with an `Array` container
-with eltype `Int`.This feature makes it easier to use `byrow` for data
+with eltype `Int`.This feature makes it easier to use `eachrow` for data
 transformations. `_N` is introduced to represent the length of the dataframe,
 `_D` represents the `dataframe` including added columns, and `row` represents
 the index of the current row.
 
 Changes to the rows do not affect `d` but instead a freshly allocated data frame is returned
-by `@byrow`. Also note that the returned data frame does not share columns
+by `@eachrow`. Also note that the returned data frame does not share columns
 with `d`.
 
-Like with `@transform`, `@byrow` supports the use of `cols` to work with column names
+Like with `@transform`, `@eachrow` supports the use of `cols` to work with column names
 stored as variables. Using `cols` with a multi-column selector, such as a `Vector` of
 `Symbol`s, is currently unsupported.
 
@@ -127,7 +144,7 @@ julia> using DataFrames, DataFramesMeta
 julia> df = DataFrame(A = 1:3, B = [2, 1, 2]);
 
 julia> let x = 0
-            @byrow df begin
+            @eachrow df begin
                 if :A + :B == 3
                     x += 1
                 end
@@ -136,7 +153,7 @@ julia> let x = 0
         end
 2
 
-julia> @byrow df begin
+julia> @eachrow df begin
             if :A > :B
                 :A = 0
             end
@@ -148,7 +165,7 @@ julia> @byrow df begin
 │ 2   │ 0 │ 1 │
 │ 3   │ 0 │ 2 │
 
-julia> df2 = @byrow df begin
+julia> df2 = @eachrow df begin
            @newcol colX::Array{Float64}
            :colX = :B == 2 ? pi * :A : :B
        end
@@ -161,7 +178,7 @@ julia> df2 = @byrow df begin
 
 julia> varA = :A; varB = :B;
 
-julia> df2 = @byrow df begin
+julia> df2 = @eachrow df begin
            @newcol colX::Array{Float64}
            :colX = cols(varB) == 2 ? pi * cols(varA) : cols(varB)
        end
@@ -174,6 +191,6 @@ julia> df2 = @byrow df begin
 ```
 
 """
-macro byrow(df, body)
-    esc(byrow_helper(df, body, false))
+macro eachrow(df, body)
+    esc(eachrow_helper(df, body, false))
 end

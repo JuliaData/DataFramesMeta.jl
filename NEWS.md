@@ -8,5 +8,7 @@
 * Restrictions are imposed on the types of column references allowed when using `cols`. 
   Mixing integer column references with other types now errors. ([#183])
 * `@where` with a grouped data frame will now perform operations by group and filter
-  rows in the parent `DataFrame`. The operation no longer filters groups. Returns a 
+  rows in the parent `AbstractDataFrame`. The operation no longer filters groups. Returns a 
   fresh `DataFrame`.
+ * `@based_on` has been renamed to `@combine`
+ * `@byrow` has been renamed to `@eachrow`

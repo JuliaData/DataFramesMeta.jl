@@ -11,9 +11,9 @@ const ≅ = isequal
 d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 2, 2, 3, 1, 1, 2])
 g = groupby(d, :x, sort=true)
 
-@test @based_on(g, nsum = sum(:n)).nsum == [99, 84, 27]
+@test @combine(g, nsum = sum(:n)).nsum == [99, 84, 27]
 
-@testset "@based_on" begin
+@testset "@combine" begin
     df = DataFrame(
         g = [1, 1, 1, 2, 2],
         i = 1:5,
@@ -42,46 +42,46 @@ g = groupby(d, :x, sort=true)
     n_sym = :new_column
     n_space = "new column"
 
-    @test @based_on(gd, n = mean(:i)).n == [2.0, 4.5]
-    @test @based_on(gd, n = mean(:i) + mean(:g)).n == [3.0, 6.5]
-    @test @based_on(gd, n = first(:t .* string.(:y))).n == ["av", "cy"]
-    @test @based_on(gd, n = first(Symbol.(:y, ^(:t)))).n == [:vt, :yt]
-    @test @based_on(gd, n = first(Symbol.(:y, ^(:body)))).n == [:vbody, :ybody]
-    @test @based_on(gd, body = :i).body == df.i
-    @test @based_on(gd, transform = :i).transform == df.i
-    @test @based_on(gd, (n1 = [first(:i)], n2 = [first(:y)])).n1 == [1, 4]
+    @test @combine(gd, n = mean(:i)).n == [2.0, 4.5]
+    @test @combine(gd, n = mean(:i) + mean(:g)).n == [3.0, 6.5]
+    @test @combine(gd, n = first(:t .* string.(:y))).n == ["av", "cy"]
+    @test @combine(gd, n = first(Symbol.(:y, ^(:t)))).n == [:vt, :yt]
+    @test @combine(gd, n = first(Symbol.(:y, ^(:body)))).n == [:vbody, :ybody]
+    @test @combine(gd, body = :i).body == df.i
+    @test @combine(gd, transform = :i).transform == df.i
+    @test @combine(gd, (n1 = [first(:i)], n2 = [first(:y)])).n1 == [1, 4]
 
-    @test @based_on(gd, n = mean(cols(iq))).n == [2.0, 4.5]
-    @test @based_on(gd, n = mean(cols(iq)) + mean(cols(gq))).n == [3.0, 6.5]
-    @test @based_on(gd, n = first(cols(tq) .* string.(cols(yq)))).n == ["av", "cy"]
-    @test @based_on(gd, n = first(Symbol.(cols(yq), ^(:t)))).n == [:vt, :yt]
-    @test @based_on(gd, n = first(Symbol.(cols(yq), ^(:body)))).n == [:vbody, :ybody]
-    @test @based_on(gd, body = cols(iq)).body == df.i
-    @test @based_on(gd, transform = cols(iq)).transform == df.i
-    @test @based_on(gd, (n1 = [first(cols(iq))], n2 = [first(cols(yq))])).n1 == [1, 4]
+    @test @combine(gd, n = mean(cols(iq))).n == [2.0, 4.5]
+    @test @combine(gd, n = mean(cols(iq)) + mean(cols(gq))).n == [3.0, 6.5]
+    @test @combine(gd, n = first(cols(tq) .* string.(cols(yq)))).n == ["av", "cy"]
+    @test @combine(gd, n = first(Symbol.(cols(yq), ^(:t)))).n == [:vt, :yt]
+    @test @combine(gd, n = first(Symbol.(cols(yq), ^(:body)))).n == [:vbody, :ybody]
+    @test @combine(gd, body = cols(iq)).body == df.i
+    @test @combine(gd, transform = cols(iq)).transform == df.i
+    @test @combine(gd, (n1 = [first(cols(iq))], n2 = [first(cols(yq))])).n1 == [1, 4]
 
-    @test @based_on(gd, n = mean(cols(ir))).n == [2.0, 4.5]
-    @test @based_on(gd, n = mean(cols(ir)) + mean(cols(gr))).n == [3.0, 6.5]
-    @test @based_on(gd, n = first(cols(tr) .* string.(cols(yr)))).n == ["av", "cy"]
-    @test @based_on(gd, n = first(Symbol.(cols(yr), ^(:t)))).n == [:vt, :yt]
-    @test @based_on(gd, n = first(Symbol.(cols(yr), ^(:body)))).n == [:vbody, :ybody]
-    @test @based_on(gd, body = cols(ir)).body == df.i
-    @test @based_on(gd, transform = cols(ir)).transform == df.i
-    @test @based_on(gd, (n1 = [first(cols(ir))], n2 = [first(cols(yr))])).n1 == [1, 4]
-    @test @based_on(gd, n = mean(cols("i")) + 0 * first(cols(:g))).n == [2.0, 4.5]
-    @test @based_on(gd, n = mean(cols(2)) + first(cols(1))).n == [3.0, 6.5]
+    @test @combine(gd, n = mean(cols(ir))).n == [2.0, 4.5]
+    @test @combine(gd, n = mean(cols(ir)) + mean(cols(gr))).n == [3.0, 6.5]
+    @test @combine(gd, n = first(cols(tr) .* string.(cols(yr)))).n == ["av", "cy"]
+    @test @combine(gd, n = first(Symbol.(cols(yr), ^(:t)))).n == [:vt, :yt]
+    @test @combine(gd, n = first(Symbol.(cols(yr), ^(:body)))).n == [:vbody, :ybody]
+    @test @combine(gd, body = cols(ir)).body == df.i
+    @test @combine(gd, transform = cols(ir)).transform == df.i
+    @test @combine(gd, (n1 = [first(cols(ir))], n2 = [first(cols(yr))])).n1 == [1, 4]
+    @test @combine(gd, n = mean(cols("i")) + 0 * first(cols(:g))).n == [2.0, 4.5]
+    @test @combine(gd, n = mean(cols(2)) + first(cols(1))).n == [3.0, 6.5]
 
 
-    @test @based_on(gd, :i) == select(df, :g, :i)
-    @test @based_on(gd, :i, :g) ≅ select(df, :g, :i)
+    @test @combine(gd, :i) == select(df, :g, :i)
+    @test @combine(gd, :i, :g) ≅ select(df, :g, :i)
 
-    @test @based_on(gd, :i, n = 1).n == fill(1, nrow(df))
+    @test @combine(gd, :i, n = 1).n == fill(1, nrow(df))
 
-    @test @based_on(gd, cols("new_column") = 2).new_column == [2, 2]
-    @test @based_on(gd, cols(n_str) = 2).new_column == [2, 2]
-    @test @based_on(gd, cols(n_sym) = 2).new_column == [2, 2]
-    @test @based_on(gd, cols(n_space) = 2)."new column" == [2, 2]
-    @test @based_on(gd, cols("new" * "_" * "column") = 2)."new_column" == [2, 2]
+    @test @combine(gd, cols("new_column") = 2).new_column == [2, 2]
+    @test @combine(gd, cols(n_str) = 2).new_column == [2, 2]
+    @test @combine(gd, cols(n_sym) = 2).new_column == [2, 2]
+    @test @combine(gd, cols(n_space) = 2)."new column" == [2, 2]
+    @test @combine(gd, cols("new" * "_" * "column") = 2)."new_column" == [2, 2]
 end
 
 # Defined outside of `@testset` due to use of `@eval`
@@ -111,16 +111,16 @@ gd = groupby(df, :g)
 
 newvar = :n
 
-@testset "Limits of @based_on" begin
-    t = @based_on(gd, [:i, :g]).i_g_function
+@testset "Limits of @combine" begin
+    t = @combine(gd, [:i, :g])[!, 2]
     @test t == [[1, 2, 3], [1, 1, 1], [4, 5], [2, 2]]
     @test t isa Vector{SubArray{Int64,1,Array{Int64,1},Tuple{Array{Int64,1}},false}}
-    @test @based_on(gd, All()).function isa Vector{<:All}
-    @test @based_on(gd, Not(:i)).i_function isa Vector{<:InvertedIndex}
-    @test @based_on(gd, Not([:i, :g])).g == [1, 2]
-    @test_throws MethodError @eval @based_on(gd, n = sum(Between(:i, :t)))
-    @test_throws LoadError @eval @based_on(gd; n = mean(:i))
-    @test_throws ArgumentError @eval @based_on(gd, n = mean(:i) + mean(cols(1)))
+    @test @combine(gd, All()).function isa Vector{<:All}
+    @test @combine(gd, Not(:i)).i_function isa Vector{<:InvertedIndex}
+    @test @combine(gd, Not([:i, :g])).g == [1, 2]
+    @test_throws MethodError @eval @combine(gd, n = sum(Between(:i, :t)))
+    @test_throws LoadError @eval @combine(gd; n = mean(:i))
+    @test_throws ArgumentError @eval @combine(gd, n = mean(:i) + mean(cols(1)))
 end
 
 @testset "@by" begin
@@ -222,7 +222,7 @@ gd = groupby(df, :g)
 newvar = :n
 
 @testset "limits of @by" begin
-    t = @by(df, :g, [:i, :g]).i_g_function
+    t = @by(df, :g, [:i, :g])[!, 2]
     @test t == [[1, 2, 3], [1, 1, 1], [4, 5], [2, 2]]
     @test t isa Vector{SubArray{Int64,1,Array{Int64,1},Tuple{Array{Int64,1}},false}}
     @test @by(df, :g, All()).function isa Vector{<:All}
