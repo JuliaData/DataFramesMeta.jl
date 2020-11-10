@@ -596,14 +596,14 @@ function combine_helper(x, args...; deprecation_warning = false)
 end
 
 """
-    @combine(g, i...)
+    @combine(x, args...)
 
 Summarize a grouping operation
 
 ### Arguments
 
 * `g` : a GroupedDataFrame
-* `i...` : keyword arguments defining new columns
+* `args...` : keyword arguments defining new columns
 
 ### Examples
 

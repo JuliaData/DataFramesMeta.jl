@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Introduction · DataFramesMeta Documentation</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="assets/documenter.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit">DataFramesMeta Documentation</span></div><form class="docs-search" action="search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li class="is-active"><a class="tocitem" href>Introduction</a><ul class="internal"><li class="toplevel"><a class="tocitem" href="#Provided-macros"><span>Provided macros</span></a></li><li><a class="tocitem" href="#@select"><span><code>@select</code></span></a></li><li><a class="tocitem" href="#@transform"><span><code>@transform</code></span></a></li><li><a class="tocitem" href="#@where"><span><code>@where</code></span></a></li><li><a class="tocitem" href="#@combine"><span><code>@combine</code></span></a></li><li><a class="tocitem" href="#@orderby"><span><code>@orderby</code></span></a></li><li><a class="tocitem" href="#@with"><span><code>@with</code></span></a></li><li><a class="tocitem" href="#@eachrow"><span><code>@eachrow</code></span></a></li><li><a class="tocitem" href="#Working-with-column-names-programmatically-with-cols"><span>Working with column names programmatically with <code>cols</code></span></a></li><li><a class="tocitem" href="#LINQ-Style-Queries-and-Transforms"><span>LINQ-Style Queries and Transforms</span></a></li><li><a class="tocitem" href="#@linq-and-other-chaining-macros"><span><code>@linq</code> and other chaining macros</span></a></li><li class="toplevel"><a class="tocitem" href="#Package-Maintenance"><span>Package Maintenance</span></a></li></ul></li><li><a class="tocitem" href="api/api/">API</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Introduction</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Introduction</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/JuliaData/DataFramesMeta.jl/blob/master/docs/src/index.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Introduction"><a class="docs-heading-anchor" href="#Introduction">Introduction</a><a id="Introduction-1"></a><a class="docs-heading-anchor-permalink" href="#Introduction" title="Permalink"></a></h1><p>Metaprogramming tools for DataFrames.jl objects. These macros improve performance and provide more convenient syntax.</p><p>DataFrames.jl has the functions <code>select</code>, <code>transform</code>, and <code>combine</code>  for manipulating data frames. DataFramesMeta provides the macros  <code>@select</code>, <code>@transform</code>, and <code>@combine</code> to mirror these functions with  more convenient syntax. Inspired by <a href="https://dplyr.tidyverse.org/">dplyr</a> in R  and <a href="https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/linq/">LINQ</a> in C#. </p><p>In addition, DataFramesMeta provides </p><ul><li><code>@orderby</code>, for sorting data frames</li><li><code>@where</code>, for keeping rows of a DataFrame matching a given condition</li><li><code>@by</code>, for grouping and combining a data frame in a single step</li><li><code>@with</code>, for working with the columns of a data frame with high performance and  convenient syntax</li><li><code>@eachrow</code>, for looping through rows in data frame, again with high performance and  convenient syntax. </li><li><code>@linq</code>, for piping the above macros together, similar to <a href="https://cran.r-project.org/web/packages/magrittr/vignettes/magrittr.html">magrittr</a>&#39;s <code>%&gt;%</code> in R. </li></ul><p>To reference columns inside DataFramesMeta macros, use <code>Symbol</code>s. For example, use <code>:x</code> to refer to the column <code>df.x</code>. To use a variable <code>varname</code> representing a <code>Symbol</code> to refer to  a column, use the syntax <code>cols(varname)</code>. </p><p>Use <code>passmissing</code>  to propagate <code>missing</code> values more easily. See <code>?passmissing</code> for  details. <code>passmissing</code> is defined in <a href="https://github.com/JuliaData/Missings.jl">Missings.jl</a> but exported by DataFramesMeta for convenience. </p><h1 id="Provided-macros"><a class="docs-heading-anchor" href="#Provided-macros">Provided macros</a><a id="Provided-macros-1"></a><a class="docs-heading-anchor-permalink" href="#Provided-macros" title="Permalink"></a></h1><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>Newer versions of DataFrames.jl support the operators <code>Between</code>, <code>All</code>, <code>Cols</code>, and <code>Not</code> when selecting and transforming columns. DataFramesMeta.jl does not currently support this syntax. </p></div></div><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>To refer to <code>Symbol</code>s without aliasing the column in a data frame, use <code>^</code>. </p><pre><code class="language-none">df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+@select(df, :x2 = :x, :x3 = ^(:x))</code></pre><p>This rule applies to all DataFramesMeta macros.</p></div></div><h2 id="@select"><a class="docs-heading-anchor" href="#@select"><code>@select</code></a><a id="@select-1"></a><a class="docs-heading-anchor-permalink" href="#@select" title="Permalink"></a></h2><p>Column selections and transformations. Only newly created columns are kept.  Operates on both a <code>DataFrame</code> and a <code>GroupedDataFrame</code>. </p><p>When given a <code>GroupedDataFrame</code>, performs a transformation by group and then  if necessary repeats the result to have as many rows as the input  data frame. </p><pre><code class="language-julia">df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+gd = groupby(df, :x);
+@select(df, :x, :y)
+@select(df, x2 = 2 * :x, :y)
+@select(gd, x2 = 2 .* :y .* first(:y))</code></pre><h2 id="@transform"><a class="docs-heading-anchor" href="#@transform"><code>@transform</code></a><a id="@transform-1"></a><a class="docs-heading-anchor-permalink" href="#@transform" title="Permalink"></a></h2><p>Add additional columns based on keyword arguments. Operates on both a  <code>DataFrame</code> and a <code>GroupedDataFrame</code>. </p><p>When given a <code>GroupedDataFrame</code>, performs a transformation by group and then  if necessary repeats the result to have as many rows as the input  data frame. </p><pre><code class="language-julia">df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+gd = groupby(df, :x);
+@transform(df, :x, :y)
+@transform(df, x2 = 2 * :x, :y)
+@transform(gd, x2 = 2 .* :y .* first(:y))</code></pre><h2 id="@where"><a class="docs-heading-anchor" href="#@where"><code>@where</code></a><a id="@where-1"></a><a class="docs-heading-anchor-permalink" href="#@where" title="Permalink"></a></h2><p>Select row subsets. Operates on both a <code>DataFrame</code> and a <code>GroupedDataFrame</code>. </p><pre><code class="language-julia">df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+gd = groupby(df, :x);
+outside_var = 1;
+@where(df, :x .&gt; 1)
+@where(df, :x .&gt; outside_var)
+@where(df, :x .&gt; outside_var, :y .&lt; 102)  # the two expressions are &quot;and-ed&quot;
+@where(gd, :x .&gt; mean(:x))</code></pre><h2 id="@combine"><a class="docs-heading-anchor" href="#@combine"><code>@combine</code></a><a id="@combine-1"></a><a class="docs-heading-anchor-permalink" href="#@combine" title="Permalink"></a></h2><p>Summarize, or collapse, a grouped data frame by performing transformations at the group level and  collecting the result into a single data frame. Also works on a <code>DataFrame</code>, which  acts like a <code>GroupedDataFrame</code> with one group. </p><p>Examples:</p><pre><code class="language-julia">df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+gd = groupby(df, :x);
+@combine(gd, x2 = sum(:y))
+@combine(gd, x2 = :y .- sum(:y))
+@combine(gd, (n1 = sum(:y), n2 = first(:y)))</code></pre><p>Requires a <code>DataFrame</code> or <code>GroupedDataFrame</code> as the first argument, unlike  <code>combine</code> from DataFrames.jl. For instance, <code>@combine((a = sum(:x), b = sum(:y)), gd)</code>  will fail because <code>@combine</code> requires a <code>GroupedDataFrame</code> or a <code>DataFrame</code>  as the first argument. The following, however, will work.</p><pre><code class="language-none">df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+gd = groupby(df, :x);
+@combine(gd, (a = sum(:x), b = sum(:y)))</code></pre><p>For arguments which return a table-like object, such as <code>(a = sum(:x), b = sum(:y))</code>, above, <code>@combine</code> only allows <em>one</em> argument and it must be the <em>second</em> positional argument.  Consider the call </p><pre><code class="language-none">@combine(gd, (a = sum(:x), b = sum(:y)), c = first(:x))</code></pre><p>the above will fail because <code>@combine</code> does not accept a &quot;keyword argument&quot;-style column  creation after a &quot;return a table&quot;-style column creation call. </p><h2 id="@orderby"><a class="docs-heading-anchor" href="#@orderby"><code>@orderby</code></a><a id="@orderby-1"></a><a class="docs-heading-anchor-permalink" href="#@orderby" title="Permalink"></a></h2><p>Sort rows in a <code>DataFrame</code> by values in one of several columns or a  transformation of columns. Only operates on <code>DataFrame</code>s and not <code>GroupedDataFrame</code>s. </p><pre><code class="language-julia">df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+@orderby(df, -1 .* :x)
+@orderby(df, :x, :y .- mean(:y))</code></pre><h2 id="@with"><a class="docs-heading-anchor" href="#@with"><code>@with</code></a><a id="@with-1"></a><a class="docs-heading-anchor-permalink" href="#@with" title="Permalink"></a></h2><p><code>@with</code> creates a scope in which all symbols that appear are aliases for the columns in a DataFrame. </p><pre><code class="language-julia">df = DataFrame(x = 1:3, y = [2, 1, 2])
+x = [2, 1, 0]
+
+@with(df, :y .+ 1)
+@with(df, :x + x)  # the two x&#39;s are different
+
+x = @with df begin
+    res = 0.0
+    for i in 1:length(:x)
+        res += :x[i] * :y[i]
+    end
+    res
+end
+
+@with(df, df[:x .&gt; 1, ^(:y)]) # The ^ means leave the :y alone
+</code></pre><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p><code>@with</code> creates a function, so scope within <code>@with</code> is a local scope. Variables in the parent can be read. Writing to variables in the parent scope differs depending on the type of scope of the parent. If the parent scope is a global scope, then a variable cannot be assigned without using the <code>global</code> keyword. If the parent scope is a local scope (inside a function or let block for example), the <code>global</code> keyword is not needed to assign to that parent scope.</p></div></div><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>Because <code>@with</code> creates a function, be careful with the use of <code>return</code>. </p><pre><code class="language-none">function data_transform(df; returnearly = false)
+    if returnearly
+        @with df begin 
+            z = :x + :y
+            return z
+        end
+    else 
+        return [1, 2, 3]
+    end
+
+    return [4, 5, 6]
+end</code></pre><p>The above function will return <code>[4, 5, 6]</code> because the <code>return</code> inside the <code>@with</code> applies to the anonymous function created by <code>@with</code>. </p><p>Given that <code>@eachrow</code> (below) is implemented with <code>@with</code>, the same caveat applies to  <code>@eachrow</code> blocks. </p></div></div><h2 id="@eachrow"><a class="docs-heading-anchor" href="#@eachrow"><code>@eachrow</code></a><a id="@eachrow-1"></a><a class="docs-heading-anchor-permalink" href="#@eachrow" title="Permalink"></a></h2><p>Act on each row of a data frame. Includes support for control flow and <code>begin end</code> blocks. Since the &quot;environment&quot; induced by <code>@eachrow df</code> is implicitly a single row of <code>df</code>, one uses regular operators and comparisons instead of their elementwise counterparts as in <code>@with</code>. Does not change the input data frame argument.</p><pre><code class="language-julia">df = DataFrame(A = 1:3, B = [2, 1, 2])
+df2 = @eachrow df begin 
+    :A = :B + 1
+end</code></pre><p><code>@eachrow</code> introduces a function scope, so a <code>let</code> block is required here to create  a scope to allow assignment of variables within <code>@eachrow</code>. </p><pre><code class="language-julia">df = DataFrame(A = 1:3, B = [2, 1, 2])
+let x = 0.0
+    @eachrow df begin
+        if :A &lt; :B
+            x += :B * :C
+        end
+    end
+    x
+end</code></pre><p><code>@eachrow</code> also supports special syntax for allocating new columns to make <code>@eachrow</code> more useful for data transformations. The syntax <code>@newcol x::Array{Int}</code> allocates a new column <code>:x</code> with an <code>Array</code> container with eltype <code>Int</code>. Here is an example where two new columns are added:</p><pre><code class="language-julia">df = DataFrame(A = 1:3, B = [2, 1, 2])
+df2 = @eachrow df begin
+    @newcol colX::Array{Float64}
+    @newcol colY::Array{Union{Int,Missing}}
+    :colX = :B == 2 ? pi * :A : :B
+    if :A &gt; 1
+        :colY = :A * :B
+    else
+        :colY = Missing
+    end
+end</code></pre><h2 id="Working-with-column-names-programmatically-with-cols"><a class="docs-heading-anchor" href="#Working-with-column-names-programmatically-with-cols">Working with column names programmatically with <code>cols</code></a><a id="Working-with-column-names-programmatically-with-cols-1"></a><a class="docs-heading-anchor-permalink" href="#Working-with-column-names-programmatically-with-cols" title="Permalink"></a></h2><p>DataFramesMeta.jl provides the special syntax <code>cols</code> for referring to  columns in a data frame via a <code>Symbol</code>, string, or column position as either a literal or a variable. </p><pre><code class="language-julia">df = DataFrame(A = 1:3, B = [2, 1, 2])
+
+nameA = :A
+df2 = @transform(df, C = :B - cols(nameA))
+
+nameA_string = &quot;A&quot;
+df3 = @transform(df, C = :B - cols(nameA_string))
+
+nameB = &quot;B&quot;
+df4 = @eachrow df begin 
+    :A = cols(nameB)
+end</code></pre><p><code>cols</code> can also be used to create new columns in a data frame. </p><pre><code class="language-julia">df = DataFrame(A = 1:3, B = [2, 1, 2])
+
+newcol = &quot;C&quot;
+@select(df, cols(newcol) = :A + :B)
+
+@by(df, :B, cols(&quot;A complicated&quot; * &quot; new name&quot;) = first(:A))
+
+nameC = &quot;C&quot;
+df3 = @eachrow df begin 
+    @newcol cols(nameC)::Vector{Int}
+    cols(nameC) = :A
+end</code></pre><p>DataFramesMeta macros do not allow mixing of integer column references with references  of other types. This means <code>@transform(df, y = :A + cols(2))</code>, attempting to add the columns  <code>df[!, :A]</code> and <code>df[!, 2]</code>, will fail. This is because in DataFrames, the command </p><pre><code class="language-julia">transform(df, [:A, 2] =&gt; (+) =&gt; :y)</code></pre><p>will fail, as DataFrames requires the &quot;source&quot; column identifiers in a  <code>source =&gt; fun =&gt; dest</code> pair to all have the same type. DataFramesMeta adds one exception to this rule. <code>Symbol</code>s and strings are allowed to be mixed inside DataFramesMeta macros.  Consequently, </p><pre><code class="language-none">@transform(df, y = :A + cols(&quot;B&quot;))</code></pre><p>will not error even though </p><pre><code class="language-none">transform(df, [:A, &quot;B&quot;] =&gt; (+) =&gt; :y)</code></pre><p>will error in DataFrames. </p><p>For consistency, this restriction in the input column types also applies to <code>@with</code> and <code>@eachrow</code>. You cannot mix integer column references with <code>Symbol</code> or string column  references in <code>@with</code> and <code>@eachrow</code> in any part of the expression, but you can mix  <code>Symbol</code>s and strings. The following will fail:</p><pre><code class="language-julia">df = DataFrame(A = 1:3, B = [2, 1, 2])
+@eachrow df begin 
+    :A = cols(2)
+end
+
+@with df begin 
+    cols(1) + cols(&quot;A&quot;)
+end</code></pre><p>while the following will work without error</p><pre><code class="language-julia">@eachrow df begin 
+    cols(1) = cols(2)
+end
+
+@with df begin 
+    cols(1) + cols(2)
+end</code></pre><p>Note that <code>cols</code> is <em>not</em> a standard Julia function. It is only used to modify the  way that macros in DataFramesMeta.jl escape arguments and has no behavior of its own  outside of DataFramesMeta macros.</p><h2 id="LINQ-Style-Queries-and-Transforms"><a class="docs-heading-anchor" href="#LINQ-Style-Queries-and-Transforms">LINQ-Style Queries and Transforms</a><a id="LINQ-Style-Queries-and-Transforms-1"></a><a class="docs-heading-anchor-permalink" href="#LINQ-Style-Queries-and-Transforms" title="Permalink"></a></h2><p>A number of functions for operations on DataFrames have been defined. Here is a table of equivalents for Hadley&#39;s <a href="https://github.com/hadley/dplyr">dplyr</a> and common <a href="http://en.wikipedia.org/wiki/Language_Integrated_Query">LINQ</a> functions.</p><pre><code class="language-none">Julia             dplyr            LINQ
+---------------------------------------------
+@where            filter           Where
+@transform        mutate           Select (?)
+@by                                GroupBy
+groupby           group_by         GroupBy
+@combine          summarise/do
+@orderby          arrange          OrderBy
+@select           select           Select</code></pre><h2 id="@linq-and-other-chaining-macros"><a class="docs-heading-anchor" href="#@linq-and-other-chaining-macros"><code>@linq</code> and other chaining macros</a><a id="@linq-and-other-chaining-macros-1"></a><a class="docs-heading-anchor-permalink" href="#@linq-and-other-chaining-macros" title="Permalink"></a></h2><p>There is also a <code>@linq</code> macro that supports chaining and all of the functionality defined in other macros. Here is an example of <code>@linq</code>:</p><pre><code class="language-julia">df = DataFrame(a = repeat(1:5, outer = 20),
+               b = repeat([&quot;a&quot;, &quot;b&quot;, &quot;c&quot;, &quot;d&quot;], inner = 25),
+               x = repeat(1:20, inner = 5))
+
+x_thread = @linq df |&gt;
+    transform(y = 10 * :x) |&gt;
+    where(:a .&gt; 2) |&gt;
+    by(:b, meanX = mean(:x), meanY = mean(:y)) |&gt;
+    orderby(:meanX) |&gt;
+    select(:meanX, :meanY, var = :b)</code></pre><p>Relative to the use of individual macros, chaining looks cleaner and more obvious with less noise from <code>@</code> symbols. This approach also avoids filling up the limited macro name space. The main downside is that more magic happens under the hood.</p><p>This method is extensible. Here is a comparison of the macro and <code>@linq</code> versions of <code>with</code>.</p><pre><code class="language-julia">function linq(::DataFramesMeta.SymbolParameter{:with}, d, body)
+    with_helper(d, body)
+end
+
+df = DataFrame(A = 1:3, B = [2, 1, 2])
+
+@linq df |&gt;
+    with(:A .* :B)</code></pre><p>The <code>linq</code> method above registers the expression-replacement method defined for all <code>with()</code> calls. It should return an expression like a macro.</p><p>Again, this is experimental. Based on feedback, we may decide to only use <code>@linq</code> or only support the set of linq-like macros.</p><p>Alternatively you can use Lazy.jl <code>@&gt;</code> macro like this:</p><pre><code class="language-julia">using Lazy: @&gt;
+
+df = DataFrame(a = repeat(1:5, outer = 20),
+               b = repeat([&quot;a&quot;, &quot;b&quot;, &quot;c&quot;, &quot;d&quot;], inner = 25),
+               x = repeat(1:20, inner = 5))
+
+x_thread = @&gt; begin
+    df
+    @transform(y = 10 * :x)
+    @where(:a .&gt; 2)
+    @by(:b, meanX = mean(:x), meanY = mean(:y))
+    @orderby(:meanX)
+    @select(:meanX, :meanY, var = :b)
+end</code></pre><p>Please note that Lazy.jl exports the function <code>groupby</code> which would clash with <code>DataFrames.groupby</code>. Hence, it is recommended that you only import a select number of functions into the namespace by only importing <code>@&gt;</code> e.g.  <code>using Lazy: @&gt;</code> instead of <code>using Lazy</code>.</p><p>Another alternative is Pipe.jl which exports the <code>@pipe</code> macro for piping.  The piping mechanism in Pipe.jl requires explicit specification of the piped object via <code>_</code> instead of assuming it is the first argument to the next function. The Pipe.jl equivalent of the above is:</p><pre><code class="language-julia">using Pipe
+
+df = DataFrame(a = repeat(1:5, outer = 20),
+               b = repeat([&quot;a&quot;, &quot;b&quot;, &quot;c&quot;, &quot;d&quot;], inner = 25),
+               x = repeat(1:20, inner = 5))
+
+x_thread = @pipe df |&gt;
+    @transform(_, y = 10 * :x) |&gt;
+    @where(_, :a .&gt; 2) |&gt;
+    @by(_, :b, meanX = mean(:x), meanY = mean(:y)) |&gt;
+    @orderby(_, :meanX) |&gt;
+    @select(_, :meanX, :meanY, var = :b)</code></pre><h1 id="Package-Maintenance"><a class="docs-heading-anchor" href="#Package-Maintenance">Package Maintenance</a><a id="Package-Maintenance-1"></a><a class="docs-heading-anchor-permalink" href="#Package-Maintenance" title="Permalink"></a></h1><p>Any of the <a href="https://github.com/orgs/JuliaStats/teams/collaborators">JuliaStats collaborators</a> have write access and can accept pull requests.</p><p>Pull requests are welcome. Pull requests should include updated tests. If functionality is changed, docstrings should be added or updated. Generally, follow the guidelines in <a href="https://github.com/JuliaStats/DataFrames.jl/blob/master/CONTRIBUTING.md">DataFrames</a>.</p><ul><li><a href="api/api/#API">API</a></li></ul></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="api/api/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Tuesday 10 November 2020 12:31">Tuesday 10 November 2020</span>. Using Julia version 1.5.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
