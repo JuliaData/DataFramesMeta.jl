@@ -5,7 +5,7 @@ using Reexport
 @reexport using DataFrames
 
 # Basics:
-export @with, @where, @orderby, @transform, @by, @combine, @select,
+export @with, @where, @orderby, @transform, @by, @combine, @select, @eachrow,
        @byrow, @byrow!, @based_on # deprecated
 
 include("linqmacro.jl")
@@ -78,8 +78,12 @@ In the above example, `##595` is an anonymous function equivalent to the followi
 (_x, _y) -> _x + _y
 ```
 
-```julia
+```jldoctest
+julia> using DataFramesMeta;
+
 julia> df = DataFrame(x = [1, 2], y = [3, 4]);
+
+julia> import DataFramesMeta: @col;
 
 julia> DataFrames.transform(df, @col z = :x .* :y)
 2×3 DataFrame
@@ -89,9 +93,7 @@ julia> DataFrames.transform(df, @col z = :x .* :y)
 │ 1   │ 1     │ 3     │ 3     │
 │ 2   │ 2     │ 4     │ 8     │
 
-
 ```
-
 """
 macro col(kw)
     esc(fun_to_vec(kw))
@@ -237,8 +239,6 @@ tempfun(a, b) = a .+ b .+ 1
 tempfun(d[!, :a], d[!, :b])
 ```
 
-All of the other DataFramesMeta macros are based on `@with`.
-
 If an expression is wrapped in `^(expr)`, `expr` gets passed through untouched.
 If an expression is wrapped in  `cols(expr)`, the column is referenced by the
 variable `expr` rather than a symbol.
@@ -246,7 +246,7 @@ variable `expr` rather than a symbol.
 ### Examples
 
 ```jldoctest
-julia> using DataFramesMeta
+julia> using DataFramesMeta;
 
 julia> y = 3;
 
@@ -283,18 +283,19 @@ julia> @with(df, df[:x .> 1, ^(:y)]) # The ^ means leave the :y alone
 julia> colref = :x;
 
 julia> @with(df, :y + cols(colref)) # Equivalent to df[!, :y] + df[!, colref]
+3-element Array{Int64,1}:
  3
  3
  5
 ```
 
-`@with` creates a function, so scope within `@with` is a local scope.
-Variables in the parent can be read. Writing to variables in the parent scope
-differs depending on the type of scope of the parent. If the parent scope is a
-global scope, then a variable cannot be assigned without using the `global` keyword.
-If the parent scope is a local scope (inside a function or let block for example),
-the `global` keyword is not needed to assign to that parent scope.
-
+!!! note
+    `@with` creates a function, so the scope within `@with` is a local scope.
+    Variables in the parent can be read. Writing to variables in the parent scope
+    differs depending on the type of scope of the parent. If the parent scope is a
+    global scope, then a variable cannot be assigned without using the `global` keyword.
+    If the parent scope is a local scope (inside a function or let block for example),
+    the `global` keyword is not needed to assign to that parent scope.
 """
 macro with(d, body)
     esc(with_helper(d, body))
@@ -365,33 +366,35 @@ for which the generated values are all `true`.
 ### Examples
 
 ```jldoctest
-julia> using DataFramesMeta, DataFrames
+julia> using DataFramesMeta, Statistics;
 
 julia> df = DataFrame(x = 1:3, y = [2, 1, 2]);
 
-julia> x = [2, 1, 0];
+julia> globalvar = [2, 1, 0];
 
 julia> @where(df, :x .> 1)
 2×2 DataFrame
-│ Row │ x │ y │
-├─────┼───┼───┤
-│ 1   │ 2 │ 1 │
-│ 2   │ 3 │ 2 │
+│ Row │ x     │ y     │
+│     │ Int64 │ Int64 │
+├─────┼───────┼───────┤
+│ 1   │ 2     │ 1     │
+│ 2   │ 3     │ 2     │
 
-julia> @where(df, :x .> x)
+julia> @where(df, :x .> globalvar)
 2×2 DataFrame
-│ Row │ x │ y │
-├─────┼───┼───┤
-│ 1   │ 2 │ 1 │
-│ 2   │ 3 │ 2 │
+│ Row │ x     │ y     │
+│     │ Int64 │ Int64 │
+├─────┼───────┼───────┤
+│ 1   │ 2     │ 1     │
+│ 2   │ 3     │ 2     │
 
-julia> @where(df, :x .> x, :y .== 3)
+julia> @where(df, :x .> globalvar, :y .== 3)
 0×2 DataFrame
 
 julia> d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
                                     2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
 
-julia> g = groupby(d, :x)
+julia> g = groupby(d, :x);
 
 julia> @where(g, :n .> mean(:n))
 8×2 DataFrame
@@ -476,7 +479,7 @@ the given `DataFrame` on the result, returning a new `DataFrame`.
 ### Examples
 
 ```jldoctest
-julia> using DataFrames, DataFramesMeta, Statistics
+julia> using DataFramesMeta, Statistics;
 
 julia> d = DataFrame(x = [3, 3, 3, 2, 1, 1, 1, 2, 1, 1], n = 1:10);
 
@@ -550,19 +553,19 @@ Add additional columns or keys based on keyword arguments.
 ### Examples
 
 ```jldoctest
-julia> using DataFramesMeta, DataFrames
+julia> using DataFramesMeta;
 
 julia> df = DataFrame(A = 1:3, B = [2, 1, 2]);
 
 julia> @transform(df, a = 2 * :A, x = :A .+ :B)
 3×4 DataFrame
-│ Row │ A │ B │ a │ x │
-├─────┼───┼───┼───┼───┤
-│ 1   │ 1 │ 2 │ 2 │ 3 │
-│ 2   │ 2 │ 1 │ 4 │ 3 │
-│ 3   │ 3 │ 2 │ 6 │ 5 │
+│ Row │ A     │ B     │ a     │ x     │
+│     │ Int64 │ Int64 │ Int64 │ Int64 │
+├─────┼───────┼───────┼───────┼───────┤
+│ 1   │ 1     │ 2     │ 2     │ 3     │
+│ 2   │ 2     │ 1     │ 4     │ 3     │
+│ 3   │ 3     │ 2     │ 6     │ 5     │
 ```
-
 """
 macro transform(x, args...)
     esc(transform_helper(x, args...))
@@ -608,7 +611,7 @@ Summarize a grouping operation
 ### Examples
 
 ```jldoctest
-julia> using DataFramesMeta, DataFrames
+julia> using DataFramesMeta;
 
 julia> d = DataFrame(
             n = 1:20,
@@ -618,34 +621,13 @@ julia> g = groupby(d, :x);
 
 julia> @combine(g, nsum = sum(:n))
 3×2 DataFrame
-│ Row │ x │ nsum │
-├─────┼───┼──────┤
-│ 1   │ 1 │ 99   │
-│ 2   │ 2 │ 84   │
-│ 3   │ 3 │ 27   │
+│ Row │ x     │ nsum  │
+│     │ Int64 │ Int64 │
+├─────┼───────┼───────┤
+│ 1   │ 3     │ 27    │
+│ 2   │ 1     │ 99    │
+│ 3   │ 2     │ 84    │
 
-julia> @combine(g, x2 = 2 * :x, nsum = sum(:n))
-20×3 DataFrame
-│ Row │ x │ x2 │ nsum │
-├─────┼───┼────┼──────┤
-│ 1   │ 1 │ 2  │ 99   │
-│ 2   │ 1 │ 2  │ 99   │
-│ 3   │ 1 │ 2  │ 99   │
-│ 4   │ 1 │ 2  │ 99   │
-│ 5   │ 1 │ 2  │ 99   │
-│ 6   │ 1 │ 2  │ 99   │
-│ 7   │ 1 │ 2  │ 99   │
-│ 8   │ 1 │ 2  │ 99   │
-⋮
-│ 12  │ 2 │ 4  │ 84   │
-│ 13  │ 2 │ 4  │ 84   │
-│ 14  │ 2 │ 4  │ 84   │
-│ 15  │ 2 │ 4  │ 84   │
-│ 16  │ 3 │ 6  │ 27   │
-│ 17  │ 3 │ 6  │ 27   │
-│ 18  │ 3 │ 6  │ 27   │
-│ 19  │ 3 │ 6  │ 27   │
-│ 20  │ 3 │ 6  │ 27   │
 ```
 """
 macro combine(x, args...)
@@ -704,56 +686,61 @@ Split-apply-combine in one step.
 ### Examples
 
 ```jldoctest
-julia> using DataFrames, DataFramesMeta, Statistics
+julia> using DataFramesMeta, Statistics
 
 julia> df = DataFrame(
             a = repeat(1:4, outer = 2),
             b = repeat(2:-1:1, outer = 4),
-            c = randn(8));
+            c = 1:8);
 
 julia> @by(df, :a, d = sum(:c))
 4×2 DataFrame
-│ Row │ a │ d        │
-├─────┼───┼──────────┤
-│ 1   │ 1 │ 1.27638  │
-│ 2   │ 2 │ 1.00951  │
-│ 3   │ 3 │ 1.48328  │
-│ 4   │ 4 │ -2.42621 │
+│ Row │ a     │ d     │
+│     │ Int64 │ Int64 │
+├─────┼───────┼───────┤
+│ 1   │ 1     │ 6     │
+│ 2   │ 2     │ 8     │
+│ 3   │ 3     │ 10    │
+│ 4   │ 4     │ 12    │
 
 julia> @by(df, :a, d = 2 * :c)
 8×2 DataFrame
-│ Row │ a │ d         │
-├─────┼───┼───────────┤
-│ 1   │ 1 │ 1.22982   │
-│ 2   │ 1 │ 1.32294   │
-│ 3   │ 2 │ 1.93664   │
-│ 4   │ 2 │ 0.0823819 │
-│ 5   │ 3 │ -0.670512 │
-│ 6   │ 3 │ 3.63708   │
-│ 7   │ 4 │ -3.06436  │
-│ 8   │ 4 │ -1.78806  │
+│ Row │ a     │ d     │
+│     │ Int64 │ Int64 │
+├─────┼───────┼───────┤
+│ 1   │ 1     │ 2     │
+│ 2   │ 1     │ 10    │
+│ 3   │ 2     │ 4     │
+│ 4   │ 2     │ 12    │
+│ 5   │ 3     │ 6     │
+│ 6   │ 3     │ 14    │
+│ 7   │ 4     │ 8     │
+│ 8   │ 4     │ 16    │
 
 julia> @by(df, :a, c_sum = sum(:c), c_mean = mean(:c))
 4×3 DataFrame
-│ Row │ a │ c_sum    │ c_mean   │
-├─────┼───┼──────────┼──────────┤
-│ 1   │ 1 │ 1.27638  │ 0.63819  │
-│ 2   │ 2 │ 1.00951  │ 0.504755 │
-│ 3   │ 3 │ 1.48328  │ 0.741642 │
-│ 4   │ 4 │ -2.42621 │ -1.2131  │
+│ Row │ a     │ c_sum │ c_mean  │
+│     │ Int64 │ Int64 │ Float64 │
+├─────┼───────┼───────┼─────────┤
+│ 1   │ 1     │ 6     │ 3.0     │
+│ 2   │ 2     │ 8     │ 4.0     │
+│ 3   │ 3     │ 10    │ 5.0     │
+│ 4   │ 4     │ 12    │ 6.0     │
 
 julia> @by(df, :a, c = :c, c_mean = mean(:c))
 8×3 DataFrame
-│ Row │ a │ c         │ c_mean   │
-├─────┼───┼───────────┼──────────┤
-│ 1   │ 1 │ 0.61491   │ 0.63819  │
-│ 2   │ 1 │ 0.66147   │ 0.63819  │
-│ 3   │ 2 │ 0.968319  │ 0.504755 │
-│ 4   │ 2 │ 0.041191  │ 0.504755 │
-│ 5   │ 3 │ -0.335256 │ 0.741642 │
-│ 6   │ 3 │ 1.81854   │ 0.741642 │
-│ 7   │ 4 │ -1.53218  │ -1.2131  │
-│ 8   │ 4 │ -0.894029 │ -1.2131  │
+│ Row │ a     │ c     │ c_mean  │
+│     │ Int64 │ Int64 │ Float64 │
+├─────┼───────┼───────┼─────────┤
+│ 1   │ 1     │ 1     │ 3.0     │
+│ 2   │ 1     │ 5     │ 3.0     │
+│ 3   │ 2     │ 2     │ 4.0     │
+│ 4   │ 2     │ 6     │ 4.0     │
+│ 5   │ 3     │ 3     │ 5.0     │
+│ 6   │ 3     │ 7     │ 5.0     │
+│ 7   │ 4     │ 4     │ 6.0     │
+│ 8   │ 4     │ 8     │ 6.0     │
+
 ```
 """
 macro by(x, what, args...)
@@ -795,44 +782,35 @@ Select and transform columns.
 ```jldoctest
 julia> using DataFrames, DataFramesMeta
 
-julia> df = DataFrame(a = repeat(1:4, outer = 2), b = repeat(2:-1:1, outer = 4), c = randn(8))
-8×3 DataFrame
-│ Row │ a │ b │ c         │
-├─────┼───┼───┼───────────┤
-│ 1   │ 1 │ 2 │ -0.354685 │
-│ 2   │ 2 │ 1 │ 0.287631  │
-│ 3   │ 3 │ 2 │ -0.918007 │
-│ 4   │ 4 │ 1 │ -0.352519 │
-│ 5   │ 1 │ 2 │ 0.743501  │
-│ 6   │ 2 │ 1 │ -1.27415  │
-│ 7   │ 3 │ 2 │ 0.258456  │
-│ 8   │ 4 │ 1 │ -0.460486 │
+julia> df = DataFrame(a = repeat(1:4, outer = 2), b = repeat(2:-1:1, outer = 4), c = 1:8);
 
 julia> @select(df, :c, :a)
 8×2 DataFrame
-│ Row │ c         │ a │
-├─────┼───────────┼───┤
-│ 1   │ -0.354685 │ 1 │
-│ 2   │ 0.287631  │ 2 │
-│ 3   │ -0.918007 │ 3 │
-│ 4   │ -0.352519 │ 4 │
-│ 5   │ 0.743501  │ 1 │
-│ 6   │ -1.27415  │ 2 │
-│ 7   │ 0.258456  │ 3 │
-│ 8   │ -0.460486 │ 4 │
+│ Row │ c     │ a     │
+│     │ Int64 │ Int64 │
+├─────┼───────┼───────┤
+│ 1   │ 1     │ 1     │
+│ 2   │ 2     │ 2     │
+│ 3   │ 3     │ 3     │
+│ 4   │ 4     │ 4     │
+│ 5   │ 5     │ 1     │
+│ 6   │ 6     │ 2     │
+│ 7   │ 7     │ 3     │
+│ 8   │ 8     │ 4     │
 
 julia> @select(df, :c, x = :b + :c)
 8×2 DataFrame
-│ Row │ c         │ x         │
-├─────┼───────────┼───────────┤
-│ 1   │ -0.354685 │ 1.64531   │
-│ 2   │ 0.287631  │ 1.28763   │
-│ 3   │ -0.918007 │ 1.08199   │
-│ 4   │ -0.352519 │ 0.647481  │
-│ 5   │ 0.743501  │ 2.7435    │
-│ 6   │ -1.27415  │ -0.274145 │
-│ 7   │ 0.258456  │ 2.25846   │
-│ 8   │ -0.460486 │ 0.539514  │
+│ Row │ c     │ x     │
+│     │ Int64 │ Int64 │
+├─────┼───────┼───────┤
+│ 1   │ 1     │ 3     │
+│ 2   │ 2     │ 3     │
+│ 3   │ 3     │ 5     │
+│ 4   │ 4     │ 5     │
+│ 5   │ 5     │ 7     │
+│ 6   │ 6     │ 7     │
+│ 7   │ 7     │ 9     │
+│ 8   │ 8     │ 9     │
 ```
 """
 macro select(x, args...)

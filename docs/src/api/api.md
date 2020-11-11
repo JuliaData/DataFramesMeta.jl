@@ -27,3 +27,8 @@
 ```@docs
 @with(x, body)
 ```
+
+
+```@docs
+@eachrow(x, body)
+```

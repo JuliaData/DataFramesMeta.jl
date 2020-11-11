@@ -38,16 +38,6 @@ but exported by DataFramesMeta for convenience.
     and `Not` when selecting and transforming columns. DataFramesMeta.jl does not currently
     support this syntax. 
 
-!!! note
-    To refer to `Symbol`s without aliasing the column in a data frame, use `^`. 
-
-    ```
-    df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
-    @select(df, :x2 = :x, :x3 = ^(:x))
-    ```
-
-    This rule applies to all DataFramesMeta macros.
-
 ## `@select`
 
 Column selections and transformations. Only newly created columns are kept. 
@@ -342,7 +332,19 @@ Note that `cols` is *not* a standard Julia function. It is only used to modify t
 way that macros in DataFramesMeta.jl escape arguments and has no behavior of its own 
 outside of DataFramesMeta macros.
 
-## LINQ-Style Queries and Transforms
+
+# Working with `Symbol`s without referring to columns
+
+To refer to `Symbol`s without aliasing the column in a data frame, use `^`. 
+
+```
+df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+@select(df, :x2 = :x, :x3 = ^(:x))
+```
+
+This rule applies to all DataFramesMeta macros.
+
+## Comparison with `dplyr` and LINQ
 
 A number of functions for operations on DataFrames have been defined.
 Here is a table of equivalents for Hadley's
