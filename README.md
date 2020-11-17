@@ -2,7 +2,6 @@
 
 [![Coveralls](https://coveralls.io/repos/github/JuliaStats/DataFramesMeta.jl/badge.svg?branch=master)](https://coveralls.io/github/JuliaStats/DataFramesMeta.jl?branch=master)
 [![Travis](https://travis-ci.org/JuliaData/DataFramesMeta.jl.svg?branch=master)](https://travis-ci.org/JuliaData/DataFramesMeta.jl)
-[![AppVeyor](https://ci.appveyor.com/api/projects/status/github/juliadata/dataframesmeta.jl?branch=master&svg=true)](https://ci.appveyor.com/project/juliadata/dataframesmeta-jl/branch/master)
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://JuliaData.github.io/DataFramesMeta.jl/stable)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://JuliaData.github.io/DataFramesMeta.jl/dev)
 
