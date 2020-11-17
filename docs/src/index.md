@@ -451,17 +451,6 @@ x_thread = @pipe df |>
     @select(_, :meanX, :meanY, var = :b)
 ```
 
-# Package Maintenance
-
-Any of the
-[JuliaStats collaborators](https://github.com/orgs/JuliaStats/teams/collaborators)
-have write access and can accept pull requests.
-
-Pull requests are welcome. Pull requests should include updated tests. If
-functionality is changed, docstrings should be added or updated. Generally,
-follow the guidelines in
-[DataFrames](https://github.com/JuliaStats/DataFrames.jl/blob/master/CONTRIBUTING.md).
-
 ```@contents
 Pages = ["api/api.md"]
 Depth = 3

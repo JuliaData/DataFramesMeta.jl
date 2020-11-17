@@ -1,6 +1,5 @@
 *.jl.cov
 *.jl.mem
 docs/build/
-docs/site/
 .DS_Store
 Manifest.toml
