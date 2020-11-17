@@ -31,7 +31,7 @@ install:
 julia> import Pkg; Pkg.add("DataFramesMeta")
 ```
 
-or via the `Pkg` REPL mode 
+or via the `Pkg` REPL mode (enter by typing `]` at the REPL console)
 
 ```
 ] add DataFramesMeta
