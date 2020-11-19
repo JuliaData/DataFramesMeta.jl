@@ -3,6 +3,10 @@ using Documenter, DataFramesMeta
 makedocs(
 	modules = [DataFramesMeta],
 	sitename = "DataFramesMeta Documentation",
+	format = Documenter.HTML(
+		canonical = "https://juliadata.github.io/DataFramesMeta.jl/stable/",
+		assets = ["assets/favicon.ico"]
+	),
 	pages = Any[
 		"Introduction" => "index.md",
 		"API" => "api/api.md"])

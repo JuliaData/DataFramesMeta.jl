@@ -246,7 +246,7 @@ variable `expr` rather than a symbol.
 ### Examples
 
 ```jldoctest
-julia> using DataFramesMeta;
+julia> using DataFramesMeta
 
 julia> y = 3;
 
@@ -366,7 +366,7 @@ for which the generated values are all `true`.
 ### Examples
 
 ```jldoctest
-julia> using DataFramesMeta, Statistics;
+julia> using DataFramesMeta, Statistics
 
 julia> df = DataFrame(x = 1:3, y = [2, 1, 2]);
 
@@ -479,7 +479,7 @@ the given `DataFrame` on the result, returning a new `DataFrame`.
 ### Examples
 
 ```jldoctest
-julia> using DataFramesMeta, Statistics;
+julia> using DataFramesMeta, Statistics
 
 julia> d = DataFrame(x = [3, 3, 3, 2, 1, 1, 1, 2, 1, 1], n = 1:10);
 
@@ -553,7 +553,7 @@ Add additional columns or keys based on keyword arguments.
 ### Examples
 
 ```jldoctest
-julia> using DataFramesMeta;
+julia> using DataFramesMeta
 
 julia> df = DataFrame(A = 1:3, B = [2, 1, 2]);
 
@@ -611,7 +611,7 @@ Summarize a grouping operation
 ### Examples
 
 ```jldoctest
-julia> using DataFramesMeta;
+julia> using DataFramesMeta
 
 julia> d = DataFrame(
             n = 1:20,
