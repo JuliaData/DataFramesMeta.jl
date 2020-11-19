@@ -605,7 +605,7 @@ Summarize a grouping operation
 
 ### Arguments
 
-* `g` : a GroupedDataFrame
+* `x` : a `GroupedDataFrame` or `AbstractDataFrame`
 * `args...` : keyword arguments defining new columns
 
 ### Examples
@@ -627,6 +627,32 @@ julia> @combine(g, nsum = sum(:n))
 │ 1   │ 3     │ 27    │
 │ 2   │ 1     │ 99    │
 │ 3   │ 2     │ 84    │
+
+julia> @combine(g, x2 = 2 * :x, nsum = sum(:n))
+20×3 DataFrame
+│ Row │ x     │ x2    │ nsum  │
+│     │ Int64 │ Int64 │ Int64 │
+├─────┼───────┼───────┼───────┤
+│ 1   │ 3     │ 6     │ 27    │
+│ 2   │ 3     │ 6     │ 27    │
+│ 3   │ 3     │ 6     │ 27    │
+│ 4   │ 3     │ 6     │ 27    │
+│ 5   │ 3     │ 6     │ 27    │
+│ 6   │ 1     │ 2     │ 99    │
+│ 7   │ 1     │ 2     │ 99    │
+│ 8   │ 1     │ 2     │ 99    │
+│ 9   │ 1     │ 2     │ 99    │
+│ 10  │ 1     │ 2     │ 99    │
+│ 11  │ 1     │ 2     │ 99    │
+│ 12  │ 1     │ 2     │ 99    │
+│ 13  │ 1     │ 2     │ 99    │
+│ 14  │ 1     │ 2     │ 99    │
+│ 15  │ 2     │ 4     │ 84    │
+│ 16  │ 2     │ 4     │ 84    │
+│ 17  │ 2     │ 4     │ 84    │
+│ 18  │ 2     │ 4     │ 84    │
+│ 19  │ 2     │ 4     │ 84    │
+│ 20  │ 2     │ 4     │ 84    │
 
 ```
 """
