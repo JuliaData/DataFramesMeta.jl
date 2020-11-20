@@ -109,7 +109,7 @@ use regular operators and comparisons instead of their elementwise counterparts
 as in `@with`. Note that the scope within `@eachrow` is a hard scope.
 
 `eachrow` also supports special syntax for allocating new columns. The syntax
-`@newcol x::Array{Int}` allocates a new column `:x` with an `Array` container
+`@newcol x::Vector{Int}` allocates a new column `:x` with an `Vector` container
 with eltype `Int`.This feature makes it easier to use `eachrow` for data
 transformations. `_N` is introduced to represent the length of the dataframe,
 `_D` represents the `dataframe` including added columns, and `row` represents
@@ -163,7 +163,7 @@ julia> @eachrow df begin
 │ 3   │ 0     │ 2     │
 
 julia> df2 = @eachrow df begin
-           @newcol colX::Array{Float64}
+           @newcol colX::Vector{Float64}
            :colX = :B == 2 ? pi * :A : :B
        end
 3×3 DataFrame
@@ -177,7 +177,7 @@ julia> df2 = @eachrow df begin
 julia> varA = :A; varB = :B;
 
 julia> df2 = @eachrow df begin
-           @newcol colX::Array{Float64}
+           @newcol colX::Vector{Float64}
            :colX = cols(varB) == 2 ? pi * cols(varA) : cols(varB)
        end
 3×3 DataFrame

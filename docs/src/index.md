@@ -1,7 +1,6 @@
 # Introduction
 
-Metaprogramming tools for DataFrames.jl objects.
-These macros improve performance and provide more convenient syntax.
+Metaprogramming tools for DataFrames.jl objects to provide more convenient syntax.
 
 DataFrames.jl has the functions `select`, `transform`, and `combine` 
 for manipulating data frames. DataFramesMeta provides the macros 
@@ -22,6 +21,18 @@ In addition, DataFramesMeta provides
 * `@linq`, for piping the above macros together, similar to [magrittr](https://cran.r-project.org/web/packages/magrittr/vignettes/magrittr.html)'s
   `%>%` in R. 
 
+See below the convenience of DataFramesMeta compared to DataFrames.
+
+```julia
+df = DataFrame(a = [1, 2], b = [3, 4]);
+
+# With DataFrames
+transform(df, [:a, :b] => ((a, b) -> a .* b .+ first(a) .- sum(b)) => :c);
+
+# With DataFramesMeta
+@transform(df, c = :a .* :b .+ first(:a) .- sum(:b))
+```
+
 To reference columns inside DataFramesMeta macros, use `Symbol`s. For example, use `:x`
 to refer to the column `df.x`. To use a variable `varname` representing a `Symbol` to refer to 
 a column, use the syntax `cols(varname)`. 
@@ -35,7 +46,7 @@ but exported by DataFramesMeta for convenience.
 !!! note 
     
     Newer versions of DataFrames.jl support the operators `Between`, `All`, `Cols`,
-    and `Not` when selecting and transforming columns. DataFramesMeta.jl does not currently
+    and `Not` when selecting and transforming columns. DataFramesMeta does not currently
     support this syntax. 
 
 ## `@select`
@@ -194,7 +205,11 @@ end
 
 ## `@eachrow`
 
-Act on each row of a data frame. Includes support for control flow and `begin end` blocks. Since the "environment" induced by `@eachrow df` is implicitly a single row of `df`, one uses regular operators and comparisons instead of their elementwise counterparts as in `@with`. Does not change the input data frame argument.
+Act on each row of a data frame. Includes support for control flow and `begin end` 
+blocks. Since the "environment" induced by `@eachrow df` is implicitly a 
+single row of `df`, one uses regular operators and comparisons instead of 
+their elementwise counterparts as in `@with`. Does not change the input data 
+frame argument.
 
 ```julia
 df = DataFrame(A = 1:3, B = [2, 1, 2])
@@ -220,14 +235,14 @@ end
 
 `@eachrow` also supports special syntax for allocating new columns to make
 `@eachrow` more useful for data transformations. The syntax `@newcol
-x::Array{Int}` allocates a new column `:x` with an `Array` container with eltype
+x::Vector{Int}` allocates a new column `:x` with an `Vector` container with eltype
 `Int`. Here is an example where two new columns are added:
 
 ```julia
 df = DataFrame(A = 1:3, B = [2, 1, 2])
 df2 = @eachrow df begin
-    @newcol colX::Array{Float64}
-    @newcol colY::Array{Union{Int,Missing}}
+    @newcol colX::Vector{Float64}
+    @newcol colY::Vector{Union{Int,Missing}}
     :colX = :B == 2 ? pi * :A : :B
     if :A > 1
         :colY = :A * :B
@@ -239,7 +254,7 @@ end
 
 ## Working with column names programmatically with `cols`
 
-DataFramesMeta.jl provides the special syntax `cols` for referring to 
+DataFramesMeta provides the special syntax `cols` for referring to 
 columns in a data frame via a `Symbol`, string, or column position as either
 a literal or a variable. 
 
@@ -329,7 +344,7 @@ end
 ```
 
 Note that `cols` is *not* a standard Julia function. It is only used to modify the 
-way that macros in DataFramesMeta.jl escape arguments and has no behavior of its own 
+way that macros in DataFramesMeta escape arguments and has no behavior of its own 
 outside of DataFramesMeta macros.
 
 
@@ -386,27 +401,6 @@ more obvious with less noise from `@` symbols. This approach also
 avoids filling up the limited macro name space. The main downside is
 that more magic happens under the hood.
 
-This method is extensible. Here is a comparison of the macro and
-`@linq` versions of `with`.
-
-```julia
-function linq(::DataFramesMeta.SymbolParameter{:with}, d, body)
-    with_helper(d, body)
-end
-
-df = DataFrame(A = 1:3, B = [2, 1, 2])
-
-@linq df |>
-    with(:A .* :B)
-```
-
-The `linq` method above registers the expression-replacement method
-defined for all `with()` calls. It should return an expression like a
-macro.
-
-Again, this is experimental. Based on feedback, we may decide to only
-use `@linq` or only support the set of linq-like macros.
-
 Alternatively you can use Lazy.jl `@>` macro like this:
 
 ```julia
@@ -426,13 +420,14 @@ x_thread = @> begin
 end
 ```
 
-Please note that Lazy.jl exports the function `groupby` which would clash
-with `DataFrames.groupby`. Hence, it is recommended that you only import a
-select number of functions into the namespace by only importing `@>` e.g. 
-`using Lazy: @>` instead of `using Lazy`.
+!!! note 
+    Please note that Lazy exports the function `groupby` which would clash
+    with `DataFrames.groupby`. Hence, it is recommended that you only import a
+    select number of functions into the namespace by only importing `@>` e.g. 
+    `using Lazy: @>` instead of `using Lazy`.
 
 Another alternative is Pipe.jl which exports the `@pipe` macro for piping. 
-The piping mechanism in Pipe.jl requires explicit specification of the piped
+The piping mechanism in Pipe requires explicit specification of the piped
 object via `_` instead of assuming it is the first argument to the next function.
 The Pipe.jl equivalent of the above is:
 
