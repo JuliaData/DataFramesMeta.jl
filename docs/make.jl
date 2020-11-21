@@ -4,8 +4,7 @@ makedocs(
 	modules = [DataFramesMeta],
 	sitename = "DataFramesMeta Documentation",
 	format = Documenter.HTML(
-		canonical = "https://juliadata.github.io/DataFramesMeta.jl/stable/",
-		assets = ["assets/favicon.ico"]
+		canonical = "https://juliadata.github.io/DataFramesMeta.jl/stable/"
 	),
 	pages = Any[
 		"Introduction" => "index.md",
