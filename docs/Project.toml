@@ -1,0 +1,6 @@
+[deps]
+DataFramesMeta = "1313f7d8-7da2-5740-9ea0-a2ca25f37964"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+
+[compat]
+Documenter = "0.25"

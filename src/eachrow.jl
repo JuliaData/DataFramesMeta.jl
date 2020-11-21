@@ -1,7 +1,3 @@
-
-export @eachrow!
-export @eachrow
-
 ##############################################################################
 ##
 ## @eachrow
@@ -92,12 +88,12 @@ Deprecated version of `@eachrow`, see: [`@eachrow`](@ref)
 
 Acts the exact same way.
 """
-macro byrow(df, body)
-    esc(eachrow_helper(df, body, true))
+macro byrow(d, body)
+    esc(eachrow_helper(d, body, true))
 end
 
 """
-    @eachrow(d, expr)
+    @eachrow(d, body)
 
 Act on each row of a data frame, similar to
 
@@ -113,7 +109,7 @@ use regular operators and comparisons instead of their elementwise counterparts
 as in `@with`. Note that the scope within `@eachrow` is a hard scope.
 
 `eachrow` also supports special syntax for allocating new columns. The syntax
-`@newcol x::Array{Int}` allocates a new column `:x` with an `Array` container
+`@newcol x::Vector{Int}` allocates a new column `:x` with an `Vector` container
 with eltype `Int`.This feature makes it easier to use `eachrow` for data
 transformations. `_N` is introduced to represent the length of the dataframe,
 `_D` represents the `dataframe` including added columns, and `row` represents
@@ -159,38 +155,40 @@ julia> @eachrow df begin
             end
         end
 3×2 DataFrame
-│ Row │ A │ B │
-├─────┼───┼───┤
-│ 1   │ 1 │ 2 │
-│ 2   │ 0 │ 1 │
-│ 3   │ 0 │ 2 │
+│ Row │ A     │ B     │
+│     │ Int64 │ Int64 │
+├─────┼───────┼───────┤
+│ 1   │ 1     │ 2     │
+│ 2   │ 0     │ 1     │
+│ 3   │ 0     │ 2     │
 
 julia> df2 = @eachrow df begin
-           @newcol colX::Array{Float64}
+           @newcol colX::Vector{Float64}
            :colX = :B == 2 ? pi * :A : :B
        end
 3×3 DataFrame
-│ Row │ A │ B │ colX    │
-├─────┼───┼───┼─────────┤
-│ 1   │ 1 │ 2 │ 3.14159 │
-│ 2   │ 0 │ 1 │ 1.0     │
-│ 3   │ 0 │ 2 │ 0.0     │
+│ Row │ A     │ B     │ colX    │
+│     │ Int64 │ Int64 │ Float64 │
+├─────┼───────┼───────┼─────────┤
+│ 1   │ 1     │ 2     │ 3.14159 │
+│ 2   │ 2     │ 1     │ 1.0     │
+│ 3   │ 3     │ 2     │ 9.42478 │
 
 julia> varA = :A; varB = :B;
 
 julia> df2 = @eachrow df begin
-           @newcol colX::Array{Float64}
+           @newcol colX::Vector{Float64}
            :colX = cols(varB) == 2 ? pi * cols(varA) : cols(varB)
        end
 3×3 DataFrame
-│ Row │ A │ B │ colX    │
-├─────┼───┼───┼─────────┤
-│ 1   │ 1 │ 2 │ 3.14159 │
-│ 2   │ 0 │ 1 │ 1.0     │
-│ 3   │ 0 │ 2 │ 0.0     │
+│ Row │ A     │ B     │ colX    │
+│     │ Int64 │ Int64 │ Float64 │
+├─────┼───────┼───────┼─────────┤
+│ 1   │ 1     │ 2     │ 3.14159 │
+│ 2   │ 2     │ 1     │ 1.0     │
+│ 3   │ 3     │ 2     │ 9.42478 │
 ```
-
 """
-macro eachrow(df, body)
-    esc(eachrow_helper(df, body, false))
+macro eachrow(d, body)
+    esc(eachrow_helper(d, body, false))
 end
