@@ -599,10 +599,12 @@ function combine_helper(x, args...; deprecation_warning = false)
         !(first(args).head == :(=) || first(args).head == :kw)
 
         t = fun_to_vec(first(args); nolhs = true)
+        # 0.22: No pair as first arg, needs AsTable in other args to return table
         if DATAFRAMES_GEQ_22
             quote
                 $DataFrames.combine($x, $t)
             end
+        # 0.21: Pair as first arg, other args can't return table
         else
             quote
                 $DataFrames.combine($t, $x)
@@ -697,10 +699,12 @@ function by_helper(x, what, args...)
         !(first(args).head == :(=) || first(args).head == :kw)
 
         t = fun_to_vec(first(args); nolhs = true)
+        # 0.22: No pair as first arg, needs AsTable in other args to return table
         if DATAFRAMES_GEQ_22
             quote
                 $DataFrames.combine($groupby($x, $what), $t)
             end
+        # 0.21: Pair as first arg, other args can't return table
         else
             quote
                 $DataFrames.combine($t, $groupby($x, $what))
