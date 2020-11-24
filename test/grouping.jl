@@ -112,12 +112,19 @@ gd = groupby(df, :g)
 newvar = :n
 
 @testset "Limits of @combine" begin
-    t = @combine(gd, [:i, :g])[!, 2]
-    @test t == [[1, 2, 3], [1, 1, 1], [4, 5], [2, 2]]
-    @test t isa Vector{SubArray{Int64,1,Array{Int64,1},Tuple{Array{Int64,1}},false}}
-    @test @combine(gd, All()).function isa Vector{<:All}
-    @test @combine(gd, Not(:i)).i_function isa Vector{<:InvertedIndex}
-    @test @combine(gd, Not([:i, :g])).g == [1, 2]
+    if DataFramesMeta.DATAFRAMES_GEQ_22
+        @test_throws ArgumentError @combine(gd, [:i, :g])
+        @test_throws ArgumentError @combine(gd, All()).function isa Vector{<:All}
+        @test_throws ArgumentError @combine(gd, Not(:i)).i_function isa Vector{<:InvertedIndex}
+        @test_throws ArgumentError @combine(gd, Not([:i, :g])).g == [1, 2]
+    else
+        t = @combine(gd, [:i, :g])[!, 2]
+        @test t == [[1, 2, 3], [1, 1, 1], [4, 5], [2, 2]]
+        @test t isa Vector{SubArray{Int64,1,Array{Int64,1},Tuple{Array{Int64,1}},false}}
+        @test @combine(gd, All()).function isa Vector{<:All}
+        @test @combine(gd, Not(:i)).i_function isa Vector{<:InvertedIndex}
+        @test @combine(gd, Not([:i, :g])).g == [1, 2]
+    end
     @test_throws MethodError @eval @combine(gd, n = sum(Between(:i, :t)))
     @test_throws LoadError @eval @combine(gd; n = mean(:i))
     @test_throws ArgumentError @eval @combine(gd, n = mean(:i) + mean(cols(1)))
@@ -222,12 +229,19 @@ gd = groupby(df, :g)
 newvar = :n
 
 @testset "limits of @by" begin
-    t = @by(df, :g, [:i, :g])[!, 2]
-    @test t == [[1, 2, 3], [1, 1, 1], [4, 5], [2, 2]]
-    @test t isa Vector{SubArray{Int64,1,Array{Int64,1},Tuple{Array{Int64,1}},false}}
-    @test @by(df, :g, All()).function isa Vector{<:All}
-    @test @by(df, :g, Not(:i)).i_function isa Vector{<:InvertedIndex}
-    @test @by(df, :g, Not([:i, :g])).g == [1, 2]
+    if DataFramesMeta.DATAFRAMES_GEQ_22
+        @test_throws ArgumentError @by(df, :g, [:i, :g])
+        @test_throws ArgumentError @by(df, :g, All()).function isa Vector{<:All}
+        @test_throws ArgumentError @by(df, :g, Not(:i)).i_function isa Vector{<:InvertedIndex}
+        @test_throws ArgumentError @by(df, :g, Not([:i, :g])).g == [1, 2]
+    else
+        t = @by(df, :g, [:i, :g])[!, 2]
+        @test t == [[1, 2, 3], [1, 1, 1], [4, 5], [2, 2]]
+        @test t isa Vector{SubArray{Int64,1,Array{Int64,1},Tuple{Array{Int64,1}},false}}
+        @test @by(df, :g, All()).function isa Vector{<:All}
+        @test @by(df, :g, Not(:i)).i_function isa Vector{<:InvertedIndex}
+        @test @by(df, :g, Not([:i, :g])).g == [1, 2]
+    end
     @test_throws MethodError @eval @by(df, :g, n = sum(Between(:i, :t)))
     @test_throws MethodError @eval @by(df, :g; n = mean(:i))
     @test_throws ArgumentError @eval @by(df, :g, n = mean(:i) + mean(cols(1)))

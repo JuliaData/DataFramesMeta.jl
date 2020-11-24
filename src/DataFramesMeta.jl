@@ -8,6 +8,9 @@ using Reexport
 export @with, @where, @orderby, @transform, @by, @combine, @select, @eachrow,
        @byrow, @byrow!, @based_on # deprecated
 
+
+global const DATAFRAMES_GEQ_22 = isdefined(DataFrames, :pretty_table) ? true : false
+
 include("linqmacro.jl")
 include("eachrow.jl")
 
@@ -134,10 +137,19 @@ function fun_to_vec(kw::Expr; nolhs::Bool = false, gensym_names::Bool = false)
                     $dest
                 end
             else
+                # [:x] => _f => AsTable
+                if DATAFRAMES_GEQ_22
+                    t = quote
+                        DataFramesMeta.make_source_concrete($(source)) =>
+                        $fun =>
+                        AsTable
+                    end
                 # [:x] => _f
-                t = quote
-                    DataFramesMeta.make_source_concrete($(source)) =>
-                    $fun
+                else
+                    t = quote
+                        DataFramesMeta.make_source_concrete($(source)) =>
+                        $fun
+                    end
                 end
             end
          else
@@ -587,8 +599,16 @@ function combine_helper(x, args...; deprecation_warning = false)
         !(first(args).head == :(=) || first(args).head == :kw)
 
         t = fun_to_vec(first(args); nolhs = true)
-        quote
-            $DataFrames.combine($t, $x)
+        # 0.22: No pair as first arg, needs AsTable in other args to return table
+        if DATAFRAMES_GEQ_22
+            quote
+                $DataFrames.combine($x, $t)
+            end
+        # 0.21: Pair as first arg, other args can't return table
+        else
+            quote
+                $DataFrames.combine($t, $x)
+            end
         end
     else
         t = (fun_to_vec(arg) for arg in args)
@@ -679,8 +699,16 @@ function by_helper(x, what, args...)
         !(first(args).head == :(=) || first(args).head == :kw)
 
         t = fun_to_vec(first(args); nolhs = true)
-        quote
-            $DataFrames.combine($t, $groupby($x, $what))
+        # 0.22: No pair as first arg, needs AsTable in other args to return table
+        if DATAFRAMES_GEQ_22
+            quote
+                $DataFrames.combine($groupby($x, $what), $t)
+            end
+        # 0.21: Pair as first arg, other args can't return table
+        else
+            quote
+                $DataFrames.combine($t, $groupby($x, $what))
+            end
         end
     else
         t = (fun_to_vec(arg) for arg in args)
@@ -689,6 +717,7 @@ function by_helper(x, what, args...)
         end
     end
 end
+
 
 """
     @by(d::AbstractDataFrame, cols, e...)
