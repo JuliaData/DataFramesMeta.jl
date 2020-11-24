@@ -112,9 +112,13 @@ gd = groupby(df, :g)
 newvar = :n
 
 @testset "Limits of @combine" begin
-    t = @combine(gd, [:i, :g])[!, 2]
-    @test t == [[1, 2, 3], [1, 1, 1], [4, 5], [2, 2]]
-    @test t isa Vector{SubArray{Int64,1,Array{Int64,1},Tuple{Array{Int64,1}},false}}
+    if DataFramesMeta.DATAFRAMES_GEQ_22
+        @test_throws ArgumentError @combine(gd, [:i, :g])
+    else
+        t = @combine(gd, [:i, :g])[!, 2]
+        @test t == [[1, 2, 3], [1, 1, 1], [4, 5], [2, 2]]
+        @test t isa Vector{SubArray{Int64,1,Array{Int64,1},Tuple{Array{Int64,1}},false}}
+    end
     @test @combine(gd, All()).function isa Vector{<:All}
     @test @combine(gd, Not(:i)).i_function isa Vector{<:InvertedIndex}
     @test @combine(gd, Not([:i, :g])).g == [1, 2]
