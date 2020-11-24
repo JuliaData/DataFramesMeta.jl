@@ -697,8 +697,14 @@ function by_helper(x, what, args...)
         !(first(args).head == :(=) || first(args).head == :kw)
 
         t = fun_to_vec(first(args); nolhs = true)
-        quote
-            $DataFrames.combine($t, $groupby($x, $what))
+        if DATAFRAMES_GEQ_22
+            quote
+                $DataFrames.combine($groupby($x, $what), $t)
+            end
+        else
+            quote
+                $DataFrames.combine($t, $groupby($x, $what))
+            end
         end
     else
         t = (fun_to_vec(arg) for arg in args)
@@ -707,6 +713,7 @@ function by_helper(x, what, args...)
         end
     end
 end
+
 
 """
     @by(d::AbstractDataFrame, cols, e...)
