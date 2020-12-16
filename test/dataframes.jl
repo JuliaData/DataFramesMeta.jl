@@ -78,6 +78,9 @@ const ≅ = isequal
     @test @transform(df, n = 1).n == fill(1, nrow(df))
 
     @test @transform(df, n = :i .* :g).n == [1, 2, 3, 8, 10]
+    
+    @transform!(df, n = :i)
+    @test newdf ≅ df
 end
 
 # Defined outside of `@testset` due to use of `@eval`
@@ -194,6 +197,9 @@ end
     @test @select(df, cols("new" * "_" * "column") = :i).new_column == df.i
 
     @test @transform(df, n = :i .* :g).n == [1, 2, 3, 8, 10]
+
+    @select!(df, :i, :g, n = :i .+ :g) 
+    @test df == df2[!, [:i, :g, :n]]
 end
 
 # Defined outside of `@testset` due to use of `@eval`
