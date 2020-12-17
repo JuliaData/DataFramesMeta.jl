@@ -612,7 +612,7 @@ Mutate `d` inplace to add additional columns or keys based on keyword arguments 
 
 ### Returns
 
-* `::AbstractDataFrame` or `::GroupedDataFrame`
+* `::DataFrame`
 
 ### Examples
 
@@ -874,7 +874,7 @@ Select and transform columns.
 
 ### Arguments
 
-* `d` : an AbstractDataFrame
+* `d` : an `AbstractDataFrame` or `GroupedDataFrame`
 * `e` :  keyword arguments specifying new columns in terms of existing columns
   or symbols to specify existing columns
 
@@ -950,7 +950,7 @@ Mutate `d` in-place to retain only columns or transformations specified by `e` a
 
 ### Returns
 
-* `::AbstractDataFrame`
+* `::DataFrame`
 
 ### Examples
 

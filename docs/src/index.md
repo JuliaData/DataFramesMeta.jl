@@ -2,9 +2,9 @@
 
 Metaprogramming tools for DataFrames.jl objects to provide more convenient syntax.
 
-DataFrames.jl has the functions `select`, `transform`, and `combine` 
+DataFrames.jl has the functions `select(!)`, `transform(!)`, and `combine` 
 for manipulating data frames. DataFramesMeta provides the macros 
-`@select`, `@transform`, and `@combine` to mirror these functions with 
+`@select(!)`, `@transform(!)`, and `@combine` to mirror these functions with 
 more convenient syntax. Inspired by [dplyr](https://dplyr.tidyverse.org/) in R 
 and [LINQ](https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/linq/)
 in C#. 
@@ -65,6 +65,25 @@ gd = groupby(df, :x);
 @select(df, x2 = 2 * :x, :y)
 @select(gd, x2 = 2 .* :y .* first(:y))
 ```
+
+## `@select!`
+
+In-place column selections and transformations, mirroring `select!` in DataFrames.jl. 
+Only specified columns are kept. Operates on both a `DataFrame` and a `GroupedDataFrame`. 
+The mutated dataframe is returned.
+
+When given a `GroupedDataFrame`, performs a transformation by group and then 
+if necessary repeats the result to have as many rows as the input 
+data frame. 
+
+```julia
+df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+gd = groupby(df, :x);
+@select!(df, :x, :y)
+@select!(df, x = 2 * :x, :y)
+@select!(gd, y = 2 .* :y .* first(:y))
+```
+
 ## `@transform`
 
 Add additional columns based on keyword arguments. Operates on both a 
@@ -80,6 +99,25 @@ gd = groupby(df, :x);
 @transform(df, :x, :y)
 @transform(df, x2 = 2 * :x, :y)
 @transform(gd, x2 = 2 .* :y .* first(:y))
+```
+
+## `@transform!`
+
+Add additional columns based on keyword arguments. Operates on both a 
+`DataFrame` and a `GroupedDataFrame`. The mutated dataframe is returned.
+
+When given a `GroupedDataFrame`, performs a transformation by group and then 
+if necessary repeats the result to have as many rows as the input 
+data frame. 
+
+
+
+```julia
+df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+gd = groupby(df, :x);
+@transform!(df, :x, :y)
+@transform!(df, x = 2 * :x, :y)
+@transform!(gd, y = 2 .* :y .* first(:y))
 ```
 
 ## `@where`
