@@ -621,9 +621,9 @@ julia> using DataFramesMeta
 
 julia> df = DataFrame(A = 1:3, B = [2, 1, 2]);
 
-julia> @transform!(df, a = 2 * :A, x = :A .+ :B);
+julia> df2 = @transform!(df, a = 2 * :A, x = :A .+ :B);
 
-julia> df
+julia> (df === df2) && df2
 3×4 DataFrame
 │ Row │ A     │ B     │ a     │ x     │
 │     │ Int64 │ Int64 │ Int64 │ Int64 │
@@ -631,6 +631,8 @@ julia> df
 │ 1   │ 1     │ 2     │ 2     │ 3     │
 │ 2   │ 2     │ 1     │ 4     │ 3     │
 │ 3   │ 3     │ 2     │ 6     │ 5     │
+
+julia> @transform!
 ```
 """
 macro transform!(x, args...)
@@ -978,9 +980,9 @@ julia> df
 
 julia> df = DataFrame(a = repeat(1:4, outer = 2), b = repeat(2:-1:1, outer = 4), c = 1:8);
 
-julia> @select!(df, :c, x = :b + :c);
+julia> df2 = @select!(df, :c, x = :b + :c);
 
-julia> df
+julia> (df === df2) && df2
 
 8×2 DataFrame
 │ Row │ c     │ x     │
