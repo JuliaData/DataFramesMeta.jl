@@ -961,9 +961,9 @@ julia> using DataFrames, DataFramesMeta
 
 julia> df = DataFrame(a = repeat(1:4, outer = 2), b = repeat(2:-1:1, outer = 4), c = 1:8);
 
-julia> @select!(df, :c, :a);
+julia> df2 = @select!(df, :c, :a);
 
-julia> df
+julia> (df2.c === df.c) && df2
 
 8×2 DataFrame
 │ Row │ c     │ a     │
@@ -982,7 +982,7 @@ julia> df = DataFrame(a = repeat(1:4, outer = 2), b = repeat(2:-1:1, outer = 4),
 
 julia> df2 = @select!(df, :c, x = :b + :c);
 
-julia> (df === df2) && df2
+julia> (df.c === df2.c) && df2
 
 8×2 DataFrame
 │ Row │ c     │ x     │

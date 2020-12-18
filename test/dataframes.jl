@@ -79,8 +79,6 @@ const ≅ = isequal
 
     @test @transform(df, n = :i .* :g).n == [1, 2, 3, 8, 10]
     
-    @transform!(df, n = :i)
-    @test newdf ≅ df
 end
 
 
@@ -151,11 +149,10 @@ end
     @test @transform!(df, n = :i).n === df.i
     # mutating
     df2 = copy(df)
-    @transform!(df, n = :i)
-    df == @transform(df2, n = :i)
-
-
-    
+    @test @transform!(df, :i) ≅ df2
+    @test @transform!(df, :i, :g) ≅ df2
+    @transform!(df, n2 = :i)
+    @test df[:, Not(:n2)] ≅ df2
 end
 
 # Defined outside of `@testset` due to use of `@eval`
@@ -311,7 +308,7 @@ end
     @test @select!(copy(df), :i) == df2[!, [:i]]
 
     @test @select!(copy(df), n = :i .+ :g).n == df.i .+ df.g
-    @test @select!(copy(df), n = :i).n == df2.i
+    @test @select!(copy(df), n = :i).n == df.i
     @test @select!(copy(df), n = :t .* string.(:y)).n == df.t .* string.(df.y)
     @test @select!(copy(df), n = Symbol.(:y, ^(:t))).n == Symbol.(df.y, :t)
     @test @select!(copy(df), n = Symbol.(:y, ^(:body))).n == Symbol.(df.y, :body)
