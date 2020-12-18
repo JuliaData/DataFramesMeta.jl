@@ -603,7 +603,7 @@ end
 """
     @transform!(d, i...)
 
-Mutate `d` inplace to add additional columns or keys based on keyword arguments and return it. 
+Mutate `d` inplace to add additional columns or keys based on keyword arguments and return it.  No copies of existing columns are made, meaning modifications of the returned data frame may affect the input data frame as well.
 
 ### Arguments
 
@@ -942,7 +942,7 @@ end
 """
     @select!(d, e...)
 
-Mutate `d` in-place to retain only columns or transformations specified by `e` and return it.
+Mutate `d` in-place to retain only columns or transformations specified by `e` and return it. No copies of existing columns are made, meaning modifications of the returned data frame may affect the input data frame as well. 
 
 ### Arguments
 

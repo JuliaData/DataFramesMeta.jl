@@ -2,9 +2,9 @@
 
 Metaprogramming tools for DataFrames.jl objects to provide more convenient syntax.
 
-DataFrames.jl has the functions `select(!)`, `transform(!)`, and `combine` 
+DataFrames.jl has the functions `select`, `transform`, and `combine`, as well as the in-place `select!` and `transform!`
 for manipulating data frames. DataFramesMeta provides the macros 
-`@select(!)`, `@transform(!)`, and `@combine` to mirror these functions with 
+`@select`, `@transform`, `@combine`, `@select!`, and `@transform!` to mirror these functions with 
 more convenient syntax. Inspired by [dplyr](https://dplyr.tidyverse.org/) in R 
 and [LINQ](https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/linq/)
 in C#. 
