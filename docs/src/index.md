@@ -49,10 +49,13 @@ but exported by DataFramesMeta for convenience.
     and `Not` when selecting and transforming columns. DataFramesMeta does not currently
     support this syntax. 
 
-## `@select`
+## `@select` and '@select!`
 
 Column selections and transformations. Only newly created columns are kept. 
 Operates on both a `DataFrame` and a `GroupedDataFrame`. 
+
+`@select` copies the specified columns and return a new dataframe, while `@select!`
+mutates the original dataframe and return it.  
 
 When given a `GroupedDataFrame`, performs a transformation by group and then 
 if necessary repeats the result to have as many rows as the input 
@@ -64,30 +67,18 @@ gd = groupby(df, :x);
 @select(df, :x, :y)
 @select(df, x2 = 2 * :x, :y)
 @select(gd, x2 = 2 .* :y .* first(:y))
-```
-
-## `@select!`
-
-In-place column selections and transformations, mirroring `select!` in DataFrames.jl. 
-Only specified columns are kept. Operates on both a `DataFrame` and a `GroupedDataFrame`. 
-The mutated dataframe is returned.
-
-When given a `GroupedDataFrame`, performs a transformation by group and then 
-if necessary repeats the result to have as many rows as the input 
-data frame. 
-
-```julia
-df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
-gd = groupby(df, :x);
 @select!(df, :x, :y)
 @select!(df, x = 2 * :x, :y)
 @select!(gd, y = 2 .* :y .* first(:y))
 ```
 
-## `@transform`
+## `@transform and @transform!`
 
 Add additional columns based on keyword arguments. Operates on both a 
 `DataFrame` and a `GroupedDataFrame`. 
+
+`@transform` copies the original dataframe and return it together with newly created
+columns, while `@transform!` adds additional columns to the original dataframe and return it.
 
 When given a `GroupedDataFrame`, performs a transformation by group and then 
 if necessary repeats the result to have as many rows as the input 
@@ -99,22 +90,6 @@ gd = groupby(df, :x);
 @transform(df, :x, :y)
 @transform(df, x2 = 2 * :x, :y)
 @transform(gd, x2 = 2 .* :y .* first(:y))
-```
-
-## `@transform!`
-
-Add additional columns based on keyword arguments. Operates on both a 
-`DataFrame` and a `GroupedDataFrame`. The mutated dataframe is returned.
-
-When given a `GroupedDataFrame`, performs a transformation by group and then 
-if necessary repeats the result to have as many rows as the input 
-data frame. 
-
-
-
-```julia
-df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
-gd = groupby(df, :x);
 @transform!(df, :x, :y)
 @transform!(df, x = 2 * :x, :y)
 @transform!(gd, y = 2 .* :y .* first(:y))

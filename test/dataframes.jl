@@ -149,7 +149,8 @@ end
     @test @transform!(df, n = :i).n === df.i
     # mutating
     df2 = copy(df)
-    @test @transform!(df, :i) ≅ df2
+    @test @transform!(df, :i) === df
+    @test df ≅ df2
     @test @transform!(df, :i, :g) ≅ df2
     @transform!(df, n2 = :i)
     @test df[:, Not(:n2)] ≅ df2
@@ -350,7 +351,7 @@ end
     
     # mutating
     df2 = @select(df, :i)
-    @select!(df, :i)
+    @select!(df, :i) === df
     @test df == df2
 end
 

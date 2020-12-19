@@ -603,7 +603,8 @@ end
 """
     @transform!(d, i...)
 
-Mutate `d` inplace to add additional columns or keys based on keyword arguments and return it.  No copies of existing columns are made, meaning modifications of the returned data frame may affect the input data frame as well.
+Mutate `d` inplace to add additional columns or keys based on keyword arguments and return it.  
+No copies of existing columns are made.
 
 ### Arguments
 
@@ -621,9 +622,8 @@ julia> using DataFramesMeta
 
 julia> df = DataFrame(A = 1:3, B = [2, 1, 2]);
 
-julia> df2 = @transform!(df, a = 2 * :A, x = :A .+ :B);
+julia> df2 = @transform!(df, a = 2 * :A, x = :A .+ :B)
 
-julia> (df === df2) && df2
 3×4 DataFrame
 │ Row │ A     │ B     │ a     │ x     │
 │     │ Int64 │ Int64 │ Int64 │ Int64 │
@@ -632,7 +632,8 @@ julia> (df === df2) && df2
 │ 2   │ 2     │ 1     │ 4     │ 3     │
 │ 3   │ 3     │ 2     │ 6     │ 5     │
 
-julia> @transform!
+julia> df === df2
+true
 ```
 """
 macro transform!(x, args...)
@@ -942,7 +943,7 @@ end
 """
     @select!(d, e...)
 
-Mutate `d` in-place to retain only columns or transformations specified by `e` and return it. No copies of existing columns are made, meaning modifications of the returned data frame may affect the input data frame as well. 
+Mutate `d` in-place to retain only columns or transformations specified by `e` and return it. No copies of existing columns are made.
 
 ### Arguments
 
@@ -961,9 +962,7 @@ julia> using DataFrames, DataFramesMeta
 
 julia> df = DataFrame(a = repeat(1:4, outer = 2), b = repeat(2:-1:1, outer = 4), c = 1:8);
 
-julia> df2 = @select!(df, :c, :a);
-
-julia> (df2.c === df.c) && df2
+julia> df2 = @select!(df, :c, :a)
 
 8×2 DataFrame
 │ Row │ c     │ a     │
@@ -978,11 +977,15 @@ julia> (df2.c === df.c) && df2
 │ 7   │ 7     │ 3     │
 │ 8   │ 8     │ 4     │
 
+julia> df === df2
+
+true
+
+
+
 julia> df = DataFrame(a = repeat(1:4, outer = 2), b = repeat(2:-1:1, outer = 4), c = 1:8);
 
-julia> df2 = @select!(df, :c, x = :b + :c);
-
-julia> (df.c === df2.c) && df2
+julia> df2 = @select!(df, :c, x = :b + :c)
 
 8×2 DataFrame
 │ Row │ c     │ x     │
@@ -996,6 +999,10 @@ julia> (df.c === df2.c) && df2
 │ 6   │ 6     │ 7     │
 │ 7   │ 7     │ 9     │
 │ 8   │ 8     │ 9     │
+
+julia> df === df2
+
+true
 ```
 """
 macro select!(x, args...)
