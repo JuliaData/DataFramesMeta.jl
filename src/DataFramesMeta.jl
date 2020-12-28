@@ -962,7 +962,6 @@ julia> using DataFrames, DataFramesMeta
 julia> df = DataFrame(a = repeat(1:4, outer = 2), b = repeat(2:-1:1, outer = 4), c = 1:8);
 
 julia> df2 = @select!(df, :c, :a)
-
 8×2 DataFrame
 │ Row │ c     │ a     │
 │     │ Int64 │ Int64 │

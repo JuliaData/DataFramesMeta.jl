@@ -49,7 +49,7 @@ but exported by DataFramesMeta for convenience.
     and `Not` when selecting and transforming columns. DataFramesMeta does not currently
     support this syntax. 
 
-## `@select` and '@select!`
+## `@select` and `@select!`
 
 Column selections and transformations. Only newly created columns are kept. 
 Operates on both a `DataFrame` and a `GroupedDataFrame`. 
