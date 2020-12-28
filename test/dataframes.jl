@@ -351,7 +351,7 @@ end
     
     # mutating
     df2 = @select(df, :i)
-    @select!(df, :i) === df
+    @test @select!(df, :i) === df
     @test df == df2
 end
 

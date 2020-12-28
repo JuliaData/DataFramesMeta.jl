@@ -623,7 +623,6 @@ julia> using DataFramesMeta
 julia> df = DataFrame(A = 1:3, B = [2, 1, 2]);
 
 julia> df2 = @transform!(df, a = 2 * :A, x = :A .+ :B)
-
 3×4 DataFrame
 │ Row │ A     │ B     │ a     │ x     │
 │     │ Int64 │ Int64 │ Int64 │ Int64 │
@@ -978,7 +977,6 @@ julia> df2 = @select!(df, :c, :a)
 │ 8   │ 8     │ 4     │
 
 julia> df === df2
-
 true
 
 
@@ -986,7 +984,6 @@ true
 julia> df = DataFrame(a = repeat(1:4, outer = 2), b = repeat(2:-1:1, outer = 4), c = 1:8);
 
 julia> df2 = @select!(df, :c, x = :b + :c)
-
 8×2 DataFrame
 │ Row │ c     │ x     │
 │     │ Int64 │ Int64 │
@@ -1001,7 +998,6 @@ julia> df2 = @select!(df, :c, x = :b + :c)
 │ 8   │ 8     │ 9     │
 
 julia> df === df2
-
 true
 ```
 """

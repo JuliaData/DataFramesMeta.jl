@@ -54,8 +54,8 @@ but exported by DataFramesMeta for convenience.
 Column selections and transformations. Only newly created columns are kept. 
 Operates on both a `DataFrame` and a `GroupedDataFrame`. 
 
-`@select` copies the specified columns and return a new dataframe, while `@select!`
-mutates the original dataframe and return it.  
+`@select` returns a new data frame with newly allocated columns, while `@select!`
+mutates the original data frame and returns it.
 
 When given a `GroupedDataFrame`, performs a transformation by group and then 
 if necessary repeats the result to have as many rows as the input 
@@ -72,13 +72,13 @@ gd = groupby(df, :x);
 @select!(gd, y = 2 .* :y .* first(:y))
 ```
 
-## `@transform and @transform!`
+## `@transform` and `@transform!`
 
 Add additional columns based on keyword arguments. Operates on both a 
 `DataFrame` and a `GroupedDataFrame`. 
 
-`@transform` copies the original dataframe and return it together with newly created
-columns, while `@transform!` adds additional columns to the original dataframe and return it.
+`@transform` returns a new data frame with newly allocated columns, while `@transform!`
+mutates the original data frame and returns it.
 
 When given a `GroupedDataFrame`, performs a transformation by group and then 
 if necessary repeats the result to have as many rows as the input 
