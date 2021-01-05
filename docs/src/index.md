@@ -2,9 +2,9 @@
 
 Metaprogramming tools for DataFrames.jl objects to provide more convenient syntax.
 
-DataFrames.jl has the functions `select`, `transform`, and `combine` 
+DataFrames.jl has the functions `select`, `transform`, and `combine`, as well as the in-place `select!` and `transform!`
 for manipulating data frames. DataFramesMeta provides the macros 
-`@select`, `@transform`, and `@combine` to mirror these functions with 
+`@select`, `@transform`, `@combine`, `@select!`, and `@transform!` to mirror these functions with 
 more convenient syntax. Inspired by [dplyr](https://dplyr.tidyverse.org/) in R 
 and [LINQ](https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/linq/)
 in C#. 
@@ -49,10 +49,13 @@ but exported by DataFramesMeta for convenience.
     and `Not` when selecting and transforming columns. DataFramesMeta does not currently
     support this syntax. 
 
-## `@select`
+## `@select` and `@select!`
 
 Column selections and transformations. Only newly created columns are kept. 
 Operates on both a `DataFrame` and a `GroupedDataFrame`. 
+
+`@select` returns a new data frame with newly allocated columns, while `@select!`
+mutates the original data frame and returns it.
 
 When given a `GroupedDataFrame`, performs a transformation by group and then 
 if necessary repeats the result to have as many rows as the input 
@@ -64,11 +67,18 @@ gd = groupby(df, :x);
 @select(df, :x, :y)
 @select(df, x2 = 2 * :x, :y)
 @select(gd, x2 = 2 .* :y .* first(:y))
+@select!(df, :x, :y)
+@select!(df, x = 2 * :x, :y)
+@select!(gd, y = 2 .* :y .* first(:y))
 ```
-## `@transform`
+
+## `@transform` and `@transform!`
 
 Add additional columns based on keyword arguments. Operates on both a 
 `DataFrame` and a `GroupedDataFrame`. 
+
+`@transform` returns a new data frame with newly allocated columns, while `@transform!`
+mutates the original data frame and returns it.
 
 When given a `GroupedDataFrame`, performs a transformation by group and then 
 if necessary repeats the result to have as many rows as the input 
@@ -80,6 +90,9 @@ gd = groupby(df, :x);
 @transform(df, :x, :y)
 @transform(df, x2 = 2 * :x, :y)
 @transform(gd, x2 = 2 .* :y .* first(:y))
+@transform!(df, :x, :y)
+@transform!(df, x = 2 * :x, :y)
+@transform!(gd, y = 2 .* :y .* first(:y))
 ```
 
 ## `@where`

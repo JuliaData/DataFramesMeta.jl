@@ -6,6 +6,7 @@ using Reexport
 
 # Basics:
 export @with, @where, @orderby, @transform, @by, @combine, @select, @eachrow,
+       @transform!, @select!,
        @byrow, @byrow!, @based_on # deprecated
 
 
@@ -583,6 +584,61 @@ macro transform(x, args...)
     esc(transform_helper(x, args...))
 end
 
+##############################################################################
+##
+## transform! & @transform!
+##
+##############################################################################
+
+
+function transform!_helper(x, args...)
+
+    t = (fun_to_vec(arg) for arg in args)
+
+    quote
+        $DataFrames.transform!($x, $(t...))
+    end
+end
+
+"""
+    @transform!(d, i...)
+
+Mutate `d` inplace to add additional columns or keys based on keyword arguments and return it.  
+No copies of existing columns are made.
+
+### Arguments
+
+* `d` : an `AbstractDataFrame`, or `GroupedDataFrame`
+* `i...` : keyword arguments defining new columns or keys
+
+### Returns
+
+* `::DataFrame`
+
+### Examples
+
+```jldoctest
+julia> using DataFramesMeta
+
+julia> df = DataFrame(A = 1:3, B = [2, 1, 2]);
+
+julia> df2 = @transform!(df, a = 2 * :A, x = :A .+ :B)
+3×4 DataFrame
+│ Row │ A     │ B     │ a     │ x     │
+│     │ Int64 │ Int64 │ Int64 │ Int64 │
+├─────┼───────┼───────┼───────┼───────┤
+│ 1   │ 1     │ 2     │ 2     │ 3     │
+│ 2   │ 2     │ 1     │ 4     │ 3     │
+│ 3   │ 3     │ 2     │ 6     │ 5     │
+
+julia> df === df2
+true
+```
+"""
+macro transform!(x, args...)
+    esc(transform!_helper(x, args...))
+end
+
 
 ##############################################################################
 ##
@@ -820,7 +876,7 @@ Select and transform columns.
 
 ### Arguments
 
-* `d` : an AbstractDataFrame
+* `d` : an `AbstractDataFrame` or `GroupedDataFrame`
 * `e` :  keyword arguments specifying new columns in terms of existing columns
   or symbols to specify existing columns
 
@@ -866,6 +922,86 @@ julia> @select(df, :c, x = :b + :c)
 """
 macro select(x, args...)
     esc(select_helper(x, args...))
+end
+
+
+##############################################################################
+##
+## @select! - in-place select and transform columns
+##
+##############################################################################
+
+function select!_helper(x, args...)
+    t = (fun_to_vec(arg) for arg in args)
+
+    quote
+        $DataFrames.select!($x, $(t...))
+    end
+end
+
+"""
+    @select!(d, e...)
+
+Mutate `d` in-place to retain only columns or transformations specified by `e` and return it. No copies of existing columns are made.
+
+### Arguments
+
+* `d` : an AbstractDataFrame
+* `e` :  keyword arguments specifying new columns in terms of existing columns
+  or symbols to specify existing columns
+
+### Returns
+
+* `::DataFrame`
+
+### Examples
+
+```jldoctest
+julia> using DataFrames, DataFramesMeta
+
+julia> df = DataFrame(a = repeat(1:4, outer = 2), b = repeat(2:-1:1, outer = 4), c = 1:8);
+
+julia> df2 = @select!(df, :c, :a)
+8×2 DataFrame
+│ Row │ c     │ a     │
+│     │ Int64 │ Int64 │
+├─────┼───────┼───────┤
+│ 1   │ 1     │ 1     │
+│ 2   │ 2     │ 2     │
+│ 3   │ 3     │ 3     │
+│ 4   │ 4     │ 4     │
+│ 5   │ 5     │ 1     │
+│ 6   │ 6     │ 2     │
+│ 7   │ 7     │ 3     │
+│ 8   │ 8     │ 4     │
+
+julia> df === df2
+true
+
+
+
+julia> df = DataFrame(a = repeat(1:4, outer = 2), b = repeat(2:-1:1, outer = 4), c = 1:8);
+
+julia> df2 = @select!(df, :c, x = :b + :c)
+8×2 DataFrame
+│ Row │ c     │ x     │
+│     │ Int64 │ Int64 │
+├─────┼───────┼───────┤
+│ 1   │ 1     │ 3     │
+│ 2   │ 2     │ 3     │
+│ 3   │ 3     │ 5     │
+│ 4   │ 4     │ 5     │
+│ 5   │ 5     │ 7     │
+│ 6   │ 6     │ 7     │
+│ 7   │ 7     │ 9     │
+│ 8   │ 8     │ 9     │
+
+julia> df === df2
+true
+```
+"""
+macro select!(x, args...)
+    esc(select!_helper(x, args...))
 end
 
 end # module

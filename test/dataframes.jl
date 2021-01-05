@@ -78,6 +78,82 @@ const ≅ = isequal
     @test @transform(df, n = 1).n == fill(1, nrow(df))
 
     @test @transform(df, n = :i .* :g).n == [1, 2, 3, 8, 10]
+    
+end
+
+
+@testset "@transform!" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5,
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing]
+        )
+
+    m = [100, 200, 300, 400, 500]
+
+    gq = :g
+    iq = :i
+    tq = :t
+    yq = :y
+    cq = :c
+
+    gr = "g"
+    ir = "i"
+    tr = "t"
+    yr = "y"
+    cr = "c"
+
+    n_str = "new_column"
+    n_sym = :new_column
+    n_space = "new column"
+
+    @test @transform!(df, n = :i).n == df.i
+    @test @transform!(df, n = :i .+ :g).n == df.i .+ df.g
+    @test @transform!(df, n = :t .* string.(:y)).n == df.t .* string.(df.y)
+    @test @transform!(df, n = Symbol.(:y, ^(:t))).n == Symbol.(df.y, :t)
+    @test @transform!(df, n = Symbol.(:y, ^(:body))).n == Symbol.(df.y, :body)
+    @test @transform!(df, body = :i).body == df.i
+    @test @transform!(df, transform = :i).transform == df.i
+
+    @test @transform!(df, n = cols(iq)).n == df.i
+    @test @transform!(df, n = cols(iq) .+ cols(gq)).n == df.i .+ df.g
+    @test @transform!(df, n = cols(tq) .* string.(cols(yq))).n == df.t .* string.(df.y)
+    @test @transform!(df, n = Symbol.(cols(yq), ^(:t))).n == Symbol.(df.y, :t)
+    @test @transform!(df, n = Symbol.(cols(yq), ^(:body))).n == Symbol.(df.y, :body)
+    @test @transform!(df, body = cols(iq)).body == df.i
+    @test @transform!(df, transform = cols(iq)).transform == df.i
+
+    @test @transform!(df, n = cols(ir)).n == df.i
+    @test @transform!(df, n = cols(ir) .+ cols(gr)).n == df.i .+ df.g
+    @test @transform!(df, n = cols(tr) .* string.(cols(yr))).n == df.t .* string.(df.y)
+    @test @transform!(df, n = Symbol.(cols(yr), ^(:t))).n == Symbol.(df.y, :t)
+    @test @transform!(df, n = Symbol.(cols(yr), ^(:body))).n == Symbol.(df.y, :body)
+    @test @transform!(df, body = cols(ir)).body == df.i
+    @test @transform!(df, transform = cols(ir)).transform == df.i
+    @test @transform!(df, n = cols("g") + cols(:i)).n == df.g + df.i
+    @test @transform!(df, n = cols(1) + cols(2)).n == df.g + df.i
+
+    @test @transform!(df, cols("new_column") = :i).new_column == df.i
+    @test @transform!(df, cols(n_str) = :i).new_column == df.i
+    @test @transform!(df, cols(n_sym) = :i).new_column == df.i
+    @test @transform!(df, cols(n_space) = :i)."new column" == df.i
+    @test @transform!(df, cols("new" * "_" * "column") = :i).new_column == df.i
+
+    @test @transform!(df, n = 1).n == fill(1, nrow(df))
+    @test @transform!(df, n = :i .* :g).n == [1, 2, 3, 8, 10]
+
+    # non-copying
+    @test @transform!(df, n = :i).g === df.g
+    @test @transform!(df, n = :i).n === df.i
+    # mutating
+    df2 = copy(df)
+    @test @transform!(df, :i) === df
+    @test df ≅ df2
+    @test @transform!(df, :i, :g) ≅ df2
+    @transform!(df, n2 = :i)
+    @test df[:, Not(:n2)] ≅ df2
 end
 
 # Defined outside of `@testset` due to use of `@eval`
@@ -194,6 +270,89 @@ end
     @test @select(df, cols("new" * "_" * "column") = :i).new_column == df.i
 
     @test @transform(df, n = :i .* :g).n == [1, 2, 3, 8, 10]
+
+end
+
+@testset "@select!" begin
+    # Defined outside of `@testset` due to use of `@eval`
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5,
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing]
+        )
+
+    m = [100, 200, 300, 400, 500]
+
+    gq = :g
+    iq = :i
+    tq = :t
+    yq = :y
+    cq = :c
+
+    gr = "g"
+    ir = "i"
+    tr = "t"
+    yr = "y"
+    cr = "c"
+
+    n_str = "new_column"
+    n_sym = :new_column
+    n_space = "new column"
+    
+    df2 = copy(df)
+    df2.n = df2.i .+ df2.g
+
+    @test @select!(copy(df), :i, :g, n = :i .+ :g) == df2[!, [:i, :g, :n]]
+    @test @select!(copy(df), :i, :g) == df2[!, [:i, :g]]
+    @test @select!(copy(df), :i) == df2[!, [:i]]
+
+    @test @select!(copy(df), n = :i .+ :g).n == df.i .+ df.g
+    @test @select!(copy(df), n = :i).n == df.i
+    @test @select!(copy(df), n = :t .* string.(:y)).n == df.t .* string.(df.y)
+    @test @select!(copy(df), n = Symbol.(:y, ^(:t))).n == Symbol.(df.y, :t)
+    @test @select!(copy(df), n = Symbol.(:y, ^(:body))).n == Symbol.(df.y, :body)
+    @test @select!(copy(df), body = :i).body == df.i
+    @test @select!(copy(df), transform = :i).transform == df.i
+
+    @test @select!(copy(df), n = cols(iq)).n == df.i
+    @test @select!(copy(df), n = cols(iq) .+ cols(gq)).n == df.i .+ df.g
+    @test @select!(copy(df), n = cols(tq) .* string.(cols(yq))).n == df.t .* string.(df.y)
+    @test @select!(copy(df), n = Symbol.(cols(yq), ^(:t))).n == Symbol.(df.y, :t)
+    @test @select!(copy(df), n = Symbol.(cols(yq), ^(:body))).n == Symbol.(df.y, :body)
+    @test @select!(copy(df), body = cols(iq)).body == df.i
+    @test @select!(copy(df), transform = cols(iq)).transform == df.i
+
+    @test @select!(copy(df), n = cols(ir)).n == df.i
+    @test @select!(copy(df), n = cols(ir) .+ cols(gr)).n == df.i .+ df.g
+    @test @select!(copy(df), n = cols(tr) .* string.(cols(yr))).n == df.t .* string.(df.y)
+    @test @select!(copy(df), n = Symbol.(cols(yr), ^(:t))).n == Symbol.(df.y, :t)
+    @test @select!(copy(df), n = Symbol.(cols(yr), ^(:body))).n == Symbol.(df.y, :body)
+    @test @select!(copy(df), body = cols(ir)).body == df.i
+    @test @select!(copy(df), transform = cols(ir)).transform == df.i
+    @test @select!(copy(df), n = cols("g") + cols(:i)).n == df.g + df.i
+    @test @select!(copy(df), n = cols(1) + cols(2)).n == df.g + df.i
+
+
+    @test @select!(copy(df), n = 1).n == fill(1, nrow(df))
+
+    @test @select!(copy(df), cols("new_column") = :i).new_column == df.i
+    @test @select!(copy(df), cols(n_str) = :i).new_column == df.i
+    @test @select!(copy(df), cols(n_sym) = :i).new_column == df.i
+    @test @select!(copy(df), cols(n_space) = :i)."new column" == df.i
+    @test @select!(copy(df), cols("new" * "_" * "column") = :i).new_column == df.i
+
+    # non-copying
+    newcol = [1:5;]
+    df2 = copy(df)
+    df2.newcol = newcol
+    @test @select!(df2, :newcol).newcol === newcol
+    
+    # mutating
+    df2 = @select(df, :i)
+    @test @select!(df, :i) === df
+    @test df == df2
 end
 
 # Defined outside of `@testset` due to use of `@eval`
