@@ -10,9 +10,7 @@ Metaprogramming tools for DataFrames.jl objects.
 # Macros 
 
 * `@transform`, for adding new columns to a data frame
-* `@transform!`, for adding new columns to a data frame *in-place*
 * `@select`, for selecting columns in a data frame
-* `@select!`, for selecting columns in a data frame *in-place*
 * `@combine`, for applying operations on each group of a grouped data frame
 * `@orderby`, for sorting data frames
 * `@where`, for keeping rows of a DataFrame matching a given condition
