@@ -7,21 +7,6 @@
 
 Metaprogramming tools for DataFrames.jl objects.
 
-# Macros 
-
-* `@transform`, for adding new columns to a data frame
-* `@select`, for selecting columns in a data frame
-* `@combine`, for applying operations on each group of a grouped data frame
-* `@orderby`, for sorting data frames
-* `@where`, for keeping rows of a DataFrame matching a given condition
-* `@by`, for grouping and combining a data frame in a single step
-* `@with`, for working with the columns of a data frame with high performance and 
-  convenient syntax
-* `@eachrow`, for looping through rows in data frame, again with high performance and 
-  convenient syntax. 
-* `@linq`, for piping the above macros together, similar to [magrittr](https://cran.r-project.org/web/packages/magrittr/vignettes/magrittr.html)'s
-  `%>%` in R. 
-
 # Installation
 
 DataFramesMeta.jl is a registered Julia package. Run either of the following to 
