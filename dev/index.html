@@ -133,20 +133,19 @@ x_thread = @linq df |&gt;
     where(:a .&gt; 2) |&gt;
     by(:b, meanX = mean(:x), meanY = mean(:y)) |&gt;
     orderby(:meanX) |&gt;
-    select(:meanX, :meanY, var = :b)</code></pre><p>Relative to the use of individual macros, chaining looks cleaner and more obvious with less noise from <code>@</code> symbols. This approach also avoids filling up the limited macro name space. The main downside is that more magic happens under the hood.</p><p>Alternatively you can use Lazy.jl <code>@&gt;</code> macro like this:</p><pre><code class="language-julia">using Lazy: @&gt;
+    select(:meanX, :meanY, var = :b)</code></pre><p>Relative to the use of individual macros, chaining looks cleaner and more obvious with less noise from <code>@</code> symbols. This approach also avoids filling up the limited macro name space. The main downside is that more magic happens under the hood.</p><p>Alternatively you can use Chain.jl, which exports the <code>@chain</code> macro. With Chain.jl, there is no need for <code>|&gt;</code> and the result of the previous expression is  assumed to be the first argument of the current call, unless otherwise specified  with <code>_</code>.</p><pre><code class="language-julia">using Chain, Statistics
 
 df = DataFrame(a = repeat(1:5, outer = 20),
                b = repeat([&quot;a&quot;, &quot;b&quot;, &quot;c&quot;, &quot;d&quot;], inner = 25),
                x = repeat(1:20, inner = 5))
 
-x_thread = @&gt; begin
-    df
+x_thread = @chain df begin
     @transform(y = 10 * :x)
     @where(:a .&gt; 2)
     @by(:b, meanX = mean(:x), meanY = mean(:y))
     @orderby(:meanX)
     @select(:meanX, :meanY, var = :b)
-end</code></pre><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>Please note that Lazy exports the function <code>groupby</code> which would clash with <code>DataFrames.groupby</code>. Hence, it is recommended that you only import a select number of functions into the namespace by only importing <code>@&gt;</code> e.g.  <code>using Lazy: @&gt;</code> instead of <code>using Lazy</code>.</p></div></div><p>Another alternative is Pipe.jl which exports the <code>@pipe</code> macro for piping.  The piping mechanism in Pipe requires explicit specification of the piped object via <code>_</code> instead of assuming it is the first argument to the next function. The Pipe.jl equivalent of the above is:</p><pre><code class="language-julia">using Pipe
+end</code></pre><p>Another alternative is Pipe.jl which exports the <code>@pipe</code> macro for piping.  The piping mechanism in Pipe requires explicit specification of the piped object via <code>_</code> instead of assuming it is the first argument to the next function. The Pipe.jl equivalent of the above is:</p><pre><code class="language-julia">using Pipe, Statistics
 
 df = DataFrame(a = repeat(1:5, outer = 20),
                b = repeat([&quot;a&quot;, &quot;b&quot;, &quot;c&quot;, &quot;d&quot;], inner = 25),
@@ -157,4 +156,4 @@ x_thread = @pipe df |&gt;
     @where(_, :a .&gt; 2) |&gt;
     @by(_, :b, meanX = mean(:x), meanY = mean(:y)) |&gt;
     @orderby(_, :meanX) |&gt;
-    @select(_, :meanX, :meanY, var = :b)</code></pre><ul><li><a href="api/api/#API">API</a></li></ul></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="api/api/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Friday 8 January 2021 16:17">Friday 8 January 2021</span>. Using Julia version 1.5.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+    @select(_, :meanX, :meanY, var = :b)</code></pre><ul><li><a href="api/api/#API">API</a></li></ul></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="api/api/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Thursday 14 January 2021 16:37">Thursday 14 January 2021</span>. Using Julia version 1.5.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
