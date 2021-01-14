@@ -414,17 +414,19 @@ more obvious with less noise from `@` symbols. This approach also
 avoids filling up the limited macro name space. The main downside is
 that more magic happens under the hood.
 
-Alternatively you can use Lazy.jl `@>` macro like this:
+Alternatively you can use Chain.jl, which exports the `@chain` macro. With Chain.jl,
+there is no need for `|>` and the result of the previous expression is 
+assumed to be the first argument of the current call, unless otherwise specified 
+with `_`.
 
 ```julia
-using Lazy: @>
+using Chain, Statistics
 
 df = DataFrame(a = repeat(1:5, outer = 20),
                b = repeat(["a", "b", "c", "d"], inner = 25),
                x = repeat(1:20, inner = 5))
 
-x_thread = @> begin
-    df
+x_thread = @chain df begin
     @transform(y = 10 * :x)
     @where(:a .> 2)
     @by(:b, meanX = mean(:x), meanY = mean(:y))
@@ -433,19 +435,13 @@ x_thread = @> begin
 end
 ```
 
-!!! note 
-    Please note that Lazy exports the function `groupby` which would clash
-    with `DataFrames.groupby`. Hence, it is recommended that you only import a
-    select number of functions into the namespace by only importing `@>` e.g. 
-    `using Lazy: @>` instead of `using Lazy`.
-
 Another alternative is Pipe.jl which exports the `@pipe` macro for piping. 
 The piping mechanism in Pipe requires explicit specification of the piped
 object via `_` instead of assuming it is the first argument to the next function.
 The Pipe.jl equivalent of the above is:
 
 ```julia
-using Pipe
+using Pipe, Statistics
 
 df = DataFrame(a = repeat(1:5, outer = 20),
                b = repeat(["a", "b", "c", "d"], inner = 25),
