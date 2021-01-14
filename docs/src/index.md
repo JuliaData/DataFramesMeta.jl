@@ -415,7 +415,7 @@ avoids filling up the limited macro name space. The main downside is
 that more magic happens under the hood.
 
 Alternatively you can use Chain.jl, which exports the `@chain` macro. With Chain.jl,
-there is no need for `|>` and the first result of the previous expression is 
+there is no need for `|>` and the result of the previous expression is 
 assumed to be the first argument of the current call, unless otherwise specified 
 with `_`.
 
