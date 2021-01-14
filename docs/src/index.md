@@ -427,11 +427,11 @@ df = DataFrame(a = repeat(1:5, outer = 20),
                x = repeat(1:20, inner = 5))
 
 x_thread = @chain df begin
-    @transform(_, y = 10 * :x)
-    @where(_, :a .> 2)
-    @by(_, :b, meanX = mean(:x), meanY = mean(:y))
-    @orderby(_, :meanX)
-    @select(_, :meanX, :meanY, var = :b)
+    @transform(y = 10 * :x)
+    @where(:a .> 2)
+    @by(:b, meanX = mean(:x), meanY = mean(:y))
+    @orderby(:meanX)
+    @select(:meanX, :meanY, var = :b)
 end
 ```
 
