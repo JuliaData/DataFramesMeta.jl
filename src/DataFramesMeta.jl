@@ -103,7 +103,7 @@ macro col(kw)
     esc(fun_to_vec(kw))
 end
 
-
+is_simple_function_call(x) = false
 function is_simple_function_call(expr)
     (expr.head == :call
         && length(expr.args) >= 2
@@ -111,6 +111,7 @@ function is_simple_function_call(expr)
         && all(x -> x isa QuoteNode, expr.args[2:end]))
 end
 
+is_simple_broadcast_call(x) = false
 function is_simple_broadcast_call(expr)
     (expr.head == :.
         && length(expr.args) == 2
