@@ -103,6 +103,24 @@ macro col(kw)
     esc(fun_to_vec(kw))
 end
 
+
+function is_simple_function_call(expr)
+    (expr.head == :call
+        && length(expr.args) >= 2
+        && expr.args[1] isa Symbol
+        && all(x -> x isa QuoteNode, expr.args[2:end]))
+end
+
+function is_simple_broadcast_call(expr)
+    (expr.head == :.
+        && length(expr.args) == 2
+        && expr.args[1] isa Symbol
+        && expr.args[2] isa Expr
+        && expr.args[2].head == :tuple
+        && all(x -> x isa QuoteNode, expr.args[2].args))
+end
+
+
 # `nolhs` needs to be `true` when we have syntax of the form
 # `@combine(gd, fun(:x, :y))` where `fun` returns a `table` object.
 # We don't create the "new name" pair because new names are given
@@ -110,69 +128,91 @@ end
 function fun_to_vec(kw::Expr; nolhs::Bool = false, gensym_names::Bool = false)
     # nolhs: f(:x) where f returns a Table
     # !nolhs, y = g(:x)
-    if kw.head === :(=) || kw.head === :kw || nolhs
-        membernames = Dict{Any, Symbol}()
-        if nolhs
-            # act on f(:x)
-            body = replace_syms!(kw, membernames)
-        else
-            # act on g(:x)
-            body = replace_syms!(kw.args[2], membernames)
+
+    if !(kw.head === :(=) || kw.head === :kw || nolhs)
+        throw(ArgumentError("Expressions not of the form `y = f(:x)` currently disallowed."))
+    end
+
+    function_expr = nolhs ? kw : kw.args[2]
+
+    # check cases where we can avoid creating an anonymous function
+
+    # f(:x, ...) into [:x, ...] => f
+    if is_simple_function_call(function_expr)
+        # extract source symbols from quotenodes
+        source = [q.value for q in function_expr.args[2:end]]
+        fun = function_expr.args[1]::Symbol
+        if VERSION >= v"1.6.0-beta" && startswith(string(fun), ".")
+            bc_sym = Symbol(chop(string(fun), head = 1, tail = 0))
+            fun = :(Base.BroadcastFunction($bc_sym))
         end
+
+    # f.(:x, ...) into [:x, ...] => BroadcastFunction(f)
+    elseif VERSION > v"1.6.0-beta" && is_simple_broadcast_call(function_expr)
+        # extract source symbols from quotenodes
+        source = [q.value for q in function_expr.args[2].args]
+        fun = :(Base.BroadcastFunction($(function_expr.args[1])))
+
+    # everything else goes through the normal replacement pipeline
+    # which results in a new anonymous function
+    else
+        membernames = Dict{Any, Symbol}()
+
+        body = replace_syms!(function_expr, membernames)
 
         source = Expr(:vect, keys(membernames)...)
         inputargs = Expr(:tuple, values(membernames)...)
+
         fun = quote
             $inputargs -> begin
                 $body
             end
         end
+    end
 
-        if nolhs
-            if gensym_names
-                # [:x] => _f => Symbol("###343")
-                dest = QuoteNode(gensym())
-                t = quote
-                    DataFramesMeta.make_source_concrete($(source)) =>
-                    $fun =>
-                    $dest
-                end
-            else
-                # [:x] => _f => AsTable
-                if DATAFRAMES_GEQ_22
-                    t = quote
-                        DataFramesMeta.make_source_concrete($(source)) =>
-                        $fun =>
-                        AsTable
-                    end
-                # [:x] => _f
-                else
-                    t = quote
-                        DataFramesMeta.make_source_concrete($(source)) =>
-                        $fun
-                    end
-                end
-            end
-         else
-            if kw.args[1] isa Symbol
-                # y = f(:x) becomes [:x] => _f => :y
-                dest = QuoteNode(kw.args[1])
-            elseif onearg(kw.args[1], :cols)
-                # cols(n) = f(:x) becomes [:x] => _f => n
-                dest = kw.args[1].args[2]
-            end
+
+
+    if nolhs
+        if gensym_names
+            # [:x] => _f => Symbol("###343")
+            dest = QuoteNode(gensym())
             t = quote
                 DataFramesMeta.make_source_concrete($(source)) =>
                 $fun =>
                 $dest
             end
+        else
+            # [:x] => _f => AsTable
+            if DATAFRAMES_GEQ_22
+                t = quote
+                    DataFramesMeta.make_source_concrete($(source)) =>
+                    $fun =>
+                    AsTable
+                end
+            # [:x] => _f
+            else
+                t = quote
+                    DataFramesMeta.make_source_concrete($(source)) =>
+                    $fun
+                end
+            end
         end
         return t
-    elseif onearg(kw, :cols)
-        return kw.args[2]
     else
-        throw(ArgumentError("Expressions not of the form `y = f(:x)` currently disallowed."))
+        if kw.args[1] isa Symbol
+            # y = f(:x) becomes [:x] => _f => :y
+            dest = QuoteNode(kw.args[1])
+        elseif onearg(kw.args[1], :cols)
+            # cols(n) = f(:x) becomes [:x] => _f => n
+            dest = kw.args[1].args[2]
+        end
+        t = quote
+            DataFramesMeta.make_source_concrete($(source)) =>
+            $fun =>
+            $dest
+        end
     end
+    return t
 end
 fun_to_vec(kw::QuoteNode; nolhs::Bool = false, gensym_names::Bool = false) = kw
 
