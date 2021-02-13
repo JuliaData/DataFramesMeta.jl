@@ -139,11 +139,13 @@ function fun_to_vec(kw::Expr; nolhs::Bool = false, gensym_names::Bool = false)
     # check cases where we can avoid creating an anonymous function
 
     # f(:x, ...) into [:x, ...] => f
-    if is_simple_function_call(function_expr)
+    if is_simple_function_call(function_expr) &&
+            # we can only deal with dot-operators from 1.6 onwards, all others are ok
+            (VERSION >= v"1.6.0-beta" || !startswith(string(function_expr.args[1]), "."))
         # extract source symbols from quotenodes
         source = [q.value for q in function_expr.args[2:end]]
-        fun = function_expr.args[1]::Symbol
-        if VERSION >= v"1.6.0-beta" && startswith(string(fun), ".")
+        fun = function_expr.args[1]
+        if startswith(string(fun), ".")
             bc_sym = Symbol(chop(string(fun), head = 1, tail = 0))
             fun = :(Base.BroadcastFunction($bc_sym))
         end
