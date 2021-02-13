@@ -104,7 +104,7 @@ macro col(kw)
 end
 
 is_simple_function_call(x) = false
-function is_simple_function_call(expr)
+function is_simple_function_call(expr::Expr)
     (expr.head == :call
         && length(expr.args) >= 2
         && expr.args[1] isa Symbol
@@ -112,7 +112,7 @@ function is_simple_function_call(expr)
 end
 
 is_simple_broadcast_call(x) = false
-function is_simple_broadcast_call(expr)
+function is_simple_broadcast_call(expr::Expr)
     (expr.head == :.
         && length(expr.args) == 2
         && expr.args[1] isa Symbol
