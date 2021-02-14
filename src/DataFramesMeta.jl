@@ -122,6 +122,18 @@ function is_simple_broadcast_call(expr::Expr)
 end
 
 
+function broadcast_f_expr(f)
+    # theoretically we could use ByRow everywhere, but maybe we can save some compilation
+    # here and there by using the Base functionality where it's available, as other code
+    # might have already called that
+    if VERSION >= v"1.6.0-beta"
+        :(Base.BroadcastFunction($f))
+    else
+        :(DataFrames.ByRow($f))
+    end
+end
+
+
 # `nolhs` needs to be `true` when we have syntax of the form
 # `@combine(gd, fun(:x, :y))` where `fun` returns a `table` object.
 # We don't create the "new name" pair because new names are given
@@ -139,22 +151,26 @@ function fun_to_vec(kw::Expr; nolhs::Bool = false, gensym_names::Bool = false)
     # check cases where we can avoid creating an anonymous function
 
     # f(:x, ...) into [:x, ...] => f
-    if is_simple_function_call(function_expr) &&
-            # we can only deal with dot-operators from 1.6 onwards, all others are ok
-            (VERSION >= v"1.6.0-beta" || !startswith(string(function_expr.args[1]), "."))
+    if is_simple_function_call(function_expr)
         # extract source symbols from quotenodes
         source = [q.value for q in function_expr.args[2:end]]
         fun = function_expr.args[1]
+        # some normal-looking calls are actually broadcasts, like
+        # .+ .- etc., if we just pass on those symbols as function calls
+        # we get UndefVarErrors
+        # instead we transform the symbols to their non-broadcast versions
+        # and then use broadcast wrappers
         if startswith(string(fun), ".")
-            bc_sym = Symbol(chop(string(fun), head = 1, tail = 0))
-            fun = :(Base.BroadcastFunction($bc_sym))
+            f_sym_without_dot = Symbol(chop(string(fun), head = 1, tail = 0))
+            fun = broadcast_f_expr(f_sym_without_dot)
         end
 
     # f.(:x, ...) into [:x, ...] => BroadcastFunction(f)
-    elseif VERSION > v"1.6.0-beta" && is_simple_broadcast_call(function_expr)
+    elseif is_simple_broadcast_call(function_expr)
         # extract source symbols from quotenodes
         source = [q.value for q in function_expr.args[2].args]
-        fun = :(Base.BroadcastFunction($(function_expr.args[1])))
+        f = function_expr.args[1]
+        fun = broadcast_f_expr(f)
 
     # everything else goes through the normal replacement pipeline
     # which results in a new anonymous function
