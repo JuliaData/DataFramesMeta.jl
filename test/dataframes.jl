@@ -480,7 +480,7 @@ end
     @test @select(df, cols("X")) == select(df, "X")
     @test @select(df, cols("X Y Z")) == select(df, "X Y Z")
     @test @transform(df, cols("X")) == df
-    @test @transform(df, cols("X", "Y", "Z")) == df
+    @test @transform(df, cols("X Y Z")) == df
 end
 
 
