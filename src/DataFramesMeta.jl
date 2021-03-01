@@ -168,6 +168,8 @@ function fun_to_vec(kw::Expr; nolhs::Bool = false, gensym_names::Bool = false)
             end
         end
         return t
+    elseif onearg(kw, :cols)
+        return kw.args[2]
     else
         throw(ArgumentError("Expressions not of the form `y = f(:x)` currently disallowed."))
     end
@@ -603,7 +605,7 @@ end
 """
     @transform!(d, i...)
 
-Mutate `d` inplace to add additional columns or keys based on keyword arguments and return it.  
+Mutate `d` inplace to add additional columns or keys based on keyword arguments and return it.
 No copies of existing columns are made.
 
 ### Arguments

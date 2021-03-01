@@ -78,7 +78,7 @@ const ≅ = isequal
     @test @transform(df, n = 1).n == fill(1, nrow(df))
 
     @test @transform(df, n = :i .* :g).n == [1, 2, 3, 8, 10]
-    
+
 end
 
 
@@ -300,7 +300,7 @@ end
     n_str = "new_column"
     n_sym = :new_column
     n_space = "new column"
-    
+
     df2 = copy(df)
     df2.n = df2.i .+ df2.g
 
@@ -348,7 +348,7 @@ end
     df2 = copy(df)
     df2.newcol = newcol
     @test @select!(df2, :newcol).newcol === newcol
-    
+
     # mutating
     df2 = @select(df, :i)
     @test @select!(df, :i) === df
@@ -472,6 +472,15 @@ end
     subdf = @view df[1:3, :]
 
     @test @orderby(subdf, -:i) == df[[3, 2, 1], :]
+end
+
+@testset "cols with @select fix" begin
+    df = DataFrame("X" => 1, "X Y Z" => 2)
+
+    @test @select(df, cols("X")) == select(df, "X")
+    @test @select(df, cols("X Y Z")) == select(df, "X Y Z")
+    @test @transform(df, cols("X")) == df
+    @test @transform(df, cols("X Y Z")) == df
 end
 
 
