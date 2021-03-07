@@ -38,6 +38,9 @@ replace_syms!(q::QuoteNode, membernames) =
     replace_syms!(Meta.quot(q.value), membernames)
 replace_syms!(e::Expr, membernames) =
     if onearg(e, :^)
+        @warn "^() for escaping `Symbol`s is deprecated, use syms() instead"
+        e.args[2]
+    elseif onearg(e, :syms)
         e.args[2]
     elseif onearg(e, :_I_)
         @warn "_I_() for escaping variables is deprecated, use cols() instead"

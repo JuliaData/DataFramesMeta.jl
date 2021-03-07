@@ -113,6 +113,34 @@ end
     @test df2 == DataFrame(A = [1, 2, 3], B = [2, 1, 2], C = [2, 1, 2])
 end
 
+df = DataFrame(a = [:A, :B])
+@testset "syms with byrow" begin
+    df = DataFrame(a = [:A, :B])
+
+    df2 = @transform(df, b = syms(:C))
+    @test df2.b == [:C, :C]
+
+    df2 = @select(df, b = syms(:C))
+    @test df2.b == [:C, :C]
+
+    df2 = @transform(df, b = syms(Symbol("A symbol")))
+    @test df2.b == [Symbol("A symbol"), Symbol("A symbol")]
+
+    @test_throws LoadError @eval @select(df, syms(:A))
+
+    x = @with df begin
+        syms(:a)
+    end
+
+    @test x == :a
+
+    df2 = @eachrow df begin
+        @newcol b::Array{Symbol}
+        :b = syms(:a)
+    end
+    @test df2.b == [:a, :a]
+end
+
 df = DataFrame(A = 1:3, B = [2, 1, 2])
 
 @testset "limits of @eachrow" begin

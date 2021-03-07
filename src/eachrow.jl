@@ -11,6 +11,8 @@ function eachrow_replace(e::Expr)
     if onearg(e, :cols)
         # cols(:x) becomes cols(:x)[row]
         return Expr(:ref, Expr(:call, :cols, e.args[2]), :row)
+    elseif onearg(e, :syms) || onearg(e, :^)
+        return e
     end
 
     if e.head == :.

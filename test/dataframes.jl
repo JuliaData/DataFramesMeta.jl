@@ -38,24 +38,24 @@ const ≅ = isequal
     @test @transform(df, n = :i).n == df.i
     @test @transform(df, n = :i .+ :g).n == df.i .+ df.g
     @test @transform(df, n = :t .* string.(:y)).n == df.t .* string.(df.y)
-    @test @transform(df, n = Symbol.(:y, ^(:t))).n == Symbol.(df.y, :t)
-    @test @transform(df, n = Symbol.(:y, ^(:body))).n == Symbol.(df.y, :body)
+    @test @transform(df, n = Symbol.(:y, syms(:t))).n == Symbol.(df.y, :t)
+    @test @transform(df, n = Symbol.(:y, syms(:body))).n == Symbol.(df.y, :body)
     @test @transform(df, body = :i).body == df.i
     @test @transform(df, transform = :i).transform == df.i
 
     @test @transform(df, n = cols(iq)).n == df.i
     @test @transform(df, n = cols(iq) .+ cols(gq)).n == df.i .+ df.g
     @test @transform(df, n = cols(tq) .* string.(cols(yq))).n == df.t .* string.(df.y)
-    @test @transform(df, n = Symbol.(cols(yq), ^(:t))).n == Symbol.(df.y, :t)
-    @test @transform(df, n = Symbol.(cols(yq), ^(:body))).n == Symbol.(df.y, :body)
+    @test @transform(df, n = Symbol.(cols(yq), syms(:t))).n == Symbol.(df.y, :t)
+    @test @transform(df, n = Symbol.(cols(yq), syms(:body))).n == Symbol.(df.y, :body)
     @test @transform(df, body = cols(iq)).body == df.i
     @test @transform(df, transform = cols(iq)).transform == df.i
 
     @test @transform(df, n = cols(ir)).n == df.i
     @test @transform(df, n = cols(ir) .+ cols(gr)).n == df.i .+ df.g
     @test @transform(df, n = cols(tr) .* string.(cols(yr))).n == df.t .* string.(df.y)
-    @test @transform(df, n = Symbol.(cols(yr), ^(:t))).n == Symbol.(df.y, :t)
-    @test @transform(df, n = Symbol.(cols(yr), ^(:body))).n == Symbol.(df.y, :body)
+    @test @transform(df, n = Symbol.(cols(yr), syms(:t))).n == Symbol.(df.y, :t)
+    @test @transform(df, n = Symbol.(cols(yr), syms(:body))).n == Symbol.(df.y, :body)
     @test @transform(df, body = cols(ir)).body == df.i
     @test @transform(df, transform = cols(ir)).transform == df.i
     @test @transform(df, n = cols("g") + cols(:i)).n == df.g + df.i
@@ -112,24 +112,24 @@ end
     @test @transform!(df, n = :i).n == df.i
     @test @transform!(df, n = :i .+ :g).n == df.i .+ df.g
     @test @transform!(df, n = :t .* string.(:y)).n == df.t .* string.(df.y)
-    @test @transform!(df, n = Symbol.(:y, ^(:t))).n == Symbol.(df.y, :t)
-    @test @transform!(df, n = Symbol.(:y, ^(:body))).n == Symbol.(df.y, :body)
+    @test @transform!(df, n = Symbol.(:y, syms(:t))).n == Symbol.(df.y, :t)
+    @test @transform!(df, n = Symbol.(:y, syms(:body))).n == Symbol.(df.y, :body)
     @test @transform!(df, body = :i).body == df.i
     @test @transform!(df, transform = :i).transform == df.i
 
     @test @transform!(df, n = cols(iq)).n == df.i
     @test @transform!(df, n = cols(iq) .+ cols(gq)).n == df.i .+ df.g
     @test @transform!(df, n = cols(tq) .* string.(cols(yq))).n == df.t .* string.(df.y)
-    @test @transform!(df, n = Symbol.(cols(yq), ^(:t))).n == Symbol.(df.y, :t)
-    @test @transform!(df, n = Symbol.(cols(yq), ^(:body))).n == Symbol.(df.y, :body)
+    @test @transform!(df, n = Symbol.(cols(yq), syms(:t))).n == Symbol.(df.y, :t)
+    @test @transform!(df, n = Symbol.(cols(yq), syms(:body))).n == Symbol.(df.y, :body)
     @test @transform!(df, body = cols(iq)).body == df.i
     @test @transform!(df, transform = cols(iq)).transform == df.i
 
     @test @transform!(df, n = cols(ir)).n == df.i
     @test @transform!(df, n = cols(ir) .+ cols(gr)).n == df.i .+ df.g
     @test @transform!(df, n = cols(tr) .* string.(cols(yr))).n == df.t .* string.(df.y)
-    @test @transform!(df, n = Symbol.(cols(yr), ^(:t))).n == Symbol.(df.y, :t)
-    @test @transform!(df, n = Symbol.(cols(yr), ^(:body))).n == Symbol.(df.y, :body)
+    @test @transform!(df, n = Symbol.(cols(yr), syms(:t))).n == Symbol.(df.y, :t)
+    @test @transform!(df, n = Symbol.(cols(yr), syms(:body))).n == Symbol.(df.y, :body)
     @test @transform!(df, body = cols(ir)).body == df.i
     @test @transform!(df, transform = cols(ir)).transform == df.i
     @test @transform!(df, n = cols("g") + cols(:i)).n == df.g + df.i
@@ -237,24 +237,24 @@ end
     @test @select(df, n = :i).n == df.i
     @test @select(df, n = :i .+ :g).n == df.i .+ df.g
     @test @select(df, n = :t .* string.(:y)).n == df.t .* string.(df.y)
-    @test @select(df, n = Symbol.(:y, ^(:t))).n == Symbol.(df.y, :t)
-    @test @select(df, n = Symbol.(:y, ^(:body))).n == Symbol.(df.y, :body)
+    @test @select(df, n = Symbol.(:y, syms(:t))).n == Symbol.(df.y, :t)
+    @test @select(df, n = Symbol.(:y, syms(:body))).n == Symbol.(df.y, :body)
     @test @select(df, body = :i).body == df.i
     @test @select(df, transform = :i).transform == df.i
 
     @test @select(df, n = cols(iq)).n == df.i
     @test @select(df, n = cols(iq) .+ cols(gq)).n == df.i .+ df.g
     @test @select(df, n = cols(tq) .* string.(cols(yq))).n == df.t .* string.(df.y)
-    @test @select(df, n = Symbol.(cols(yq), ^(:t))).n == Symbol.(df.y, :t)
-    @test @select(df, n = Symbol.(cols(yq), ^(:body))).n == Symbol.(df.y, :body)
+    @test @select(df, n = Symbol.(cols(yq), syms(:t))).n == Symbol.(df.y, :t)
+    @test @select(df, n = Symbol.(cols(yq), syms(:body))).n == Symbol.(df.y, :body)
     @test @select(df, body = cols(iq)).body == df.i
     @test @select(df, transform = cols(iq)).transform == df.i
 
     @test @select(df, n = cols(ir)).n == df.i
     @test @select(df, n = cols(ir) .+ cols(gr)).n == df.i .+ df.g
     @test @select(df, n = cols(tr) .* string.(cols(yr))).n == df.t .* string.(df.y)
-    @test @select(df, n = Symbol.(cols(yr), ^(:t))).n == Symbol.(df.y, :t)
-    @test @select(df, n = Symbol.(cols(yr), ^(:body))).n == Symbol.(df.y, :body)
+    @test @select(df, n = Symbol.(cols(yr), syms(:t))).n == Symbol.(df.y, :t)
+    @test @select(df, n = Symbol.(cols(yr), syms(:body))).n == Symbol.(df.y, :body)
     @test @select(df, body = cols(ir)).body == df.i
     @test @select(df, transform = cols(ir)).transform == df.i
     @test @select(df, n = cols("g") + cols(:i)).n == df.g + df.i
@@ -311,24 +311,24 @@ end
     @test @select!(copy(df), n = :i .+ :g).n == df.i .+ df.g
     @test @select!(copy(df), n = :i).n == df.i
     @test @select!(copy(df), n = :t .* string.(:y)).n == df.t .* string.(df.y)
-    @test @select!(copy(df), n = Symbol.(:y, ^(:t))).n == Symbol.(df.y, :t)
-    @test @select!(copy(df), n = Symbol.(:y, ^(:body))).n == Symbol.(df.y, :body)
+    @test @select!(copy(df), n = Symbol.(:y, syms(:t))).n == Symbol.(df.y, :t)
+    @test @select!(copy(df), n = Symbol.(:y, syms(:body))).n == Symbol.(df.y, :body)
     @test @select!(copy(df), body = :i).body == df.i
     @test @select!(copy(df), transform = :i).transform == df.i
 
     @test @select!(copy(df), n = cols(iq)).n == df.i
     @test @select!(copy(df), n = cols(iq) .+ cols(gq)).n == df.i .+ df.g
     @test @select!(copy(df), n = cols(tq) .* string.(cols(yq))).n == df.t .* string.(df.y)
-    @test @select!(copy(df), n = Symbol.(cols(yq), ^(:t))).n == Symbol.(df.y, :t)
-    @test @select!(copy(df), n = Symbol.(cols(yq), ^(:body))).n == Symbol.(df.y, :body)
+    @test @select!(copy(df), n = Symbol.(cols(yq), syms(:t))).n == Symbol.(df.y, :t)
+    @test @select!(copy(df), n = Symbol.(cols(yq), syms(:body))).n == Symbol.(df.y, :body)
     @test @select!(copy(df), body = cols(iq)).body == df.i
     @test @select!(copy(df), transform = cols(iq)).transform == df.i
 
     @test @select!(copy(df), n = cols(ir)).n == df.i
     @test @select!(copy(df), n = cols(ir) .+ cols(gr)).n == df.i .+ df.g
     @test @select!(copy(df), n = cols(tr) .* string.(cols(yr))).n == df.t .* string.(df.y)
-    @test @select!(copy(df), n = Symbol.(cols(yr), ^(:t))).n == Symbol.(df.y, :t)
-    @test @select!(copy(df), n = Symbol.(cols(yr), ^(:body))).n == Symbol.(df.y, :body)
+    @test @select!(copy(df), n = Symbol.(cols(yr), syms(:t))).n == Symbol.(df.y, :t)
+    @test @select!(copy(df), n = Symbol.(cols(yr), syms(:body))).n == Symbol.(df.y, :body)
     @test @select!(copy(df), body = cols(ir)).body == df.i
     @test @select!(copy(df), transform = cols(ir)).transform == df.i
     @test @select!(copy(df), n = cols("g") + cols(:i)).n == df.g + df.i
@@ -420,7 +420,7 @@ end
     @test_throws ArgumentError @with(df, :A + cols(2))
 
     @test  x == sum(df.A .* df.B)
-    @test  @with(df, df[:A .> 1, ^([:B, :A])]) == df[df.A .> 1, [:B, :A]]
+    @test  @with(df, df[:A .> 1, syms([:B, :A])]) == df[df.A .> 1, [:B, :A]]
     @test  @with(df, DataFrame(a = :A * 2, b = :A .+ :B)) == DataFrame(a = df.A * 2, b = df.A .+ df.B)
 end
 
