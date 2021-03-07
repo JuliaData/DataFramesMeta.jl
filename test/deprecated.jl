@@ -278,6 +278,7 @@ end
 end
 
 df = DataFrame(a = [:A, :B])
+@testset "^ instead of syms"
     # To add when testset with syms is finalized.
 end
 
