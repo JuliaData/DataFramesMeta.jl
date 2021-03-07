@@ -257,7 +257,7 @@ tempfun(a, b) = a .+ b .+ 1
 tempfun(d[!, :a], d[!, :b])
 ```
 
-If an expression is wrapped in `^(expr)`, `expr` gets passed through untouched.
+If an expression is wrapped in `syms(expr)`, `expr` gets passed through untouched.
 If an expression is wrapped in  `cols(expr)`, the column is referenced by the
 variable `expr` rather than a symbol.
 
@@ -293,7 +293,7 @@ julia> @with df begin
         end
 10.0
 
-julia> @with(df, df[:x .> 1, ^(:y)]) # The ^ means leave the :y alone
+julia> @with(df, df[:x .> 1, syms(:y)]) # The ^ means leave the :y alone
 2-element Array{Int64,1}:
  1
  2

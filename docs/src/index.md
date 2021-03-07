@@ -179,7 +179,7 @@ x = @with df begin
     res
 end
 
-@with(df, df[:x .> 1, ^(:y)]) # The ^ means leave the :y alone
+@with(df, df[:x .> 1, syms(:y)]) # The `syms` means leave the :y alone
 
 ```
 
@@ -363,11 +363,11 @@ outside of DataFramesMeta macros.
 
 # Working with `Symbol`s without referring to columns
 
-To refer to `Symbol`s without aliasing the column in a data frame, use `^`. 
+To refer to `Symbol`s without aliasing the column in a data frame, use `syms`. 
 
 ```
 df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
-@select(df, :x2 = :x, :x3 = ^(:x))
+@select(df, :x2 = :x, :x3 = syms(:x))
 ```
 
 This rule applies to all DataFramesMeta macros.
