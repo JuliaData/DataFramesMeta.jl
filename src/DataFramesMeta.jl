@@ -37,12 +37,12 @@ replace_syms!(x, membernames) = x
 replace_syms!(q::QuoteNode, membernames) =
     replace_syms!(Meta.quot(q.value), membernames)
 replace_syms!(e::Expr, membernames) =
-    if onearg(e, :^)
+    if onearg(e, :^) # TODO: Delete this branch after deprecation period
         @warn "^() for escaping `Symbol`s is deprecated, use syms() instead"
         e.args[2]
     elseif onearg(e, :syms)
         e.args[2]
-    elseif onearg(e, :_I_)
+    elseif onearg(e, :_I_) # TODO: Delete this branch after deprecation period
         @warn "_I_() for escaping variables is deprecated, use cols() instead"
         addkey!(membernames, :($(e.args[2])))
     elseif onearg(e, :cols)
