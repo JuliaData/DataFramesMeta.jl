@@ -29,8 +29,8 @@ function addkey!(membernames, nam)
     membernames[nam]
 end
 
-onearg(e, f) = e.head == :call && length(e.args) == 2 && e.args[1] == f
-
+onearg(e::Expr, f) = e.head == :call && length(e.args) == 2 && e.args[1] == f
+onearg(e, f) = false
 mapexpr(f, e) = Expr(e.head, map(f, e.args)...)
 
 replace_syms!(x, membernames) = x
@@ -126,7 +126,6 @@ function args_to_selectors(v)
         if arg isa QuoteNode
             arg
         elseif onearg(arg, :cols)
-            @show arg.args[2]
             arg.args[2]
         else
             Throw(ArgumentError("This path should not be reached, arg: $(arg)"))
