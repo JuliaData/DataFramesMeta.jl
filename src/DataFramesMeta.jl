@@ -108,7 +108,7 @@ function is_simple_function_call(expr::Expr)
     (expr.head == :call
         && length(expr.args) >= 2
         && expr.args[1] isa Symbol
-        && all(x -> x isa QuoteNode, expr.args[2:end]))
+        && all(x -> x isa QuoteNode || onearg(x, :cols), expr.args[2:end]))
 end
 
 is_simple_broadcast_call(x) = false
@@ -118,21 +118,23 @@ function is_simple_broadcast_call(expr::Expr)
         && expr.args[1] isa Symbol
         && expr.args[2] isa Expr
         && expr.args[2].head == :tuple
-        && all(x -> x isa QuoteNode, expr.args[2].args))
+        && all(x -> x isa QuoteNode || onearg(x, :cols), expr.args[2:end]))
 end
 
-
-function broadcast_f_expr(f)
-    # theoretically we could use ByRow everywhere, but maybe we can save some compilation
-    # here and there by using the Base functionality where it's available, as other code
-    # might have already called that
-    if VERSION >= v"1.6.0-beta"
-        :(Base.BroadcastFunction($f))
-    else
-        :(DataFrames.ByRow($f))
+function args_to_selectors(v)
+    t = map(v) do arg
+        if arg isa QuoteNode
+            arg
+        elseif onearg(arg, :cols)
+            @show arg.args[2]
+            arg.args[2]
+        else
+            Throw(ArgumentError("This path should not be reached, arg: $(arg)"))
+        end
     end
-end
 
+    Expr(:vect, t...)
+end
 
 # `nolhs` needs to be `true` when we have syntax of the form
 # `@combine(gd, fun(:x, :y))` where `fun` returns a `table` object.
@@ -141,36 +143,50 @@ end
 function fun_to_vec(kw::Expr; nolhs::Bool = false, gensym_names::Bool = false)
     # nolhs: f(:x) where f returns a Table
     # !nolhs, y = g(:x)
-
     if !(kw.head === :(=) || kw.head === :kw || nolhs)
-        throw(ArgumentError("Expressions not of the form `y = f(:x)` currently disallowed."))
+        throw(ArgummentError("Expressions not of the form `y = f(:x)` currently disallowed."))
+    end
+
+    # y = :x
+    if nolhs == false && length(kw.args) == 2
+       x = kw.args[2]
+       if x isa QuoteNode || onearg(x, :cols)
+
+            source = Expr(:vect, x isa QuoteNode ? x : x.args[2])
+            fun = identity
+            dest = QuoteNode(kw.args[1])
+
+            t = quote
+                $source => $fun => $dest
+            end
+
+            return t
+        end
     end
 
     function_expr = nolhs ? kw : kw.args[2]
-
     # check cases where we can avoid creating an anonymous function
-
-    # f(:x, ...) into [:x, ...] => f
+    # f(:x, :y) into [:x, :y] => f => :z # nolhs == false
     if is_simple_function_call(function_expr)
         # extract source symbols from quotenodes
-        source = [q.value for q in function_expr.args[2:end]]
+        source = args_to_selectors(function_expr.args[2:end])
         fun = function_expr.args[1]
         # some normal-looking calls are actually broadcasts, like
         # .+ .- etc., if we just pass on those symbols as function calls
         # we get UndefVarErrors
         # instead we transform the symbols to their non-broadcast versions
         # and then use broadcast wrappers
-        if startswith(string(fun), ".")
+        if startswith(string(fun), '.')
             f_sym_without_dot = Symbol(chop(string(fun), head = 1, tail = 0))
-            fun = broadcast_f_expr(f_sym_without_dot)
+            fun = :(DataFrames.ByRow($f_sym_without_dot))
         end
 
-    # f.(:x, ...) into [:x, ...] => BroadcastFunction(f)
+    # f.(:x, ...) into [:x, ...] => ByRow(f)
     elseif is_simple_broadcast_call(function_expr)
         # extract source symbols from quotenodes
-        source = [q.value for q in function_expr.args[2].args]
+        source = args_to_selectors(function_expr.args[2].args)
         f = function_expr.args[1]
-        fun = broadcast_f_expr(f)
+        fun = :(DataFrames.ByRow($f))
 
     # everything else goes through the normal replacement pipeline
     # which results in a new anonymous function
@@ -188,9 +204,13 @@ function fun_to_vec(kw::Expr; nolhs::Bool = false, gensym_names::Bool = false)
             end
         end
     end
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> add cols feature and symbol
 
+    # @combine(gd, (a = :x, b = :y))
     if nolhs
         if gensym_names
             # [:x] => _f => Symbol("###343")
@@ -216,7 +236,11 @@ function fun_to_vec(kw::Expr; nolhs::Bool = false, gensym_names::Bool = false)
                 end
             end
         end
+<<<<<<< HEAD
         return t
+=======
+    # @select(df, y = f(:x))
+>>>>>>> add cols feature and symbol
     else
         if kw.args[1] isa Symbol
             # y = f(:x) becomes [:x] => _f => :y
