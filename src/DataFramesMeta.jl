@@ -141,13 +141,18 @@ end
 # We don't create the "new name" pair because new names are given
 # by the table.
 function fun_to_vec(kw::Expr; nolhs::Bool = false, gensym_names::Bool = false)
-    # nolhs: f(:x) where f returns a Table
-    # !nolhs, y = g(:x)
-    if !(kw.head === :(=) || kw.head === :kw || nolhs)
-        throw(ArgummentError("Expressions not of the form `y = f(:x)` currently disallowed."))
+    # @select(df, cols(:x))
+    if onearg(kw, :cols)
+        return kw.args[2]
     end
 
-    # y = :x
+    # nolhs: @select(df, f(:x)) where f returns a Table
+    # !nolhs, @select(df, y = g(:x))
+    if !(kw.head === :(=) || kw.head === :kw || nolhs)
+        throw(ArgumentError("Expressions not of the form `y = f(:x)` currently disallowed."))
+    end
+
+    # @select(df, y = :x)
     if nolhs == false && length(kw.args) == 2
        x = kw.args[2]
        if x isa QuoteNode || onearg(x, :cols)
@@ -164,9 +169,9 @@ function fun_to_vec(kw::Expr; nolhs::Bool = false, gensym_names::Bool = false)
         end
     end
 
-    function_expr = nolhs ? kw : kw.args[2]
     # check cases where we can avoid creating an anonymous function
     # f(:x, :y) into [:x, :y] => f => :z # nolhs == false
+    function_expr = nolhs ? kw : kw.args[2]
     if is_simple_function_call(function_expr)
         # extract source symbols from quotenodes
         source = args_to_selectors(function_expr.args[2:end])
@@ -204,11 +209,6 @@ function fun_to_vec(kw::Expr; nolhs::Bool = false, gensym_names::Bool = false)
             end
         end
     end
-<<<<<<< HEAD
-
-
-=======
->>>>>>> add cols feature and symbol
 
     # @combine(gd, (a = :x, b = :y))
     if nolhs
@@ -236,11 +236,9 @@ function fun_to_vec(kw::Expr; nolhs::Bool = false, gensym_names::Bool = false)
                 end
             end
         end
-<<<<<<< HEAD
         return t
-=======
-    # @select(df, y = f(:x))
->>>>>>> add cols feature and symbol
+    # @select(df, y = f(:x)) or
+    # @select(df, cols("y") = f(:x))
     else
         if kw.args[1] isa Symbol
             # y = f(:x) becomes [:x] => _f => :y
