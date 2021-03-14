@@ -118,7 +118,7 @@ function is_simple_broadcast_call(expr::Expr)
         && expr.args[1] isa Symbol
         && expr.args[2] isa Expr
         && expr.args[2].head == :tuple
-        && all(x -> x isa QuoteNode || onearg(x, :cols), expr.args[2:end]))
+        && all(x -> x isa QuoteNode || onearg(x, :cols), expr.args[2].args))
 end
 
 function args_to_selectors(v)
