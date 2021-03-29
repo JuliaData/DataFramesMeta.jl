@@ -71,6 +71,7 @@ const ≅ = isequal
 
     @test @transform(df, cols("new_column") = :i).new_column == df.i
     @test @transform(df, cols(n_str) = :i).new_column == df.i
+    @test @transform(df, cols(n_str) = cols("i") .+ 0).new_column == df.i
     @test @transform(df, cols(n_sym) = :i).new_column == df.i
     @test @transform(df, cols(n_space) = :i)."new column" == df.i
     @test @transform(df, cols("new" * "_" * "column") = :i).new_column == df.i
@@ -137,6 +138,7 @@ end
 
     @test @transform!(df, cols("new_column") = :i).new_column == df.i
     @test @transform!(df, cols(n_str) = :i).new_column == df.i
+    @test @transform(df, cols(n_str) = cols("i") .+ 0).new_column == df.i
     @test @transform!(df, cols(n_sym) = :i).new_column == df.i
     @test @transform!(df, cols(n_space) = :i)."new column" == df.i
     @test @transform!(df, cols("new" * "_" * "column") = :i).new_column == df.i
@@ -265,6 +267,7 @@ end
 
     @test @select(df, cols("new_column") = :i).new_column == df.i
     @test @select(df, cols(n_str) = :i).new_column == df.i
+    @test @select(df, cols(n_str) = cols("i") .+ 0).new_column == df.i
     @test @select(df, cols(n_sym) = :i).new_column == df.i
     @test @select(df, cols(n_space) = :i)."new column" == df.i
     @test @select(df, cols("new" * "_" * "column") = :i).new_column == df.i
@@ -339,6 +342,7 @@ end
 
     @test @select!(copy(df), cols("new_column") = :i).new_column == df.i
     @test @select!(copy(df), cols(n_str) = :i).new_column == df.i
+    @test @select!(copy(df), cols(n_str) = cols(:i) .+ 0).new_column == df.i
     @test @select!(copy(df), cols(n_sym) = :i).new_column == df.i
     @test @select!(copy(df), cols(n_space) = :i)."new column" == df.i
     @test @select!(copy(df), cols("new" * "_" * "column") = :i).new_column == df.i
