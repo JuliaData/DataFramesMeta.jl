@@ -30,7 +30,7 @@ or via the `Pkg` REPL mode (enter by typing `]` at the REPL console)
 # Package Maintenance
 
 Any of the
-[JuliaDatacollaborators](https://github.com/orgs/JuliaData/teams/collaborators)
+[JuliaData collaborators](https://github.com/orgs/JuliaData/teams/collaborators)
 have write access and can accept pull requests.
 
 Pull requests are welcome. Pull requests should include updated tests. If
