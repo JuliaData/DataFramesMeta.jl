@@ -145,8 +145,6 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
     # cols(:y) = f(cols(:x)) # re-write as simple call, RHS is block, use cols
     # cols(y) = :x + 1 # re-write as complicated col, but RHS is :block
     # cols(:y) = cols(:x) + 1 # re-write as complicated call, RHS is block, use cols
-    dump(ex)
-    asdf
     Base.remove_linenums!(ex)
 
     if gensym_names
