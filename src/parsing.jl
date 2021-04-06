@@ -145,6 +145,8 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
     # cols(:y) = f(cols(:x)) # re-write as simple call, RHS is block, use cols
     # cols(y) = :x + 1 # re-write as complicated col, but RHS is :block
     # cols(:y) = cols(:x) + 1 # re-write as complicated call, RHS is block, use cols
+    dump(ex)
+    asdf
     Base.remove_linenums!(ex)
 
     if gensym_names
@@ -176,7 +178,7 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
         end
     end
 
-    # (; a = :x, )
+    # (; a = :x, ) # named tuple
     if nokw && !(is_simple_function_call(ex))
         source, fun = get_source_fun(ex)
 
@@ -220,7 +222,8 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
         end
     end
 
-    # cols(:y) = :x # rhs is NOT a QuoteNode in this isntance
+    # cols(:y) = :x # rhs is NOT a
+    # QuoteNode
     if onearg(lhs, :cols) && rhs isa QuoteNode
         source = rhs
         fun = :copy
