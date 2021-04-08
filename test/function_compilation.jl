@@ -67,37 +67,37 @@ using DataFramesMeta
 			@test @select(df, c = :a) == DataFrame(c = [1])
 
 				fasttime = @timed @select(df, c = :a)
-				slowtime = @timed select(df, [:a] => (a -> a) => :c)
+				slowtime = @timed select(df, [:a] => (a -> identity(a)) => :c)
 				@test slowtime[2] > fasttime[2]
 
 			@test @select(df, cols(:c) = :a) == DataFrame(c = [1])
 
 				fasttime = @timed @select(df, cols(:c) = :a)
-				slowtime = @timed select(df, [:a] => (a -> a) => :c)
+				slowtime = @timed select(df, [:a] => (a -> identity(a)) => :c)
 				@test slowtime[2] > fasttime[2]
 
 			@test @select(df, c = cols(:a)) == DataFrame(c = [1])
 
 				fasttime = @timed @select(df, c = cols(:a))
-				slowtime = @timed select(df, [:a] => (a -> a) => :c)
+				slowtime = @timed select(df, [:a] => (a -> identity(a)) => :c)
 				@test slowtime[2] > fasttime[2]
 
 			@test @select(df, cols(:c) = cols(:a)) == DataFrame(c = [1])
 
 				fasttime = @timed @select(df, cols(:c) = cols(:a))
-				slowtime = @timed select(df, [:a] => (a -> a) => :c)
+				slowtime = @timed select(df, [:a] => (a -> identity(a)) => :c)
 				@test slowtime[2] > fasttime[2]
 
 			@test @select(df, :a) == df[:, [:a]]
 
 				fasttime = @timed @select(df, :a)
-				slowtime = @timed select(df, [:a] => (a -> a) => :a)
+				slowtime = @timed select(df, [:a] => (a -> identity(a)) => :a)
 				@test slowtime[2] > fasttime[2]
 
 			@test @select(df, cols(:a)) == df[:, [:a]]
 
 				fasttime = @timed @select(df, cols(:a))
-				slowtime = @timed select(df, [:a] => (a -> a) => :a)
+				slowtime = @timed select(df, [:a] => (a -> identity(a)) => :a)
 				@test slowtime[2] > fasttime[2]
 
 			@test @select(df, c = testfun(:a, :b)) == DataFrame(c = [2])

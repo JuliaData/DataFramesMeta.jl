@@ -282,7 +282,7 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
     # QuoteNode
     if onearg(lhs, :cols) && rhs isa QuoteNode
         source = rhs
-        fun = :copy
+        fun = :identity
         dest = lhs.args[2]
 
         return quote
@@ -293,7 +293,7 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
     # cols(:y) = cols(:x)
     if onearg(lhs, :cols) && onearg(rhs, :cols)
         source = rhs.args[2]
-        fun = :copy
+        fun = :identity
         dest = lhs.args[2]
 
         return quote
@@ -704,7 +704,7 @@ end
 function transform_helper(x, args...)
 
     t = (fun_to_vec(arg) for arg in args)
-
+    @show first(t)
     quote
         $DataFrames.transform($x, $(t...))
     end
