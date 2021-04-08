@@ -704,7 +704,7 @@ end
 function transform_helper(x, args...)
 
     t = (fun_to_vec(arg) for arg in args)
-    @show first(t)
+
     quote
         $DataFrames.transform($x, $(t...))
     end
