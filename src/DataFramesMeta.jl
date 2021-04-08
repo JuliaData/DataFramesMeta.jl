@@ -204,7 +204,6 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
     # cols(:y) = f(cols(:x)) # re-write as simple call, RHS is block, use cols
     # cols(y) = :x + 1 # re-write as complicated col, but RHS is :block
     # cols(:y) = cols(:x) + 1 # re-write as complicated call, RHS is block, use cols
-    Base.remove_linenums!(ex)
 
     if gensym_names
         ex = Expr(:kw, gensym(), ex)
@@ -248,8 +247,8 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
         lhs = ex.args[1]
         rhs_t = ex.args[2]
         # if lhs is a cols(y) then the rhs gets parsed as a block
-        if onearg(lhs, :cols) && rhs_t.head === :block && length(rhs_t.args) == 1
-            rhs = rhs_t.args[1]
+        if onearg(lhs, :cols) && rhs_t.head === :block && length(rhs_t.args) == 2
+            rhs = rhs_t.args[2]
         else
             rhs = rhs_t
         end
