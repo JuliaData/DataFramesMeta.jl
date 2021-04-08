@@ -28,7 +28,6 @@ function addkey!(membernames, nam)
     membernames[nam]
 end
 
-
 onearg(e::Expr, f) = e.head == :call && length(e.args) == 2 && e.args[1] == f
 onearg(e, f) = false
 
@@ -180,11 +179,12 @@ macro col(kw)
     esc(fun_to_vec(kw))
 end
 
-fun_to_vec(ex::QuoteNode; nolhs::Bool = false, gensym_names::Bool = false) = ex
-# `nolhs` needs to be `true` when we have syntax of the form
-# `@combine(gd, fun(:x, :y))` where `fun` returns a `table` object.
-# We don't create the "new name" pair because new names are given
-# by the table.
+# `nolhs` needs to be `true` when we
+# have syntax of the form `@combine(gd,
+# fun(:x, :y))` where `fun` returns a
+# `table` object. We don't create the
+# "new name" pair because new names are
+# given by the table.
 function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
     # classify the type of expression
     # :x # handled via dispatch
@@ -333,6 +333,7 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
     throw(ArgumentError("This path should not be reached"))
     return nothing
 end
+fun_to_vec(ex::QuoteNode; nolhs::Bool = false, gensym_names::Bool = false) = ex
 
 function make_source_concrete(x::AbstractVector)
     if isempty(x) || isconcretetype(eltype(x))
