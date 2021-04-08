@@ -58,6 +58,7 @@ function eachrow_helper(df, body, deprecation_warning)
     deprecation_warning && @warn "`@byrow!` and `@byrow` are deprecated, use `@eachrow` instead."
     e_body, e_newcols = eachrow_find_newcols(body, Any[])
     _df = gensym()
+    @show e_newcols
     quote
         let $_df = $df
             local _N = nrow($_df)
