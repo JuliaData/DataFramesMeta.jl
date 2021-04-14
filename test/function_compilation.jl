@@ -22,6 +22,12 @@ using DataFramesMeta
 				slowtime = @timed select(df, [:a, :b] => ((a, b) -> a + b) => :c)
 				@test slowtime[2] > fasttime[2]
 
+			@test @select(df, c = begin :a + :b end) == DataFrame(c = [3])
+
+				fasttime = @timed @select(df, c = begin :a + :b end)
+				slowtime = @timed select(df, [:a, :b] => ((a, b) -> a + b) => :c)
+				@test slowtime[2] > fasttime[2]
+
 			@test @select(df, cols(:c) = :a + :b) == DataFrame(c = [3])
 
 				fasttime = @timed @select(df, cols(:c) = :a + :b)
@@ -154,6 +160,30 @@ using DataFramesMeta
 
 				fasttime = @timed @combine(gd, testnt(:b))
 				slowtime = @timed combine(gd, :b => (b -> testnt(b)) => AsTable)
+				@test slowtime[2] > fasttime[2]
+
+			@test @with df (:a + :b) == [3]
+
+				fasttime = @timed @with df (:a + :b)
+				slowtime = @timed @with df ((a, b) -> a + b)(df.a, df.b)
+				@test slowtime[2] > fasttime[2]
+
+			@test @with df (:a .* :b) == [2]
+
+				fasttime = @timed @with df (:a .* :b)
+				slowtime = @timed @with df ((a, b) -> a .* b)(df.a, df.b)
+				@test slowtime[2] > fasttime[2]
+
+			@test @with df testfun(:a, :b) == [2]
+
+				fasttime = @timed @with df testfun(:a, :b)
+				slowtime = @timed @with df ((a, b) -> testfun(a, b))(df.a, df.b)
+				@test slowtime[2] > fasttime[2]
+
+			@test @with df testdotfun.(:a, :b) == [2]
+
+				fasttime = @timed @with df testdotfun.(:a, :b)
+				slowtime = @timed @with df ((a, b) -> testdotfun.(a, b))(df.a, df.b)
 				@test slowtime[2] > fasttime[2]
 		end
 	end

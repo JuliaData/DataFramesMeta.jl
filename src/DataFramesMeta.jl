@@ -90,8 +90,14 @@ function args_to_selectors(v)
 end
 
 function get_source_fun(function_expr)
+    # recursive step for begin :a + :b
+    # end
+    if (function_expr isa Expr
+        && function_expr.head == :block
+        && length(function_expr.args) == 2) # omitting the line number node
 
-    if is_simple_non_broadcast_call(function_expr)
+        return get_source_fun(function_expr.args[2])
+    elseif is_simple_non_broadcast_call(function_expr)
         source = args_to_selectors(function_expr.args[2:end])
         fun_t = function_expr.args[1]
 
@@ -361,23 +367,14 @@ function replace_dotted!(e, membernames)
     Expr(:., x_new, y_new)
 end
 
-getsinglecolumn(df, s::DataFrames.ColumnIndex) = df[!, s]
-getsinglecolumn(df, s) = throw(ArgumentError("Only indexing with Symbols, strings and integers " *
-    "is currently allowed with cols"))
+function exec(df, v, fun)
+    cdf = eachcol(df)
+    fun(map(c -> cdf[c], v)...)
+end
 
 function with_helper(d, body)
-    membernames = Dict{Any, Symbol}()
-    funname = gensym()
-    body = replace_syms!(body, membernames)
-    source = Expr(:vect, keys(membernames)...)
-    _d = gensym()
-    quote
-        $_d = $d
-        function $funname($(values(membernames)...))
-            $body
-        end
-        $funname((DataFramesMeta.getsinglecolumn($_d, s) for s in  DataFramesMeta.make_source_concrete($source))...)
-    end
+    source, fun = get_source_fun(body)
+    :(DataFramesMeta.exec($d, $source, $fun))
 end
 
 """
