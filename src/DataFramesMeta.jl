@@ -368,9 +368,12 @@ function replace_dotted!(e, membernames)
 end
 
 function exec(df, v, fun)
-    cdf = eachcol(df)
-    fun(map(c -> cdf[c], v)...)
+    fun(map(c -> DataFramesMeta.getsinglecolumn(df, c), v)...)
 end
+
+getsinglecolumn(df, s::DataFrames.ColumnIndex) = df[!, s]
+getsinglecolumn(df, s) = throw(ArgumentError("Only indexing with Symbols, strings and integers " *
+    "is currently allowed with cols"))
 
 function with_helper(d, body)
     source, fun = get_source_fun(body)
