@@ -531,7 +531,7 @@ julia> @orderby(d, sortperm(:c, rev = true))
    9 │     3      2  b
   10 │     3      1  a
 
-julia> @orderby(d, :x, :n .- mean(:n))
+julia> @orderby(d, :x, abs.(:n .- mean(:n)))
 10×3 DataFrame
  Row │ x      n      c
      │ Int64  Int64  String
@@ -543,9 +543,9 @@ julia> @orderby(d, :x, :n .- mean(:n))
    5 │     1     10  j
    6 │     2      4  d
    7 │     2      8  h
-   8 │     3      1  a
+   8 │     3      3  c
    9 │     3      2  b
-  10 │     3      3  c
+  10 │     3      1  a
 
 """
 macro orderby(d, args...)
