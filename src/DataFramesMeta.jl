@@ -496,40 +496,57 @@ the given `DataFrame` on the result, returning a new `DataFrame`.
 ```jldoctest
 julia> using DataFramesMeta, Statistics
 
-julia> d = DataFrame(x = [3, 3, 3, 2, 1, 1, 1, 2, 1, 1], n = 1:10);
+julia> d = DataFrame(x = [3, 3, 3, 2, 1, 1, 1, 2, 1, 1], n = 1:10,
+                     c = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"]);
 
 julia> @orderby(d, -1 .* :n)
-10×2 DataFrame
-│ Row │ x     │ n     │
-│     │ Int64 │ Int64 │
-├─────┼───────┼───────┤
-│ 1   │ 1     │ 10    │
-│ 2   │ 1     │ 9     │
-│ 3   │ 2     │ 8     │
-│ 4   │ 1     │ 7     │
-│ 5   │ 1     │ 6     │
-│ 6   │ 1     │ 5     │
-│ 7   │ 2     │ 4     │
-│ 8   │ 3     │ 3     │
-│ 9   │ 3     │ 2     │
-│ 10  │ 3     │ 1     │
+10×3 DataFrame
+ Row │ x      n      c
+     │ Int64  Int64  String
+─────┼──────────────────────
+   1 │     1     10  j
+   2 │     1      9  i
+   3 │     2      8  h
+   4 │     1      7  g
+   5 │     1      6  f
+   6 │     1      5  e
+   7 │     2      4  d
+   8 │     3      3  c
+   9 │     3      2  b
+  10 │     3      1  a
 
-julia> @orderby(d, :x, :n .- mean(:n))
-10×2 DataFrame
-│ Row │ x     │ n     │
-│     │ Int64 │ Int64 │
-├─────┼───────┼───────┤
-│ 1   │ 1     │ 5     │
-│ 2   │ 1     │ 6     │
-│ 3   │ 1     │ 7     │
-│ 4   │ 1     │ 9     │
-│ 5   │ 1     │ 10    │
-│ 6   │ 2     │ 4     │
-│ 7   │ 2     │ 8     │
-│ 8   │ 3     │ 1     │
-│ 9   │ 3     │ 2     │
-│ 10  │ 3     │ 3     │
-```
+julia> @orderby(d, sortperm(:c, rev = true))
+10×3 DataFrame
+ Row │ x      n      c
+     │ Int64  Int64  String
+─────┼──────────────────────
+   1 │     1     10  j
+   2 │     1      9  i
+   3 │     2      8  h
+   4 │     1      7  g
+   5 │     1      6  f
+   6 │     1      5  e
+   7 │     2      4  d
+   8 │     3      3  c
+   9 │     3      2  b
+  10 │     3      1  a
+
+julia> @orderby(d, :x, abs.(:n .- mean(:n)))
+10×3 DataFrame
+ Row │ x      n      c
+     │ Int64  Int64  String
+─────┼──────────────────────
+   1 │     1      5  e
+   2 │     1      6  f
+   3 │     1      7  g
+   4 │     1      9  i
+   5 │     1     10  j
+   6 │     2      4  d
+   7 │     2      8  h
+   8 │     3      3  c
+   9 │     3      2  b
+  10 │     3      1  a
+
 """
 macro orderby(d, args...)
     esc(orderby_helper(d, args...))
