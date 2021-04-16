@@ -55,20 +55,20 @@ replace_syms!(e::Expr, membernames) =
 
 is_simple_non_broadcast_call(x) = false
 function is_simple_non_broadcast_call(expr::Expr)
-    (expr.head == :call
-        && length(expr.args) >= 2
-        && expr.args[1] isa Symbol
-        && all(x -> x isa QuoteNode || onearg(x, :cols), expr.args[2:end]))
+    expr.head == :call &&
+        length(expr.args) >= 2 &&
+        expr.args[1] isa Symbol &&
+        all(x -> x isa QuoteNode || onearg(x, :cols), expr.args[2:end])
 end
 
 is_simple_broadcast_call(x) = false
 function is_simple_broadcast_call(expr::Expr)
-    (expr.head == :.
-        && length(expr.args) == 2
-        && expr.args[1] isa Symbol
-        && expr.args[2] isa Expr
-        && expr.args[2].head == :tuple
-        && all(x -> x isa QuoteNode || onearg(x, :cols), expr.args[2].args))
+    expr.head == :. &&
+        length(expr.args) == 2 &&
+        expr.args[1] isa Symbol &&
+        expr.args[2] isa Expr &&
+        expr.args[2].head == :tuple &&
+        all(x -> x isa QuoteNode || onearg(x, :cols), expr.args[2].args)
 end
 
 function is_simple_function_call(x)
@@ -82,7 +82,7 @@ function args_to_selectors(v)
         elseif onearg(arg, :cols)
             arg.args[2]
         else
-            Throw(ArgumentError("This path should not be reached, arg: $(arg)"))
+            throw(ArgumentError("This path should not be reached, arg: $(arg)"))
         end
     end
 
@@ -226,9 +226,10 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
     end
 
     # The above cases are the only ones allowed
-    # if you don't have nolhs etc.
+    # if you don't have nolhs explicitely stated
+    # or are just `:x` or `cols(x)`
     if !(ex.head === :(=) || ex.head === :kw || nolhs)
-        throw(ArgumentError("Expressions not of the form `y = f(:x)` currently disallowed."))
+        throw(ArgumentError("Expressions not of the form `y = f(:x)` are currently disallowed."))
     end
 
     # f(:x)
@@ -259,7 +260,7 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
             rhs = rhs_t
         end
     else
-        Throw(ArgumentError("This path should not be reached"))
+        throw(ArgumentError("This path should not be reached"))
     end
 
     # y = :x
