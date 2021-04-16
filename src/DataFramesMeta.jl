@@ -71,8 +71,6 @@ function is_simple_broadcast_call(expr::Expr)
         all(x -> x isa QuoteNode || onearg(x, :cols), expr.args[2].args)
 end
 
-is_simple_function_call(x) = is_simple_non_broadcast_call(x) || is_simple_broadcast_call(x)
-
 function args_to_selectors(v)
     t = map(v) do arg
         if arg isa QuoteNode
