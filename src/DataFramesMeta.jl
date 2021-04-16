@@ -71,9 +71,7 @@ function is_simple_broadcast_call(expr::Expr)
         all(x -> x isa QuoteNode || onearg(x, :cols), expr.args[2].args)
 end
 
-function is_simple_function_call(x)
-    is_simple_non_broadcast_call(x) || is_simple_broadcast_call(x)
-end
+is_simple_function_call(x) = is_simple_non_broadcast_call(x) || is_simple_broadcast_call(x)
 
 function args_to_selectors(v)
     t = map(v) do arg
@@ -90,11 +88,10 @@ function args_to_selectors(v)
 end
 
 function get_source_fun(function_expr)
-    # recursive step for begin :a + :b
-    # end
-    if (function_expr isa Expr
-        && function_expr.head == :block
-        && length(function_expr.args) == 2) # omitting the line number node
+    # recursive step for begin :a + :b end
+    if function_expr isa Expr &&
+        function_expr.head == :block &&
+        length(function_expr.args) == 2 # omitting the line number node
 
         return get_source_fun(function_expr.args[2])
     elseif is_simple_non_broadcast_call(function_expr)
@@ -186,11 +183,9 @@ macro col(kw)
     esc(fun_to_vec(kw))
 end
 
-# `nolhs` needs to be `true` when we
-# have syntax of the form `@combine(gd,
-# fun(:x, :y))` where `fun` returns a
-# `table` object. We don't create the
-# "new name" pair because new names are
+# `nolhs` needs to be `true` when we have syntax of the form
+# `@combine(gd, fun(:x, :y))` where `fun` returns a `table` object.
+# We don't create the "new name" pair because new names are
 # given by the table.
 function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
     # classify the type of expression
@@ -250,7 +245,7 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
         end
     end
 
-    if nokw == false
+    if !nokw
         lhs = ex.args[1]
         rhs_t = ex.args[2]
         # if lhs is a cols(y) then the rhs gets parsed as a block
@@ -338,7 +333,6 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
     end
 
     throw(ArgumentError("This path should not be reached"))
-    return nothing
 end
 fun_to_vec(ex::QuoteNode; nolhs::Bool = false, gensym_names::Bool = false) = ex
 
@@ -368,9 +362,7 @@ function replace_dotted!(e, membernames)
     Expr(:., x_new, y_new)
 end
 
-function exec(df, v, fun)
-    fun(map(c -> DataFramesMeta.getsinglecolumn(df, c), v)...)
-end
+exec(df, v, fun) = fun(map(c -> DataFramesMeta.getsinglecolumn(df, c), v)...)
 
 getsinglecolumn(df, s::DataFrames.ColumnIndex) = df[!, s]
 getsinglecolumn(df, s) = throw(ArgumentError("Only indexing with Symbols, strings and integers " *
