@@ -89,7 +89,7 @@ end
 """
     get_source_fun(function_expr)
 
-Given an expression that may `QuoteNode`s (`:x`)
+Given an expression that may contain `QuoteNode`s (`:x`)
 and items wrapped in `cols`, return a function
 that is equivalent to that expression where the
 `QuoteNode`s and `cols` items are the inputs
@@ -117,7 +117,7 @@ julia> DataFramesMeta.get_source_fun(ex)
 (:(DataFramesMeta.make_source_concrete([:x, :y])), :+)
 
 julia> ex = quote
-       :x .+1 .* :y
+           :x .+ 1 .* :y
        end |> MacroTools.prettify
 
 julia> src, fun = DataFramesMeta.get_source_fun(ex);
@@ -252,7 +252,7 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
     nokw = (ex.head !== :(=)) && (ex.head !== :kw) && nolhs
 
     # :x
-    # handled belos via dispatch on ::QuoteNode
+    # handled below via dispatch on ::QuoteNode
 
     # cols(:x)
     if onearg(ex, :cols)
