@@ -18,139 +18,139 @@ using DataFramesMeta
 
             fasttime = @timed @select(df, c = :a + :b)
             slowtime = @timed select(df, [:a, :b] => ((a, b) -> a + b) => :c)
-            slowtime[2] > fasttime[2] || @warn("Slow compilation)
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation)
 
             @test @select(df, c = begin :a + :b end) == DataFrame(c = [3])
 
             fasttime = @timed @select(df, c = begin :a + :b end)
             slowtime = @timed select(df, [:a, :b] => ((a, b) -> a + b) => :c)
-            slowtime[2] > fasttime[2] || @warn("Slow compilation)
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation)
 
             @test @select(df, cols(:c) = :a + :b) == DataFrame(c = [3])
 
             fasttime = @timed @select(df, cols(:c) = :a + :b)
             slowtime = @timed select(df, [:a, :b] => ((a, b) -> a + b) => :c)
-            slowtime[2] > fasttime[2] || @warn("Slow compilation)
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation)
 
             @test @select(df, c = :a .+ :b) == DataFrame(c = [3])
 
             fasttime = @timed @select(df, c = :a .+ :b)
             slowtime = @timed select(df, [:a, :b] => ((a, b) -> a .+ b) => :c)
-            slowtime[2] > fasttime[2] || @warn("Slow compilation)
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation)
 
             @test @select(df, cols(:c) = :a .+ :b) == DataFrame(c = [3])
 
             fasttime = @timed @select(df, cols(:c) = :a .+ :b)
             slowtime = @timed select(df, [:a, :b] => ((a, b) -> a .+ b) => :c)
-            slowtime[2] > fasttime[2] || @warn("Slow compilation)
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation)
 
             @test @select(df, c = cols(:a) + cols(:b)) == DataFrame(c = [3])
 
             fasttime = @timed @select(df, c = cols(:a) + cols(:b))
             slowtime = @timed select(df, [:a, :b] => ((a, b) -> a + b) => :c)
-            slowtime[2] > fasttime[2] || @warn("Slow compilation)
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation)
 
             @test @select(df, cols(:c) = cols(:a) + cols(:b)) == DataFrame(c = [3])
 
             fasttime = @timed @select(df, cols(:c) = cols(:a) + cols(:b))
             slowtime = @timed select(df, [:a, :b] => ((a, b) -> a + b) => :c)
-            slowtime[2] > fasttime[2] || @warn("Slow compilation)
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation)
 
             @test @select(df, c = cols(:a) .+ cols(:b)) == DataFrame(c = [3])
 
             fasttime = @timed @select(df, c = cols(:a) .+ cols(:b))
             slowtime = @timed select(df, [:a, :b] => ((a, b) -> a .+ b) => :c)
-            slowtime[2] > fasttime[2] || @warn("Slow compilation)
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation)
 
             @test @select(df, cols(:c) = cols(:a) .+ cols(:b)) == DataFrame(c = [3])
 
             fasttime = @timed @select(df, cols(:c) = cols(:a) .+ cols(:b))
             slowtime = @timed select(df, [:a, :b] => ((a, b) -> a .+ b) => :c)
-            slowtime[2] > fasttime[2] || @warn("Slow compilation)
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation)
 
             @test @select(df, c = :a) == DataFrame(c = [1])
 
             fasttime = @timed @select(df, c = :a)
             slowtime = @timed select(df, [:a] => (a -> identity(a)) => :c)
-            slowtime[2] > fasttime[2] || @warn("Slow compilation)
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation)
 
             @test @select(df, cols(:c) = :a) == DataFrame(c = [1])
 
             fasttime = @timed @select(df, cols(:c) = :a)
             slowtime = @timed select(df, [:a] => (a -> identity(a)) => :c)
-            slowtime[2] > fasttime[2] || @warn("Slow compilation)
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation)
 
             @test @select(df, c = cols(:a)) == DataFrame(c = [1])
 
             fasttime = @timed @select(df, c = cols(:a))
             slowtime = @timed select(df, [:a] => (a -> identity(a)) => :c)
-            slowtime[2] > fasttime[2] || @warn("Slow compilation)
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation)
 
             @test @select(df, cols(:c) = cols(:a)) == DataFrame(c = [1])
 
             fasttime = @timed @select(df, cols(:c) = cols(:a))
             slowtime = @timed select(df, [:a] => (a -> identity(a)) => :c)
-            slowtime[2] > fasttime[2] || @warn("Slow compilation)
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation)
 
             @test @select(df, :a) == df[:, [:a]]
 
             fasttime = @timed @select(df, :a)
             slowtime = @timed select(df, [:a] => (a -> identity(a)) => :a)
-            slowtime[2] > fasttime[2] || @warn("Slow compilation)
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation)
 
             @test @select(df, cols(:a)) == df[:, [:a]]
 
             fasttime = @timed @select(df, cols(:a))
             slowtime = @timed select(df, [:a] => (a -> identity(a)) => :a)
-            slowtime[2] > fasttime[2] || @warn("Slow compilation)
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation)
 
             @test @select(df, c = testfun(:a, :b)) == DataFrame(c = [2])
 
             fasttime = @timed @select(df, c = testfun(:a, :b))
             slowtime = @timed select(df, [:a, :b] => ((a, b) -> testfun(a, b)) => :c)
-            slowtime[2] > fasttime[2] || @warn("Slow compilation)
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation)
 
             @test @select(df, cols(:c) = testfun(:a, :b)) == DataFrame(c = [2])
 
             fasttime = @timed @select(df, cols(:c) = testfun(:a, :b))
             slowtime = @timed select(df, [:a, :b] => ((a, b) -> testfun(a, b)) => :c)
-            slowtime[2] > fasttime[2] || @warn("Slow compilation)
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation)
 
             @test @select(df, c = testfun(cols("a"), cols("b"))) == DataFrame(c = [2])
 
             fasttime = @timed @select(df, c = testfun(cols("a"), cols("b")))
             slowtime = @timed select(df, [:a, :b] => ((a, b) -> testfun(a, b)) => :c)
-            slowtime[2] > fasttime[2] || @warn("Slow compilation)
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation)
 
             @test @select(df, cols(:c) = testfun(cols("a"), cols("b"))) == DataFrame(c = [2])
 
             fasttime = @timed @select(df, cols(:c) = testfun(cols("a"), cols("b")))
             slowtime = @timed select(df, [:a, :b] => ((a, b) -> testfun(a, b)) => :c)
-            slowtime[2] > fasttime[2] || @warn("Slow compilation)
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation)
 
             @test @select(df, c = testdotfun.(:a, :b)) == DataFrame(c = [2])
 
             fasttime = @timed @select(df, c = testdotfun.(:a, :b))
             slowtime = @timed select(df, [:a, :b] => ((a, b) -> testdotfun.(a, b)) => :c)
-            slowtime[2] > fasttime[2] || @warn("Slow compilation)
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation)
 
             @test @select(df, cols(:c) = testdotfun.(:a, :b)) == DataFrame(c = [2])
 
             fasttime = @timed @select(df, cols(:c) = testdotfun.(:a, :b))
             slowtime = @timed select(df, [:a, :b] => ((a, b) -> testdotfun.(a, b)) => :c)
-            slowtime[2] > fasttime[2] || @warn("Slow compilation)
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation)
 
             @test @select(df, c = testdotfun.(cols("a"), cols("b"))) == DataFrame(c = [2])
 
             fasttime = @timed @select(df, c = testdotfun.(cols("a"), cols("b")))
             slowtime = @timed select(df, [:a, :b] => ((a, b) -> testdotfun.(a, b)) => :c)
-            slowtime[2] > fasttime[2] || @warn("Slow compilation)
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation)
 
             @test @select(df, cols(:c) = testdotfun.(cols("a"), cols("b"))) == DataFrame(c = [2])
 
             fasttime = @timed @select(df, cols(:c) = testdotfun.(cols("a"), cols("b")))
             slowtime = @timed select(df, [:a, :b] => ((a, b) -> testdotfun.(a, b)) => :c)
-            slowtime[2] > fasttime[2] || @warn("Slow compilation)
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation)
 
             gd = groupby(df, :a)
 
@@ -158,32 +158,32 @@ using DataFramesMeta
 
             fasttime = @timed @combine(gd, testnt(:b))
             slowtime = @timed combine(gd, :b => (b -> testnt(b)) => AsTable)
-            slowtime[2] > fasttime[2] || @warn("Slow compilation)
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation)
 
             @test @with df (:a + :b) == [3]
 
             fasttime = @timed @with df (:a + :b)
             slowtime = @timed @with df ((a, b) -> a + b)(df.a, df.b)
-            slowtime[2] > fasttime[2] || @warn("Slow compilation)
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation)
 
             @test @with df (:a .* :b) == [2]
 
             @with df (:a .* :b)
             fasttime = @timed @with df (:a .* :b)
             slowtime = @timed @with df ((a, b) -> a .* b)(df.a, df.b)
-            slowtime[2] > fasttime[2] || @warn("Slow compilation)
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation)
 
             @test @with df testfun(:a, :b) == [2]
 
             fasttime = @timed @with df testfun(:a, :b)
             slowtime = @timed @with df ((a, b) -> testfun(a, b))(df.a, df.b)
-            slowtime[2] > fasttime[2] || @warn("Slow compilation)
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation)
 
             @test @with df testdotfun.(:a, :b) == [2]
 
             fasttime = @timed @with df testdotfun.(:a, :b)
             slowtime = @timed @with df ((a, b) -> testdotfun.(a, b))(df.a, df.b)
-            slowtime[2] > fasttime[2] || @warn("Slow compilation)
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation)
         end
     end
 end
