@@ -170,6 +170,7 @@ using DataFramesMeta
 
             @test @with df (:a .* :b) == [2]
 
+            @with df (:a .* :b)
             fasttime = @timed @with df (:a .* :b)
             slowtime = @timed @with df ((a, b) -> a .* b)(df.a, df.b)
             @test slowtime[2] > fasttime[2]

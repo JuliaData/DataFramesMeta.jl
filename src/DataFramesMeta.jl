@@ -87,6 +87,47 @@ function args_to_selectors(v)
     :(DataFramesMeta.make_source_concrete($(Expr(:vect, t...))))
 end
 
+
+"""
+    get_source_fun(function_expr)
+
+Given an expression that may `QuoteNode`s (`:x`)
+and items wrapped in `cols`, return a function
+that is equivalent to that expression where the
+`QuoteNode`s and `cols` items are the inputs
+to the function.
+
+For fast compilation `get_source_fun` returns
+the name of a called function where possible.
+
+* `f(:x, :y)` will return `f`
+* `f.(:x, :y)` will return `ByRow(f)`
+* `:x .+ :y` will return `.+`
+
+`get_source_fun` also returns an expression
+representing the vector of inputs that will be
+used as the `src` in the `src => fun => dest`
+call later on.
+
+### Examples
+
+julia> using MacroTools
+
+julia> ex = :(:x + :y)
+
+julia> DataFramesMeta.get_source_fun(ex)
+(:(DataFramesMeta.make_source_concrete([:x, :y])), :+)
+
+julia> ex = quote
+       :x .+1 .* :y
+       end |> MacroTools.prettify
+
+julia> src, fun = DataFramesMeta.get_source_fun(ex);
+
+julia> MacroTools.prettify(fun)
+:((mammoth, goat)->mammoth .+ 1 .* goat)
+
+"""
 function get_source_fun(function_expr)
     # recursive step for begin :a + :b end
     if function_expr isa Expr &&
@@ -213,7 +254,7 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
     nokw = (ex.head !== :(=)) && (ex.head !== :kw) && nolhs
 
     # :x
-    # handled above via dispatch
+    # handled belos via dispatch on ::QuoteNode
 
     # cols(:x)
     if onearg(ex, :cols)
@@ -227,17 +268,9 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
         throw(ArgumentError("Expressions not of the form `y = f(:x)` are currently disallowed."))
     end
 
-    # f(:x)
-    if nokw && is_simple_function_call(ex)
-        source, fun = get_source_fun(ex)
-
-        return quote
-            $source => $fun => AsTable
-        end
-    end
-
-    # (; a = :x, ) # named tuple
-    if nokw && !(is_simple_function_call(ex))
+    # f(:x) # it's assumed this returns a Table
+    # (; a = :x, ) # something more explicit we might see
+    if nokw
         source, fun = get_source_fun(ex)
 
         return quote
@@ -261,49 +294,47 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
     # y = :x
     if lhs isa Symbol && rhs isa QuoteNode
         source = rhs
-        fun = :identity
         dest = QuoteNode(lhs)
 
         return quote
-            $source => $fun => $dest
+            $source => $dest
         end
     end
 
     # y = cols(:x)
     if lhs isa Symbol && onearg(rhs, :cols)
         source = rhs.args[2]
-        fun = :identity
         dest = QuoteNode(lhs)
 
         return quote
-            $source => $fun => $dest
+            $source => $dest
         end
     end
 
-    # cols(:y) = :x # rhs is NOT a
-    # QuoteNode
+    # cols(:y) = :x
     if onearg(lhs, :cols) && rhs isa QuoteNode
         source = rhs
-        fun = :identity
         dest = lhs.args[2]
 
         return quote
-            $source => $fun => $dest
+            $source => $dest
         end
     end
 
     # cols(:y) = cols(:x)
     if onearg(lhs, :cols) && onearg(rhs, :cols)
         source = rhs.args[2]
-        fun = :identity
         dest = lhs.args[2]
 
         return quote
-            $source => $fun => $dest
+            $source => $dest
         end
     end
 
     # y = f(:x)
+    # y = f(cols(:x))
+    # y = :x + 1
+    # y = cols(:x) + 1
     if lhs isa Symbol
         source, fun = get_source_fun(rhs)
         dest = QuoteNode(lhs)
@@ -312,15 +343,6 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
             $source => $fun => $dest
         end
     end
-
-    # y = f(cols(:x))
-    # handled above
-
-    # y = :x + 1
-    # handled above
-
-    # y = cols(:x) + 1
-    # handled above
 
     # cols(:y) = f(:x)
     if onearg(lhs, :cols)
