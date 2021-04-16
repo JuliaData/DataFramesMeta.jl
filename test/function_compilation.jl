@@ -4,10 +4,8 @@ using Test
 using DataFramesMeta
 
 @testset "function_compilation" begin
-    # Lazy way of making sure all
-    # functions are pre-compiled. @eval
-    # prevents julia from caching the
-    # intermediate anonymous functions.
+    # Lazy way of making sure all functions are pre-compiled.
+    # @eval prevents julia from caching the intermediate anonymous functions.
     for _ in 1:2
         @eval begin
             df = DataFrame(a = [1], b = [2])
