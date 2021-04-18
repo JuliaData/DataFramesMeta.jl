@@ -129,7 +129,7 @@ julia> MacroTools.prettify(fun)
 :((mammoth, goat)->mammoth .+ 1 .* goat)
 
 """
-function get_source_fun(function_expr)
+function get_source_fun(function_expr; wrap_ByRow = false)
     # recursive step for begin :a + :b end
     if function_expr isa Expr &&
         function_expr.head == :block &&
@@ -137,13 +137,11 @@ function get_source_fun(function_expr)
 
         return get_source_fun(function_expr.args[2])
     end
-
     if is_macro_head(function_expr, "@byrow")
         wrap_ByRow = true
         function_expr = function_expr.args[3]
-    else
-        wrap_ByRow = false
     end
+
     if function_expr isa QuoteNode
         source = args_to_selectors([function_expr])
         fun = :(identity)
@@ -258,7 +256,8 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
     # cols(:y) = f(cols(:x)) # re-write as simple call, RHS is block, use cols
     # cols(y) = :x + 1 # re-write as complicated col, but RHS is :block
     # cols(:y) = cols(:x) + 1 # re-write as complicated call, RHS is block, use cols
-
+    @show ex
+    dump(ex)
     if gensym_names
         ex = Expr(:kw, gensym(), ex)
     end
@@ -276,7 +275,7 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
     # The above cases are the only ones allowed
     # if you don't have nolhs explicitely stated
     # or are just `:x` or `cols(x)`
-    if !(ex.head === :(=) || ex.head === :kw || nolhs)
+    if !(ex.head === :(=) || ex.head === :kw || ex.head == :(.=) || nolhs)
         throw(ArgumentError("Expressions not of the form `y = f(:x)` are currently disallowed."))
     end
 
@@ -291,6 +290,7 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
     end
 
     if !nokw
+        wrap_ByRow = ex.head == :(.=)
         lhs = ex.args[1]
         rhs_t = ex.args[2]
         # if lhs is a cols(y) then the rhs gets parsed as a block
@@ -348,7 +348,7 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
     # y = :x + 1
     # y = cols(:x) + 1
     if lhs isa Symbol
-        source, fun = get_source_fun(rhs)
+        source, fun = get_source_fun(rhs; wrap_ByRow = wrap_ByRow)
         dest = QuoteNode(lhs)
 
         return quote
@@ -358,7 +358,7 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
 
     # cols(:y) = f(:x)
     if onearg(lhs, :cols)
-        source, fun = get_source_fun(rhs)
+        source, fun = get_source_fun(rhs; wrap_ByRow = wrap_ByRow)
         dest = lhs.args[2]
 
         return quote
@@ -640,18 +640,8 @@ end
 ## @orderby
 ##
 ##############################################################################
-function fix_byrows(ex, v = Any[])
-    if ex isa Expr && ex.head == :macrocall && ex.args[1] == Symbol("@byrow")
-        push!(v, :(@byrow $(ex.args[3].args[1])))
-        fix_byrows(ex.args[3].args[2], v)
-    else
-        push!(v, ex)
-    end
-    return v
-end
 
 function orderby_helper(x, args...)
-    args = mapreduce(fix_byrows, vcat, args)
     t = (fun_to_vec(arg; nolhs = true, gensym_names = true) for arg in args)
     quote
         $DataFramesMeta.orderby($x, $(t...))

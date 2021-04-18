@@ -476,6 +476,8 @@ end
 
     @test @where(df, @byrow :A > 1) == df[(df.A .> 1) .=== true,:]
     @test @where(df, @byrow :B > 1) == df[df.B .> 1,:]
+    @test @where(df, @byrow :A < 1) == df[(df.A .> x) .=== true,:]
+    @test @where(df, @byrow :B > x) ≅ df[df.B .> x,:]
 
     @test @where(df, :A .> 1).A isa Vector{Union{Missing, Int}}
 
