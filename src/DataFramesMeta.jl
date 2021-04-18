@@ -640,9 +640,18 @@ end
 ## @orderby
 ##
 ##############################################################################
+function fix_byrows(ex, v = Any[])
+    if ex isa Expr && ex.head == :macrocall && ex.args[1] == Symbol("@byrow")
+        push!(v, :(@byrow $(ex.args[3].args[1])))
+        fix_byrows(ex.args[3].args[2], v)
+    else
+        push!(v, ex)
+    end
+    return v
+end
 
 function orderby_helper(x, args...)
-    @show first(args)
+    args = mapreduce(fix_byrows, vcat, args)
     t = (fun_to_vec(arg; nolhs = true, gensym_names = true) for arg in args)
     quote
         $DataFramesMeta.orderby($x, $(t...))
