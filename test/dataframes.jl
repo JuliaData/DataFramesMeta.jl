@@ -61,6 +61,15 @@ const ≅ = isequal
     @test @transform(df, n = cols("g") + cols(:i)).n == df.g + df.i
     @test @transform(df, n = cols(1) + cols(2)).n == df.g + df.i
 
+    @test @transform(df, n = @byrow :i).n == df.i
+    @test @transform(df, n = @byrow :i + :g).n == df.i .+ df.g
+    @test @transform(df, n = @byrow :t * string(:y)).n == df.t .* string.(df.y)
+    @test @transform(df, n = @byrow Symbol(:y, ^(:t))).n == Symbol.(df.y, :t)
+    @test @transform(df, n = @byrow Symbol(:y, ^(:body))).n == Symbol.(df.y, :body)
+    @test @transform(df, body = @byrow :i).body == df.i
+    @test @transform(df, transform = @byrow :i).transform == df.i
+    @test @transform(df, n = @byrow :g == 1 ? 100 : 500).n == [100, 100, 100, 500, 500]
+
     @test @transform(df, n = :i).g !== df.g
 
     newdf = @transform(df, n = :i)
@@ -81,7 +90,6 @@ const ≅ = isequal
     @test @transform(df, n = :i .* :g).n == [1, 2, 3, 8, 10]
 
 end
-
 
 @testset "@transform!" begin
     df = DataFrame(
@@ -142,6 +150,15 @@ end
     @test @transform!(df, cols(n_sym) = :i).new_column == df.i
     @test @transform!(df, cols(n_space) = :i)."new column" == df.i
     @test @transform!(df, cols("new" * "_" * "column") = :i).new_column == df.i
+
+    @test @transform!(df, n = @byrow :i).n == df.i
+    @test @transform!(df, n = @byrow :i + :g).n == df.i .+ df.g
+    @test @transform!(df, n = @byrow :t * string(:y)).n == df.t .* string.(df.y)
+    @test @transform!(df, n = @byrow Symbol(:y, ^(:t))).n == Symbol.(df.y, :t)
+    @test @transform!(df, n = @byrow Symbol(:y, ^(:body))).n == Symbol.(df.y, :body)
+    @test @transform!(df, body = @byrow :i).body == df.i
+    @test @transform!(df, transform = @byrow :i).transform == df.i
+    @test @transform!(df, n = @byrow :g == 1 ? 100 : 500).n == [100, 100, 100, 500, 500]
 
     @test @transform!(df, n = 1).n == fill(1, nrow(df))
     @test @transform!(df, n = :i .* :g).n == [1, 2, 3, 8, 10]
@@ -262,6 +279,14 @@ end
     @test @select(df, n = cols("g") + cols(:i)).n == df.g + df.i
     @test @select(df, n = cols(1) + cols(2)).n == df.g + df.i
 
+    @test @select(df, n = @byrow :i).n == df.i
+    @test @select(df, n = @byrow :i + :g).n == df.i .+ df.g
+    @test @select(df, n = @byrow :t * string(:y)).n == df.t .* string.(df.y)
+    @test @select(df, n = @byrow Symbol(:y, ^(:t))).n == Symbol.(df.y, :t)
+    @test @select(df, n = @byrow Symbol(:y, ^(:body))).n == Symbol.(df.y, :body)
+    @test @select(df, body = @byrow :i).body == df.i
+    @test @select(df, transform = @byrow :i).transform == df.i
+    @test @select(df, n = @byrow :g == 1 ? 100 : 500).n == [100, 100, 100, 500, 500]
 
     @test @select(df, n = 1).n == fill(1, nrow(df))
 
@@ -337,6 +362,14 @@ end
     @test @select!(copy(df), n = cols("g") + cols(:i)).n == df.g + df.i
     @test @select!(copy(df), n = cols(1) + cols(2)).n == df.g + df.i
 
+    @test @select!(copy(df), n = @byrow :i).n == df.i
+    @test @select!(copy(df), n = @byrow :i + :g).n == df.i .+ df.g
+    @test @select!(copy(df), n = @byrow :t * string(:y)).n == df.t .* string.(df.y)
+    @test @select!(copy(df), n = @byrow Symbol(:y, ^(:t))).n == Symbol.(df.y, :t)
+    @test @select!(copy(df), n = @byrow Symbol(:y, ^(:body))).n == Symbol.(df.y, :body)
+    @test @select!(copy(df), body = @byrow :i).body == df.i
+    @test @select!(copy(df), transform = @byrow :i).transform == df.i
+    @test @select!(copy(df), n = @byrow :g == 1 ? 100 : 500).n == [100, 100, 100, 500, 500]
 
     @test @select!(copy(df), n = 1).n == fill(1, nrow(df))
 
@@ -441,6 +474,9 @@ end
     @test @where(df, :A .> 1, :B .> 1) == df[map(&, df.A .> 1, df.B .> 1),:]
     @test @where(df, :A .> 1, :A .< 4, :B .> 1) == df[map(&, df.A .> 1, df.A .< 4, df.B .> 1),:]
 
+    @test @where(df, @byrow :A > 1) == df[(df.A .> 1) .=== true,:]
+    @test @where(df, @byrow :B > 1) == df[df.B .> 1,:]
+
     @test @where(df, :A .> 1).A isa Vector{Union{Missing, Int}}
 
     @test @where(df, cols(:A) .> 1) == df[(df.A .> 1) .=== true,:]
@@ -472,6 +508,8 @@ end
     @test @orderby(df, :t) ≅ df[[1, 2, 3, 4, 5], :]
 
     @test @orderby(df, identity(:g), :g.^2) ≅ df[[1, 2, 3, 4, 5], :]
+
+    @test @orderby(df, @byrow :g, @byrow :g^2) ≅ df[[1, 2, 3, 4, 5], :]
 
     subdf = @view df[1:3, :]
 

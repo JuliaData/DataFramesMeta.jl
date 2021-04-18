@@ -14,13 +14,6 @@ y = 0
 
     @test @eachrow(df, if :A > :B; :A = 0 end) == DataFrame(A = [1, 0, 0], B = [2, 1, 2])
 
-    # No test for checking if the `@byrow!` deprecation warning exists because it
-    # seems like Test.@test_logs (or Test.collect_test_logs) does not play nice
-    # with macros.  The existence of the deprecation can be confirmed, however,
-    # from the fact it appears a single time (because of the test below) when
-    # `] test` is run.
-    @test @eachrow(df, if :A > :B; :A = 0 end) == @byrow!(df, if :A > :B; :A = 0 end)
-
     @test  df == DataFrame(A = [1, 2, 3], B = [2, 1, 2])
 
     df = DataFrame(A = 1:3, B = [2, 1, 2])  # Restore df
@@ -126,18 +119,6 @@ df = DataFrame(A = 1:3, B = [2, 1, 2])
     @test_throws ArgumentError @eval @eachrow df begin cols(n) end
 
     @test_throws ArgumentError @eachrow df cols(1) + cols(:A)
-end
-
-@testset "byrow and byrow!" begin
-    df = DataFrame(A = 1:3, B = [2, 1, 2])
-
-    @byrow df begin
-        :A = :B
-    end
-
-    @byrow! df begin
-        :A = :B
-    end
 end
 
 end # module

@@ -7,7 +7,7 @@ using Reexport
 # Basics:
 export @with, @where, @orderby, @transform, @by, @combine, @select, @eachrow,
        @transform!, @select!,
-       @byrow, @byrow!, @based_on # deprecated
+       @based_on # deprecated
 
 
 global const DATAFRAMES_GEQ_22 = isdefined(DataFrames, :pretty_table) ? true : false
@@ -71,6 +71,9 @@ function is_simple_broadcast_call(expr::Expr)
         all(x -> x isa QuoteNode || onearg(x, :cols), expr.args[2].args)
 end
 
+is_macro_head(ex, name) = false
+is_macro_head(ex::Expr, name) = ex.head == :macrocall && ex.args[1] == Symbol(name)
+
 function args_to_selectors(v)
     t = map(v) do arg
         if arg isa QuoteNode
@@ -133,6 +136,17 @@ function get_source_fun(function_expr)
         length(function_expr.args) == 2 # omitting the line number node
 
         return get_source_fun(function_expr.args[2])
+    end
+
+    if is_macro_head(function_expr, "@byrow")
+        wrap_ByRow = true
+        function_expr = function_expr.args[3]
+    else
+        wrap_ByRow = false
+    end
+    if function_expr isa QuoteNode
+        source = args_to_selectors([function_expr])
+        fun = :(identity)
     elseif is_simple_non_broadcast_call(function_expr)
         source = args_to_selectors(function_expr.args[2:end])
         fun_t = function_expr.args[1]
@@ -144,15 +158,11 @@ function get_source_fun(function_expr)
         else
             fun = fun_t
         end
-
-        return source, fun
     elseif is_simple_broadcast_call(function_expr)
         # extract source symbols from quotenodes
         source = args_to_selectors(function_expr.args[2].args)
         fun_t = function_expr.args[1]
         fun = :(DataFrames.ByRow($fun_t))
-
-        return source, fun
     else
         membernames = Dict{Any, Symbol}()
 
@@ -166,9 +176,13 @@ function get_source_fun(function_expr)
                 $body
             end
         end
-
-        return source, fun
     end
+
+    if wrap_ByRow
+        fun = :(ByRow($fun))
+    end
+
+    return source, fun
 end
 
 """
@@ -628,6 +642,7 @@ end
 ##############################################################################
 
 function orderby_helper(x, args...)
+    @show first(args)
     t = (fun_to_vec(arg; nolhs = true, gensym_names = true) for arg in args)
     quote
         $DataFramesMeta.orderby($x, $(t...))
