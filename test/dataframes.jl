@@ -70,6 +70,16 @@ const ≅ = isequal
     @test @transform(df, transform = @byrow :i).transform == df.i
     @test @transform(df, n = @byrow :g == 1 ? 100 : 500).n == [100, 100, 100, 500, 500]
 
+    @test @transform(df, n .= :i).n == df.i
+    @test @transform(df, n .= :i + :g).n == df.i .+ df.g
+    @test @transform(df, n .= :t * string(:y)).n == df.t .* string.(df.y)
+    @test @transform(df, n .= Symbol(:y, ^(:t))).n == Symbol.(df.y, :t)
+    @test @transform(df, n .= Symbol(:y, ^(:body))).n == Symbol.(df.y, :body)
+    @test @transform(df, body .= :i).body == df.i
+    @test @transform(df, transform .= :i).transform == df.i
+    @test @transform(df, n .= :g == 1 ? 100 : 500).n == [100, 100, 100, 500, 500]
+
+
     @test @transform(df, n = :i).g !== df.g
 
     newdf = @transform(df, n = :i)
@@ -476,8 +486,6 @@ end
 
     @test @where(df, @byrow :A > 1) == df[(df.A .> 1) .=== true,:]
     @test @where(df, @byrow :B > 1) == df[df.B .> 1,:]
-    @test @where(df, @byrow :A < 1) == df[(df.A .> x) .=== true,:]
-    @test @where(df, @byrow :B > x) ≅ df[df.B .> x,:]
 
     @test @where(df, :A .> 1).A isa Vector{Union{Missing, Int}}
 
@@ -511,7 +519,7 @@ end
 
     @test @orderby(df, identity(:g), :g.^2) ≅ df[[1, 2, 3, 4, 5], :]
 
-    @test @orderby(df, @byrow :g, @byrow :g^2) ≅ df[[1, 2, 3, 4, 5], :]
+    @test @orderby(df, @byrow(:g), @byrow(:g^2)) ≅ df[[1, 2, 3, 4, 5], :]
 
     subdf = @view df[1:3, :]
 
