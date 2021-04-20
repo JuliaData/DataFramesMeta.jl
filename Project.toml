@@ -7,7 +7,7 @@ DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 
 [compat]
-DataFrames = "0.21, 0.22"
+DataFrames = "0.21, 0.22, 1"
 Reexport = "0.2, 1"
 julia = "1"
 
