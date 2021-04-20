@@ -1,13 +1,13 @@
 name = "DataFramesMeta"
 uuid = "1313f7d8-7da2-5740-9ea0-a2ca25f37964"
-version = "0.6.0"
+version = "0.6.1"
 
 [deps]
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 
 [compat]
-DataFrames = "0.21, 0.22"
+DataFrames = "0.21, 0.22, 1"
 Reexport = "0.2, 1"
 julia = "1"
 
