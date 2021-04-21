@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>API · DataFramesMeta Documentation</title><link rel="canonical" href="https://juliadata.github.io/DataFramesMeta.jl/stable/api/api/"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.0/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit">DataFramesMeta Documentation</span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Introduction</a></li><li class="is-active"><a class="tocitem" href>API</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>API</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>API</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/JuliaData/DataFramesMeta.jl/blob/master/docs/src/api/api.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="API"><a class="docs-heading-anchor" href="#API">API</a><a id="API-1"></a><a class="docs-heading-anchor-permalink" href="#API" title="Permalink"></a></h1><article class="docstring"><header><a class="docstring-binding" id="DataFramesMeta.get_source_fun-Tuple{Any}" href="#DataFramesMeta.get_source_fun-Tuple{Any}"><code>DataFramesMeta.get_source_fun</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia">get_source_fun(function_expr)</code></pre><p>Given an expression that may contain <code>QuoteNode</code>s (<code>:x</code>) and items wrapped in <code>cols</code>, return a function that is equivalent to that expression where the <code>QuoteNode</code>s and <code>cols</code> items are the inputs to the function.</p><p>For fast compilation <code>get_source_fun</code> returns the name of a called function where possible.</p><ul><li><code>f(:x, :y)</code> will return <code>f</code></li><li><code>f.(:x, :y)</code> will return <code>ByRow(f)</code></li><li><code>:x .+ :y</code> will return <code>.+</code></li></ul><p><code>get_source_fun</code> also returns an expression representing the vector of inputs that will be used as the <code>src</code> in the <code>src =&gt; fun =&gt; dest</code> call later on.</p><p><strong>Examples</strong></p><p>julia&gt; using MacroTools</p><p>julia&gt; ex = :(:x + :y)</p><p>julia&gt; DataFramesMeta.get<em>source</em>fun(ex) (:(DataFramesMeta.make<em>source</em>concrete([:x, :y])), :+)</p><p>julia&gt; ex = quote            :x .+ 1 .* :y        end |&gt; MacroTools.prettify</p><p>julia&gt; src, fun = DataFramesMeta.get<em>source</em>fun(ex);</p><p>julia&gt; MacroTools.prettify(fun) :((mammoth, goat)-&gt;mammoth .+ 1 .* goat)</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaData/DataFramesMeta.jl/blob/ce591cb6bd95005d77cbfe5dd6c14bc6cf891bc8/src/DataFramesMeta.jl#L89-L128">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="DataFramesMeta.@based_on-Tuple{Any,Vararg{Any,N} where N}" href="#DataFramesMeta.@based_on-Tuple{Any,Vararg{Any,N} where N}"><code>DataFramesMeta.@based_on</code></a> — <span class="docstring-category">Macro</span></header><section><div><pre><code class="language-julia">@based_on(d, args...)</code></pre><p>Deprecated version of <code>@combine</code>, see: <a href="#DataFramesMeta.@combine-Tuple{Any,Vararg{Any,N} where N}"><code>@combine</code></a></p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaData/DataFramesMeta.jl/blob/ce591cb6bd95005d77cbfe5dd6c14bc6cf891bc8/src/DataFramesMeta.jl#L927-L931">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="DataFramesMeta.@by-Tuple{Any,Any,Vararg{Any,N} where N}" href="#DataFramesMeta.@by-Tuple{Any,Any,Vararg{Any,N} where N}"><code>DataFramesMeta.@by</code></a> — <span class="docstring-category">Macro</span></header><section><div><pre><code class="language-julia">@by(d::AbstractDataFrame, cols, e...)</code></pre><p>Split-apply-combine in one step.</p><p><strong>Arguments</strong></p><ul><li><code>d</code> : an AbstractDataFrame</li><li><code>cols</code> : a column indicator (Symbol, Int, Vector{Symbol}, etc.)</li><li><code>e</code> :  keyword arguments specifying new columns in terms of column groupings</li></ul><p><strong>Returns</strong></p><ul><li><code>::DataFrame</code></li></ul><p><strong>Examples</strong></p><pre><code class="language-julia-repl">julia&gt; using DataFramesMeta, Statistics
+
+julia&gt; df = DataFrame(
+            a = repeat(1:4, outer = 2),
+            b = repeat(2:-1:1, outer = 4),
+            c = 1:8);
+
+julia&gt; @by(df, :a, d = sum(:c))
+4×2 DataFrame
+│ Row │ a     │ d     │
+│     │ Int64 │ Int64 │
+├─────┼───────┼───────┤
+│ 1   │ 1     │ 6     │
+│ 2   │ 2     │ 8     │
+│ 3   │ 3     │ 10    │
+│ 4   │ 4     │ 12    │
+
+julia&gt; @by(df, :a, d = 2 * :c)
+8×2 DataFrame
+│ Row │ a     │ d     │
+│     │ Int64 │ Int64 │
+├─────┼───────┼───────┤
+│ 1   │ 1     │ 2     │
+│ 2   │ 1     │ 10    │
+│ 3   │ 2     │ 4     │
+│ 4   │ 2     │ 12    │
+│ 5   │ 3     │ 6     │
+│ 6   │ 3     │ 14    │
+│ 7   │ 4     │ 8     │
+│ 8   │ 4     │ 16    │
+
+julia&gt; @by(df, :a, c_sum = sum(:c), c_mean = mean(:c))
+4×3 DataFrame
+│ Row │ a     │ c_sum │ c_mean  │
+│     │ Int64 │ Int64 │ Float64 │
+├─────┼───────┼───────┼─────────┤
+│ 1   │ 1     │ 6     │ 3.0     │
+│ 2   │ 2     │ 8     │ 4.0     │
+│ 3   │ 3     │ 10    │ 5.0     │
+│ 4   │ 4     │ 12    │ 6.0     │
+
+julia&gt; @by(df, :a, c = :c, c_mean = mean(:c))
+8×3 DataFrame
+│ Row │ a     │ c     │ c_mean  │
+│     │ Int64 │ Int64 │ Float64 │
+├─────┼───────┼───────┼─────────┤
+│ 1   │ 1     │ 1     │ 3.0     │
+│ 2   │ 1     │ 5     │ 3.0     │
+│ 3   │ 2     │ 2     │ 4.0     │
+│ 4   │ 2     │ 6     │ 4.0     │
+│ 5   │ 3     │ 3     │ 5.0     │
+│ 6   │ 3     │ 7     │ 5.0     │
+│ 7   │ 4     │ 4     │ 6.0     │
+│ 8   │ 4     │ 8     │ 6.0     │
+</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaData/DataFramesMeta.jl/blob/ce591cb6bd95005d77cbfe5dd6c14bc6cf891bc8/src/DataFramesMeta.jl#L969-L1043">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="DataFramesMeta.@byrow!-Tuple{Any,Any}" href="#DataFramesMeta.@byrow!-Tuple{Any,Any}"><code>DataFramesMeta.@byrow!</code></a> — <span class="docstring-category">Macro</span></header><section><div><pre><code class="language-julia">@byrow!(d, expr)</code></pre><p>Deprecated version of <code>@eachrow</code>, see: <a href="#DataFramesMeta.@eachrow-Tuple{Any,Any}"><code>@eachrow</code></a></p><p>Acts the exact same way. It does not change the input argument <code>d</code> in-place.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaData/DataFramesMeta.jl/blob/ce591cb6bd95005d77cbfe5dd6c14bc6cf891bc8/src/eachrow.jl#L73-L79">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="DataFramesMeta.@byrow-Tuple{Any,Any}" href="#DataFramesMeta.@byrow-Tuple{Any,Any}"><code>DataFramesMeta.@byrow</code></a> — <span class="docstring-category">Macro</span></header><section><div><pre><code class="language-julia">@byrow(d, expr)</code></pre><p>Deprecated version of <code>@eachrow</code>, see: <a href="#DataFramesMeta.@eachrow-Tuple{Any,Any}"><code>@eachrow</code></a></p><p>Acts the exact same way.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaData/DataFramesMeta.jl/blob/ce591cb6bd95005d77cbfe5dd6c14bc6cf891bc8/src/eachrow.jl#L84-L90">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="DataFramesMeta.@col-Tuple{Any}" href="#DataFramesMeta.@col-Tuple{Any}"><code>DataFramesMeta.@col</code></a> — <span class="docstring-category">Macro</span></header><section><div><pre><code class="language-julia">@col(kw)</code></pre><p><code>@col</code> transforms an expression of the form <code>z = :x + :y</code> into it&#39;s equivalent in DataFrames&#39;s <code>source =&gt; fun =&gt; destination</code> syntax.</p><p><strong>Details</strong></p><p>Parsing follows the same convention as other DataFramesMeta.jl macros, such as <code>@with</code>. All terms in the expression that are <code>Symbol</code>s are treated as columns in the data frame, except <code>Symbol</code>s wrapped in <code>^</code>. To use a variable representing a column name, wrap the variable in <code>cols</code>.</p><p><code>@col</code> constructs an anonymous function <code>fun</code> based on the given expression. It then creates a <code>source =&gt; fun =&gt; destination</code> pair that is suitable for the <code>select</code>, <code>transform</code>, and <code>combine</code> functions in DataFrames.jl.</p><p><strong>Examples</strong></p><pre><code class="language-julia">julia&gt; @col z = :x + :y
+[:x, :y] =&gt; (##595 =&gt; :z)</code></pre><p>In the above example, <code>##595</code> is an anonymous function equivalent to the following</p><pre><code class="language-julia">(_x, _y) -&gt; _x + _y</code></pre><pre><code class="language-julia-repl">julia&gt; using DataFramesMeta;
+
+julia&gt; df = DataFrame(x = [1, 2], y = [3, 4]);
+
+julia&gt; import DataFramesMeta: @col;
+
+julia&gt; DataFrames.transform(df, @col z = :x .* :y)
+2×3 DataFrame
+│ Row │ x     │ y     │ z     │
+│     │ Int64 │ Int64 │ Int64 │
+├─────┼───────┼───────┼───────┤
+│ 1   │ 1     │ 3     │ 3     │
+│ 2   │ 2     │ 4     │ 8     │
+</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaData/DataFramesMeta.jl/blob/ce591cb6bd95005d77cbfe5dd6c14bc6cf891bc8/src/DataFramesMeta.jl#L174-L220">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="DataFramesMeta.@combine-Tuple{Any,Vararg{Any,N} where N}" href="#DataFramesMeta.@combine-Tuple{Any,Vararg{Any,N} where N}"><code>DataFramesMeta.@combine</code></a> — <span class="docstring-category">Macro</span></header><section><div><pre><code class="language-julia">@combine(x, args...)</code></pre><p>Summarize a grouping operation</p><p><strong>Arguments</strong></p><ul><li><code>x</code> : a <code>GroupedDataFrame</code> or <code>AbstractDataFrame</code></li><li><code>args...</code> : keyword arguments defining new columns</li></ul><p><strong>Examples</strong></p><pre><code class="language-julia-repl">julia&gt; using DataFramesMeta
+
+julia&gt; d = DataFrame(
+            n = 1:20,
+            x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1, 2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
+
+julia&gt; g = groupby(d, :x);
+
+julia&gt; @combine(g, nsum = sum(:n))
+3×2 DataFrame
+│ Row │ x     │ nsum  │
+│     │ Int64 │ Int64 │
+├─────┼───────┼───────┤
+│ 1   │ 3     │ 27    │
+│ 2   │ 1     │ 99    │
+│ 3   │ 2     │ 84    │
+
+julia&gt; @combine(g, x2 = 2 * :x, nsum = sum(:n))
+20×3 DataFrame
+│ Row │ x     │ x2    │ nsum  │
+│     │ Int64 │ Int64 │ Int64 │
+├─────┼───────┼───────┼───────┤
+│ 1   │ 3     │ 6     │ 27    │
+│ 2   │ 3     │ 6     │ 27    │
+│ 3   │ 3     │ 6     │ 27    │
+│ 4   │ 3     │ 6     │ 27    │
+│ 5   │ 3     │ 6     │ 27    │
+│ 6   │ 1     │ 2     │ 99    │
+│ 7   │ 1     │ 2     │ 99    │
+⋮
+│ 13  │ 1     │ 2     │ 99    │
+│ 14  │ 1     │ 2     │ 99    │
+│ 15  │ 2     │ 4     │ 84    │
+│ 16  │ 2     │ 4     │ 84    │
+│ 17  │ 2     │ 4     │ 84    │
+│ 18  │ 2     │ 4     │ 84    │
+│ 19  │ 2     │ 4     │ 84    │
+│ 20  │ 2     │ 4     │ 84    │
+</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaData/DataFramesMeta.jl/blob/ce591cb6bd95005d77cbfe5dd6c14bc6cf891bc8/src/DataFramesMeta.jl#L868-L921">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="DataFramesMeta.@eachrow-Tuple{Any,Any}" href="#DataFramesMeta.@eachrow-Tuple{Any,Any}"><code>DataFramesMeta.@eachrow</code></a> — <span class="docstring-category">Macro</span></header><section><div><pre><code class="language-julia">@eachrow(d, body)</code></pre><p>Act on each row of a data frame, similar to</p><pre><code class="language-none">for row in eachrow(df)
+    ...
+end</code></pre><p>Includes support for control flow and <code>begin end</code> blocks. Since the &quot;environment&quot; induced by <code>@eachrow df</code> is implicitly a single row of <code>df</code>, use regular operators and comparisons instead of their elementwise counterparts as in <code>@with</code>. Note that the scope within <code>@eachrow</code> is a hard scope.</p><p><code>eachrow</code> also supports special syntax for allocating new columns. The syntax <code>@newcol x::Vector{Int}</code> allocates a new column <code>:x</code> with an <code>Vector</code> container with eltype <code>Int</code>.This feature makes it easier to use <code>eachrow</code> for data transformations. <code>_N</code> is introduced to represent the length of the dataframe, <code>_D</code> represents the <code>dataframe</code> including added columns, and <code>row</code> represents the index of the current row.</p><p>Changes to the rows do not affect <code>d</code> but instead a freshly allocated data frame is returned by <code>@eachrow</code>. Also note that the returned data frame does not share columns with <code>d</code>.</p><p>Like with <code>@transform</code>, <code>@eachrow</code> supports the use of <code>cols</code> to work with column names stored as variables. Using <code>cols</code> with a multi-column selector, such as a <code>Vector</code> of <code>Symbol</code>s, is currently unsupported.</p><p><strong>Arguments</strong></p><ul><li><code>d</code> : an <code>AbstractDataFrame</code></li><li><code>expr</code> : expression operated on row by row</li></ul><p><strong>Returns</strong></p><p>The modified <code>AbstractDataFrame</code>.</p><p><strong>Examples</strong></p><pre><code class="language-julia">julia&gt; using DataFrames, DataFramesMeta
+
+julia&gt; df = DataFrame(A = 1:3, B = [2, 1, 2]);
+
+julia&gt; let x = 0
+            @eachrow df begin
+                if :A + :B == 3
+                    x += 1
+                end
+            end  #  This doesn&#39;t work without the let
+            x
+        end
+2
+
+julia&gt; @eachrow df begin
+            if :A &gt; :B
+                :A = 0
+            end
+        end
+3×2 DataFrame
+│ Row │ A     │ B     │
+│     │ Int64 │ Int64 │
+├─────┼───────┼───────┤
+│ 1   │ 1     │ 2     │
+│ 2   │ 0     │ 1     │
+│ 3   │ 0     │ 2     │
+
+julia&gt; df2 = @eachrow df begin
+           @newcol colX::Vector{Float64}
+           :colX = :B == 2 ? pi * :A : :B
+       end
+3×3 DataFrame
+│ Row │ A     │ B     │ colX    │
+│     │ Int64 │ Int64 │ Float64 │
+├─────┼───────┼───────┼─────────┤
+│ 1   │ 1     │ 2     │ 3.14159 │
+│ 2   │ 2     │ 1     │ 1.0     │
+│ 3   │ 3     │ 2     │ 9.42478 │
+
+julia&gt; varA = :A; varB = :B;
+
+julia&gt; df2 = @eachrow df begin
+           @newcol colX::Vector{Float64}
+           :colX = cols(varB) == 2 ? pi * cols(varA) : cols(varB)
+       end
+3×3 DataFrame
+│ Row │ A     │ B     │ colX    │
+│     │ Int64 │ Int64 │ Float64 │
+├─────┼───────┼───────┼─────────┤
+│ 1   │ 1     │ 2     │ 3.14159 │
+│ 2   │ 2     │ 1     │ 1.0     │
+│ 3   │ 3     │ 2     │ 9.42478 │</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaData/DataFramesMeta.jl/blob/ce591cb6bd95005d77cbfe5dd6c14bc6cf891bc8/src/eachrow.jl#L95-L191">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="DataFramesMeta.@linq-Tuple{Any}" href="#DataFramesMeta.@linq-Tuple{Any}"><code>DataFramesMeta.@linq</code></a> — <span class="docstring-category">Macro</span></header><section><div><pre><code class="language-julia">@linq df ...</code></pre><p>General macro that creates a mini DSL for chaining and macro calls.</p><p><strong>Details</strong></p><p>The following embedded function calls are equivalent to their macro version:</p><ul><li><code>with</code></li><li><code>where</code></li><li><code>select</code></li><li><code>transform</code></li><li><code>by</code></li><li><code>groupby</code></li><li><code>orderby</code></li><li><code>combine</code></li></ul><p><strong>Examples</strong></p><pre><code class="language-julia-repl">julia&gt; using DataFramesMeta, Statistics
+
+julia&gt; df = DataFrame(
+            a = repeat(1:4, outer = 2),
+            b = repeat(2:-1:1, outer = 4),
+            x = 1:8);
+
+julia&gt; x1 = @linq transform(where(df, :a .&gt; 2, :b .!= &quot;c&quot;), y = 10 .* :x);
+
+julia&gt; x1 = @linq by(x1, :b, meanX = mean(:x), meanY = mean(:y));
+
+julia&gt; @linq select(orderby(x1, :b, -:meanX), var = :b, :meanX, :meanY)
+2×3 DataFrame
+│ Row │ var   │ meanX   │ meanY   │
+│     │ Int64 │ Float64 │ Float64 │
+├─────┼───────┼─────────┼─────────┤
+│ 1   │ 1     │ 6.0     │ 60.0    │
+│ 2   │ 2     │ 5.0     │ 50.0    │
+
+julia&gt; @linq df |&gt;
+           transform(y = 10 .* :x) |&gt;
+           where(:a .&gt; 2) |&gt;
+           by(:b, meanX = mean(:x), meanY = mean(:y)) |&gt;
+           orderby(:meanX) |&gt;
+           select(:meanX, :meanY, var = :b)
+2×3 DataFrame
+│ Row │ meanX   │ meanY   │ var   │
+│     │ Float64 │ Float64 │ Int64 │
+├─────┼─────────┼─────────┼───────┤
+│ 1   │ 5.0     │ 50.0    │ 2     │
+│ 2   │ 6.0     │ 60.0    │ 1     │
+</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaData/DataFramesMeta.jl/blob/ce591cb6bd95005d77cbfe5dd6c14bc6cf891bc8/src/linqmacro.jl#L9-L63">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="DataFramesMeta.@orderby-Tuple{Any,Vararg{Any,N} where N}" href="#DataFramesMeta.@orderby-Tuple{Any,Vararg{Any,N} where N}"><code>DataFramesMeta.@orderby</code></a> — <span class="docstring-category">Macro</span></header><section><div><pre><code class="language-julia">@orderby(d, i...)</code></pre><p>Sort rows by values in one of several columns or a transformation of columns. Always returns a fresh <code>DataFrame</code>. Does not accept a <code>GroupedDataFrame</code>.</p><p>When given a <code>DataFrame</code>, <code>@orderby</code> applies the transformation given by its arguments (but does not create new columns) and sorts the given <code>DataFrame</code> on the result, returning a new <code>DataFrame</code>.</p><p><strong>Arguments</strong></p><ul><li><code>d</code> : an AbstractDataFrame</li><li><code>i...</code> : expression for sorting</li></ul><p><strong>Examples</strong></p><p>```jldoctest julia&gt; using DataFramesMeta, Statistics</p><p>julia&gt; d = DataFrame(x = [3, 3, 3, 2, 1, 1, 1, 2, 1, 1], n = 1:10,                      c = [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;, &quot;d&quot;, &quot;e&quot;, &quot;f&quot;, &quot;g&quot;, &quot;h&quot;, &quot;i&quot;, &quot;j&quot;]);</p><p>julia&gt; @orderby(d, -1 .* :n) 10×3 DataFrame  Row │ x      n      c      │ Int64  Int64  String ─────┼──────────────────────    1 │     1     10  j    2 │     1      9  i    3 │     2      8  h    4 │     1      7  g    5 │     1      6  f    6 │     1      5  e    7 │     2      4  d    8 │     3      3  c    9 │     3      2  b   10 │     3      1  a</p><p>julia&gt; @orderby(d, sortperm(:c, rev = true)) 10×3 DataFrame  Row │ x      n      c      │ Int64  Int64  String ─────┼──────────────────────    1 │     1     10  j    2 │     1      9  i    3 │     2      8  h    4 │     1      7  g    5 │     1      6  f    6 │     1      5  e    7 │     2      4  d    8 │     3      3  c    9 │     3      2  b   10 │     3      1  a</p><p>julia&gt; @orderby(d, :x, abs.(:n .- mean(:n))) 10×3 DataFrame  Row │ x      n      c      │ Int64  Int64  String ─────┼──────────────────────    1 │     1      5  e    2 │     1      6  f    3 │     1      7  g    4 │     1      9  i    5 │     1     10  j    6 │     2      4  d    7 │     2      8  h    8 │     3      3  c    9 │     3      2  b   10 │     3      1  a</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaData/DataFramesMeta.jl/blob/ce591cb6bd95005d77cbfe5dd6c14bc6cf891bc8/src/DataFramesMeta.jl#L651-L722">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="DataFramesMeta.@select!-Tuple{Any,Vararg{Any,N} where N}" href="#DataFramesMeta.@select!-Tuple{Any,Vararg{Any,N} where N}"><code>DataFramesMeta.@select!</code></a> — <span class="docstring-category">Macro</span></header><section><div><pre><code class="language-julia">@select!(d, e...)</code></pre><p>Mutate <code>d</code> in-place to retain only columns or transformations specified by <code>e</code> and return it. No copies of existing columns are made.</p><p><strong>Arguments</strong></p><ul><li><code>d</code> : an AbstractDataFrame</li><li><code>e</code> :  keyword arguments specifying new columns in terms of existing columns or symbols to specify existing columns</li></ul><p><strong>Returns</strong></p><ul><li><code>::DataFrame</code></li></ul><p><strong>Examples</strong></p><pre><code class="language-julia-repl">julia&gt; using DataFrames, DataFramesMeta
+
+julia&gt; df = DataFrame(a = repeat(1:4, outer = 2), b = repeat(2:-1:1, outer = 4), c = 1:8);
+
+julia&gt; df2 = @select!(df, :c, :a)
+8×2 DataFrame
+│ Row │ c     │ a     │
+│     │ Int64 │ Int64 │
+├─────┼───────┼───────┤
+│ 1   │ 1     │ 1     │
+│ 2   │ 2     │ 2     │
+│ 3   │ 3     │ 3     │
+│ 4   │ 4     │ 4     │
+│ 5   │ 5     │ 1     │
+│ 6   │ 6     │ 2     │
+│ 7   │ 7     │ 3     │
+│ 8   │ 8     │ 4     │
+
+julia&gt; df === df2
+true
+
+
+
+julia&gt; df = DataFrame(a = repeat(1:4, outer = 2), b = repeat(2:-1:1, outer = 4), c = 1:8);
+
+julia&gt; df2 = @select!(df, :c, x = :b + :c)
+8×2 DataFrame
+│ Row │ c     │ x     │
+│     │ Int64 │ Int64 │
+├─────┼───────┼───────┤
+│ 1   │ 1     │ 3     │
+│ 2   │ 2     │ 3     │
+│ 3   │ 3     │ 5     │
+│ 4   │ 4     │ 5     │
+│ 5   │ 5     │ 7     │
+│ 6   │ 6     │ 7     │
+│ 7   │ 7     │ 9     │
+│ 8   │ 8     │ 9     │
+
+julia&gt; df === df2
+true</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaData/DataFramesMeta.jl/blob/ce591cb6bd95005d77cbfe5dd6c14bc6cf891bc8/src/DataFramesMeta.jl#L1133-L1193">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="DataFramesMeta.@select-Tuple{Any,Vararg{Any,N} where N}" href="#DataFramesMeta.@select-Tuple{Any,Vararg{Any,N} where N}"><code>DataFramesMeta.@select</code></a> — <span class="docstring-category">Macro</span></header><section><div><pre><code class="language-julia">@select(d, e...)</code></pre><p>Select and transform columns.</p><p><strong>Arguments</strong></p><ul><li><code>d</code> : an <code>AbstractDataFrame</code> or <code>GroupedDataFrame</code></li><li><code>e</code> :  keyword arguments specifying new columns in terms of existing columns or symbols to specify existing columns</li></ul><p><strong>Returns</strong></p><ul><li><code>::AbstractDataFrame</code></li></ul><p><strong>Examples</strong></p><pre><code class="language-julia-repl">julia&gt; using DataFrames, DataFramesMeta
+
+julia&gt; df = DataFrame(a = repeat(1:4, outer = 2), b = repeat(2:-1:1, outer = 4), c = 1:8);
+
+julia&gt; @select(df, :c, :a)
+8×2 DataFrame
+│ Row │ c     │ a     │
+│     │ Int64 │ Int64 │
+├─────┼───────┼───────┤
+│ 1   │ 1     │ 1     │
+│ 2   │ 2     │ 2     │
+│ 3   │ 3     │ 3     │
+│ 4   │ 4     │ 4     │
+│ 5   │ 5     │ 1     │
+│ 6   │ 6     │ 2     │
+│ 7   │ 7     │ 3     │
+│ 8   │ 8     │ 4     │
+
+julia&gt; @select(df, :c, x = :b + :c)
+8×2 DataFrame
+│ Row │ c     │ x     │
+│     │ Int64 │ Int64 │
+├─────┼───────┼───────┤
+│ 1   │ 1     │ 3     │
+│ 2   │ 2     │ 3     │
+│ 3   │ 3     │ 5     │
+│ 4   │ 4     │ 5     │
+│ 5   │ 5     │ 7     │
+│ 6   │ 6     │ 7     │
+│ 7   │ 7     │ 9     │
+│ 8   │ 8     │ 9     │</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaData/DataFramesMeta.jl/blob/ce591cb6bd95005d77cbfe5dd6c14bc6cf891bc8/src/DataFramesMeta.jl#L1063-L1113">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="DataFramesMeta.@transform!-Tuple{Any,Vararg{Any,N} where N}" href="#DataFramesMeta.@transform!-Tuple{Any,Vararg{Any,N} where N}"><code>DataFramesMeta.@transform!</code></a> — <span class="docstring-category">Macro</span></header><section><div><pre><code class="language-julia">@transform!(d, i...)</code></pre><p>Mutate <code>d</code> inplace to add additional columns or keys based on keyword arguments and return it. No copies of existing columns are made.</p><p><strong>Arguments</strong></p><ul><li><code>d</code> : an <code>AbstractDataFrame</code>, or <code>GroupedDataFrame</code></li><li><code>i...</code> : keyword arguments defining new columns or keys</li></ul><p><strong>Returns</strong></p><ul><li><code>::DataFrame</code></li></ul><p><strong>Examples</strong></p><pre><code class="language-julia-repl">julia&gt; using DataFramesMeta
+
+julia&gt; df = DataFrame(A = 1:3, B = [2, 1, 2]);
+
+julia&gt; df2 = @transform!(df, a = 2 * :A, x = :A .+ :B)
+3×4 DataFrame
+│ Row │ A     │ B     │ a     │ x     │
+│     │ Int64 │ Int64 │ Int64 │ Int64 │
+├─────┼───────┼───────┼───────┼───────┤
+│ 1   │ 1     │ 2     │ 2     │ 3     │
+│ 2   │ 2     │ 1     │ 4     │ 3     │
+│ 3   │ 3     │ 2     │ 6     │ 5     │
+
+julia&gt; df === df2
+true</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaData/DataFramesMeta.jl/blob/ce591cb6bd95005d77cbfe5dd6c14bc6cf891bc8/src/DataFramesMeta.jl#L794-L828">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="DataFramesMeta.@transform-Tuple{Any,Vararg{Any,N} where N}" href="#DataFramesMeta.@transform-Tuple{Any,Vararg{Any,N} where N}"><code>DataFramesMeta.@transform</code></a> — <span class="docstring-category">Macro</span></header><section><div><pre><code class="language-julia">@transform(d, i...)</code></pre><p>Add additional columns or keys based on keyword arguments.</p><p><strong>Arguments</strong></p><ul><li><code>d</code> : an <code>AbstractDataFrame</code>, or <code>GroupedDataFrame</code></li><li><code>i...</code> : keyword arguments defining new columns or keys</li></ul><p><strong>Returns</strong></p><ul><li><code>::AbstractDataFrame</code> or <code>::GroupedDataFrame</code></li></ul><p><strong>Examples</strong></p><pre><code class="language-julia-repl">julia&gt; using DataFramesMeta
+
+julia&gt; df = DataFrame(A = 1:3, B = [2, 1, 2]);
+
+julia&gt; @transform(df, a = 2 * :A, x = :A .+ :B)
+3×4 DataFrame
+│ Row │ A     │ B     │ a     │ x     │
+│     │ Int64 │ Int64 │ Int64 │ Int64 │
+├─────┼───────┼───────┼───────┼───────┤
+│ 1   │ 1     │ 2     │ 2     │ 3     │
+│ 2   │ 2     │ 1     │ 4     │ 3     │
+│ 3   │ 3     │ 2     │ 6     │ 5     │</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaData/DataFramesMeta.jl/blob/ce591cb6bd95005d77cbfe5dd6c14bc6cf891bc8/src/DataFramesMeta.jl#L743-L773">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="DataFramesMeta.@where-Tuple{Any,Vararg{Any,N} where N}" href="#DataFramesMeta.@where-Tuple{Any,Vararg{Any,N} where N}"><code>DataFramesMeta.@where</code></a> — <span class="docstring-category">Macro</span></header><section><div><pre><code class="language-julia">@where(d, i...)</code></pre><p>Select row subsets in <code>AbstractDataFrame</code>s and <code>GroupedDataFrame</code>s.</p><p><strong>Arguments</strong></p><ul><li><code>d</code> : an AbstractDataFrame or GroupedDataFrame</li><li><code>i...</code> : expression for selecting rows</li></ul><p>Multiple <code>i</code> expressions are &quot;and-ed&quot; together.</p><p>If given a <code>GroupedDataFrame</code>, <code>@where</code> applies transformations by group, and returns a fresh <code>DataFrame</code> containing the rows for which the generated values are all <code>true</code>.</p><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p><code>@where</code> treats <code>missing</code> values as <code>false</code> when filtering rows. Unlike <code>DataFrames.filter</code> and other boolean operations with <code>missing</code>, <code>@where</code> will <em>not</em> error on missing values, and will only keep <code>true</code> values.</p></div></div><p><strong>Examples</strong></p><pre><code class="language-julia-repl">julia&gt; using DataFramesMeta, Statistics
+
+julia&gt; df = DataFrame(x = 1:3, y = [2, 1, 2]);
+
+julia&gt; globalvar = [2, 1, 0];
+
+julia&gt; @where(df, :x .&gt; 1)
+2×2 DataFrame
+│ Row │ x     │ y     │
+│     │ Int64 │ Int64 │
+├─────┼───────┼───────┤
+│ 1   │ 2     │ 1     │
+│ 2   │ 3     │ 2     │
+
+julia&gt; @where(df, :x .&gt; globalvar)
+2×2 DataFrame
+│ Row │ x     │ y     │
+│     │ Int64 │ Int64 │
+├─────┼───────┼───────┤
+│ 1   │ 2     │ 1     │
+│ 2   │ 3     │ 2     │
+
+julia&gt; @where(df, :x .&gt; globalvar, :y .== 3)
+0×2 DataFrame
+
+julia&gt; d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
+                                    2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
+
+julia&gt; g = groupby(d, :x);
+
+julia&gt; @where(g, :n .&gt; mean(:n))
+8×2 DataFrame
+│ Row │ n     │ x     │
+│     │ Int64 │ Int64 │
+├─────┼───────┼───────┤
+│ 1   │ 12    │ 1     │
+│ 2   │ 13    │ 1     │
+│ 3   │ 15    │ 2     │
+│ 4   │ 16    │ 2     │
+│ 5   │ 17    │ 3     │
+│ 6   │ 18    │ 1     │
+│ 7   │ 19    │ 1     │
+│ 8   │ 20    │ 2     │
+
+julia&gt; @where(g, :n .== first(:n))
+3×2 DataFrame
+│ Row │ n     │ x     │
+│     │ Int64 │ Int64 │
+├─────┼───────┼───────┤
+│ 1   │ 1     │ 3     │
+│ 2   │ 5     │ 1     │
+│ 3   │ 8     │ 2     │
+
+julia&gt; d = DataFrame(a = [1, 2, missing], b = [&quot;x&quot;, &quot;y&quot;, missing]);
+
+julia&gt; @where(d, :a .== 1)
+1×2 DataFrame
+│ Row │ a      │ b       │
+│     │ Int64? │ String? │
+├─────┼────────┼─────────┤
+│ 1   │ 1      │ x       │</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaData/DataFramesMeta.jl/blob/ce591cb6bd95005d77cbfe5dd6c14bc6cf891bc8/src/DataFramesMeta.jl#L531-L618">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="DataFramesMeta.@with-Tuple{Any,Any}" href="#DataFramesMeta.@with-Tuple{Any,Any}"><code>DataFramesMeta.@with</code></a> — <span class="docstring-category">Macro</span></header><section><div><pre><code class="language-julia">@with(d, expr)</code></pre><p><code>@with</code> allows DataFrame columns keys to be referenced as symbols.</p><p><strong>Arguments</strong></p><ul><li><code>d</code> : an AbstractDataFrame type</li><li><code>expr</code> : the expression to evaluate in <code>d</code></li></ul><p><strong>Details</strong></p><p><code>@with</code> works by parsing the expression body for all columns indicated by symbols (e.g. <code>:colA</code>). Then, a function is created that wraps the body and passes the columns as function arguments. This function is then called. Operations are efficient because:</p><ul><li>A pseudo-anonymous function is defined, so types are stable.</li><li>Columns are passed as references, eliminating DataFrame indexing.</li></ul><p>The following</p><pre><code class="language-julia">@with(d, :a .+ :b .+ 1)</code></pre><p>becomes</p><pre><code class="language-julia">tempfun(a, b) = a .+ b .+ 1
+tempfun(d[!, :a], d[!, :b])</code></pre><p>If an expression is wrapped in <code>^(expr)</code>, <code>expr</code> gets passed through untouched. If an expression is wrapped in  <code>cols(expr)</code>, the column is referenced by the variable <code>expr</code> rather than a symbol.</p><p><strong>Examples</strong></p><pre><code class="language-julia-repl">julia&gt; using DataFramesMeta
+
+julia&gt; y = 3;
+
+julia&gt; df = DataFrame(x = 1:3, y = [2, 1, 2]);
+
+julia&gt; x = [2, 1, 0];
+
+julia&gt; @with(df, :y .+ 1)
+3-element Array{Int64,1}:
+ 3
+ 2
+ 3
+
+julia&gt; @with(df, :x + x)
+3-element Array{Int64,1}:
+ 3
+ 3
+ 3
+
+julia&gt; @with df begin
+            res = 0.0
+            for i in 1:length(:x)
+                res += :x[i] * :y[i]
+            end
+            res
+        end
+10.0
+
+julia&gt; @with(df, df[:x .&gt; 1, ^(:y)]) # The ^ means leave the :y alone
+2-element Array{Int64,1}:
+ 1
+ 2
+
+julia&gt; colref = :x;
+
+julia&gt; @with(df, :y + cols(colref)) # Equivalent to df[!, :y] + df[!, colref]
+3-element Array{Int64,1}:
+ 3
+ 3
+ 5</code></pre><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p><code>@with</code> creates a function, so the scope within <code>@with</code> is a local scope. Variables in the parent can be read. Writing to variables in the parent scope differs depending on the type of scope of the parent. If the parent scope is a global scope, then a variable cannot be assigned without using the <code>global</code> keyword. If the parent scope is a local scope (inside a function or let block for example), the <code>global</code> keyword is not needed to assign to that parent scope.</p></div></div></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaData/DataFramesMeta.jl/blob/ce591cb6bd95005d77cbfe5dd6c14bc6cf891bc8/src/DataFramesMeta.jl#L396-L486">source</a></section></article></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Introduction</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Wednesday 21 April 2021 11:15">Wednesday 21 April 2021</span>. Using Julia version 1.5.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
