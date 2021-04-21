@@ -877,4 +877,3 @@ julia> @by(df, :a, c = :c, c_mean = mean(:c))
 macro by(x, what, args...)
     esc(by_helper(x, what, args...))
 end
-
