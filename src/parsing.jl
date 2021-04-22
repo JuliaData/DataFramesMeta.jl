@@ -106,7 +106,7 @@ function get_source_fun(function_expr)
     # recursive step for begin :a + :b end
     if function_expr isa Expr &&
         function_expr.head == :block &&
-        length(function_expr.args) == 1 # omitting the line number node
+        length(function_expr.args) == 1
 
         return get_source_fun(function_expr.args[1])
     elseif is_simple_non_broadcast_call(function_expr)
@@ -204,14 +204,15 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
         lhs = ex.args[1]
         rhs_t = ex.args[2]
         # if lhs is a cols(y) then the rhs gets parsed as a block
-        if onearg(lhs, :cols) && rhs_t.head === :block && length(rhs_t.args) == 2
-            rhs = Base.remove_linenums!(rhs_t.args[2])
+        if onearg(lhs, :cols) && rhs_t.head === :block && length(rhs_t.args) == 1
+            rhs = rhs_t.args[1]
         else
             rhs = rhs_t
         end
     else
         throw(ArgumentError("This path should not be reached"))
     end
+
 
     # y = :x
     if lhs isa Symbol && rhs isa QuoteNode
@@ -320,7 +321,7 @@ function fix_args(args...)
         if arg isa Expr && arg.head == :block
            append!(exprs, Base.remove_linenums!(arg).args)
         else
-            push!(exprs, arg)
+            push!(exprs, Base.remove_linenums!(arg))
         end
     end
     return exprs
