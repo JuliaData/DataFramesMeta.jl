@@ -106,9 +106,9 @@ function get_source_fun(function_expr)
     # recursive step for begin :a + :b end
     if function_expr isa Expr &&
         function_expr.head == :block &&
-        length(function_expr.args) == 2 # omitting the line number node
+        length(function_expr.args) == 1 # omitting the line number node
 
-        return get_source_fun(function_expr.args[2])
+        return get_source_fun(function_expr.args[1])
     elseif is_simple_non_broadcast_call(function_expr)
         source = args_to_selectors(function_expr.args[2:end])
         fun_t = function_expr.args[1]
@@ -142,7 +142,6 @@ function get_source_fun(function_expr)
                 $body
             end
         end
-
         return source, fun
     end
 end
@@ -206,7 +205,7 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
         rhs_t = ex.args[2]
         # if lhs is a cols(y) then the rhs gets parsed as a block
         if onearg(lhs, :cols) && rhs_t.head === :block && length(rhs_t.args) == 2
-            rhs = rhs_t.args[2]
+            rhs = Base.remove_linenums!(rhs_t.args[2])
         else
             rhs = rhs_t
         end
