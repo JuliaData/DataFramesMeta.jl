@@ -306,3 +306,23 @@ function replace_dotted!(e, membernames)
     y_new = protect_replace_syms!(e.args[2], membernames)
     Expr(:., x_new, y_new)
 end
+
+"""
+    fix_args(args...; )
+
+Given multiple arguments which can be any type
+of expression-like object (`Expr`, `QuoteNode`, etc.)
+flattens the arguments into an array, unnesting
+`:block` expressions.
+"""
+function fix_args(args...)
+    exprs = Any[]
+    for arg in args
+        if arg isa Expr && arg.head == :block
+           append!(exprs, Base.remove_linenums!(arg).args)
+        else
+            push!(exprs, arg)
+        end
+    end
+    return exprs
+end

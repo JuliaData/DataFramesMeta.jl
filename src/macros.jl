@@ -176,7 +176,8 @@ end
 ##############################################################################
 
 function where_helper(x, args...)
-    t = (fun_to_vec(arg; nolhs = true, gensym_names = true) for arg in args)
+    exprs = fix_args(args...)
+    t = (fun_to_vec(ex; gensym_names = true, nolhs = true) for ex in exprs)
     quote
         $where($x, $(t...))
     end
@@ -301,7 +302,6 @@ macro where(x, args...)
     esc(where_helper(x, args...))
 end
 
-
 ##############################################################################
 ##
 ## @orderby
@@ -309,7 +309,8 @@ end
 ##############################################################################
 
 function orderby_helper(x, args...)
-    t = (fun_to_vec(arg; nolhs = true, gensym_names = true) for arg in args)
+    exprs = fix_args(args...)
+    t = (fun_to_vec(ex; gensym_names = true, nolhs = true) for ex in exprs)
     quote
         $DataFramesMeta.orderby($x, $(t...))
     end
@@ -414,9 +415,8 @@ end
 
 
 function transform_helper(x, args...)
-
-    t = (fun_to_vec(arg) for arg in args)
-
+    exprs = fix_args(args...)
+    t = (fun_to_vec(ex; gensym_names = false, nolhs = false) for ex in exprs)
     quote
         $DataFrames.transform($x, $(t...))
     end
@@ -466,9 +466,8 @@ end
 
 
 function transform!_helper(x, args...)
-
-    t = (fun_to_vec(arg) for arg in args)
-
+    exprs = fix_args(args...)
+    t = (fun_to_vec(ex; gensym_names = false, nolhs = false) for ex in exprs)
     quote
         $DataFrames.transform!($x, $(t...))
     end
@@ -521,8 +520,8 @@ end
 ##############################################################################
 
 function select_helper(x, args...)
-    t = (fun_to_vec(arg) for arg in args)
-
+    exprs = fix_args(args...)
+    t = (fun_to_vec(ex; gensym_names = false, nolhs = false) for ex in exprs)
     quote
         $DataFrames.select($x, $(t...))
     end
@@ -591,8 +590,8 @@ end
 ##############################################################################
 
 function select!_helper(x, args...)
-    t = (fun_to_vec(arg) for arg in args)
-
+    exprs = fix_args(args...)
+    t = (fun_to_vec(ex; gensym_names = false, nolhs = false) for ex in exprs)
     quote
         $DataFrames.select!($x, $(t...))
     end
@@ -674,11 +673,14 @@ function combine_helper(x, args...; deprecation_warning = false)
     deprecation_warning && @warn "`@based_on` is deprecated. Use `@combine` instead."
 
     # Only allow one argument when returning a Table object
-    if length(args) == 1 &&
-        !(first(args) isa QuoteNode) &&
-        !(first(args).head == :(=) || first(args).head == :kw)
+    exprs = fix_args(args...)
+    fe = first(exprs)
+    if length(exprs) == 1 &&
+        !(fe isa QuoteNode) &&
+        !(fe.head == :(=) || fe.head == :kw)
 
-        t = fun_to_vec(first(args); nolhs = true)
+        t = fun_to_vec(fe; gensym_names = false, nolhs = true)
+
         # 0.22: No pair as first arg, needs AsTable in other args to return table
         if DATAFRAMES_GEQ_22
             quote
@@ -691,7 +693,7 @@ function combine_helper(x, args...; deprecation_warning = false)
             end
         end
     else
-        t = (fun_to_vec(arg) for arg in args)
+        t = (fun_to_vec(ex; gensym_names = false, nolhs = false) for ex in exprs)
         quote
             $DataFrames.combine($x, $(t...))
         end
@@ -774,11 +776,15 @@ end
 
 function by_helper(x, what, args...)
     # Only allow one argument when returning a Table object
-    if length(args) == 1 &&
-        !(first(args) isa QuoteNode) &&
-        !(first(args).head == :(=) || first(args).head == :kw)
+    # Only allow one argument when returning a Table object
+    exprs = fix_args(args...)
+    fe = first(exprs)
+    if length(exprs) == 1 &&
+        !(fe isa QuoteNode) &&
+        !(fe.head == :(=) || fe.head == :kw)
 
-        t = fun_to_vec(first(args); nolhs = true)
+        t = fun_to_vec(fe; gensym_names = false, nolhs = true)
+
         # 0.22: No pair as first arg, needs AsTable in other args to return table
         if DATAFRAMES_GEQ_22
             quote
@@ -791,7 +797,7 @@ function by_helper(x, what, args...)
             end
         end
     else
-        t = (fun_to_vec(arg) for arg in args)
+        t = (fun_to_vec(ex; gensym_names = false, nolhs = false) for ex in exprs)
         quote
             $DataFrames.combine($groupby($x, $what), $(t...))
         end
