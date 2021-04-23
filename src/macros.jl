@@ -457,6 +457,10 @@ macro transform(x, args...)
     esc(transform_helper(x, args...))
 end
 
+macro transform(x, a)
+  esc(transform_helper(x, a))
+end
+
 
 ##############################################################################
 ##

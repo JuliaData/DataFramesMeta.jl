@@ -3,7 +3,7 @@ module TestChaining
 using Test, Random
 using DataFrames
 using DataFramesMeta
-using Lazy
+using Lazy, Chain
 using Statistics
 using Random
 
@@ -30,6 +30,14 @@ end
 
 x_thread = @> begin
    df
+   @where(:a .> 2)
+   @transform(y = 10 * :x)
+   @by(:b, meanX = mean(:x), meanY = mean(:y))
+   @orderby(:b, -:meanX)
+   @select(var = :b, :meanX, :meanY)
+end
+
+x_chain = @chain df begin
    @where(:a .> 2)
    @transform(y = 10 * :x)
    @by(:b, meanX = mean(:x), meanY = mean(:y))
