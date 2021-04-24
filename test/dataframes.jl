@@ -183,10 +183,6 @@ end
     @test @transform!(df, n = 1).n == fill(1, nrow(df))
     @test @transform!(df, n = :i .* :g).n == [1, 2, 3, 8, 10]
 
-
-
-
-
     # non-copying
     @test @transform!(df, n = :i).g === df.g
     # mutating
