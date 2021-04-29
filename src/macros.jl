@@ -436,6 +436,25 @@ Add additional columns or keys based on keyword arguments.
 
 * `::AbstractDataFrame` or `::GroupedDataFrame`
 
+Inputs to `@transform` can come in two formats. One
+can create new columns in a single block, where each
+line is of the form `y = f(:x)`, or as a series of
+keyword arguments. For example, the following are
+equivelant
+
+```julia
+@transform df begin
+  a = :x
+  b = :y
+end
+```
+
+and
+
+```
+@transform(df, a = :x, b = :y)
+```
+
 ### Examples
 
 ```jldoctest
@@ -443,7 +462,11 @@ julia> using DataFramesMeta
 
 julia> df = DataFrame(A = 1:3, B = [2, 1, 2]);
 
-julia> @transform(df, a = 2 * :A, x = :A .+ :B)
+julia> @transform df begin
+  a = 2 * :A
+  x = :A .+ :B
+end
+
 3×4 DataFrame
 │ Row │ A     │ B     │ a     │ x     │
 │     │ Int64 │ Int64 │ Int64 │ Int64 │

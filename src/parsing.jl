@@ -311,18 +311,25 @@ end
     fix_args(args...; )
 
 Given multiple arguments which can be any type
-of expression-like object (`Expr`, `QuoteNode`, etc.)
-flattens the arguments into an array, unnesting
-`:block` expressions.
+of expression-like object (`Expr`, `QuoteNode`, etc.),
+appends them
 """
 function fix_args(args...)
-    exprs = Any[]
-    for arg in args
-        if arg isa Expr && arg.head == :block
-           append!(exprs, Base.remove_linenums!(arg).args)
-        else
-            push!(exprs, Base.remove_linenums!(arg))
-        end
+    Any[Base.remove_linenums!(arg) for arg in args]
+end
+
+"""
+   fix_args(arg)
+
+Normalize a single input to a vector of expressions.
+If `arg` is a single `:block`, it is unnested.
+Otherwise, return a single-element array.
+"""
+function fix_args(arg)
+    if arg isa Expr && arg.head == :block
+        x = Base.remove_linenums!(arg).args
+    else
+        x = Any[Base.remove_linenums!(arg)]
     end
-    return exprs
+    return x
 end

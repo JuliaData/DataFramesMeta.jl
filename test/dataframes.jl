@@ -98,12 +98,6 @@ const ≅ = isequal
     end
     @test d ≅ @transform(df, n1 = :i, n2 = :i .+ :g)
 
-    d = @transform(df, begin
-        n1 = :i
-        cols(:n2) = :i .+ :g
-    end, n3 = :g)
-    @test d ≅ @transform(df, n1 = :i, n2 = :i .+ :g, n3 = :g)
-
     d = @transform df begin
         n1 = begin
             :i
