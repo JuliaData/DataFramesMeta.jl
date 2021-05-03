@@ -308,24 +308,25 @@ function replace_dotted!(e, membernames)
 end
 
 """
-    fix_args(args...; )
+    create_args_vector(args...; )
 
 Given multiple arguments which can be any type
 of expression-like object (`Expr`, `QuoteNode`, etc.),
-appends them
+puts them into a single array, removing line numbers.
 """
-function fix_args(args...)
+function create_args_vector(args...)
     Any[Base.remove_linenums!(arg) for arg in args]
 end
 
 """
-   fix_args(arg)
+   create_args_vector(arg)
 
 Normalize a single input to a vector of expressions.
 If `arg` is a single `:block`, it is unnested.
 Otherwise, return a single-element array.
+Also removes line numbers.
 """
-function fix_args(arg)
+function create_args_vector(arg)
     if arg isa Expr && arg.head == :block
         x = Base.remove_linenums!(arg).args
     else

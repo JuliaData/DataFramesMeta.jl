@@ -176,7 +176,7 @@ end
 ##############################################################################
 
 function where_helper(x, args...)
-    exprs = fix_args(args...)
+    exprs = create_args_vector(args...)
     t = (fun_to_vec(ex; gensym_names = true, nolhs = true) for ex in exprs)
     quote
         $where($x, $(t...))
@@ -309,7 +309,7 @@ end
 ##############################################################################
 
 function orderby_helper(x, args...)
-    exprs = fix_args(args...)
+    exprs = create_args_vector(args...)
     t = (fun_to_vec(ex; gensym_names = true, nolhs = true) for ex in exprs)
     quote
         $DataFramesMeta.orderby($x, $(t...))
@@ -415,7 +415,7 @@ end
 
 
 function transform_helper(x, args...)
-    exprs = fix_args(args...)
+    exprs = create_args_vector(args...)
     t = (fun_to_vec(ex; gensym_names = false, nolhs = false) for ex in exprs)
     quote
         $DataFrames.transform($x, $(t...))
@@ -489,7 +489,7 @@ end
 
 
 function transform!_helper(x, args...)
-    exprs = fix_args(args...)
+    exprs = create_args_vector(args...)
     t = (fun_to_vec(ex; gensym_names = false, nolhs = false) for ex in exprs)
     quote
         $DataFrames.transform!($x, $(t...))
@@ -543,7 +543,7 @@ end
 ##############################################################################
 
 function select_helper(x, args...)
-    exprs = fix_args(args...)
+    exprs = create_args_vector(args...)
     t = (fun_to_vec(ex; gensym_names = false, nolhs = false) for ex in exprs)
     quote
         $DataFrames.select($x, $(t...))
@@ -613,7 +613,7 @@ end
 ##############################################################################
 
 function select!_helper(x, args...)
-    exprs = fix_args(args...)
+    exprs = create_args_vector(args...)
     t = (fun_to_vec(ex; gensym_names = false, nolhs = false) for ex in exprs)
     quote
         $DataFrames.select!($x, $(t...))
@@ -696,7 +696,7 @@ function combine_helper(x, args...; deprecation_warning = false)
     deprecation_warning && @warn "`@based_on` is deprecated. Use `@combine` instead."
 
     # Only allow one argument when returning a Table object
-    exprs = fix_args(args...)
+    exprs = create_args_vector(args...)
     fe = first(exprs)
     if length(exprs) == 1 &&
         !(fe isa QuoteNode) &&
@@ -800,7 +800,7 @@ end
 function by_helper(x, what, args...)
     # Only allow one argument when returning a Table object
     # Only allow one argument when returning a Table object
-    exprs = fix_args(args...)
+    exprs = create_args_vector(args...)
     fe = first(exprs)
     if length(exprs) == 1 &&
         !(fe isa QuoteNode) &&
