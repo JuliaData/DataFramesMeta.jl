@@ -691,19 +691,19 @@ end
         :c
         :g .*  2
     end
-    @test d ≅ @orderby(df, :c, :g .*  2 )
+    @test d ≅ @orderby(df, :c, :g .* 2)
 
     d = @orderby df begin
         cols(:c)
         :g .*  2
     end
-    @test d ≅ @orderby(df, :c, :g .*  2 )
+    @test d ≅ @orderby(df, :c, :g .* 2)
 
     d = @orderby df begin
         :c
         cols(:g) .*  2
     end
-    @test d ≅ @orderby(df, :c, :g .*  2 )
+    @test d ≅ @orderby(df, :c, :g .* 2)
 
     d = @orderby df begin
         begin
@@ -711,13 +711,13 @@ end
         end
         :g .*  2
     end
-    @test d ≅ @orderby(df, :c, :g .*  2 )
+    @test d ≅ @orderby(df, :c, :g .* 2)
 
     d = @orderby df begin
         :c
         @. :g * 2
     end
-    @test d ≅ @orderby(df, :c, :g .*  2 )
+    @test d ≅ @orderby(df, :c, :g .* 2)
 end
 
 @testset "cols with @select fix" begin
@@ -728,6 +728,5 @@ end
     @test @transform(df, cols("X")) == df
     @test @transform(df, cols("X Y Z")) == df
 end
-
 
 end # module
