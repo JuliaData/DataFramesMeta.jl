@@ -55,7 +55,7 @@ eachrow_find_newcols(x, newcol_decl) = (x, Any[])
 function eachrow_helper(df, body, deprecation_warning)
     # @deprecate cannot be used because eachrow is a macro, and the @warn should not be in
     # eachrow itself because then it will be displayed when the macro is evaluated.
-    deprecation_warning && @error "`@byrow!` and `@byrow` are deprecated, use `@eachrow` instead."
+    deprecation_warning && @warn "`@byrow!` and `@byrow` are deprecated, use `@eachrow` instead."
     e_body, e_newcols = eachrow_find_newcols(body, Any[])
     _df = gensym()
     quote
