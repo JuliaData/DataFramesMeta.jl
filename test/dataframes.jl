@@ -79,7 +79,9 @@ const ≅ = isequal
     @test @transform(df, n = 1).n == fill(1, nrow(df))
 
     @test @transform(df, n = :i .* :g).n == [1, 2, 3, 8, 10]
+end
 
+@testset "@transform with :block" begin
     d = @transform df begin
         n1 = :i
         n2 = :i .+ :g
@@ -188,6 +190,40 @@ end
     @test df[:, Not(:n2)] ≅ df2
 end
 
+@testset "@transform! with :block" begin
+    d = @transform! df begin
+        n1 = :i
+        n2 = :i .+ :g
+    end
+    @test d ≅ @transform!(df, n1 = :i, n2 = :i .+ :g)
+
+    d = @transform! df begin
+        cols(:n1) = :i
+        n2 = cols(:i) .+ :g
+    end
+    @test d ≅ @transform!(df, n1 = :i, n2 = :i .+ :g)
+
+    d = @transform df begin
+        n1 = cols(:i)
+        cols(:n2) = :i .+ :g
+    end
+    @test d ≅ @transform!(df, n1 = :i, n2 = :i .+ :g)
+
+    d = @transform! df begin
+        n1 = begin
+            :i
+        end
+        n2 = :i .+ :g
+    end
+    @test d ≅ @transform!(df, n1 = :i, n2 = :i .+ :g)
+
+    d = @transform! df begin
+        n1 = @. :i * :g
+        n2 = @. :i * :g
+    end
+    @test d ≅ @transform!(df, n1 = :i .* :g, n2 = :i .* :g)
+end
+
 # Defined outside of `@testset` due to use of `@eval`
 df = DataFrame(
     g = [1, 1, 1, 2, 2],
@@ -292,7 +328,6 @@ end
     @test @select(df, n = cols("g") + cols(:i)).n == df.g + df.i
     @test @select(df, n = cols(1) + cols(2)).n == df.g + df.i
 
-
     @test @select(df, n = 1).n == fill(1, nrow(df))
 
     @test @select(df, cols("new_column") = :i).new_column == df.i
@@ -303,7 +338,40 @@ end
     @test @select(df, cols("new" * "_" * "column") = :i).new_column == df.i
 
     @test @transform(df, n = :i .* :g).n == [1, 2, 3, 8, 10]
+end
 
+@testset "select with :block" begin
+    d = @select df begin
+        n1 = :i
+        n2 = :i .+ :g
+    end
+    @test d ≅ @select(df, n1 = :i, n2 = :i .+ :g)
+
+    d = @select df begin
+        cols(:n1) = :i
+        n2 = cols(:i) .+ :g
+    end
+    @test d ≅ @select(df, n1 = :i, n2 = :i .+ :g)
+
+    d = @select df begin
+        n1 = cols(:i)
+        cols(:n2) = :i .+ :g
+    end
+    @test d ≅ @select(df, n1 = :i, n2 = :i .+ :g)
+
+    d = @select df begin
+        n1 = begin
+            :i
+        end
+        n2 = :i .+ :g
+    end
+    @test d ≅ @select(df, n1 = :i, n2 = :i .+ :g)
+
+    d = @select df begin
+        n1 = @. :i * :g
+        n2 = @. :i * :g
+    end
+    @test d ≅ @select(df, n1 = :i .* :g, n2 = :i .* :g)
 end
 
 @testset "@select!" begin
@@ -387,6 +455,40 @@ end
     df2 = @select(df, :i)
     @test @select!(df, :i) === df
     @test df == df2
+end
+
+@testset "@select! with :block" begin
+    d = @select! copy(df) begin
+        n1 = :i
+        n2 = :i .+ :g
+    end
+    @test d ≅ @select!(copy(df), n1 = :i, n2 = :i .+ :g)
+
+    d = @select! copy(df) begin
+        cols(:n1) = :i
+        n2 = cols(:i) .+ :g
+    end
+    @test d ≅ @select!(copy(df), n1 = :i, n2 = :i .+ :g)
+
+    d = @select! copy(df) begin
+        n1 = cols(:i)
+        cols(:n2) = :i .+ :g
+    end
+    @test d ≅ @select!(copy(df), n1 = :i, n2 = :i .+ :g)
+
+    d = @select! copy(df) begin
+        n1 = begin
+            :i
+        end
+        n2 = :i .+ :g
+    end
+    @test d ≅ @select!(copy(df), n1 = :i, n2 = :i .+ :g)
+
+    d = @select! copy(df) begin
+        n1 = @. :i * :g
+        n2 = @. :i * :g
+    end
+    @test d ≅ @select!(copy(df), n1 = :i .* :g, n2 = :i .* :g)
 end
 
 # Defined outside of `@testset` due to use of `@eval`
