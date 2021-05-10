@@ -82,6 +82,14 @@ const ≅ = isequal
 end
 
 @testset "@transform with :block" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5,
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing]
+        )
+
     d = @transform df begin
         n1 = :i
         n2 = :i .+ :g
@@ -191,6 +199,14 @@ end
 end
 
 @testset "@transform! with :block" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5,
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing]
+        )
+
     d = @transform! df begin
         n1 = :i
         n2 = :i .+ :g
@@ -341,6 +357,14 @@ end
 end
 
 @testset "select with :block" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5,
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing]
+        )
+
     d = @select df begin
         n1 = :i
         n2 = :i .+ :g
@@ -458,6 +482,14 @@ end
 end
 
 @testset "@select! with :block" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5,
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing]
+        )
+
     d = @select! copy(df) begin
         n1 = :i
         n2 = :i .+ :g
@@ -590,6 +622,42 @@ end
     @test @where(subdf, :A .== 3) == DataFrame(A = 3, B = 2)
 end
 
+@testset "where with :block" begin
+    df = DataFrame(A = [1, 2, 3, missing], B = [2, 1, 2, 1])
+
+    d = @where df begin
+        :A .> 1
+        :B .> 1
+    end
+    @test d ≅ @where(df, :A .> 1, :B .> 1)
+
+    d = @where df begin
+        cols(:A) .> 1
+        :B .> 1
+    end
+    @test d ≅ @where(df, :A .> 1, :B .> 1)
+
+    d = @where df begin
+        :A .> 1
+        cols(:B) .> 1
+    end
+    @test d ≅ @where(df, :A .> 1, :B .> 1)
+
+    d = @where df begin
+        begin
+            :A .> 1
+        end
+        :B .> 1
+    end
+    @test d ≅ @where(df, :A .> 1, :B .> 1)
+
+    d = @where df begin
+        :A .> 1
+        @. :B > 1
+    end
+    @test d ≅ @where(df, :A .> 1, :B .> 1)
+end
+
 @testset "orderby" begin
     df = DataFrame(
         g = [1, 1, 1, 2, 2],
@@ -608,6 +676,48 @@ end
     subdf = @view df[1:3, :]
 
     @test @orderby(subdf, -:i) == df[[3, 2, 1], :]
+end
+
+@testset "orderby with :block" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5,
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing]
+        )
+
+    d = @orderby df begin
+        :c
+        :g .*  2
+    end
+    @test d ≅ @orderby(df, :c, :g .*  2 )
+
+    d = @orderby df begin
+        cols(:c)
+        :g .*  2
+    end
+    @test d ≅ @orderby(df, :c, :g .*  2 )
+
+    d = @orderby df begin
+        :c
+        cols(:g) .*  2
+    end
+    @test d ≅ @orderby(df, :c, :g .*  2 )
+
+    d = @orderby df begin
+        begin
+            :c
+        end
+        :g .*  2
+    end
+    @test d ≅ @orderby(df, :c, :g .*  2 )
+
+    d = @orderby df begin
+        :c
+        @. :g * 2
+    end
+    @test d ≅ @orderby(df, :c, :g .*  2 )
 end
 
 @testset "cols with @select fix" begin
