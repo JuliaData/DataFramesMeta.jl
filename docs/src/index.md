@@ -16,7 +16,7 @@ In addition, DataFramesMeta provides
 * `@by`, for grouping and combining a data frame in a single step
 * `@with`, for working with the columns of a data frame with high performance and 
   convenient syntax
-* `@eachrow`, for looping through rows in data frame, again with high performance and 
+* `@eachrow` and `@eachrow!` for looping through rows in data frame, again with high performance and 
   convenient syntax. 
 * `@linq`, for piping the above macros together, similar to [magrittr](https://cran.r-project.org/web/packages/magrittr/vignettes/magrittr.html)'s
   `%>%` in R. 
@@ -216,13 +216,16 @@ end
     `@eachrow` blocks. 
 
 
-## `@eachrow`
+## `@eachrow` and `@eachrow!`
 
 Act on each row of a data frame. Includes support for control flow and `begin end` 
 blocks. Since the "environment" induced by `@eachrow df` is implicitly a 
 single row of `df`, one uses regular operators and comparisons instead of 
 their elementwise counterparts as in `@with`. Does not change the input data 
 frame argument.
+
+`@eachrow!` is identical to `@eachrow` but acts on a data-frame in-place, modifying
+the input.
 
 ```julia
 df = DataFrame(A = 1:3, B = [2, 1, 2])
