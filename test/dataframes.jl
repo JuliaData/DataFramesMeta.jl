@@ -148,7 +148,6 @@ end
 
     # non-copying
     @test @transform!(df, n = :i).g === df.g
-    @test @transform!(df, n = :i).n === df.i
     # mutating
     df2 = copy(df)
     @test @transform!(df, :i) === df
