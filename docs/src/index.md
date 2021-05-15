@@ -260,7 +260,7 @@ df2 = @eachrow df begin
     if :A > 1
         :colY = :A * :B
     else
-        :colY = Missing
+        :colY = missing
     end
 end
 ```
