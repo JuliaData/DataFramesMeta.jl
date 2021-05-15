@@ -5,8 +5,9 @@ using Reexport
 @reexport using DataFrames
 
 # Basics:
-export @with, @where, @orderby, @transform, @by, @combine, @select, @eachrow,
+export @with, @where, @orderby, @transform, @by, @combine, @select,
        @transform!, @select!,
+       @eachrow, @eachrow!,
        @byrow, @byrow!, @based_on # deprecated
 
 

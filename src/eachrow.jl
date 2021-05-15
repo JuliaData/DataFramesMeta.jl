@@ -95,16 +95,17 @@ end
 """
     @eachrow(d, body)
 
-Act on each row of a data frame, similar to
+Act on each row of a data frame, producing a new dataframe.
+Similar to
 
 ```
-for row in eachrow(df)
+for row in eachrow(copy(df))
     ...
 end
 ```
 
 Includes support for control flow and `begin end` blocks. Since the
-"environment" induced by `@eachrow df` is implicitly a single row of `df`,
+"environment" induced by `@eachrow df` is implicitly a single row of `d`,
 use regular operators and comparisons instead of their elementwise counterparts
 as in `@with`. Note that the scope within `@eachrow` is a hard scope.
 
@@ -135,7 +136,7 @@ The modified `AbstractDataFrame`.
 ### Examples
 
 ```julia
-julia> using DataFrames, DataFramesMeta
+julia> using  DataFramesMeta
 
 julia> df = DataFrame(A = 1:3, B = [2, 1, 2]);
 
@@ -155,24 +156,24 @@ julia> @eachrow df begin
             end
         end
 3×2 DataFrame
-│ Row │ A     │ B     │
-│     │ Int64 │ Int64 │
-├─────┼───────┼───────┤
-│ 1   │ 1     │ 2     │
-│ 2   │ 0     │ 1     │
-│ 3   │ 0     │ 2     │
+ Row │ A      B
+     │ Int64  Int64
+─────┼──────────────
+   1 │     1      2
+   2 │     0      1
+   3 │     0      2
 
 julia> df2 = @eachrow df begin
            @newcol colX::Vector{Float64}
            :colX = :B == 2 ? pi * :A : :B
        end
 3×3 DataFrame
-│ Row │ A     │ B     │ colX    │
-│     │ Int64 │ Int64 │ Float64 │
-├─────┼───────┼───────┼─────────┤
-│ 1   │ 1     │ 2     │ 3.14159 │
-│ 2   │ 2     │ 1     │ 1.0     │
-│ 3   │ 3     │ 2     │ 9.42478 │
+ Row │ A      B      colX
+     │ Int64  Int64  Float64
+─────┼───────────────────────
+   1 │     1      2  3.14159
+   2 │     2      1  1.0
+   3 │     3      2  9.42478
 
 julia> varA = :A; varB = :B;
 
@@ -181,14 +182,139 @@ julia> df2 = @eachrow df begin
            :colX = cols(varB) == 2 ? pi * cols(varA) : cols(varB)
        end
 3×3 DataFrame
-│ Row │ A     │ B     │ colX    │
-│     │ Int64 │ Int64 │ Float64 │
-├─────┼───────┼───────┼─────────┤
-│ 1   │ 1     │ 2     │ 3.14159 │
-│ 2   │ 2     │ 1     │ 1.0     │
-│ 3   │ 3     │ 2     │ 9.42478 │
+ Row │ A      B      colX
+     │ Int64  Int64  Float64
+─────┼───────────────────────
+   1 │     1      2  3.14159
+   2 │     2      1  1.0
+   3 │     3      2  9.42478
 ```
 """
 macro eachrow(d, body)
     esc(eachrow_helper(d, body, false))
+end
+
+function eachrow!_helper(df, body)
+    # @deprecate cannot be used because eachrow is a macro, and the @warn should not be in
+    # eachrow itself because then it will be displayed when the macro is evaluated.
+    e_body, e_newcols = eachrow_find_newcols(body, Any[])
+    _df = gensym()
+    quote
+        let $_df = $df
+            local _N = nrow($_df)
+            local _DF = @transform!($_df, $(e_newcols...))
+            $(with_helper(:_DF, :(for row = 1:_N
+                $(eachrow_replace(e_body))
+            end)))
+            _DF
+        end
+    end
+end
+
+"""
+    @eachrow!(d, body)
+
+Act on each row of a data frame, similar to
+
+```
+for row in eachrow(d)
+    ...
+end
+```
+
+Includes support for control flow and `begin end` blocks. Since the
+"environment" induced by `@eachrow df` is implicitly a single row of `d`,
+use regular operators and comparisons instead of their elementwise counterparts
+as in `@with`. Note that the scope within `@eachrow!` is a hard scope.
+
+`eachrow!` also supports special syntax for allocating new columns. The syntax
+`@newcol x::Vector{Int}` allocates a new column `:x` with an `Vector` container
+with eltype `Int`.This feature makes it easier to use `eachrow` for data
+transformations. `_N` is introduced to represent the length of the dataframe,
+`_D` represents the `dataframe` including added columns, and `row` represents
+the index of the current row.
+
+Changes to the rows directly affect `d`. The operation will modify the
+data frame in place.
+
+Like with `@transform!`, `@eachrow!` supports the use of `cols` to work with column names
+stored as variables. Using `cols` with a multi-column selector, such as a `Vector` of
+`Symbol`s, is currently unsupported.
+
+### Arguments
+
+* `d` : an `AbstractDataFrame`
+* `expr` : expression operated on row by row
+
+### Returns
+
+The modified `AbstractDataFrame`.
+
+### Examples
+
+```julia
+julia> using DataFramesMeta
+
+julia> df = DataFrame(A = 1:3, B = [2, 1, 2]);
+
+julia> let x = 0
+            @eachrow! df begin
+                if :A + :B == 3
+                    x += 1
+                end
+            end  #  This doesn't work without the let
+            x
+        end
+2
+
+julia> df2 = copy(df);
+
+julia> @eachrow! df2 begin
+           if :A > :B
+               :A = 0
+           end
+       end;
+
+julia> df2
+3×2 DataFrame
+ Row │ A      B
+     │ Int64  Int64
+─────┼──────────────
+   1 │     1      2
+   2 │     0      1
+   3 │     0      2
+
+julia> df2 = copy(df);
+
+julia> @eachrow! df2 begin
+           @newcol colX::Vector{Float64}
+           :colX = :B == 2 ? pi * :A : :B
+       end
+3×3 DataFrame
+ Row │ A      B      colX
+     │ Int64  Int64  Float64
+─────┼───────────────────────
+   1 │     1      2  3.14159
+   2 │     2      1  1.0
+   3 │     3      2  9.42478
+
+julia> varA = :A; varB = :B;
+
+julia> df2 = copy(df);
+
+julia> @eachrow! df2 begin
+           @newcol colX::Vector{Float64}
+           :colX = cols(varB) == 2 ? pi * cols(varA) : cols(varB)
+       end
+3×3 DataFrame
+ Row │ A      B      colX
+     │ Int64  Int64  Float64
+─────┼───────────────────────
+   1 │     1      2  3.14159
+   2 │     2      1  1.0
+   3 │     3      2  9.42478
+```
+"""
+macro eachrow!(d, body)
+    esc(eachrow!_helper(d, body))
 end
