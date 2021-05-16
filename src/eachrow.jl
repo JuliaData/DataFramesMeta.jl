@@ -110,10 +110,10 @@ use regular operators and comparisons instead of their elementwise counterparts
 as in `@with`. Note that the scope within `@eachrow` is a hard scope.
 
 `eachrow` also supports special syntax for allocating new columns. The syntax
-`@newcol x::Vector{Int}` allocates a new column `:x` with an `Vector` container
+`@newcol x::Vector{Int}` allocates a new uninitialized column `:x` with an `Vector` container
 with eltype `Int`.This feature makes it easier to use `eachrow` for data
-transformations. `_N` is introduced to represent the length of the dataframe,
-`_D` represents the `dataframe` including added columns, and `row` represents
+transformations. `_N` is introduced to represent the number of rows in the dataframe,
+`_DF` represents the `dataframe` including added columns, and `row` represents
 the index of the current row.
 
 Changes to the rows do not affect `d` but instead a freshly allocated data frame is returned
@@ -188,6 +188,32 @@ julia> df2 = @eachrow df begin
    1 │     1      2  3.14159
    2 │     2      1  1.0
    3 │     3      2  9.42478
+
+
+julia> x = [1, 1, 1];
+
+julia> @eachrow df begin
+           x[row] = :A
+       end;
+
+julia> x
+3-element Vector{Int64}:
+ 1
+ 2
+ 3
+
+julia> @eachrow df begin
+           @newcol m::Vector{Float64}
+           :m = mean(_DF[:, row])
+       end
+3×3 DataFrame
+ Row │ A      B      m
+     │ Int64  Int64  Float64
+─────┼───────────────────────
+   1 │     1      2  2.0
+   2 │     2      1  1.66667
+   3 │     3      2  1.22222
+
 ```
 """
 macro eachrow(d, body)
@@ -195,8 +221,6 @@ macro eachrow(d, body)
 end
 
 function eachrow!_helper(df, body)
-    # @deprecate cannot be used because eachrow is a macro, and the @warn should not be in
-    # eachrow itself because then it will be displayed when the macro is evaluated.
     e_body, e_newcols = eachrow_find_newcols(body, Any[])
     _df = gensym()
     quote
@@ -218,7 +242,7 @@ Act on each row of a data frame, similar to
 
 ```
 for row in eachrow(d)
-    ...
+    ... # Actions that modify `d`.
 end
 ```
 
@@ -228,10 +252,10 @@ use regular operators and comparisons instead of their elementwise counterparts
 as in `@with`. Note that the scope within `@eachrow!` is a hard scope.
 
 `eachrow!` also supports special syntax for allocating new columns. The syntax
-`@newcol x::Vector{Int}` allocates a new column `:x` with an `Vector` container
+`@newcol x::Vector{Int}` allocates a new uninitialized column `:x` with an `Vector` container
 with eltype `Int`.This feature makes it easier to use `eachrow` for data
-transformations. `_N` is introduced to represent the length of the dataframe,
-`_D` represents the `dataframe` including added columns, and `row` represents
+transformations. `_N` is introduced to represent the number of rows in the dataframe,
+`_DF` represents the `dataframe` including added columns, and `row` represents
 the index of the current row.
 
 Changes to the rows directly affect `d`. The operation will modify the
@@ -313,6 +337,30 @@ julia> @eachrow! df2 begin
    1 │     1      2  3.14159
    2 │     2      1  1.0
    3 │     3      2  9.42478
+
+julia> x = [1, 1, 1];
+
+julia> @eachrow! df begin
+           x[row] = :A
+       end;
+
+julia> x
+3-element Vector{Int64}:
+ 1
+ 2
+ 3
+
+julia> @eachrow! df begin
+           @newcol m::Vector{Float64}
+           :m = mean(_DF[:, row])
+       end
+3×3 DataFrame
+ Row │ A      B      m
+     │ Int64  Int64  Float64
+─────┼───────────────────────
+   1 │     1      2  2.0
+   2 │     2      1  1.66667
+   3 │     3      2  1.22222
 ```
 """
 macro eachrow!(d, body)
