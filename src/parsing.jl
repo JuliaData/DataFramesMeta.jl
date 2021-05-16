@@ -308,7 +308,7 @@ function replace_dotted!(e, membernames)
 end
 
 """
-    create_args_vector(args...; )
+    create_args_vector(args...)
 
 Given multiple arguments which can be any type
 of expression-like object (`Expr`, `QuoteNode`, etc.),

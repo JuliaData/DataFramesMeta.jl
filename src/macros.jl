@@ -228,7 +228,7 @@ for which the generated values are all `true`.
 
 Inputs to `@where` can come in two formats: a `block`, in which case each
 argument in the block is a separate selector, or as multiple arguments.
-For example the following two statements are equivalent.
+For example the following two statements are equivalent:
 
 ```julia
 @where df begin
