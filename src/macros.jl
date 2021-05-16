@@ -226,8 +226,8 @@ If given a `GroupedDataFrame`, `@where` applies transformations by
 group, and returns a fresh `DataFrame` containing the rows
 for which the generated values are all `true`.
 
-Inputs to `@where` can come in two formats: a `block`, in which case each
-argument in the block is a separate selector, or as multiple arguments.
+Inputs to `@where` can come in two formats: a `begin ... end` block, in which case each
+line is a separate selector, or as multiple arguments.
 For example the following two statements are equivalent:
 
 ```julia
@@ -367,8 +367,8 @@ When given a `DataFrame`, `@orderby` applies the transformation
 given by its arguments (but does not create new columns) and sorts
 the given `DataFrame` on the result, returning a new `DataFrame`.
 
-Inputs to `@orderby` can come in two formats: a `block`, in which case each
-argument in the block is a separate ordering operation, and as mulitple
+Inputs to `@orderby` can come in two formats: a `begin ... end` block, in which case each
+line in the block is a separate ordering operation, and as mulitple
 arguments. For example, the following two statements are equivalent.
 
 ```julia
@@ -484,8 +484,8 @@ Add additional columns or keys based on keyword arguments.
 
 * `::AbstractDataFrame` or `::GroupedDataFrame`
 
-Inputs to `@transform` can come in two formats: a `block`,
-in which case each argument in the block is a separate
+Inputs to `@transform` can come in two formats: a `begin ... end` block,
+in which case each line in the block is a separate
 transformation, (`y = f(:x)`), or as a series of
 keyword arguments. For example, the following are
 equivalent.
@@ -559,8 +559,8 @@ No copies of existing columns are made.
 
 * `::DataFrame`
 
-Inputs to `@transform!` can come in two formats: a `block`,
-in which case each argument in the block is a separate
+Inputs to `@transform!` can come in two formats: a `begin ... end` block,
+in which case each line in the block is a separate
 transformation, (`y = f(:x)`), or as a series of
 keyword arguments. For example, the following are
 equivalent.
@@ -633,8 +633,8 @@ Select and transform columns.
 
 * `::AbstractDataFrame`
 
-Inputs to `@select` can come in two formats: a `block`,
-in which case each argument in the block is a separate
+Inputs to `@select` can come in two formats: a `begin ... end` block,
+in which case each line in the block is a separate
 transformation or selector, or as a series of
 arguments and keyword arguments. For example, the following are
 equivalent.
@@ -726,8 +726,8 @@ Mutate `d` in-place to retain only columns or transformations specified by `e` a
 
 * `::DataFrame`
 
-Inputs to `@select!` can come in two formats: a `block`,
-in which case each argument in the block is a separate
+Inputs to `@select!` can come in two formats: a `begin ... end` block,
+in which case each line in the block is a separate
 transformation or selector, or as a series of
 arguments and keyword arguments. For example, the following are
 equivalent.
@@ -831,8 +831,8 @@ Summarize a grouping operation
 * `x` : a `GroupedDataFrame` or `AbstractDataFrame`
 * `args...` : keyword arguments defining new columns
 
-Inputs to `@combine` can come in two formats: a `block`,
-in which case each argument in the block is a separate
+Inputs to `@combine` can come in two formats: a `begin ... end` block,
+in which case each line in the block is a separate
 transformation, or as a series of keyword arguments.
 For example, the following are equivalent.
 
@@ -965,8 +965,8 @@ Split-apply-combine in one step.
 
 * `::DataFrame`
 
-Transformation inputs to `@by` can come in two formats: a `block`,
-in which case each argument in the block is a separate
+Transformation inputs to `@by` can come in two formats: a `begin ... end` block,
+in which case each line in the block is a separate
 transformation, or as a series of keyword arguments.
 For example, the following are equivalent.
 
