@@ -369,7 +369,7 @@ the given `DataFrame` on the result, returning a new `DataFrame`.
 
 Inputs to `@orderby` can come in two formats: a `begin ... end` block, in which case each
 line in the block is a separate ordering operation, and as mulitple
-arguments. For example, the following two statements are equivalent.
+arguments. For example, the following two statements are equivalent:
 
 ```julia
 @orderby df begin
@@ -488,7 +488,7 @@ Inputs to `@transform` can come in two formats: a `begin ... end` block,
 in which case each line in the block is a separate
 transformation, (`y = f(:x)`), or as a series of
 keyword arguments. For example, the following are
-equivalent.
+equivalent:
 
 ```julia
 @transform df begin
@@ -563,7 +563,7 @@ Inputs to `@transform!` can come in two formats: a `begin ... end` block,
 in which case each line in the block is a separate
 transformation, (`y = f(:x)`), or as a series of
 keyword arguments. For example, the following are
-equivalent.
+equivalent:
 
 ```julia
 @transform! df begin
@@ -637,7 +637,7 @@ Inputs to `@select` can come in two formats: a `begin ... end` block,
 in which case each line in the block is a separate
 transformation or selector, or as a series of
 arguments and keyword arguments. For example, the following are
-equivalent.
+equivalent:
 
 ```julia
 @select df begin
@@ -730,7 +730,7 @@ Inputs to `@select!` can come in two formats: a `begin ... end` block,
 in which case each line in the block is a separate
 transformation or selector, or as a series of
 arguments and keyword arguments. For example, the following are
-equivalent.
+equivalent:
 
 ### Examples
 
@@ -834,7 +834,7 @@ Summarize a grouping operation
 Inputs to `@combine` can come in two formats: a `begin ... end` block,
 in which case each line in the block is a separate
 transformation, or as a series of keyword arguments.
-For example, the following are equivalent.
+For example, the following are equivalent:
 
 ```
 @combine df begin
@@ -968,7 +968,7 @@ Split-apply-combine in one step.
 Transformation inputs to `@by` can come in two formats: a `begin ... end` block,
 in which case each line in the block is a separate
 transformation, or as a series of keyword arguments.
-For example, the following are equivalent.
+For example, the following are equivalent:
 
 ```
 @by df :g begin
