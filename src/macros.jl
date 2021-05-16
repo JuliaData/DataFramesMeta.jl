@@ -176,7 +176,8 @@ end
 ##############################################################################
 
 function where_helper(x, args...)
-    t = (fun_to_vec(arg; nolhs = true, gensym_names = true) for arg in args)
+    exprs = create_args_vector(args...)
+    t = (fun_to_vec(ex; gensym_names = true, nolhs = true) for ex in exprs)
     quote
         $where($x, $(t...))
     end
@@ -225,6 +226,23 @@ If given a `GroupedDataFrame`, `@where` applies transformations by
 group, and returns a fresh `DataFrame` containing the rows
 for which the generated values are all `true`.
 
+Inputs to `@where` can come in two formats: a `begin ... end` block, in which case each
+line is a separate selector, or as multiple arguments.
+For example the following two statements are equivalent:
+
+```julia
+@where df begin
+    :x .> 1
+    :y .< 2
+end
+```
+
+and
+
+```
+@where(df, :x .> 1, :y .< 2)
+```
+
 !!! note
     `@where` treats `missing` values as `false` when filtering rows.
     Unlike `DataFrames.filter` and other boolean operations with
@@ -242,21 +260,24 @@ julia> globalvar = [2, 1, 0];
 
 julia> @where(df, :x .> 1)
 2×2 DataFrame
-│ Row │ x     │ y     │
-│     │ Int64 │ Int64 │
-├─────┼───────┼───────┤
-│ 1   │ 2     │ 1     │
-│ 2   │ 3     │ 2     │
+ Row │ x      y
+     │ Int64  Int64
+─────┼──────────────
+   1 │     2      1
+   2 │     3      2
 
 julia> @where(df, :x .> globalvar)
 2×2 DataFrame
-│ Row │ x     │ y     │
-│     │ Int64 │ Int64 │
-├─────┼───────┼───────┤
-│ 1   │ 2     │ 1     │
-│ 2   │ 3     │ 2     │
+ Row │ x      y
+     │ Int64  Int64
+─────┼──────────────
+   1 │     2      1
+   2 │     3      2
 
-julia> @where(df, :x .> globalvar, :y .== 3)
+julia> @where df begin
+    :x .> globalvar
+    :y .== 3
+end
 0×2 DataFrame
 
 julia> d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
@@ -266,26 +287,33 @@ julia> g = groupby(d, :x);
 
 julia> @where(g, :n .> mean(:n))
 8×2 DataFrame
-│ Row │ n     │ x     │
-│     │ Int64 │ Int64 │
-├─────┼───────┼───────┤
-│ 1   │ 12    │ 1     │
-│ 2   │ 13    │ 1     │
-│ 3   │ 15    │ 2     │
-│ 4   │ 16    │ 2     │
-│ 5   │ 17    │ 3     │
-│ 6   │ 18    │ 1     │
-│ 7   │ 19    │ 1     │
-│ 8   │ 20    │ 2     │
+ Row │ n      x
+     │ Int64  Int64
+─────┼──────────────
+   1 │    12      1
+   2 │    13      1
+   3 │    15      2
+   4 │    16      2
+   5 │    17      3
+   6 │    18      1
+   7 │    19      1
+   8 │    20      2
 
-julia> @where(g, :n .== first(:n))
-3×2 DataFrame
-│ Row │ n     │ x     │
-│     │ Int64 │ Int64 │
-├─────┼───────┼───────┤
-│ 1   │ 1     │ 3     │
-│ 2   │ 5     │ 1     │
-│ 3   │ 8     │ 2     │
+julia> @where g begin
+           :n .> mean(:n)
+           :n .< 20
+       end
+7×2 DataFrame
+ Row │ n      x
+     │ Int64  Int64
+─────┼──────────────
+   1 │    12      1
+   2 │    13      1
+   3 │    15      2
+   4 │    16      2
+   5 │    17      3
+   6 │    18      1
+   7 │    19      1
 
 julia> d = DataFrame(a = [1, 2, missing], b = ["x", "y", missing]);
 
@@ -301,7 +329,6 @@ macro where(x, args...)
     esc(where_helper(x, args...))
 end
 
-
 ##############################################################################
 ##
 ## @orderby
@@ -309,7 +336,8 @@ end
 ##############################################################################
 
 function orderby_helper(x, args...)
-    t = (fun_to_vec(arg; nolhs = true, gensym_names = true) for arg in args)
+    exprs = create_args_vector(args...)
+    t = (fun_to_vec(ex; gensym_names = true, nolhs = true) for ex in exprs)
     quote
         $DataFramesMeta.orderby($x, $(t...))
     end
@@ -338,6 +366,24 @@ Always returns a fresh `DataFrame`. Does not accept a `GroupedDataFrame`.
 When given a `DataFrame`, `@orderby` applies the transformation
 given by its arguments (but does not create new columns) and sorts
 the given `DataFrame` on the result, returning a new `DataFrame`.
+
+Inputs to `@orderby` can come in two formats: a `begin ... end` block, in which case each
+line in the block is a separate ordering operation, and as mulitple
+arguments. For example, the following two statements are equivalent:
+
+```julia
+@orderby df begin
+    :x
+    -:y
+end
+```
+
+and
+
+```
+@where(df, :x, -:y)
+```
+
 
 ### Arguments
 
@@ -384,7 +430,10 @@ julia> @orderby(d, sortperm(:c, rev = true))
    9 │     3      2  b
   10 │     3      1  a
 
-julia> @orderby(d, :x, abs.(:n .- mean(:n)))
+julia> @orderby d begin
+    :x
+    abs.(:n .- mean(:n))
+end
 10×3 DataFrame
  Row │ x      n      c
      │ Int64  Int64  String
@@ -399,7 +448,7 @@ julia> @orderby(d, :x, abs.(:n .- mean(:n)))
    8 │     3      3  c
    9 │     3      2  b
   10 │     3      1  a
-
+```
 """
 macro orderby(d, args...)
     esc(orderby_helper(d, args...))
@@ -414,9 +463,8 @@ end
 
 
 function transform_helper(x, args...)
-
-    t = (fun_to_vec(arg) for arg in args)
-
+    exprs = create_args_vector(args...)
+    t = (fun_to_vec(ex; gensym_names = false, nolhs = false) for ex in exprs)
     quote
         $DataFrames.transform($x, $(t...))
     end
@@ -436,6 +484,25 @@ Add additional columns or keys based on keyword arguments.
 
 * `::AbstractDataFrame` or `::GroupedDataFrame`
 
+Inputs to `@transform` can come in two formats: a `begin ... end` block,
+in which case each line in the block is a separate
+transformation, (`y = f(:x)`), or as a series of
+keyword arguments. For example, the following are
+equivalent:
+
+```julia
+@transform df begin
+    a = :x
+    b = :y
+end
+```
+
+and
+
+```
+@transform(df, a = :x, b = :y)
+```
+
 ### Examples
 
 ```jldoctest
@@ -443,7 +510,11 @@ julia> using DataFramesMeta
 
 julia> df = DataFrame(A = 1:3, B = [2, 1, 2]);
 
-julia> @transform(df, a = 2 * :A, x = :A .+ :B)
+julia> @transform df begin
+    a = 2 * :A
+    x = :A .+ :B
+end
+
 3×4 DataFrame
 │ Row │ A     │ B     │ a     │ x     │
 │     │ Int64 │ Int64 │ Int64 │ Int64 │
@@ -466,9 +537,8 @@ end
 
 
 function transform!_helper(x, args...)
-
-    t = (fun_to_vec(arg) for arg in args)
-
+    exprs = create_args_vector(args...)
+    t = (fun_to_vec(ex; gensym_names = false, nolhs = false) for ex in exprs)
     quote
         $DataFrames.transform!($x, $(t...))
     end
@@ -488,6 +558,26 @@ No copies of existing columns are made.
 ### Returns
 
 * `::DataFrame`
+
+Inputs to `@transform!` can come in two formats: a `begin ... end` block,
+in which case each line in the block is a separate
+transformation, (`y = f(:x)`), or as a series of
+keyword arguments. For example, the following are
+equivalent:
+
+```julia
+@transform! df begin
+    a = :x
+    b = :y
+end
+```
+
+and
+
+```
+@transform!(df, a = :x, b = :y)
+```
+
 
 ### Examples
 
@@ -521,8 +611,8 @@ end
 ##############################################################################
 
 function select_helper(x, args...)
-    t = (fun_to_vec(arg) for arg in args)
-
+    exprs = create_args_vector(args...)
+    t = (fun_to_vec(ex; gensym_names = false, nolhs = false) for ex in exprs)
     quote
         $DataFrames.select($x, $(t...))
     end
@@ -543,40 +633,63 @@ Select and transform columns.
 
 * `::AbstractDataFrame`
 
+Inputs to `@select` can come in two formats: a `begin ... end` block,
+in which case each line in the block is a separate
+transformation or selector, or as a series of
+arguments and keyword arguments. For example, the following are
+equivalent:
+
+```julia
+@select df begin
+    :x
+    y = :a .+ :b
+end
+```
+
+and
+
+```
+@select(df, :x, :y = :a .+ :b)
+```
+
 ### Examples
 
 ```jldoctest
-julia> using DataFrames, DataFramesMeta
+julia> using DataFramesMeta
 
 julia> df = DataFrame(a = repeat(1:4, outer = 2), b = repeat(2:-1:1, outer = 4), c = 1:8);
 
 julia> @select(df, :c, :a)
 8×2 DataFrame
-│ Row │ c     │ a     │
-│     │ Int64 │ Int64 │
-├─────┼───────┼───────┤
-│ 1   │ 1     │ 1     │
-│ 2   │ 2     │ 2     │
-│ 3   │ 3     │ 3     │
-│ 4   │ 4     │ 4     │
-│ 5   │ 5     │ 1     │
-│ 6   │ 6     │ 2     │
-│ 7   │ 7     │ 3     │
-│ 8   │ 8     │ 4     │
+ Row │ c      a
+     │ Int64  Int64
+─────┼──────────────
+   1 │     1      1
+   2 │     2      2
+   3 │     3      3
+   4 │     4      4
+   5 │     5      1
+   6 │     6      2
+   7 │     7      3
+   8 │     8      4
 
-julia> @select(df, :c, x = :b + :c)
+
+julia> @select df begin
+           :c
+           x = :b + :c
+       end
 8×2 DataFrame
-│ Row │ c     │ x     │
-│     │ Int64 │ Int64 │
-├─────┼───────┼───────┤
-│ 1   │ 1     │ 3     │
-│ 2   │ 2     │ 3     │
-│ 3   │ 3     │ 5     │
-│ 4   │ 4     │ 5     │
-│ 5   │ 5     │ 7     │
-│ 6   │ 6     │ 7     │
-│ 7   │ 7     │ 9     │
-│ 8   │ 8     │ 9     │
+ Row │ c      x
+     │ Int64  Int64
+─────┼──────────────
+   1 │     1      3
+   2 │     2      3
+   3 │     3      5
+   4 │     4      5
+   5 │     5      7
+   6 │     6      7
+   7 │     7      9
+   8 │     8      9
 ```
 """
 macro select(x, args...)
@@ -591,8 +704,8 @@ end
 ##############################################################################
 
 function select!_helper(x, args...)
-    t = (fun_to_vec(arg) for arg in args)
-
+    exprs = create_args_vector(args...)
+    t = (fun_to_vec(ex; gensym_names = false, nolhs = false) for ex in exprs)
     quote
         $DataFrames.select!($x, $(t...))
     end
@@ -613,6 +726,12 @@ Mutate `d` in-place to retain only columns or transformations specified by `e` a
 
 * `::DataFrame`
 
+Inputs to `@select!` can come in two formats: a `begin ... end` block,
+in which case each line in the block is a separate
+transformation or selector, or as a series of
+arguments and keyword arguments. For example, the following are
+equivalent:
+
 ### Examples
 
 ```jldoctest
@@ -622,38 +741,39 @@ julia> df = DataFrame(a = repeat(1:4, outer = 2), b = repeat(2:-1:1, outer = 4),
 
 julia> df2 = @select!(df, :c, :a)
 8×2 DataFrame
-│ Row │ c     │ a     │
-│     │ Int64 │ Int64 │
-├─────┼───────┼───────┤
-│ 1   │ 1     │ 1     │
-│ 2   │ 2     │ 2     │
-│ 3   │ 3     │ 3     │
-│ 4   │ 4     │ 4     │
-│ 5   │ 5     │ 1     │
-│ 6   │ 6     │ 2     │
-│ 7   │ 7     │ 3     │
-│ 8   │ 8     │ 4     │
+ Row │ c      a
+     │ Int64  Int64
+─────┼──────────────
+   1 │     1      1
+   2 │     2      2
+   3 │     3      3
+   4 │     4      4
+   5 │     5      1
+   6 │     6      2
+   7 │     7      3
+   8 │     8      4
 
 julia> df === df2
 true
 
-
-
 julia> df = DataFrame(a = repeat(1:4, outer = 2), b = repeat(2:-1:1, outer = 4), c = 1:8);
 
-julia> df2 = @select!(df, :c, x = :b + :c)
+julia> df2 = @select! df begin
+           :c
+           x = :b + :c
+       end
 8×2 DataFrame
-│ Row │ c     │ x     │
-│     │ Int64 │ Int64 │
-├─────┼───────┼───────┤
-│ 1   │ 1     │ 3     │
-│ 2   │ 2     │ 3     │
-│ 3   │ 3     │ 5     │
-│ 4   │ 4     │ 5     │
-│ 5   │ 5     │ 7     │
-│ 6   │ 6     │ 7     │
-│ 7   │ 7     │ 9     │
-│ 8   │ 8     │ 9     │
+ Row │ c      x
+     │ Int64  Int64
+─────┼──────────────
+   1 │     1      3
+   2 │     2      3
+   3 │     3      5
+   4 │     4      5
+   5 │     5      7
+   6 │     6      7
+   7 │     7      9
+   8 │     8      9
 
 julia> df === df2
 true
@@ -674,11 +794,14 @@ function combine_helper(x, args...; deprecation_warning = false)
     deprecation_warning && @warn "`@based_on` is deprecated. Use `@combine` instead."
 
     # Only allow one argument when returning a Table object
-    if length(args) == 1 &&
-        !(first(args) isa QuoteNode) &&
-        !(first(args).head == :(=) || first(args).head == :kw)
+    exprs = create_args_vector(args...)
+    fe = first(exprs)
+    if length(exprs) == 1 &&
+        !(fe isa QuoteNode) &&
+        !(fe.head == :(=) || fe.head == :kw)
 
-        t = fun_to_vec(first(args); nolhs = true)
+        t = fun_to_vec(fe; gensym_names = false, nolhs = true)
+
         # 0.22: No pair as first arg, needs AsTable in other args to return table
         if DATAFRAMES_GEQ_22
             quote
@@ -691,7 +814,7 @@ function combine_helper(x, args...; deprecation_warning = false)
             end
         end
     else
-        t = (fun_to_vec(arg) for arg in args)
+        t = (fun_to_vec(ex; gensym_names = false, nolhs = false) for ex in exprs)
         quote
             $DataFrames.combine($x, $(t...))
         end
@@ -708,6 +831,24 @@ Summarize a grouping operation
 * `x` : a `GroupedDataFrame` or `AbstractDataFrame`
 * `args...` : keyword arguments defining new columns
 
+Inputs to `@combine` can come in two formats: a `begin ... end` block,
+in which case each line in the block is a separate
+transformation, or as a series of keyword arguments.
+For example, the following are equivalent:
+
+```
+@combine df begin
+    mx = mean(:x)
+    sx = std(:x)
+end
+```
+
+and
+
+```
+@combine(df, mx = mean(:x), sx = std(:x))
+```
+
 ### Examples
 
 ```jldoctest
@@ -721,35 +862,41 @@ julia> g = groupby(d, :x);
 
 julia> @combine(g, nsum = sum(:n))
 3×2 DataFrame
-│ Row │ x     │ nsum  │
-│     │ Int64 │ Int64 │
-├─────┼───────┼───────┤
-│ 1   │ 3     │ 27    │
-│ 2   │ 1     │ 99    │
-│ 3   │ 2     │ 84    │
+ Row │ x      nsum
+     │ Int64  Int64
+─────┼──────────────
+   1 │     1     99
+   2 │     2     84
+   3 │     3     27
 
-julia> @combine(g, x2 = 2 * :x, nsum = sum(:n))
+julia> @combine g begin
+           x2 = 2 * :x
+           nsum = sum(:n)
+       end
 20×3 DataFrame
-│ Row │ x     │ x2    │ nsum  │
-│     │ Int64 │ Int64 │ Int64 │
-├─────┼───────┼───────┼───────┤
-│ 1   │ 3     │ 6     │ 27    │
-│ 2   │ 3     │ 6     │ 27    │
-│ 3   │ 3     │ 6     │ 27    │
-│ 4   │ 3     │ 6     │ 27    │
-│ 5   │ 3     │ 6     │ 27    │
-│ 6   │ 1     │ 2     │ 99    │
-│ 7   │ 1     │ 2     │ 99    │
-⋮
-│ 13  │ 1     │ 2     │ 99    │
-│ 14  │ 1     │ 2     │ 99    │
-│ 15  │ 2     │ 4     │ 84    │
-│ 16  │ 2     │ 4     │ 84    │
-│ 17  │ 2     │ 4     │ 84    │
-│ 18  │ 2     │ 4     │ 84    │
-│ 19  │ 2     │ 4     │ 84    │
-│ 20  │ 2     │ 4     │ 84    │
-
+ Row │ x      x2     nsum
+     │ Int64  Int64  Int64
+─────┼─────────────────────
+   1 │     1      2     99
+   2 │     1      2     99
+   3 │     1      2     99
+   4 │     1      2     99
+   5 │     1      2     99
+   6 │     1      2     99
+   7 │     1      2     99
+   8 │     1      2     99
+   9 │     1      2     99
+  10 │     2      4     84
+  11 │     2      4     84
+  12 │     2      4     84
+  13 │     2      4     84
+  14 │     2      4     84
+  15 │     2      4     84
+  16 │     3      6     27
+  17 │     3      6     27
+  18 │     3      6     27
+  19 │     3      6     27
+  20 │     3      6     27
 ```
 """
 macro combine(x, args...)
@@ -774,11 +921,15 @@ end
 
 function by_helper(x, what, args...)
     # Only allow one argument when returning a Table object
-    if length(args) == 1 &&
-        !(first(args) isa QuoteNode) &&
-        !(first(args).head == :(=) || first(args).head == :kw)
+    # Only allow one argument when returning a Table object
+    exprs = create_args_vector(args...)
+    fe = first(exprs)
+    if length(exprs) == 1 &&
+        !(fe isa QuoteNode) &&
+        !(fe.head == :(=) || fe.head == :kw)
 
-        t = fun_to_vec(first(args); nolhs = true)
+        t = fun_to_vec(fe; gensym_names = false, nolhs = true)
+
         # 0.22: No pair as first arg, needs AsTable in other args to return table
         if DATAFRAMES_GEQ_22
             quote
@@ -791,7 +942,7 @@ function by_helper(x, what, args...)
             end
         end
     else
-        t = (fun_to_vec(arg) for arg in args)
+        t = (fun_to_vec(ex; gensym_names = false, nolhs = false) for ex in exprs)
         quote
             $DataFrames.combine($groupby($x, $what), $(t...))
         end
@@ -814,6 +965,24 @@ Split-apply-combine in one step.
 
 * `::DataFrame`
 
+Transformation inputs to `@by` can come in two formats: a `begin ... end` block,
+in which case each line in the block is a separate
+transformation, or as a series of keyword arguments.
+For example, the following are equivalent:
+
+```
+@by df :g begin
+    mx = mean(:x)
+    sx = std(:x)
+end
+```
+
+and
+
+```
+@by(df, :g, mx = mean(:x), sx = std(:x))
+```
+
 ### Examples
 
 ```jldoctest
@@ -826,52 +995,56 @@ julia> df = DataFrame(
 
 julia> @by(df, :a, d = sum(:c))
 4×2 DataFrame
-│ Row │ a     │ d     │
-│     │ Int64 │ Int64 │
-├─────┼───────┼───────┤
-│ 1   │ 1     │ 6     │
-│ 2   │ 2     │ 8     │
-│ 3   │ 3     │ 10    │
-│ 4   │ 4     │ 12    │
+ Row │ a      d
+     │ Int64  Int64
+─────┼──────────────
+   1 │     1      6
+   2 │     2      8
+   3 │     3     10
+   4 │     4     12
 
-julia> @by(df, :a, d = 2 * :c)
+julia> @by df :a begin
+           d = 2 * :c
+       end
 8×2 DataFrame
-│ Row │ a     │ d     │
-│     │ Int64 │ Int64 │
-├─────┼───────┼───────┤
-│ 1   │ 1     │ 2     │
-│ 2   │ 1     │ 10    │
-│ 3   │ 2     │ 4     │
-│ 4   │ 2     │ 12    │
-│ 5   │ 3     │ 6     │
-│ 6   │ 3     │ 14    │
-│ 7   │ 4     │ 8     │
-│ 8   │ 4     │ 16    │
+ Row │ a      d
+     │ Int64  Int64
+─────┼──────────────
+   1 │     1      2
+   2 │     1     10
+   3 │     2      4
+   4 │     2     12
+   5 │     3      6
+   6 │     3     14
+   7 │     4      8
+   8 │     4     16
 
 julia> @by(df, :a, c_sum = sum(:c), c_mean = mean(:c))
 4×3 DataFrame
-│ Row │ a     │ c_sum │ c_mean  │
-│     │ Int64 │ Int64 │ Float64 │
-├─────┼───────┼───────┼─────────┤
-│ 1   │ 1     │ 6     │ 3.0     │
-│ 2   │ 2     │ 8     │ 4.0     │
-│ 3   │ 3     │ 10    │ 5.0     │
-│ 4   │ 4     │ 12    │ 6.0     │
+ Row │ a      c_sum  c_mean
+     │ Int64  Int64  Float64
+─────┼───────────────────────
+   1 │     1      6      3.0
+   2 │     2      8      4.0
+   3 │     3     10      5.0
+   4 │     4     12      6.0
 
-julia> @by(df, :a, c = :c, c_mean = mean(:c))
+julia> @by df :a begin
+           c = :c
+           c_mean = mean(:c)
+       end
 8×3 DataFrame
-│ Row │ a     │ c     │ c_mean  │
-│     │ Int64 │ Int64 │ Float64 │
-├─────┼───────┼───────┼─────────┤
-│ 1   │ 1     │ 1     │ 3.0     │
-│ 2   │ 1     │ 5     │ 3.0     │
-│ 3   │ 2     │ 2     │ 4.0     │
-│ 4   │ 2     │ 6     │ 4.0     │
-│ 5   │ 3     │ 3     │ 5.0     │
-│ 6   │ 3     │ 7     │ 5.0     │
-│ 7   │ 4     │ 4     │ 6.0     │
-│ 8   │ 4     │ 8     │ 6.0     │
-
+ Row │ a      c      c_mean
+     │ Int64  Int64  Float64
+─────┼───────────────────────
+   1 │     1      1      3.0
+   2 │     1      5      3.0
+   3 │     2      2      4.0
+   4 │     2      6      4.0
+   5 │     3      3      5.0
+   6 │     3      7      5.0
+   7 │     4      4      6.0
+   8 │     4      8      6.0
 ```
 """
 macro by(x, what, args...)

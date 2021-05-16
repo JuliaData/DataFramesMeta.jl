@@ -79,7 +79,48 @@ const ≅ = isequal
     @test @transform(df, n = 1).n == fill(1, nrow(df))
 
     @test @transform(df, n = :i .* :g).n == [1, 2, 3, 8, 10]
+end
 
+@testset "@transform with :block" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5,
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing]
+        )
+
+    d = @transform df begin
+        n1 = :i
+        n2 = :i .+ :g
+    end
+    @test d ≅ @transform(df, n1 = :i, n2 = :i .+ :g)
+
+    d = @transform df begin
+        cols(:n1) = :i
+        n2 = cols(:i) .+ :g
+    end
+    @test d ≅ @transform(df, n1 = :i, n2 = :i .+ :g)
+
+    d = @transform df begin
+        n1 = cols(:i)
+        cols(:n2) = :i .+ :g
+    end
+    @test d ≅ @transform(df, n1 = :i, n2 = :i .+ :g)
+
+    d = @transform df begin
+        n1 = begin
+            :i
+        end
+        n2 = :i .+ :g
+    end
+    @test d ≅ @transform(df, n1 = :i, n2 = :i .+ :g)
+
+    d = @transform df begin
+        n1 = @. :i * :g
+        n2 = @. :i * :g
+    end
+    @test d ≅ @transform(df, n1 = :i .* :g, n2 = :i .* :g)
 end
 
 
@@ -155,6 +196,48 @@ end
     @test @transform!(df, :i, :g) ≅ df2
     @transform!(df, n2 = :i)
     @test df[:, Not(:n2)] ≅ df2
+end
+
+@testset "@transform! with :block" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5,
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing]
+        )
+
+    d = @transform! df begin
+        n1 = :i
+        n2 = :i .+ :g
+    end
+    @test d ≅ @transform!(df, n1 = :i, n2 = :i .+ :g)
+
+    d = @transform! df begin
+        cols(:n1) = :i
+        n2 = cols(:i) .+ :g
+    end
+    @test d ≅ @transform!(df, n1 = :i, n2 = :i .+ :g)
+
+    d = @transform df begin
+        n1 = cols(:i)
+        cols(:n2) = :i .+ :g
+    end
+    @test d ≅ @transform!(df, n1 = :i, n2 = :i .+ :g)
+
+    d = @transform! df begin
+        n1 = begin
+            :i
+        end
+        n2 = :i .+ :g
+    end
+    @test d ≅ @transform!(df, n1 = :i, n2 = :i .+ :g)
+
+    d = @transform! df begin
+        n1 = @. :i * :g
+        n2 = @. :i * :g
+    end
+    @test d ≅ @transform!(df, n1 = :i .* :g, n2 = :i .* :g)
 end
 
 # Defined outside of `@testset` due to use of `@eval`
@@ -261,7 +344,6 @@ end
     @test @select(df, n = cols("g") + cols(:i)).n == df.g + df.i
     @test @select(df, n = cols(1) + cols(2)).n == df.g + df.i
 
-
     @test @select(df, n = 1).n == fill(1, nrow(df))
 
     @test @select(df, cols("new_column") = :i).new_column == df.i
@@ -272,7 +354,48 @@ end
     @test @select(df, cols("new" * "_" * "column") = :i).new_column == df.i
 
     @test @transform(df, n = :i .* :g).n == [1, 2, 3, 8, 10]
+end
 
+@testset "select with :block" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5,
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing]
+        )
+
+    d = @select df begin
+        n1 = :i
+        n2 = :i .+ :g
+    end
+    @test d ≅ @select(df, n1 = :i, n2 = :i .+ :g)
+
+    d = @select df begin
+        cols(:n1) = :i
+        n2 = cols(:i) .+ :g
+    end
+    @test d ≅ @select(df, n1 = :i, n2 = :i .+ :g)
+
+    d = @select df begin
+        n1 = cols(:i)
+        cols(:n2) = :i .+ :g
+    end
+    @test d ≅ @select(df, n1 = :i, n2 = :i .+ :g)
+
+    d = @select df begin
+        n1 = begin
+            :i
+        end
+        n2 = :i .+ :g
+    end
+    @test d ≅ @select(df, n1 = :i, n2 = :i .+ :g)
+
+    d = @select df begin
+        n1 = @. :i * :g
+        n2 = @. :i * :g
+    end
+    @test d ≅ @select(df, n1 = :i .* :g, n2 = :i .* :g)
 end
 
 @testset "@select!" begin
@@ -356,6 +479,48 @@ end
     df2 = @select(df, :i)
     @test @select!(df, :i) === df
     @test df == df2
+end
+
+@testset "@select! with :block" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5,
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing]
+        )
+
+    d = @select! copy(df) begin
+        n1 = :i
+        n2 = :i .+ :g
+    end
+    @test d ≅ @select!(copy(df), n1 = :i, n2 = :i .+ :g)
+
+    d = @select! copy(df) begin
+        cols(:n1) = :i
+        n2 = cols(:i) .+ :g
+    end
+    @test d ≅ @select!(copy(df), n1 = :i, n2 = :i .+ :g)
+
+    d = @select! copy(df) begin
+        n1 = cols(:i)
+        cols(:n2) = :i .+ :g
+    end
+    @test d ≅ @select!(copy(df), n1 = :i, n2 = :i .+ :g)
+
+    d = @select! copy(df) begin
+        n1 = begin
+            :i
+        end
+        n2 = :i .+ :g
+    end
+    @test d ≅ @select!(copy(df), n1 = :i, n2 = :i .+ :g)
+
+    d = @select! copy(df) begin
+        n1 = @. :i * :g
+        n2 = @. :i * :g
+    end
+    @test d ≅ @select!(copy(df), n1 = :i .* :g, n2 = :i .* :g)
 end
 
 # Defined outside of `@testset` due to use of `@eval`
@@ -457,6 +622,42 @@ end
     @test @where(subdf, :A .== 3) == DataFrame(A = 3, B = 2)
 end
 
+@testset "where with :block" begin
+    df = DataFrame(A = [1, 2, 3, missing], B = [2, 1, 2, 1])
+
+    d = @where df begin
+        :A .> 1
+        :B .> 1
+    end
+    @test d ≅ @where(df, :A .> 1, :B .> 1)
+
+    d = @where df begin
+        cols(:A) .> 1
+        :B .> 1
+    end
+    @test d ≅ @where(df, :A .> 1, :B .> 1)
+
+    d = @where df begin
+        :A .> 1
+        cols(:B) .> 1
+    end
+    @test d ≅ @where(df, :A .> 1, :B .> 1)
+
+    d = @where df begin
+        begin
+            :A .> 1
+        end
+        :B .> 1
+    end
+    @test d ≅ @where(df, :A .> 1, :B .> 1)
+
+    d = @where df begin
+        :A .> 1
+        @. :B > 1
+    end
+    @test d ≅ @where(df, :A .> 1, :B .> 1)
+end
+
 @testset "orderby" begin
     df = DataFrame(
         g = [1, 1, 1, 2, 2],
@@ -477,6 +678,48 @@ end
     @test @orderby(subdf, -:i) == df[[3, 2, 1], :]
 end
 
+@testset "orderby with :block" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5,
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing]
+        )
+
+    d = @orderby df begin
+        :c
+        :g .*  2
+    end
+    @test d ≅ @orderby(df, :c, :g .* 2)
+
+    d = @orderby df begin
+        cols(:c)
+        :g .*  2
+    end
+    @test d ≅ @orderby(df, :c, :g .* 2)
+
+    d = @orderby df begin
+        :c
+        cols(:g) .*  2
+    end
+    @test d ≅ @orderby(df, :c, :g .* 2)
+
+    d = @orderby df begin
+        begin
+            :c
+        end
+        :g .*  2
+    end
+    @test d ≅ @orderby(df, :c, :g .* 2)
+
+    d = @orderby df begin
+        :c
+        @. :g * 2
+    end
+    @test d ≅ @orderby(df, :c, :g .* 2)
+end
+
 @testset "cols with @select fix" begin
     df = DataFrame("X" => 1, "X Y Z" => 2)
 
@@ -485,6 +728,5 @@ end
     @test @transform(df, cols("X")) == df
     @test @transform(df, cols("X Y Z")) == df
 end
-
 
 end # module

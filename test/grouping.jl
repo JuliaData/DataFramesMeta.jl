@@ -85,6 +85,44 @@ g = groupby(d, :x, sort=true)
     @test @combine(gd, cols("new" * "_" * "column") = 2)."new_column" == [2, 2]
 end
 
+@testset "combine with :block" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5,
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing]
+        )
+
+    g = groupby(df, :g)
+
+    d = @combine g begin
+        im = mean(:i)
+        tf = first(:t)
+    end
+    @test d ≅ @combine(g, im = mean(:i), tf = first(:t))
+
+    d = @combine g begin
+        cols(:im) = mean(:i)
+        tf = first(:t)
+    end
+    @test d ≅ @combine(g, im = mean(:i), tf = first(:t))
+
+    d = @combine g begin
+        im = mean(:i)
+        tf = first(cols(:t))
+    end
+    @test d ≅ @combine(g, im = mean(:i), tf = first(:t))
+
+    d = @combine g begin
+        im = begin
+            mean(:i)
+        end
+        tf = first(:t)
+    end
+    @test d ≅ @combine(g, im = mean(:i), tf = first(:t))
+end
+
 # Defined outside of `@testset` due to use of `@eval`
 df = DataFrame(
     g = [1, 1, 1, 2, 2],
@@ -201,6 +239,44 @@ end
     @test @by(df, :g, cols(n_sym) = 2).new_column == [2, 2]
     @test @by(df, :g, cols(n_space) = 2)."new column" == [2, 2]
     @test @by(df, :g, cols("new" * "_" * "column") = 2)."new_column" == [2, 2]
+end
+
+@testset "by with :block" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5,
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing]
+        )
+
+    g = groupby(df, :g)
+
+    d = @by df :g begin
+        im = mean(:i)
+        tf = first(:t)
+    end
+    @test d ≅ @by(df, :g, im = mean(:i), tf = first(:t))
+
+    d = @by df :g begin
+        cols(:im) = mean(:i)
+        tf = first(:t)
+    end
+    @test d ≅ @by(df, :g, im = mean(:i), tf = first(:t))
+
+    d = @by df :g begin
+        im = mean(:i)
+        tf = first(cols(:t))
+    end
+    @test d ≅ @by(df, :g, im = mean(:i), tf = first(:t))
+
+    d = @by df :g begin
+        im = begin
+            mean(:i)
+        end
+        tf = first(:t)
+    end
+    @test d ≅ @by(df, :g, im = mean(:i), tf = first(:t))
 end
 
 # Defined outside of `@testset` due to use of `@eval`

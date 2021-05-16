@@ -106,9 +106,9 @@ function get_source_fun(function_expr)
     # recursive step for begin :a + :b end
     if function_expr isa Expr &&
         function_expr.head == :block &&
-        length(function_expr.args) == 2 # omitting the line number node
+        length(function_expr.args) == 1
 
-        return get_source_fun(function_expr.args[2])
+        return get_source_fun(function_expr.args[1])
     elseif is_simple_non_broadcast_call(function_expr)
         source = args_to_selectors(function_expr.args[2:end])
         fun_t = function_expr.args[1]
@@ -142,7 +142,6 @@ function get_source_fun(function_expr)
                 $body
             end
         end
-
         return source, fun
     end
 end
@@ -205,14 +204,15 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
         lhs = ex.args[1]
         rhs_t = ex.args[2]
         # if lhs is a cols(y) then the rhs gets parsed as a block
-        if onearg(lhs, :cols) && rhs_t.head === :block && length(rhs_t.args) == 2
-            rhs = rhs_t.args[2]
+        if onearg(lhs, :cols) && rhs_t.head === :block && length(rhs_t.args) == 1
+            rhs = rhs_t.args[1]
         else
             rhs = rhs_t
         end
     else
         throw(ArgumentError("This path should not be reached"))
     end
+
 
     # y = :x
     if lhs isa Symbol && rhs isa QuoteNode
@@ -305,4 +305,32 @@ function replace_dotted!(e, membernames)
     x_new = replace_syms!(e.args[1], membernames)
     y_new = protect_replace_syms!(e.args[2], membernames)
     Expr(:., x_new, y_new)
+end
+
+"""
+    create_args_vector(args...)
+
+Given multiple arguments which can be any type
+of expression-like object (`Expr`, `QuoteNode`, etc.),
+puts them into a single array, removing line numbers.
+"""
+function create_args_vector(args...)
+    Any[Base.remove_linenums!(arg) for arg in args]
+end
+
+"""
+   create_args_vector(arg)
+
+Normalize a single input to a vector of expressions.
+If `arg` is a single `:block`, it is unnested.
+Otherwise, return a single-element array.
+Also removes line numbers.
+"""
+function create_args_vector(arg)
+    if arg isa Expr && arg.head == :block
+        x = Base.remove_linenums!(arg).args
+    else
+        x = Any[Base.remove_linenums!(arg)]
+    end
+    return x
 end
