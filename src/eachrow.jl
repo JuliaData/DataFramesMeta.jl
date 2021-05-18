@@ -93,19 +93,19 @@ macro byrow(d, body)
 end
 
 """
-    @eachrow(d, body)
+    @eachrow(df, body)
 
 Act on each row of a data frame, producing a new dataframe.
 Similar to
 
 ```
-for row in eachrow(copy(df))
+for row in eachrow(df)
     ...
 end
 ```
 
 Includes support for control flow and `begin end` blocks. Since the
-"environment" induced by `@eachrow df` is implicitly a single row of `d`,
+"environment" induced by `@eachrow df` is implicitly a single row of `df`,
 use regular operators and comparisons instead of their elementwise counterparts
 as in `@with`. Note that the scope within `@eachrow` is a hard scope.
 
@@ -113,12 +113,12 @@ as in `@with`. Note that the scope within `@eachrow` is a hard scope.
 `@newcol x::Vector{Int}` allocates a new uninitialized column `:x` with an `Vector` container
 with eltype `Int`.This feature makes it easier to use `eachrow` for data
 transformations. `_N` is introduced to represent the number of rows in the dataframe,
-`_DF` represents the `dataframe` including added columns, and `row` represents
+`_DF` represents the `DataFrame` including added columns, and `row` represents
 the index of the current row.
 
-Changes to the rows do not affect `d` but instead a freshly allocated data frame is returned
+Changes to the rows do not affect `df` but instead a freshly allocated data frame is returned
 by `@eachrow`. Also note that the returned data frame does not share columns
-with `d`.
+with `df`.
 
 Like with `@transform`, `@eachrow` supports the use of `cols` to work with column names
 stored as variables. Using `cols` with a multi-column selector, such as a `Vector` of
@@ -126,7 +126,7 @@ stored as variables. Using `cols` with a multi-column selector, such as a `Vecto
 
 ### Arguments
 
-* `d` : an `AbstractDataFrame`
+* `df` : an `AbstractDataFrame`
 * `expr` : expression operated on row by row
 
 ### Returns
@@ -136,7 +136,7 @@ The modified `AbstractDataFrame`.
 ### Examples
 
 ```julia
-julia> using  DataFramesMeta
+julia> using DataFramesMeta
 
 julia> df = DataFrame(A = 1:3, B = [2, 1, 2]);
 
@@ -236,18 +236,18 @@ function eachrow!_helper(df, body)
 end
 
 """
-    @eachrow!(d, body)
+    @eachrow!(df, body)
 
 Act on each row of a data frame, similar to
 
 ```
-for row in eachrow(d)
-    ... # Actions that modify `d`.
+for row in eachrow(df)
+    ... # Actions that modify `df`.
 end
 ```
 
 Includes support for control flow and `begin end` blocks. Since the
-"environment" induced by `@eachrow df` is implicitly a single row of `d`,
+"environment" induced by `@eachrow df` is implicitly a single row of `df`,
 use regular operators and comparisons instead of their elementwise counterparts
 as in `@with`. Note that the scope within `@eachrow!` is a hard scope.
 
@@ -258,7 +258,7 @@ transformations. `_N` is introduced to represent the number of rows in the dataf
 `_DF` represents the `dataframe` including added columns, and `row` represents
 the index of the current row.
 
-Changes to the rows directly affect `d`. The operation will modify the
+Changes to the rows directly affect `df`. The operation will modify the
 data frame in place.
 
 Like with `@transform!`, `@eachrow!` supports the use of `cols` to work with column names
@@ -267,7 +267,7 @@ stored as variables. Using `cols` with a multi-column selector, such as a `Vecto
 
 ### Arguments
 
-* `d` : an `AbstractDataFrame`
+* `df` : an `AbstractDataFrame`
 * `expr` : expression operated on row by row
 
 ### Returns
