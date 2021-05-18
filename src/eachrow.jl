@@ -189,7 +189,6 @@ julia> df2 = @eachrow df begin
    2 │     2      1  1.0
    3 │     3      2  9.42478
 
-
 julia> x = [1, 1, 1];
 
 julia> @eachrow df begin
