@@ -224,7 +224,7 @@ single row of `df`, one uses regular operators and comparisons instead of
 their elementwise counterparts as in `@with`. Does not change the input data 
 frame argument.
 
-`@eachrow!` is identical to `@eachrow` but acts on a data-frame in-place, modifying
+`@eachrow!` is identical to `@eachrow` but acts on a data frame in-place, modifying
 the input.
 
 ```julia

@@ -145,13 +145,14 @@ y = 0
 @testset "eachrow!" begin
     df = DataFrame(A = 1:3, B = [2, 1, 2])
 
-    @test @eachrow!(df, if :A > :B; :A = 0 end) == DataFrame(A = [1, 0, 0], B = [2, 1, 2])
+    @test @eachrow!(df, if :A > :B; :A = 0 end) === df
+    @test df == DataFrame(A = [1, 0, 0], B = [2, 1, 2])
 
-    @test  df == DataFrame(A = [1, 0, 0], B = [2, 1, 2])
+    @test df == DataFrame(A = [1, 0, 0], B = [2, 1, 2])
 
     df = DataFrame(A = 1:3, B = [2, 1, 2])  # Restore df
     @eachrow!(df, if :A + :B == 3; global y += 1 end)
-    @test  y == 2
+    @test y == 2
 
     df = DataFrame(A = 1:3, B = [2, 1, 2])
     df2 = @eachrow! df begin
@@ -163,8 +164,8 @@ y = 0
         end
     end
 
-    @test  df.colX == [pi, 1.0, 3pi]
-    @test  df[2, :colY] == 2
+    @test df.colX == [pi, 1.0, 3pi]
+    @test df[2, :colY] == 2
     @test df2 === df2
 
     df = DataFrame(b = [5], a = [(n1 = 1, n2 = 2)])
