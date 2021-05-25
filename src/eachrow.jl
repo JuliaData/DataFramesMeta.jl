@@ -252,7 +252,7 @@ See [`@eachrow`](@ref) which employs the same syntax but allocates
 a fresh data frame.
 
 Includes support for control flow and `begin end` blocks. Since the
-"environment" induced by `@eachrow df` is implicitly a single row of `df`,
+"environment" induced by `@eachrow! df` is implicitly a single row of `df`,
 use regular operators and comparisons instead of their elementwise counterparts
 as in `@with`. Note that the scope within `@eachrow!` is a hard scope.
 
