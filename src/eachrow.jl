@@ -99,10 +99,13 @@ Act on each row of a data frame, producing a new dataframe.
 Similar to
 
 ```
-for row in eachrow(df)
+for row in eachrow(copy(df))
     ...
 end
 ```
+
+See [`@eachrow!`](@ref) which employs the same syntax but allocates
+a fresh data frame.
 
 Includes support for control flow and `begin end` blocks. Since the
 "environment" induced by `@eachrow df` is implicitly a single row of `df`,
@@ -112,7 +115,7 @@ as in `@with`. Note that the scope within `@eachrow` is a hard scope.
 `eachrow` also supports special syntax for allocating new columns. The syntax
 `@newcol x::Vector{Int}` allocates a new uninitialized column `:x` with an `Vector` container
 with eltype `Int`.This feature makes it easier to use `eachrow` for data
-transformations. `_N` is introduced to represent the number of rows in the dataframe,
+transformations. `_N` is introduced to represent the number of rows in the data frame,
 `_DF` represents the `DataFrame` including added columns, and `row` represents
 the index of the current row.
 
@@ -215,8 +218,8 @@ julia> @eachrow df begin
 
 ```
 """
-macro eachrow(d, body)
-    esc(eachrow_helper(d, body, false))
+macro eachrow(df, body)
+    esc(eachrow_helper(df, body, false))
 end
 
 function eachrow!_helper(df, body)
@@ -237,13 +240,16 @@ end
 """
     @eachrow!(df, body)
 
-Act on each row of a data frame, similar to
+Act on each row of a data frame in-place, similar to
 
 ```
 for row in eachrow(df)
     ... # Actions that modify `df`.
 end
 ```
+
+See [`@eachrow`](@ref) which employs the same syntax but allocates
+a fresh data frame.
 
 Includes support for control flow and `begin end` blocks. Since the
 "environment" induced by `@eachrow df` is implicitly a single row of `df`,
@@ -253,7 +259,7 @@ as in `@with`. Note that the scope within `@eachrow!` is a hard scope.
 `eachrow!` also supports special syntax for allocating new columns. The syntax
 `@newcol x::Vector{Int}` allocates a new uninitialized column `:x` with an `Vector` container
 with eltype `Int`.This feature makes it easier to use `eachrow` for data
-transformations. `_N` is introduced to represent the number of rows in the dataframe,
+transformations. `_N` is introduced to represent the number of rows in the data frame,
 `_DF` represents the `dataframe` including added columns, and `row` represents
 the index of the current row.
 
@@ -362,6 +368,6 @@ julia> @eachrow! df begin
    3 │     3      2  1.22222
 ```
 """
-macro eachrow!(d, body)
-    esc(eachrow!_helper(d, body))
+macro eachrow!(df, body)
+    esc(eachrow!_helper(df, body))
 end
