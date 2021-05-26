@@ -118,7 +118,7 @@ the index of the current row.
 
 Changes to the rows do not affect `df` but instead a freshly allocated data frame is returned
 by `@eachrow`. Also note that the returned data frame does not share columns
-with `df`. See [`@eachrow`](@ref) which employs employs the same syntax but modifies
+with `df`. See [`@eachrow!`](@ref) which employs the same syntax but modifies
 the data frame in-place.
 
 Like with `@transform`, `@eachrow` supports the use of `cols` to work with column names
