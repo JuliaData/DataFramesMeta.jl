@@ -140,4 +140,61 @@ end
     end
 end
 
+# `y` needs to be in global scope here because the testset relies on `y`
+y = 0
+@testset "eachrow!" begin
+    df = DataFrame(A = 1:3, B = [2, 1, 2])
+
+    @test @eachrow!(df, if :A > :B; :A = 0 end) === df
+    @test df == DataFrame(A = [1, 0, 0], B = [2, 1, 2])
+
+    @test df == DataFrame(A = [1, 0, 0], B = [2, 1, 2])
+
+    df = DataFrame(A = 1:3, B = [2, 1, 2])  # Restore df
+    @eachrow!(df, if :A + :B == 3; global y += 1 end)
+    @test y == 2
+
+    df = DataFrame(A = 1:3, B = [2, 1, 2])
+    df2 = @eachrow! df begin
+        @newcol colX::Array{Float64}
+        @newcol colY::Array{Float64}
+        :colX = :B == 2 ? pi * :A : :B
+        if :A > 1
+            :colY = :A * :B
+        end
+    end
+
+    @test df.colX == [pi, 1.0, 3pi]
+    @test df[2, :colY] == 2
+    @test df2 === df2
+
+    df = DataFrame(b = [5], a = [(n1 = 1, n2 = 2)])
+    @eachrow! df begin
+        :b = :a.n1
+    end
+
+    @test df.b == [1]
+
+    _DF = 5
+    _N = 0
+    @eachrow df begin
+        # nothing
+    end
+    @test _DF == 5
+    @test _N == 0
+
+    df = DataFrame(b = [5], a = [(n1 = 1, n2 = 2)])
+    @eachrow! df begin
+        :b = row
+    end
+    @test df.b == [1]
+
+    df = DataFrame(b = [5], a = [(n1 = 1, n2 = 2)])
+    x = (a = 400, b = 600)
+    @eachrow! df begin
+        :b = x.a
+    end
+    @test df.b == [400]
+end
+
 end # module
