@@ -61,9 +61,11 @@ function args_to_selectors(v)
     :(DataFramesMeta.make_source_concrete($(Expr(:vect, t...))))
 end
 
+is_macro_head(ex, name) = false
+is_macro_head(ex::Expr, name) = ex.head == :macrocall && ex.args[1] == Symbol(name)
 
 """
-    get_source_fun(function_expr)
+    get_source_fun(function_expr; wrap_ByRow=false)
 
 Given an expression that may contain `QuoteNode`s (`:x`)
 and items wrapped in `cols`, return a function
@@ -83,11 +85,16 @@ representing the vector of inputs that will be
 used as the `src` in the `src => fun => dest`
 call later on.
 
+If `wrap_ByRow=true` then the function gets wrapped
+in `ByRow`. If the expression begins with `@byrow`,
+then `get_source_fun` is recurively called on the
+expression that `@byrow` acts on, with `wrap_ByRow=true`.
+
 ### Examples
 
 julia> using MacroTools
 
-julia> ex = :(:x + :y)
+julia> ex = :(:x + :y);
 
 julia> DataFramesMeta.get_source_fun(ex)
 (:(DataFramesMeta.make_source_concrete([:x, :y])), :+)
@@ -101,14 +108,24 @@ julia> src, fun = DataFramesMeta.get_source_fun(ex);
 julia> MacroTools.prettify(fun)
 :((mammoth, goat)->mammoth .+ 1 .* goat)
 
+julia> ex = :(@byrow :x * :y);
+
+julia> src, fun = DataFramesMeta.get_source_fun(ex);
+
+julia> MacroTools.prettify(fun)
+:(ByRow(*))
+```
+
 """
-function get_source_fun(function_expr)
+function get_source_fun(function_expr; wrap_ByRow=false)
     # recursive step for begin :a + :b end
     if function_expr isa Expr &&
         function_expr.head == :block &&
         length(function_expr.args) == 1
 
         return get_source_fun(function_expr.args[1])
+    elseif is_macro_head(function_expr, "@byrow")
+        return get_source_fun(function_expr.args[3], wrap_ByRow=true)
     elseif is_simple_non_broadcast_call(function_expr)
         source = args_to_selectors(function_expr.args[2:end])
         fun_t = function_expr.args[1]
@@ -120,15 +137,11 @@ function get_source_fun(function_expr)
         else
             fun = fun_t
         end
-
-        return source, fun
     elseif is_simple_broadcast_call(function_expr)
         # extract source symbols from quotenodes
         source = args_to_selectors(function_expr.args[2].args)
         fun_t = function_expr.args[1]
         fun = :(DataFrames.ByRow($fun_t))
-
-        return source, fun
     else
         membernames = Dict{Any, Symbol}()
 
@@ -142,8 +155,13 @@ function get_source_fun(function_expr)
                 $body
             end
         end
-        return source, fun
     end
+
+    if wrap_ByRow
+        fun = :(ByRow($fun))
+    end
+
+    return source, fun
 end
 
 # `nolhs` needs to be `true` when we have syntax of the form
