@@ -8,7 +8,7 @@ using Reexport
 export @with, @where, @orderby, @transform, @by, @combine, @select,
        @transform!, @select!,
        @eachrow, @eachrow!,
-       @byrow, @byrow!, @based_on # deprecated
+       @based_on # deprecated
 
 
 global const DATAFRAMES_GEQ_22 = isdefined(DataFrames, :pretty_table) ? true : false

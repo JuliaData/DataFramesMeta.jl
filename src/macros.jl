@@ -463,8 +463,8 @@ end
 
 
 function transform_helper(x, args...)
-    exprs = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = false, nolhs = false) for ex in exprs)
+    exprs, wrap_ByRow = create_args_vector(args...)
+    t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_ByRow = wrap_ByRow) for ex in exprs)
     quote
         $DataFrames.transform($x, $(t...))
     end
@@ -503,6 +503,27 @@ and
 @transform(df, a = :x, b = :y)
 ```
 
+`@transform` uses the syntax `@byrow` to wrap transformations in
+the `ByRow` function wrapper from DataFrames, enabling broadcasting
+and more. For example, the call
+
+```
+@transform(df, y = @byrow :x == 1 ? "true" : "false)
+```
+
+becomes
+
+```
+transform(df, :x => ByRow(x -> x == 1 ? "true", "false") => :y)
+```
+
+which cannot be conveniently expressed using broadcasting.
+
+To avoid writing `@byrow` multiple times when performing multiple
+transformations by row, `@transform` allows `@byrow` at the
+beginning of a block of transformations. All transformations
+in the block will operate by row.
+
 ### Examples
 
 ```jldoctest
@@ -511,17 +532,38 @@ julia> using DataFramesMeta
 julia> df = DataFrame(A = 1:3, B = [2, 1, 2]);
 
 julia> @transform df begin
-    a = 2 * :A
-    x = :A .+ :B
-end
+           a = 2 * :A
+           x = :A .+ :B
+       end
+3×4 DataFrame
+ Row │ A      B      a      x
+     │ Int64  Int64  Int64  Int64
+─────┼────────────────────────────
+   1 │     1      2      2      3
+   2 │     2      1      4      3
+   3 │     3      2      6      5
+
+julia> @transform df z = @byrow :A * :B
+3×3 DataFrame
+ Row │ A      B      z
+     │ Int64  Int64  Int64
+─────┼─────────────────────
+   1 │     1      2      2
+   2 │     2      1      2
+   3 │     3      2      6
+
+julia> @transform df @byrow begin
+           x = :A * :B
+           y = :A == 1 ? 100 : 200
+       end
 
 3×4 DataFrame
-│ Row │ A     │ B     │ a     │ x     │
-│     │ Int64 │ Int64 │ Int64 │ Int64 │
-├─────┼───────┼───────┼───────┼───────┤
-│ 1   │ 1     │ 2     │ 2     │ 3     │
-│ 2   │ 2     │ 1     │ 4     │ 3     │
-│ 3   │ 3     │ 2     │ 6     │ 5     │
+ Row │ A      B      x      y
+     │ Int64  Int64  Int64  Int64
+─────┼────────────────────────────
+   1 │     1      2      2    100
+   2 │     2      1      2    200
+   3 │     3      2      6    200
 ```
 """
 macro transform(x, args...)
@@ -537,8 +579,8 @@ end
 
 
 function transform!_helper(x, args...)
-    exprs = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = false, nolhs = false) for ex in exprs)
+    exprs, wrap_ByRow = create_args_vector(args...)
+    t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_ByRow = wrap_ByRow) for ex in exprs)
     quote
         $DataFrames.transform!($x, $(t...))
     end
@@ -611,8 +653,8 @@ end
 ##############################################################################
 
 function select_helper(x, args...)
-    exprs = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = false, nolhs = false) for ex in exprs)
+    exprs, wrap_ByRow = create_args_vector(args...)
+    t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_ByRow) for ex in exprs)
     quote
         $DataFrames.select($x, $(t...))
     end
@@ -704,8 +746,8 @@ end
 ##############################################################################
 
 function select!_helper(x, args...)
-    exprs = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = false, nolhs = false) for ex in exprs)
+    exprs, wrap_ByRow = create_args_vector(args...)
+    t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_ByRow = wrap_ByRow) for ex in exprs)
     quote
         $DataFrames.select!($x, $(t...))
     end
@@ -794,13 +836,13 @@ function combine_helper(x, args...; deprecation_warning = false)
     deprecation_warning && @warn "`@based_on` is deprecated. Use `@combine` instead."
 
     # Only allow one argument when returning a Table object
-    exprs = create_args_vector(args...)
+    exprs, wrap_ByRow = create_args_vector(args...)
     fe = first(exprs)
     if length(exprs) == 1 &&
         !(fe isa QuoteNode) &&
         !(fe.head == :(=) || fe.head == :kw)
 
-        t = fun_to_vec(fe; gensym_names = false, nolhs = true)
+        t = fun_to_vec(fe; gensym_names = false, nolhs = true, wrap_ByRow = wrap_ByRow)
 
         # 0.22: No pair as first arg, needs AsTable in other args to return table
         if DATAFRAMES_GEQ_22
@@ -814,7 +856,7 @@ function combine_helper(x, args...; deprecation_warning = false)
             end
         end
     else
-        t = (fun_to_vec(ex; gensym_names = false, nolhs = false) for ex in exprs)
+        t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_ByRow = wrap_ByRow) for ex in exprs)
         quote
             $DataFrames.combine($x, $(t...))
         end
@@ -922,13 +964,13 @@ end
 function by_helper(x, what, args...)
     # Only allow one argument when returning a Table object
     # Only allow one argument when returning a Table object
-    exprs = create_args_vector(args...)
+    exprs, wrap_ByRow = create_args_vector(args...)
     fe = first(exprs)
     if length(exprs) == 1 &&
         !(fe isa QuoteNode) &&
         !(fe.head == :(=) || fe.head == :kw)
 
-        t = fun_to_vec(fe; gensym_names = false, nolhs = true)
+        t = fun_to_vec(fe; gensym_names = false, nolhs = true, wrap_ByRow = wrap_ByRow)
 
         # 0.22: No pair as first arg, needs AsTable in other args to return table
         if DATAFRAMES_GEQ_22
@@ -942,7 +984,7 @@ function by_helper(x, what, args...)
             end
         end
     else
-        t = (fun_to_vec(ex; gensym_names = false, nolhs = false) for ex in exprs)
+        t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_ByRow = wrap_ByRow) for ex in exprs)
         quote
             $DataFrames.combine($groupby($x, $what), $(t...))
         end

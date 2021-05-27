@@ -119,13 +119,13 @@ julia> MacroTools.prettify(fun)
 """
 function get_source_fun(function_expr; wrap_ByRow=false)
     # recursive step for begin :a + :b end
-    if function_expr isa Expr &&
+    if is_macro_head(function_expr, "@byrow")
+        return get_source_fun(function_expr.args[3], wrap_ByRow=true)
+    elseif function_expr isa Expr &&
         function_expr.head == :block &&
         length(function_expr.args) == 1
 
         return get_source_fun(function_expr.args[1])
-    elseif is_macro_head(function_expr, "@byrow")
-        return get_source_fun(function_expr.args[3], wrap_ByRow=true)
     elseif is_simple_non_broadcast_call(function_expr)
         source = args_to_selectors(function_expr.args[2:end])
         fun_t = function_expr.args[1]
@@ -168,7 +168,7 @@ end
 # `@combine(gd, fun(:x, :y))` where `fun` returns a `table` object.
 # We don't create the "new name" pair because new names are
 # given by the table.
-function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
+function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false, wrap_ByRow=false)
     # classify the type of expression
     # :x # handled via dispatch
     # cols(:x) # handled as though above
@@ -276,8 +276,8 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
     # y = f(cols(:x))
     # y = :x + 1
     # y = cols(:x) + 1
+    source, fun = get_source_fun(rhs; wrap_ByRow = wrap_ByRow)
     if lhs isa Symbol
-        source, fun = get_source_fun(rhs)
         dest = QuoteNode(lhs)
 
         return quote
@@ -287,7 +287,6 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
 
     # cols(:y) = f(:x)
     if onearg(lhs, :cols)
-        source, fun = get_source_fun(rhs)
         dest = lhs.args[2]
 
         return quote
@@ -297,7 +296,7 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
 
     throw(ArgumentError("This path should not be reached"))
 end
-fun_to_vec(ex::QuoteNode; nolhs::Bool = false, gensym_names::Bool = false) = ex
+fun_to_vec(ex::QuoteNode; nolhs::Bool = false, gensym_names::Bool = false, wrap_ByRow = false) = ex
 
 function make_source_concrete(x::AbstractVector)
     if isempty(x) || isconcretetype(eltype(x))
@@ -345,10 +344,15 @@ Otherwise, return a single-element array.
 Also removes line numbers.
 """
 function create_args_vector(arg)
-    if arg isa Expr && arg.head == :block
+    if arg isa Expr && is_macro_head(arg, "@byrow")
+        x = Base.remove_linenums!(arg.args[3]).args
+        wrap_ByRow = true
+    elseif arg isa Expr && arg.head == :block
         x = Base.remove_linenums!(arg).args
+        wrap_ByRow = false
     else
         x = Any[Base.remove_linenums!(arg)]
+        wrap_ByRow = false
     end
-    return x
+    return x, wrap_ByRow
 end
