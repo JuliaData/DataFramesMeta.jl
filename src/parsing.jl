@@ -332,27 +332,35 @@ of expression-like object (`Expr`, `QuoteNode`, etc.),
 puts them into a single array, removing line numbers.
 """
 function create_args_vector(args...)
-    Any[Base.remove_linenums!(arg) for arg in args]
+    Any[Base.remove_linenums!(arg) for arg in args], false
 end
 
 """
    create_args_vector(arg)
 
-Normalize a single input to a vector of expressions.
+Normalize a single input to a vector of expressions,
+with a `wrap_ByRow` flag indicating that the
+expressions should operate by row.
+
 If `arg` is a single `:block`, it is unnested.
 Otherwise, return a single-element array.
 Also removes line numbers.
+
+If `arg` is of the form `@byrow ...`, then
+`wrap_ByRow` is returned as `true`.
 """
 function create_args_vector(arg)
     if arg isa Expr && is_macro_head(arg, "@byrow")
-        x = Base.remove_linenums!(arg.args[3]).args
         wrap_ByRow = true
-    elseif arg isa Expr && arg.head == :block
-        x = Base.remove_linenums!(arg).args
+        arg = arg.args[3]
+    else
         wrap_ByRow = false
+    end
+
+    if arg isa Expr && arg.head == :block
+        x = Base.remove_linenums!(arg).args
     else
         x = Any[Base.remove_linenums!(arg)]
-        wrap_ByRow = false
     end
     return x, wrap_ByRow
 end

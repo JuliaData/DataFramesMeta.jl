@@ -123,6 +123,56 @@ end
     @test d ≅ @transform(df, n1 = :i .* :g, n2 = :i .* :g)
 end
 
+@testset "@transform with @byrow" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5,
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing])
+
+    @test @transform(df, n = @byrow :i).n == df.i
+    @test @transform(df, n = @byrow :i + :g).n == df.i .+ df.g
+    @test @transform(df, n = @byrow :t * string(:y)).n == df.t .* string.(df.y)
+    @test @transform(df, n = @byrow Symbol(:y, ^(:t))).n == Symbol.(df.y, :t)
+    @test @transform(df, n = @byrow Symbol(:y, ^(:body))).n == Symbol.(df.y, :body)
+    @test @transform(df, body = @byrow :i).body == df.i
+    @test @transform(df, transform = @byrow :i).transform == df.i
+    @test @transform(df, n = @byrow :g == 1 ? 100 : 500).n == [100, 100, 100, 500, 500]
+
+    d = @transform df @byrow begin
+        n1 = :i
+        n2 = :i * :g
+    end
+    @test d ≅ @transform(df, n1 = :i, n2 = :i .* :g)
+
+    d = @transform df @byrow begin
+        cols(:n1) = :i
+        n2 = cols(:i) * :g
+    end
+    @test d ≅ @transform(df, n1 = :i, n2 = :i .* :g)
+
+    d = @transform df @byrow begin
+        n1 = cols(:i)
+        cols(:n2) = :i * :g
+    end
+    @test d ≅ @transform(df, n1 = :i, n2 = :i .* :g)
+
+    d = @transform df @byrow begin
+        n1 = begin
+            :i
+        end
+        n2 = :i * :g
+    end
+    @test d ≅ @transform(df, n1 = :i, n2 = :i .* :g)
+
+    d = @transform df @byrow begin
+        n1 = :i * :g
+        n2 = :i * :g
+    end
+    @test d ≅ @transform(df, n1 = :i .* :g, n2 = :i .* :g)
+end
+
 
 @testset "@transform!" begin
     df = DataFrame(

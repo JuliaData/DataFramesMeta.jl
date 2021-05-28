@@ -176,7 +176,7 @@ end
 ##############################################################################
 
 function where_helper(x, args...)
-    exprs = create_args_vector(args...)
+    exprs, ByRow = create_args_vector(args...)
     t = (fun_to_vec(ex; gensym_names = true, nolhs = true) for ex in exprs)
     quote
         $where($x, $(t...))
@@ -336,8 +336,8 @@ end
 ##############################################################################
 
 function orderby_helper(x, args...)
-    exprs = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = true, nolhs = true) for ex in exprs)
+    exprs, wrap_ByRow = create_args_vector(args...)
+    t = (fun_to_vec(ex; gensym_names = true, nolhs = true, wrap_ByRow = wrap_ByRow) for ex in exprs)
     quote
         $DataFramesMeta.orderby($x, $(t...))
     end
@@ -464,7 +464,7 @@ end
 
 function transform_helper(x, args...)
     exprs, wrap_ByRow = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_ByRow = wrap_ByRow) for ex in exprs)
+    t = [fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_ByRow = wrap_ByRow) for ex in exprs]
     quote
         $DataFrames.transform($x, $(t...))
     end
@@ -517,7 +517,8 @@ becomes
 transform(df, :x => ByRow(x -> x == 1 ? "true", "false") => :y)
 ```
 
-which cannot be conveniently expressed using broadcasting.
+a transformation which  cannot be conveniently expressed
+using broadcasting.
 
 To avoid writing `@byrow` multiple times when performing multiple
 transformations by row, `@transform` allows `@byrow` at the
