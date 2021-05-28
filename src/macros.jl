@@ -655,7 +655,7 @@ end
 
 function select_helper(x, args...)
     exprs, wrap_ByRow = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_ByRow) for ex in exprs)
+    t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_ByRow = wrap_ByRow) for ex in exprs)
     quote
         $DataFrames.select($x, $(t...))
     end
