@@ -285,12 +285,118 @@ becomes
 transform(df, :x => ByRow(x -> x == 1 ? "true", "false") => :y)
 ```
 
+!!! note 
+    Unlike `@.`, `@byrow` is not a "real" macro and cannot be used outside of 
+    DataFramesMeta macros. However it's behavior within DataFramesMeta 
+    macros should be indistinguishable from externally defined macros. 
+
+### Comparison with `@eachrow`
+
+In previous versions of DataFramesMeta, `@eachrow` was named `@byrow`. 
+This version of `@byrow` is deprecated, but the syntax can be used
+to for similar, but not identical, behavior.
+
+The syntax 
+
+```julia
+@eachrow df begin 
+    :a * :b
+end 
+```
+
+is similar to 
+
+```julia
+begin
+    function tempfun(a, b)
+        for i in eachindex(a)
+            a[i] * b[i]
+        end
+    end
+    tempfun(df.a, df.b)
+    df
+end
+```
+
+The function `*` is applied by-row. But the result of those operations
+is not stored in a new vector. Additionally, `@eachrow` and `@eachrow!`
+return data frames. 
+
+By contrast,
+
+```julia
+@with df @byrow begin 
+    :a * :b
+end
+```
+
+is similar to 
+
+```julia
+tempfun(a, b) = a * b
+tempfun.(df.a, df.b)
+```
+
+`@with` combined with `@byrow` will return a vector of the 
+broadcasted multiplication and not a data frame.
+
+Additionally, `@eachrow` and `@eachrow!` allow modifying a data
+data frame. Just as with Base Julia broadcasting, `@byrow` will
+not update columns. 
+
+```
+julia> df = DataFrame(a = [1, 2], b = [3, 4]);
+
+julia> @with df @byrow begin 
+           :a = 500
+       end
+2-element Vector{Int64}:
+ 500
+ 500
+
+julia> df
+2×2 DataFrame
+ Row │ a      b     
+     │ Int64  Int64 
+─────┼──────────────
+   1 │     1      3
+   2 │     2      4
+```
+
+### Comparison with `@.` and Base broadcasting
+
 Base Julia provides the broadasting macro `@.` and in many cases `@.` 
 and `@byrow` will give equivalent results. But there are important 
 deviations in behavior. Consider the setup 
 
 ```julia
 df = DataFrame(a = [1, 2], b = [3, 4])
+```
+
+* Control flow. In all versions of Julia, expressions of the form 
+`if...else`, `a ? b : c` cannot be broadcasted. In versions below
+1.7-dev, expressions of the form `a && b` and `a || b` cannot be 
+broadcasted. Consequently, the `@.` macro will fail when encountering such
+control flow while `@byrow` will not. 
+```
+julia> @with df @byrow begin 
+           if :a == 1
+               5
+           else 
+               10
+           end
+       end
+2-element Vector{Int64}:
+  5
+ 10
+
+julia> @with df @. begin 
+           if :a == 1
+               5
+           else 
+               10
+           end
+       end # will error
 ```
 
 * Broadcasting objects that are not columns. `@byrow` constructs an 
@@ -333,10 +439,6 @@ julia> @time @with df @. :a + $expensive();
   0.537961 seconds (110.68 k allocations: 6.525 MiB, 6.73% compilation time)
 ```
 No such solution currently exists with `@byrow`. 
-
-* Unlike `@.`, `@byrow` is not a real macro and cannot be used outside of 
-DataFramesMeta macros. However it's behavior within DataFramesMeta 
-macros should be indistinguishable from externally defined macros. 
 
 ## Working with column names programmatically with `cols`
 
