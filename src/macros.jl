@@ -176,8 +176,8 @@ end
 ##############################################################################
 
 function where_helper(x, args...)
-    exprs, ByRow = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = true, nolhs = true) for ex in exprs)
+    exprs, wrap_ByRow = create_args_vector(args...)
+    t = (fun_to_vec(ex; gensym_names = true, nolhs = true, wrap_ByRow = wrap_ByRow) for ex in exprs)
     quote
         $where($x, $(t...))
     end

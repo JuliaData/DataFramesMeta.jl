@@ -270,10 +270,16 @@ end
 
 ## Row-wise transformations with `@byrow`
 
-DataFrames provides the function-wrapper `ByRow`. `ByRow(f)(x, y)`
+DataFrames.jl provides the function-wrapper `ByRow`. `ByRow(f)(x, y)`
 is roughly equivalent to `f.(x, y)`, with a few exceptions discussed below. 
-DataFramesMeta allows for users to construct expressions using `ByRow` 
+DataFramesMeta.jl allows users to construct expressions using `ByRow` 
 function wrapper with the syntax `@byrow`. 
+
+`@byrow` is not a "real" macro and cannot be used outside of 
+DataFramesMeta macros. However it's behavior within DataFramesMeta.jl
+macros should be indistinguishable from externally defined macros. 
+Thought of as a macro `@byrow` accepts a single argument and 
+creates an anonymous function wrapped in `ByRow`.  For example,
 
 ```julia
 @transform(df, y = @byrow :x == 1 ? "true" : "false)
@@ -285,18 +291,45 @@ becomes
 transform(df, :x => ByRow(x -> x == 1 ? "true", "false") => :y)
 ```
 
-!!! note 
-    Unlike `@.`, `@byrow` is not a "real" macro and cannot be used outside of 
-    DataFramesMeta macros. However it's behavior within DataFramesMeta 
-    macros should be indistinguishable from externally defined macros. 
+Macros that accept `@byrow`:
+
+* `@transform` and `@transform!`, `@select`, `@select!`, and `@combine`. `
+  @byrow` appears in the right hand side of expressions, of the form `@select(
+  df, z = @byrow :x * :y)`. 
+* `@where` and `@orderby`, with syntax of the form `@where(df, @byrow :x > :y)`
+* `@with`, where the anonymous function created by `@with` is wrapped in
+  `ByRow`. `@with df @byrow :x * :y`, which is conceptually similar to 
+  `map((x, y) -> x * y, df.x, df.y)`.
+
+To avoid writing `@byrow` multiple times when performing multiple
+operations, it is allowed `@byrow` at the beginning of a block of 
+operations. All transformations in the block will operate by row.
+
+```julia
+julia> @where df @byrow begin 
+           :a > 1
+           :b < 5
+       end
+1×2 DataFrame
+ Row │ a      b     
+     │ Int64  Int64 
+─────┼──────────────
+   1 │     2      4
+```
+
+`@byrow` can be used on macros which accept `GroupedDataFrame`s,
+however, like with `ByRow` in DataFrames.jl, when `@byrow` is
+used, functions do not take advantage of the grouping, so the 
+behavior of `@transform(df, y = @byrow f(:x))` and 
+`@transform(groupby(df, :g), y = @byrow f(:x))` is the same.
 
 ### Comparison with `@eachrow`
 
 In previous versions of DataFramesMeta, `@eachrow` was named `@byrow`. 
-This version of `@byrow` is deprecated, but the syntax can be used
-to for similar, but not identical, behavior.
+The old macro `@byrow` is deprecated, but the `@byrow` syntac can 
+now be used for similar, but not identical, behavior.
 
-The syntax 
+To re-cap, the `@eachrow` rougly transforms
 
 ```julia
 @eachrow df begin 
@@ -304,7 +337,7 @@ The syntax
 end 
 ```
 
-is similar to 
+to 
 
 ```julia
 begin
@@ -319,10 +352,10 @@ end
 ```
 
 The function `*` is applied by-row. But the result of those operations
-is not stored in a new vector. Additionally, `@eachrow` and `@eachrow!`
-return data frames. 
+is not stored anywhere, as with `for`-loops in Base Julia. 
+Rather, `@eachrow` and `@eachrow!` return data frames. 
 
-By contrast,
+Now consider `@byrow`. `@byrow` transforms
 
 ```julia
 @with df @byrow begin 
@@ -330,15 +363,14 @@ By contrast,
 end
 ```
 
-is similar to 
+to 
 
 ```julia
 tempfun(a, b) = a * b
 tempfun.(df.a, df.b)
 ```
 
-`@with` combined with `@byrow` will return a vector of the 
-broadcasted multiplication and not a data frame.
+In contrast to `@eachroe`, `@with` combined with `@byrow` will return a vector of the broadcasted multiplication and not a data frame.
 
 Additionally, `@eachrow` and `@eachrow!` allow modifying a data
 data frame. Just as with Base Julia broadcasting, `@byrow` will
@@ -374,71 +406,83 @@ df = DataFrame(a = [1, 2], b = [3, 4])
 ```
 
 * Control flow. In all versions of Julia, expressions of the form 
-`if...else`, `a ? b : c` cannot be broadcasted. In versions below
-1.7-dev, expressions of the form `a && b` and `a || b` cannot be 
-broadcasted. Consequently, the `@.` macro will fail when encountering such
-control flow while `@byrow` will not. 
-```
-julia> @with df @byrow begin 
-           if :a == 1
-               5
-           else 
-               10
-           end
-       end
-2-element Vector{Int64}:
-  5
- 10
-
-julia> @with df @. begin 
-           if :a == 1
-               5
-           else 
-               10
-           end
-       end # will error
-```
+  `if...else`, `a ? b : c` cannot be broadcasted. In versions below
+  1.7-dev, expressions of the form `a && b` and `a || b` cannot be 
+  broadcasted. Consequently, the `@.` macro will fail when encountering such
+  control flow while `@byrow` will not. 
+  ```
+  julia> @with df @byrow begin 
+             if :a == 1
+                 5
+             else 
+                 10
+             end
+         end
+  2-element Vector{Int64}:
+    5
+   10
+  
+  julia> @with df @. begin 
+             if :a == 1
+                 5
+             else 
+                 10
+             end
+         end # will error
+  ```
 
 * Broadcasting objects that are not columns. `@byrow` constructs an 
-anonymous function *which accepts only the columns of the dataframe*
-and broadcasts that function. Consequently, it does not broadcast
-objects that are referenced which are not columns. 
-```julia
-@with df @byrow :x + [5, 6]
-```
-will error. On the other hand
-```julia
-@with df @. :x + [5, 6]
-```
-will not. 
+  anonymous function *which accepts only the columns of the dataframe*
+  and broadcasts that function. Consequently, it does not broadcast
+  objects that are referenced which are not columns. 
+  
+  ```julia
+  julia> df = DataFrame(a = [1, 2], b = [3, 4]);
+  julia> @with df @byrow :x + [5, 6]
+  ```
+  
+  will error, because the `:x` in the above expression refers
+  to a scalar `Int`, and you cannot do `1 + [5, 6]`.
+
+  On the other hand
+
+  ```julia
+  @with df @. :x + [5, 6]
+  ```
+  will not, as `df.x` is a 2-element vector as is `[5, 6]`, and 
+  `1 .+ [5, 6]` is allowed.
 
 * Broadcasting expensive calls. In Base Julia, broadcastsing 
-evaluates calls first and then broadcasts the result. Because
-`@byrow` constructs an anonymous function and evaluates
-that function for every row in the DataFrame, expensive functions
-will be evaluated many times. 
-```julia
-julia> function expensive()
-           sleep(.5)
-           return 1
-       end;
-
-julia> @time @with df @byrow :a + expensive();
-  1.037073 seconds (51.67 k allocations: 3.035 MiB, 3.19% compilation time)
-
-julia> @time @with df :a .+ expensive();
-  0.539900 seconds (110.67 k allocations: 6.525 MiB, 7.05% compilation time)
-
-```
-This problem comes up when using the `@.` macro as well, but can easily be fixed with `$`.
-```julia
-julia> @time @with df @. :a + expensive();
-  1.036888 seconds (97.55 k allocations: 5.617 MiB, 3.20% compilation time)
-
-julia> @time @with df @. :a + $expensive();
-  0.537961 seconds (110.68 k allocations: 6.525 MiB, 6.73% compilation time)
-```
-No such solution currently exists with `@byrow`. 
+  evaluates calls first and then broadcasts the result. Because
+  `@byrow` constructs an anonymous function and evaluates
+  that function for every row in the data frame, expensive functions
+  will be evaluated many times. 
+  
+  ```julia
+  julia> function expensive()
+             sleep(.5)
+             return 1
+         end;
+  
+  julia> @time @with df @byrow :a + expensive();
+    1.037073 seconds (51.67 k allocations: 3.035 MiB, 3.19% compilation time)
+  
+  julia> @time @with df :a .+ expensive();
+    0.539900 seconds (110.67 k allocations: 6.525 MiB, 7.05% compilation time)
+  
+  ```
+  
+  This problem comes up when using the `@.` macro as well, but can easily be   fixed with `$`.
+  
+  ```julia
+  julia> @time @with df @. :a + expensive();
+    1.036888 seconds (97.55 k allocations: 5.617 MiB, 3.20% compilation time)
+  
+  julia> @time @with df @. :a + $expensive();
+    0.537961 seconds (110.68 k allocations: 6.525 MiB, 6.73% compilation time)
+  ```
+  
+  No such solution currently exists with `@byrow`. 
 
 ## Working with column names programmatically with `cols`
 
