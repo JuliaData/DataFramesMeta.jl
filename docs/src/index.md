@@ -287,7 +287,7 @@ creates an anonymous function wrapped in `ByRow`.  For example,
 
 becomes
 
-```
+```julia
 transform(df, :x => ByRow(x -> x == 1 ? "true", "false") => :y)
 ```
 
@@ -376,7 +376,7 @@ Additionally, `@eachrow` and `@eachrow!` allow modifying a data
 data frame. Just as with Base Julia broadcasting, `@byrow` will
 not update columns. 
 
-```
+```julia
 julia> df = DataFrame(a = [1, 2], b = [3, 4]);
 
 julia> @with df @byrow begin 
