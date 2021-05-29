@@ -131,27 +131,25 @@ end
         y = [:v, :w, :x, :y, :z],
         c = [:g, :quote, :body, :transform, missing])
 
-    @test @transform(df, n = @byrow :i).n == df.i
-    @test @transform(df, n = @byrow :i + :g).n == df.i .+ df.g
-    @test @transform(df, n = @byrow :t * string(:y)).n == df.t .* string.(df.y)
-    @test @transform(df, n = @byrow Symbol(:y, ^(:t))).n == Symbol.(df.y, :t)
-    @test @transform(df, n = @byrow Symbol(:y, ^(:body))).n == Symbol.(df.y, :body)
-    @test @transform(df, body = @byrow :i).body == df.i
-    @test @transform(df, transform = @byrow :i).transform == df.i
-    @test @transform(df, n = @byrow :g == 1 ? 100 : 500).n == [100, 100, 100, 500, 500]
+    @test @transform(df, n = @byrow :i + :g) ≅ @transform(df, n = :i + :g)
+    @test @transform(df, n = @byrow :t * string(:y)) ≅ @transform(df, n = :t .* string.(:y))
+    @test @transform(df, transform = @byrow :i) ≅ @transform(df, transform = :i)
+    @test @transform(df, n = @byrow :g == 1 ? 100 : 500) ≅ @transform(df, n = ifelse.(:g .== 1, 100, 500))
+    @test @transform(df, n = @byrow :g == 1 && :t == "a") ≅ @transform(df, n = map((g, t) -> g == 1 && t == "a", :g, :t))
+    @test @transform(df, n = @byrow first(:g)) ≅ @transform(df, n = first.(:g))
 
     d = @transform df @byrow begin
         n1 = :i
         n2 = :i * :g
     end
     @test d ≅ @transform(df, n1 = :i, n2 = :i .* :g)
+    @test d ≅ @transform(df, n1 = @byrow(:i), n2 = @byrow(:i * :g))
 
     d = @transform df @byrow begin
         cols(:n1) = :i
         n2 = cols(:i) * :g
     end
     @test d ≅ @transform(df, n1 = :i, n2 = :i .* :g)
-
     d = @transform df @byrow begin
         n1 = cols(:i)
         cols(:n2) = :i * :g
