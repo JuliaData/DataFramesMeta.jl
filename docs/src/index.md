@@ -268,6 +268,76 @@ df2 = @eachrow df begin
 end
 ```
 
+## Row-wise transformations with `@byrow`
+
+DataFrames provides the function-wrapper `ByRow`. `ByRow(f)(x, y)`
+is roughly equivalent to `f.(x, y)`, with a few exceptions discussed below. 
+DataFramesMeta allows for users to construct expressions using `ByRow` 
+function wrapper with the syntax `@byrow`. 
+
+```julia
+@transform(df, y = @byrow :x == 1 ? "true" : "false)
+```
+
+becomes
+
+```
+transform(df, :x => ByRow(x -> x == 1 ? "true", "false") => :y)
+```
+
+Base Julia provides the broadasting macro `@.` and in many cases `@.` 
+and `@byrow` will give equivalent results. But there are important 
+deviations in behavior. Consider the setup 
+
+```julia
+df = DataFrame(a = [1, 2], b = [3, 4])
+```
+
+* Broadcasting objects that are not columns. `@byrow` constructs an 
+anonymous function *which accepts only the columns of the dataframe*
+and broadcasts that function. Consequently, it does not broadcast
+objects that are referenced which are not columns. 
+```julia
+@with df @byrow :x + [5, 6]
+```
+will error. On the other hand
+```julia
+@with df @. :x + [5, 6]
+```
+will not. 
+
+* Broadcasting expensive calls. In Base Julia, broadcastsing 
+evaluates calls first and then broadcasts the result. Because
+`@byrow` constructs an anonymous function and evaluates
+that function for every row in the DataFrame, expensive functions
+will be evaluated many times. 
+```julia
+julia> function expensive()
+           sleep(.5)
+           return 1
+       end;
+
+julia> @time @with df @byrow :a + expensive();
+  1.037073 seconds (51.67 k allocations: 3.035 MiB, 3.19% compilation time)
+
+julia> @time @with df :a .+ expensive();
+  0.539900 seconds (110.67 k allocations: 6.525 MiB, 7.05% compilation time)
+
+```
+This problem comes up when using the `@.` macro as well, but can easily be fixed with `$`.
+```julia
+julia> @time @with df @. :a + expensive();
+  1.036888 seconds (97.55 k allocations: 5.617 MiB, 3.20% compilation time)
+
+julia> @time @with df @. :a + $expensive();
+  0.537961 seconds (110.68 k allocations: 6.525 MiB, 6.73% compilation time)
+```
+No such solution currently exists with `@byrow`. 
+
+* Unlike `@.`, `@byrow` is not a real macro and cannot be used outside of 
+DataFramesMeta macros. However it's behavior within DataFramesMeta 
+macros should be indistinguishable from externally defined macros. 
+
 ## Working with column names programmatically with `cols`
 
 DataFramesMeta provides the special syntax `cols` for referring to 
