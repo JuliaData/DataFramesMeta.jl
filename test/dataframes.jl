@@ -787,18 +787,18 @@ end
 @testset "@with with @byrow" begin
     df = DataFrame(A = 1:3, B = [2, 1, 2])
 
-    @test @with df, @byrow :A * 1)   ==  df.A .* 1
-    @test @with df, @byrow :A * :B)  ==  df.A .* df.B
+    @test @with(df, @byrow :A * 1)   ==  df.A .* 1
+    @test @with(df, @byrow :A * :B)  ==  df.A .* df.B
 
-    t = @test @with df @byrow begin
+    t = @with df @byrow begin
         :A * 1
     end
     @test t == df.A .* 1
 
-    t = @test @with df @byrow begin
+    t = @with df @byrow begin
         :A * :B
     end
-    @test t = df.A .* df.B
+    @test t == df.A .* df.B
 end
 
 @testset "where" begin
@@ -956,13 +956,13 @@ end
 
     d = @orderby df begin
         @byrow :c
-        @byrow :g .*  2
+        @byrow :g *  2
     end
     @test d ≅ @orderby(df, :c, :g .* 2)
 
     d = @orderby df @byrow begin
         :c
-        :g .*  2
+        :g *  2
     end
     @test d ≅ @orderby(df, :c, :g .* 2)
 end

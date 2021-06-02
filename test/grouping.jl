@@ -123,6 +123,56 @@ end
     @test d ≅ @combine(g, im = mean(:i), tf = first(:t))
 end
 
+@testset "@combine with @byrow" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5,
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :combine, missing])
+
+    gd = groupby(df, :g)
+
+    @test @combine(gd, n = @byrow :i + :g) ≅ @combine(gd, n = :i + :g)
+    @test @combine(gd, n = @byrow :t * string(:y)) ≅ @combine(gd, n = :t .* string.(:y))
+    @test @combine(gd, combine = @byrow :i) ≅ @combine(gd, combine = :i)
+    @test @combine(gd, n = @byrow :g == 1 ? 100 : 500) ≅ @combine(gd, n = ifelse.(:g .== 1, 100, 500))
+    @test @combine(gd, n = @byrow :g == 1 && :t == "a") ≅ @combine(gd, n = map((g, t) -> g == 1 && t == "a", :g, :t))
+    @test @combine(gd, n = @byrow first(:g)) ≅ @combine(gd, n = first.(:g))
+
+    d = @combine gd @byrow begin
+        n1 = :i
+        n2 = :i * :g
+    end
+    @test d ≅ @combine(gd, n1 = :i, n2 = :i .* :g)
+    @test d ≅ @combine(gd, n1 = @byrow(:i), n2 = @byrow(:i * :g))
+
+    d = @combine gd @byrow begin
+        cols(:n1) = :i
+        n2 = cols(:i) * :g
+    end
+    @test d ≅ @combine(gd, n1 = :i, n2 = :i .* :g)
+    d = @combine gd @byrow begin
+        n1 = cols(:i)
+        cols(:n2) = :i * :g
+    end
+    @test d ≅ @combine(gd, n1 = :i, n2 = :i .* :g)
+
+    d = @combine gd @byrow begin
+        n1 = begin
+            :i
+        end
+        n2 = :i * :g
+    end
+    @test d ≅ @combine(gd, n1 = :i, n2 = :i .* :g)
+
+    d = @combine gd @byrow begin
+        n1 = :i * :g
+        n2 = :i * :g
+    end
+    @test d ≅ @combine(gd, n1 = :i .* :g, n2 = :i .* :g)
+end
+
 # Defined outside of `@testset` due to use of `@eval`
 df = DataFrame(
     g = [1, 1, 1, 2, 2],
@@ -279,6 +329,56 @@ end
     @test d ≅ @by(df, :g, im = mean(:i), tf = first(:t))
 end
 
+@testset "@by with @byrow" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5,
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :combine, missing])
+
+    @test @by(df, :g, n = @byrow :i + :g) ≅ @by(df, :g, n = :i + :g)
+    @test @by(df, :g, n = @byrow :t * string(:y)) ≅ @by(df, :g, n = :t .* string.(:y))
+    @test @by(df, :g, combine = @byrow :i) ≅ @by(df, :g, combine = :i)
+    @test @by(df, :g, n = @byrow :g == 1 ? 100 : 500) ≅ @by(df, :g, n = ifelse.(:g .== 1, 100, 500))
+    @test @by(df, :g, n = @byrow :g == 1 && :t == "a") ≅ @by(df, :g, n = map((g, t) -> g == 1 && t == "a", :g, :t))
+    @test @by(df, :g, n = @byrow first(:g)) ≅ @by(df, :g, n = first.(:g))
+
+    d = @by df :g @byrow begin
+        n1 = :i
+        n2 = :i * :g
+    end
+    @test d ≅ @by(df, :g, n1 = :i, n2 = :i .* :g)
+    @test d ≅ @by(df, :g, n1 = @byrow(:i), n2 = @byrow(:i * :g))
+
+    d = @by df :g @byrow begin
+        cols(:n1) = :i
+        n2 = cols(:i) * :g
+    end
+    @test d ≅ @by(df, :g, n1 = :i, n2 = :i .* :g)
+
+    d = @by df :g @byrow begin
+        n1 = cols(:i)
+        cols(:n2) = :i * :g
+    end
+    @test d ≅ @by(df, :g, n1 = :i, n2 = :i .* :g)
+
+    d = @by df :g @byrow begin
+        n1 = begin
+            :i
+        end
+        n2 = :i * :g
+    end
+    @test d ≅ @by(df, :g, n1 = :i, n2 = :i .* :g)
+
+    d = @by df :g @byrow begin
+        n1 = :i * :g
+        n2 = :i * :g
+    end
+    @test d ≅ @by(df, :g, n1 = :i .* :g, n2 = :i .* :g)
+end
+
+
 # Defined outside of `@testset` due to use of `@eval`
 df = DataFrame(
     g = [1, 1, 1, 2, 2],
@@ -378,6 +478,9 @@ end
 
 	@test @transform(g, t = :c).a ≅ d.a
 	@test @select(g, :a, t = :c).a ≅ d.a
+
+    @test @transform(g, t = @byrow :a ^ 2).t ≅ d.a .^ 2
+    @test @select(g, :a, t = @byrow :a ^ 2).t ≅ d.a .^ 2
 end
 
 @testset "@where with a grouped data frame" begin
