@@ -784,6 +784,23 @@ end
     @test  @with(df, DataFrame(a = :A * 2, b = :A .+ :B)) == DataFrame(a = df.A * 2, b = df.A .+ df.B)
 end
 
+@testset "@with with @byrow" begin
+    df = DataFrame(A = 1:3, B = [2, 1, 2])
+
+    @test @with df, @byrow :A * 1)   ==  df.A .* 1
+    @test @with df, @byrow :A * :B)  ==  df.A .* df.B
+
+    t = @test @with df @byrow begin
+        :A * 1
+    end
+    @test t == df.A .* 1
+
+    t = @test @with df @byrow begin
+        :A * :B
+    end
+    @test t = df.A .* df.B
+end
+
 @testset "where" begin
     df = DataFrame(A = [1, 2, 3, missing], B = [2, 1, 2, 1])
 
