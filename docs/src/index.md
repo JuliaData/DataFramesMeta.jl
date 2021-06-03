@@ -276,7 +276,7 @@ DataFramesMeta.jl allows users to construct expressions using `ByRow`
 function wrapper with the syntax `@byrow`. 
 
 `@byrow` is not a "real" macro and cannot be used outside of 
-DataFramesMeta macros. However it's behavior within DataFramesMeta.jl
+DataFramesMeta.jl macros, however it's behavior within DataFramesMeta.jl
 macros should be indistinguishable from externally defined macros. 
 Thought of as a macro `@byrow` accepts a single argument and 
 creates an anonymous function wrapped in `ByRow`.  For example,
@@ -293,16 +293,16 @@ transform(df, :x => ByRow(x -> x == 1 ? "true", "false") => :y)
 
 Macros that accept `@byrow`:
 
-* `@transform` and `@transform!`, `@select`, `@select!`, and `@combine`. `
-  @byrow` appears in the right hand side of expressions, of the form `@select(
-  df, z = @byrow :x * :y)`. 
+* `@transform` and `@transform!`, `@select`, `@select!`, and `@combine`. 
+  `@byrow` appears in the right hand side of expressions, of the form 
+  `@select(df, z = @byrow :x * :y)`. 
 * `@where` and `@orderby`, with syntax of the form `@where(df, @byrow :x > :y)`
 * `@with`, where the anonymous function created by `@with` is wrapped in
-  `ByRow`. `@with df @byrow :x * :y`, which is conceptually similar to 
+  `ByRow`. `@with(df, @byrow :x * :y)`, which is conceptually similar to 
   `map((x, y) -> x * y, df.x, df.y)`.
 
 To avoid writing `@byrow` multiple times when performing multiple
-operations, it is allowed `@byrow` at the beginning of a block of 
+operations, it is allowed to use`@byrow` at the beginning of a block of 
 operations. All transformations in the block will operate by row.
 
 ```julia
@@ -319,14 +319,14 @@ julia> @where df @byrow begin
 
 `@byrow` can be used on macros which accept `GroupedDataFrame`s,
 however, like with `ByRow` in DataFrames.jl, when `@byrow` is
-used, functions do not take advantage of the grouping, so the 
-behavior of `@transform(df, y = @byrow f(:x))` and 
+used, functions do not take advantage of the grouping, so for
+example the result of `@transform(df, y = @byrow f(:x))` and 
 `@transform(groupby(df, :g), y = @byrow f(:x))` is the same.
 
 ### Comparison with `@eachrow`
 
-In previous versions of DataFramesMeta, `@eachrow` was named `@byrow`. 
-The old macro `@byrow` is deprecated, but the `@byrow` syntac can 
+In previous versions of DataFramesMeta.jl, `@eachrow` was named `@byrow`. 
+The old macro `@byrow` is deprecated, but the `@byrow` syntax can 
 now be used for similar, but not identical, behavior.
 
 To re-cap, the `@eachrow` rougly transforms
@@ -451,6 +451,12 @@ df = DataFrame(a = [1, 2], b = [3, 4])
   ```
   will not, as `df.x` is a 2-element vector as is `[5, 6]`, and 
   `1 .+ [5, 6]` is allowed.
+
+  Because `ByRow` inside `transform` blocks does not internally 
+  use broadcasting in all circumstances, in the rare instance
+  that a column in a data frame is a custom vector type that
+  implements custom broadcasting, this custom behavior will 
+  be called with `@byrow`.
 
 * Broadcasting expensive calls. In Base Julia, broadcastsing 
   evaluates calls first and then broadcasts the result. Because
