@@ -87,7 +87,7 @@ call later on.
 
 If `wrap_ByRow=true` then the function gets wrapped
 in `ByRow`. If the expression begins with `@byrow`,
-then `get_source_fun` is recurively called on the
+then `get_source_fun` is recursively called on the
 expression that `@byrow` acts on, with `wrap_ByRow=true`.
 
 ### Examples

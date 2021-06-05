@@ -503,7 +503,7 @@ and
 @transform(df, a = :x, b = :y)
 ```
 
-`@transform` uses the syntax `@byrow` to wrap transformations in
+`@transform` supports the `@byrow` syntax to wrap transformations in
 the `ByRow` function wrapper from DataFrames, enabling broadcasting
 and more. For example, the call
 
@@ -517,13 +517,13 @@ becomes
 transform(df, :x => ByRow(x -> x == 1 ? "true", "false") => :y)
 ```
 
-a transformation which  cannot be conveniently expressed
+a transformation which cannot be conveniently expressed
 using broadcasting.
 
 To avoid writing `@byrow` multiple times when performing multiple
 transformations by row, `@transform` allows `@byrow` at the
-beginning of a block of transformations. All transformations
-in the block will operate by row.
+beginning of a block of transformations (i.e. `@byrow begin... end`).
+All transformations in the block will operate by row.
 
 ### Examples
 
