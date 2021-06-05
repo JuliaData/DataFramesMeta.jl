@@ -18,6 +18,7 @@ In addition, DataFramesMeta provides
   convenient syntax
 * `@eachrow` and `@eachrow!` for looping through rows in data frame, again with high performance and 
   convenient syntax. 
+* `@byrow` for applying functions by-row of a data frame.
 * `@linq`, for piping the above macros together, similar to [magrittr](https://cran.r-project.org/web/packages/magrittr/vignettes/magrittr.html)'s
   `%>%` in R. 
 
@@ -282,13 +283,13 @@ Thought of as a macro `@byrow` accepts a single argument and
 creates an anonymous function wrapped in `ByRow`.  For example,
 
 ```julia
-@transform(df, y = @byrow :x == 1 ? "true" : "false)
+@transform(df, y = @byrow :x == 1 ? true : false)
 ```
 
 becomes
 
 ```julia
-transform(df, :x => ByRow(x -> x == 1 ? "true", "false") => :y)
+transform(df, :x => ByRow(x -> x == 1 ? true, false) => :y)
 ```
 
 Macros that accept `@byrow`:
@@ -405,11 +406,12 @@ deviations in behavior. Consider the setup
 df = DataFrame(a = [1, 2], b = [3, 4])
 ```
 
-* Control flow. In all versions of Julia, expressions of the form 
-  `if...else`, `a ? b : c` cannot be broadcasted. In versions below
-  1.7-dev, expressions of the form `a && b` and `a || b` cannot be 
-  broadcasted. Consequently, the `@.` macro will fail when encountering such
-  control flow while `@byrow` will not. 
+* Control flow. `@byrow` allows for operations of the form `if ... else`
+  and `a ? b : c` to be applied by row. These expressions cannot be 
+  broadcasted in Base Julia. `@byrow` also allows for expressions of 
+  the form `a && b` and `a || b` to be applied by row, something that 
+  is not possible in Julia versions below 1.7. 
+
   ```
   julia> @with df @byrow begin 
              if :a == 1

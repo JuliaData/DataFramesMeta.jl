@@ -65,7 +65,7 @@ is_macro_head(ex, name) = false
 is_macro_head(ex::Expr, name) = ex.head == :macrocall && ex.args[1] == Symbol(name)
 
 """
-    get_source_fun(function_expr; wrap_ByRow=false)
+    get_source_fun(function_expr; wrap_byrow=false)
 
 Given an expression that may contain `QuoteNode`s (`:x`)
 and items wrapped in `cols`, return a function
@@ -85,10 +85,10 @@ representing the vector of inputs that will be
 used as the `src` in the `src => fun => dest`
 call later on.
 
-If `wrap_ByRow=true` then the function gets wrapped
+If `wrap_byrow=true` then the function gets wrapped
 in `ByRow`. If the expression begins with `@byrow`,
 then `get_source_fun` is recurively called on the
-expression that `@byrow` acts on, with `wrap_ByRow=true`.
+expression that `@byrow` acts on, with `wrap_byrow=true`.
 
 ### Examples
 
@@ -117,10 +117,10 @@ julia> MacroTools.prettify(fun)
 ```
 
 """
-function get_source_fun(function_expr; wrap_ByRow=false)
+function get_source_fun(function_expr; wrap_byrow=false)
     # recursive step for begin :a + :b end
     if is_macro_head(function_expr, "@byrow")
-        return get_source_fun(function_expr.args[3], wrap_ByRow=true)
+        return get_source_fun(function_expr.args[3], wrap_byrow=true)
     elseif function_expr isa Expr &&
         function_expr.head == :block &&
         length(function_expr.args) == 1
@@ -157,7 +157,7 @@ function get_source_fun(function_expr; wrap_ByRow=false)
         end
     end
 
-    if wrap_ByRow
+    if wrap_byrow
         fun = :(ByRow($fun))
     end
 
@@ -168,7 +168,7 @@ end
 # `@combine(gd, fun(:x, :y))` where `fun` returns a `table` object.
 # We don't create the "new name" pair because new names are
 # given by the table.
-function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false, wrap_ByRow=false)
+function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false, wrap_byrow=false)
     # classify the type of expression
     # :x # handled via dispatch
     # cols(:x) # handled as though above
@@ -276,7 +276,7 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false, w
     # y = f(cols(:x))
     # y = :x + 1
     # y = cols(:x) + 1
-    source, fun = get_source_fun(rhs; wrap_ByRow = wrap_ByRow)
+    source, fun = get_source_fun(rhs; wrap_byrow = wrap_byrow)
     if lhs isa Symbol
         dest = QuoteNode(lhs)
 
@@ -296,7 +296,7 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false, w
 
     throw(ArgumentError("This path should not be reached"))
 end
-fun_to_vec(ex::QuoteNode; nolhs::Bool = false, gensym_names::Bool = false, wrap_ByRow = false) = ex
+fun_to_vec(ex::QuoteNode; nolhs::Bool = false, gensym_names::Bool = false, wrap_byrow = false) = ex
 
 function make_source_concrete(x::AbstractVector)
     if isempty(x) || isconcretetype(eltype(x))
@@ -325,7 +325,7 @@ function replace_dotted!(e, membernames)
 end
 
 """
-    create_args_vector(args...)
+    create_args_vector(args...) -> vec, wrap_byrow
 
 Given multiple arguments which can be any type
 of expression-like object (`Expr`, `QuoteNode`, etc.),
@@ -336,10 +336,10 @@ function create_args_vector(args...)
 end
 
 """
-   create_args_vector(arg)
+   create_args_vector(arg) -> vec, wrap_byrow
 
 Normalize a single input to a vector of expressions,
-with a `wrap_ByRow` flag indicating that the
+with a `wrap_byrow` flag indicating that the
 expressions should operate by row.
 
 If `arg` is a single `:block`, it is unnested.
@@ -347,14 +347,14 @@ Otherwise, return a single-element array.
 Also removes line numbers.
 
 If `arg` is of the form `@byrow ...`, then
-`wrap_ByRow` is returned as `true`.
+`wrap_byrow` is returned as `true`.
 """
 function create_args_vector(arg)
     if arg isa Expr && is_macro_head(arg, "@byrow")
-        wrap_ByRow = true
+        wrap_byrow = true
         arg = arg.args[3]
     else
-        wrap_ByRow = false
+        wrap_byrow = false
     end
 
     if arg isa Expr && arg.head == :block
@@ -362,5 +362,5 @@ function create_args_vector(arg)
     else
         x = Any[Base.remove_linenums!(arg)]
     end
-    return x, wrap_ByRow
+    return x, wrap_byrow
 end
