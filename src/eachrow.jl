@@ -70,7 +70,6 @@ function eachrow_helper(df, body, deprecation_warning)
     end
 end
 
-
 """
     @eachrow(df, body)
 
