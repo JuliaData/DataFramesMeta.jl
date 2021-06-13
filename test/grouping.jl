@@ -379,8 +379,8 @@ end
 	@test @transform(g, t = :c).a ≅ d.a
 	@test @select(g, :a, t = :c).a ≅ d.a
 
-    @test @transform(g, t = @byrow :a ^ 2).t ≅ d.a .^ 2
-    @test @select(g, :a, t = @byrow :a ^ 2).t ≅ d.a .^ 2
+    @test @transform(g, @byrow t = :a ^ 2).t ≅ d.a .^ 2
+    @test @select(g, :a, @byrow t = :a ^ 2).t ≅ d.a .^ 2
 end
 
 @testset "@where with a grouped data frame" begin
