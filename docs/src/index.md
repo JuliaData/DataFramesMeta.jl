@@ -272,9 +272,9 @@ end
 ## Row-wise transformations with `@byrow`
 
 DataFrames.jl provides the function wrapper `ByRow`. `ByRow(f)(x, y)`
-is roughly equivalent to `f.(x, y)`, with a few exceptions discussed below. 
-DataFramesMeta.jl allows users to construct expressions using `ByRow` 
-function wrapper with the syntax `@byrow`. 
+is roughly equivalent to `f.(x, y)`. DataFramesMeta.jl allows users 
+to construct expressions using `ByRow` function wrapper with the 
+syntax `@byrow`. 
 
 `@byrow` is not a "real" macro and cannot be used outside of 
 DataFramesMeta.jl macros. However its behavior within DataFramesMeta.jl
@@ -283,7 +283,7 @@ Thought of as a macro `@byrow` accepts a single argument and
 creates an anonymous function wrapped in `ByRow`.  For example,
 
 ```julia
-@transform(df, y = @byrow :x == 1 ? true : false)
+@transform(df, @byrow y = :x == 1 ? true : false)
 ```
 
 is equivalent to
@@ -295,8 +295,8 @@ transform(df, :x => ByRow(x -> x == 1 ? true, false) => :y)
 The following macros accept `@byrow`:
 
 * `@transform` and `@transform!`, `@select`, `@select!`, and `@combine`. 
-  `@byrow` can be used in the right hand side of expressions, e.g.
-  `@select(df, z = @byrow :x * :y)`. 
+  `@byrow` can be used in the left hand side of expressions, e.g.
+  `@select(df, @byrow z = :x * :y)`. 
 * `@where` and `@orderby`, with syntax of the form `@where(df, @byrow :x > :y)`
 * `@with`, where the anonymous function created by `@with` is wrapped in
   `ByRow`, as in `@with(df, @byrow :x * :y)`.
@@ -320,172 +320,8 @@ julia> @where df @byrow begin
 `@byrow` can be used inside macros which accept `GroupedDataFrame`s,
 however, like with `ByRow` in DataFrames.jl, when `@byrow` is
 used, functions do not take into account the grouping, so for
-example the result of `@transform(df, y = @byrow f(:x))` and 
-`@transform(groupby(df, :g), y = @byrow f(:x))` is the same.
-
-### Comparison with `@eachrow`
-
-To re-cap, the `@eachrow` rougly transforms
-
-```julia
-@eachrow df begin 
-    :a * :b
-end 
-```
-
-to 
-
-```julia
-begin
-    function tempfun(a, b)
-        for i in eachindex(a)
-            a[i] * b[i]
-        end
-    end
-    tempfun(df.a, df.b)
-    df
-end
-```
-
-The function `*` is applied by-row. But the result of those operations
-is not stored anywhere, as with `for`-loops in Base Julia. 
-Rather, `@eachrow` and `@eachrow!` return data frames. 
-
-Now consider `@byrow`. `@byrow` transforms
-
-```julia
-@with df @byrow begin 
-    :a * :b
-end
-```
-
-to 
-
-```julia
-tempfun(a, b) = a * b
-tempfun.(df.a, df.b)
-```
-
-In contrast to `@eachrow`, `@with` combined with `@byrow` returns a vector of the
-broadcasted multiplication and not a data frame.
-
-Additionally, `@eachrow` and `@eachrow!` allow modifying a data
-data frame. Just as with Base Julia broadcasting, `@byrow` will
-not update columns. 
-
-```julia
-julia> df = DataFrame(a = [1, 2], b = [3, 4]);
-
-julia> @with df @byrow begin 
-           :a = 500
-       end
-2-element Vector{Int64}:
- 500
- 500
-
-julia> df
-2×2 DataFrame
- Row │ a      b     
-     │ Int64  Int64 
-─────┼──────────────
-   1 │     1      3
-   2 │     2      4
-```
-
-### Comparison with `@.` and Base broadcasting
-
-Base Julia provides the broadasting macro `@.` and in many cases `@.` 
-and `@byrow` will give equivalent results. But there are important 
-deviations in behavior. Consider the setup 
-
-```julia
-df = DataFrame(a = [1, 2], b = [3, 4])
-```
-
-* Control flow. `@byrow` allows for operations of the form `if ... else`
-  and `a ? b : c` to be applied by row. These expressions cannot be 
-  broadcasted in Base Julia. `@byrow` also allows for expressions of 
-  the form `a && b` and `a || b` to be applied by row, something that 
-  is not possible in Julia versions below 1.7. 
-
-  ```
-  julia> @with df @byrow begin 
-             if :a == 1
-                 5
-             else 
-                 10
-             end
-         end
-  2-element Vector{Int64}:
-    5
-   10
-  
-  julia> @with df @. begin 
-             if :a == 1
-                 5
-             else 
-                 10
-             end
-         end # will error
-  ```
-
-* Broadcasting objects that are not columns. `@byrow` constructs an 
-  anonymous function *which accepts only the columns of the input data frame*
-  and broadcasts that function. Consequently, it does not broadcast
-  referenced objects which are not columns. 
-  
-  ```julia
-  julia> df = DataFrame(a = [1, 2], b = [3, 4]);
-  julia> @with df @byrow :x + [5, 6]
-  ```
-  
-  will error, because the `:x` in the above expression refers
-  to a scalar `Int`, and you cannot do `1 + [5, 6]`.
-
-  On the other hand
-
-  ```julia
-  @with df @. :x + [5, 6]
-  ```
-  will succeed, as `df.x` is a 2-element vector as is `[5, 6]`.
-
-  Because `ByRow` inside `transform` blocks does not internally 
-  use broadcasting in all circumstances, in the rare instance
-  that a column in a data frame is a custom vector type that
-  implements custom broadcasting, this custom behavior will 
-  not be called with `@byrow`.
-
-* Broadcasting expensive calls. In Base Julia, broadcasting 
-  evaluates calls first and then broadcasts the result. Because
-  `@byrow` constructs an anonymous function and evaluates
-  that function for every row in the data frame, expensive functions
-  will be evaluated many times. 
-  
-  ```julia
-  julia> function expensive()
-             sleep(.5)
-             return 1
-         end;
-  
-  julia> @time @with df @byrow :a + expensive();
-    1.037073 seconds (51.67 k allocations: 3.035 MiB, 3.19% compilation time)
-  
-  julia> @time @with df :a .+ expensive();
-    0.539900 seconds (110.67 k allocations: 6.525 MiB, 7.05% compilation time)
-  
-  ```
-  
-This problem comes up when using the `@.` macro as well, but can easily be fixed with `$`.
-  
-  ```julia
-  julia> @time @with df @. :a + expensive();
-    1.036888 seconds (97.55 k allocations: 5.617 MiB, 3.20% compilation time)
-  
-  julia> @time @with df @. :a + $expensive();
-    0.537961 seconds (110.68 k allocations: 6.525 MiB, 6.73% compilation time)
-  ```
-  
-  No such solution currently exists with `@byrow`. 
+example the result of `@transform(df, @byrow y = f(:x))` and 
+`@transform(groupby(df, :g), @byrow y = f(:x))` is the same.
 
 ## Working with column names programmatically with `cols`
 

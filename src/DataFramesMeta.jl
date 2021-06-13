@@ -8,6 +8,7 @@ using Reexport
 export @with, @where, @orderby, @transform, @by, @combine, @select,
        @transform!, @select!,
        @eachrow, @eachrow!,
+       @byrow,
        @based_on # deprecated
 
 

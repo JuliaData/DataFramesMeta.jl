@@ -120,6 +120,9 @@ julia> MacroTools.prettify(fun)
 function get_source_fun(function_expr; wrap_byrow=false)
     # recursive step for begin :a + :b end
     if is_macro_head(function_expr, "@byrow")
+        if wrap_byrow == true
+            throw(ArgumentError("Redundant `@byrow` calls."))
+        end
         return get_source_fun(function_expr.args[3], wrap_byrow=true)
     elseif function_expr isa Expr &&
         function_expr.head == :block &&
@@ -186,6 +189,13 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false, w
     # cols(:y) = f(cols(:x)) # re-write as simple call, RHS is block, use cols
     # cols(y) = :x + 1 # re-write as complicated col, but RHS is :block
     # cols(:y) = cols(:x) + 1 # re-write as complicated call, RHS is block, use cols
+    # `@byrow` before any of the above
+    if is_macro_head(ex, "@byrow")
+        if wrap_byrow == true
+            throw(ArgumentError("Redundant `@byrow` call."))
+        end
+        return fun_to_vec(ex.args[3]; nolhs = nolhs, gensym_names = gensym_names, wrap_byrow = true)
+    end
 
     if gensym_names
         ex = Expr(:kw, gensym(), ex)
@@ -231,6 +241,11 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false, w
         throw(ArgumentError("This path should not be reached"))
     end
 
+    if is_macro_head(rhs, "@byrow")
+        s = "In keyword argument inputs, `@byrow` must be on the left hand side. " *
+        "Did you write `y = @byrow f(:x)` instead of `@byrow y = f(:x)`?"
+        throw(ArgumentError(s))
+    end
 
     # y = :x
     if lhs isa Symbol && rhs isa QuoteNode
@@ -352,7 +367,14 @@ If `arg` is of the form `@byrow ...`, then
 function create_args_vector(arg)
     if arg isa Expr && is_macro_head(arg, "@byrow")
         wrap_byrow = true
-        arg = arg.args[3]
+        largs = length(arg.args)
+        if largs == 2
+            throw(ArgumentError("No transformations supplied with `@byrow`"))
+        elseif largs == 3
+            arg = arg.args[3]
+        else
+            arg = Expr(:block, arg.args[3:end]...)
+        end
     else
         wrap_byrow = false
     end
@@ -361,6 +383,10 @@ function create_args_vector(arg)
         x = Base.remove_linenums!(arg).args
     else
         x = Any[Base.remove_linenums!(arg)]
+    end
+
+    if wrap_byrow && any(t -> is_macro_head(t, "@byrow"), x)
+        throw(ArgumentError("Redundant `@byrow` calls."))
     end
     return x, wrap_byrow
 end
