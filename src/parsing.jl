@@ -65,7 +65,7 @@ is_macro_head(ex, name) = false
 is_macro_head(ex::Expr, name) = ex.head == :macrocall && ex.args[1] == Symbol(name)
 
 """
-    get_source_fun(function_expr; wrap_byrow=false)
+    get_source_fun(function_expr; wrap_byrow::Bool=false)
 
 Given an expression that may contain `QuoteNode`s (`:x`)
 and items wrapped in `cols`, return a function
@@ -311,7 +311,7 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false, w
 
     throw(ArgumentError("This path should not be reached"))
 end
-fun_to_vec(ex::QuoteNode; nolhs::Bool = false, gensym_names::Bool = false, wrap_byrow = false) = ex
+fun_to_vec(ex::QuoteNode; nolhs::Bool = false, gensym_names::Bool = false, wrap_byrow::Bool = false) = ex
 
 function make_source_concrete(x::AbstractVector)
     if isempty(x) || isconcretetype(eltype(x))
