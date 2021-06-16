@@ -159,7 +159,6 @@ tempfun.(df.a, df.b)
 In contrast to `@eachrow`, `@with` combined with `@byrow` returns a vector of the
 broadcasted multiplication and not a data frame.
 
-```suggestion 
 Additionally, transformations applied using `@eachrow!` modify the input
 data frame. On the contrary, `@byrow` does not update columns.
 
