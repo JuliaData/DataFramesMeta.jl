@@ -71,28 +71,6 @@ function eachrow_helper(df, body, deprecation_warning)
 end
 
 """
-    @byrow!(d, expr)
-
-Deprecated version of `@eachrow`, see: [`@eachrow`](@ref)
-
-Acts the exact same way. It does not change the input argument `d` in-place.
-"""
-macro byrow!(df, body)
-    esc(eachrow_helper(df, body, true))
-end
-
-"""
-    @byrow(d, expr)
-
-Deprecated version of `@eachrow`, see: [`@eachrow`](@ref)
-
-Acts the exact same way.
-"""
-macro byrow(d, body)
-    esc(eachrow_helper(d, body, true))
-end
-
-"""
     @eachrow(df, body)
 
 Act on each row of a data frame, producing a new dataframe.

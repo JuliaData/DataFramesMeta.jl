@@ -18,6 +18,7 @@ In addition, DataFramesMeta provides
   convenient syntax
 * `@eachrow` and `@eachrow!` for looping through rows in data frame, again with high performance and 
   convenient syntax. 
+* `@byrow` for applying functions to each row of a data frame (only supported inside other macros).
 * `@linq`, for piping the above macros together, similar to [magrittr](https://cran.r-project.org/web/packages/magrittr/vignettes/magrittr.html)'s
   `%>%` in R. 
 
@@ -267,6 +268,63 @@ df2 = @eachrow df begin
     end
 end
 ```
+
+## Row-wise transformations with `@byrow`
+
+`@byrow` provides a convenient syntax to apply operations by-row,
+without having to vectorize manually.  
+
+DataFrames.jl provides the function wrapper `ByRow`. `ByRow(f)(x, y)`
+is roughly equivalent to `f.(x, y)`. DataFramesMeta.jl allows users 
+to construct expressions using `ByRow` function wrapper with the 
+syntax `@byrow`. 
+
+`@byrow` is not a "real" macro and cannot be used outside of 
+DataFramesMeta.jl macros. However its behavior within DataFramesMeta.jl
+macros should be indistinguishable from externally defined macros. 
+Thought of as a macro `@byrow` accepts a single argument and 
+creates an anonymous function wrapped in `ByRow`.  For example,
+
+```julia
+@transform(df, @byrow y = :x == 1 ? true : false)
+```
+
+is equivalent to
+
+```julia
+transform(df, :x => ByRow(x -> x == 1 ? true, false) => :y)
+```
+
+The following macros accept `@byrow`:
+
+* `@transform` and `@transform!`, `@select`, `@select!`, and `@combine`. 
+  `@byrow` can be used in the left hand side of expressions, e.g.
+  `@select(df, @byrow z = :x * :y)`. 
+* `@where` and `@orderby`, with syntax of the form `@where(df, @byrow :x > :y)`
+* `@with`, where the anonymous function created by `@with` is wrapped in
+  `ByRow`, as in `@with(df, @byrow :x * :y)`.
+
+To avoid writing `@byrow` multiple times when performing multiple
+operations, it is allowed to use`@byrow` at the beginning of a block of 
+operations. All transformations in the block will operate by row.
+
+```julia
+julia> @where df @byrow begin 
+           :a > 1
+           :b < 5
+       end
+1×2 DataFrame
+ Row │ a      b     
+     │ Int64  Int64 
+─────┼──────────────
+   1 │     2      4
+```
+
+`@byrow` can be used inside macros which accept `GroupedDataFrame`s,
+however, like with `ByRow` in DataFrames.jl, when `@byrow` is
+used, functions do not take into account the grouping, so for
+example the result of `@transform(df, @byrow y = f(:x))` and 
+`@transform(groupby(df, :g), @byrow y = f(:x))` is the same.
 
 ## Working with column names programmatically with `cols`
 

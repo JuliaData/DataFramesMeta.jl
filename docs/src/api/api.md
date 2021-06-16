@@ -2,4 +2,5 @@
 
 ```@autodocs
 Modules = [DataFramesMeta]
+Private = false
 ```

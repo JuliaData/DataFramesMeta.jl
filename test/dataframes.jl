@@ -123,7 +123,6 @@ end
     @test d ≅ @transform(df, n1 = :i .* :g, n2 = :i .* :g)
 end
 
-
 @testset "@transform!" begin
     df = DataFrame(
         g = [1, 1, 1, 2, 2],

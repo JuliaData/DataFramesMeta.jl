@@ -57,6 +57,233 @@ end
 
 ##############################################################################
 ##
+## @byrow
+##
+##############################################################################
+"""
+    @byrow
+
+Broadcast operations within DataFramesMeta.jl macros.
+
+`@byrow` is not a "real" Julia macro but rather serves as a "flag"
+to indicate that the anonymous function created by DataFramesMeta
+to represent an operation should be applied "by-row".
+
+If an expression starts with `@byrow`, either of the form `@byrow = f(:x)`
+in transformations or `@byrow f(:x)` in `@orderby`, `@where`, and `@with`,
+then the anonymous function created by DataFramesMeta is wrapped in the
+`DataFrames.ByRow` function wrapper, which broadcasts the function so that it run on each row.
+
+### Examples
+
+```julia
+julia> df = DataFrame(a = [1, 2, 3, 4], b = [5, 6, 7, 8]);
+
+julia> @transform(df, @byrow c = :a * :b)
+4×3 DataFrame
+ Row │ a      b      c
+     │ Int64  Int64  Int64
+─────┼─────────────────────
+   1 │     1      5      5
+   2 │     2      6     12
+   3 │     3      7     21
+   4 │     4      8     32
+
+julia> @where(df, @byrow :a == 1 ? true : false)
+1×2 DataFrame
+ Row │ a      b
+     │ Int64  Int64
+─────┼──────────────
+   1 │     1      5
+```
+
+To avoid writing `@byrow` multiple times when performing multiple
+operations, it is allowed to use`@byrow` at the beginning of a block of
+operations. All transformations in the block will operate by row.
+
+```julia
+julia> @where df @byrow begin
+           :a > 1
+           :b < 5
+       end
+1×2 DataFrame
+ Row │ a      b
+     │ Int64  Int64
+─────┼──────────────
+   1 │     2      4
+```
+
+### Comparison with `@eachrow`
+
+To re-cap, the `@eachrow` macro roughly transforms
+
+```julia
+@eachrow df begin
+    :a * :b
+end
+```
+
+to
+
+```julia
+begin
+    function tempfun(a, b)
+        for i in eachindex(a)
+            a[i] * b[i]
+        end
+    end
+    tempfun(df.a, df.b)
+    df
+end
+```
+
+The function `*` is applied by-row. But the result of those operations
+is not stored anywhere, as with `for`-loops in Base Julia.
+Rather, `@eachrow` and `@eachrow!` return data frames.
+
+Now consider `@byrow`. `@byrow` transforms
+
+```julia
+@with df @byrow begin
+    :a * :b
+end
+```
+
+to
+
+```julia
+tempfun(a, b) = a * b
+tempfun.(df.a, df.b)
+```
+
+In contrast to `@eachrow`, `@with` combined with `@byrow` returns a vector of the
+broadcasted multiplication and not a data frame.
+
+Additionally, transformations applied using `@eachrow!` modify the input
+data frame. On the contrary, `@byrow` does not update columns.
+
+```julia
+julia> df = DataFrame(a = [1, 2], b = [3, 4]);
+
+julia> @with df @byrow begin
+           :a = 500
+       end
+2-element Vector{Int64}:
+ 500
+ 500
+
+julia> df
+2×2 DataFrame
+ Row │ a      b
+     │ Int64  Int64
+─────┼──────────────
+   1 │     1      3
+   2 │     2      4
+```
+
+### Comparison with `@.` and Base broadcasting
+
+Base Julia provides the broadasting macro `@.` and in many cases `@.`
+and `@byrow` will give equivalent results. But there are important
+deviations in behavior. Consider the setup
+
+```julia
+df = DataFrame(a = [1, 2], b = [3, 4])
+```
+
+* Control flow. `@byrow` allows for operations of the form `if ... else`
+  and `a ? b : c` to be applied by row. These expressions cannot be
+  broadcasted in Base Julia. `@byrow` also allows for expressions of
+  the form `a && b` and `a || b` to be applied by row, something that
+  is not possible in Julia versions below 1.7.
+
+```
+julia> @with df @byrow begin
+           if :a == 1
+               5
+           else
+               10
+           end
+       end
+2-element Vector{Int64}:
+  5
+ 10
+
+julia> @with df @. begin
+           if :a == 1
+               5
+           else
+               10
+           end
+       end # will error
+```
+
+* Broadcasting objects that are not columns. `@byrow` constructs an
+  anonymous function which accepts only the columns of the input data frame
+  and broadcasts that function. Consequently, it does not broadcast
+  referenced objects which are not columns.
+
+```julia
+julia> df = DataFrame(a = [1, 2], b = [3, 4]);
+julia> @with df @byrow :x + [5, 6]
+```
+
+  will error, because the `:x` in the above expression refers
+  to a scalar `Int`, and you cannot do `1 + [5, 6]`.
+
+  On the other hand
+
+```julia
+@with df @. :x + [5, 6]
+```
+
+  will succeed, as `df.x` is a 2-element vector as is `[5, 6]`.
+
+  Because `ByRow` inside `transform` blocks does not internally
+  use broadcasting in all circumstances, in the rare instance
+  that a column in a data frame is a custom vector type that
+  implements custom broadcasting, this custom behavior will
+  not be called with `@byrow`.
+
+* Broadcasting expensive calls. In Base Julia, broadcasting
+  evaluates calls first and then broadcasts the result. Because
+  `@byrow` constructs an anonymous function and evaluates
+  that function for every row in the data frame, expensive functions
+  will be evaluated many times.
+
+```julia
+julia> function expensive()
+           sleep(.5)
+           return 1
+       end;
+
+julia> @time @with df @byrow :a + expensive();
+  1.037073 seconds (51.67 k allocations: 3.035 MiB, 3.19% compilation time)
+
+julia> @time @with df :a .+ expensive();
+  0.539900 seconds (110.67 k allocations: 6.525 MiB, 7.05% compilation time)
+
+```
+
+  This problem comes up when using the `@.` macro as well,
+  but can easily be fixed with `\$`.
+
+```julia
+julia> @time @with df @. :a + expensive();
+  1.036888 seconds (97.55 k allocations: 5.617 MiB, 3.20% compilation time)
+
+julia> @time @with df @. :a + \$expensive();
+  0.537961 seconds (110.68 k allocations: 6.525 MiB, 6.73% compilation time)
+```
+
+  No such solution currently exists with `@byrow`.
+"""
+macro byrow(args...)
+    throw(ArgumentError("@byrow is deprecated outside of DataFramesMeta macros."))
+end
+
+##############################################################################
+##
 ## @with
 ##
 ##############################################################################
@@ -109,6 +336,10 @@ If an expression is wrapped in `^(expr)`, `expr` gets passed through untouched.
 If an expression is wrapped in  `cols(expr)`, the column is referenced by the
 variable `expr` rather than a symbol.
 
+If the expression provide to `@with` begins with `@byrow`, the function
+created by the `@with` block is broadcasted along the columns of the
+data frame.
+
 ### Examples
 
 ```jldoctest
@@ -153,6 +384,13 @@ julia> @with(df, :y + cols(colref)) # Equivalent to df[!, :y] + df[!, colref]
  3
  3
  5
+
+julia> @with df @byrow :x * :y
+3-element Vector{Int64}:
+ 2
+ 2
+ 6
+
 ```
 
 !!! note
@@ -176,8 +414,8 @@ end
 ##############################################################################
 
 function where_helper(x, args...)
-    exprs = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = true, nolhs = true) for ex in exprs)
+    exprs, wrap_byrow = create_args_vector(args...)
+    t = (fun_to_vec(ex; gensym_names = true, nolhs = true, wrap_byrow = wrap_byrow) for ex in exprs)
     quote
         $where($x, $(t...))
     end
@@ -248,6 +486,27 @@ and
     Unlike `DataFrames.filter` and other boolean operations with
     `missing`, `@where` will *not* error on missing values, and
     will only keep `true` values.
+
+If an expression provided to `@where` begins with `@byrow`, operations
+are applied "by row" along the data frame. To avoid writing `@byrow` multiple
+times, `@orderby` also allows `@byrow`to be placed at the beginning of a block of
+operations. For example, the following two statements are equivalent.
+
+```
+@where df @byrow begin
+    :x > 1
+    :y < 2
+end
+```
+
+and
+
+```
+@orderby df
+    @byrow :x > 1
+    @byrow :y < 2
+end
+```
 
 ### Examples
 
@@ -336,8 +595,8 @@ end
 ##############################################################################
 
 function orderby_helper(x, args...)
-    exprs = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = true, nolhs = true) for ex in exprs)
+    exprs, wrap_byrow = create_args_vector(args...)
+    t = (fun_to_vec(ex; gensym_names = true, nolhs = true, wrap_byrow = wrap_byrow) for ex in exprs)
     quote
         $DataFramesMeta.orderby($x, $(t...))
     end
@@ -381,7 +640,7 @@ end
 and
 
 ```
-@where(df, :x, -:y)
+@orderby(df, :x, -:y)
 ```
 
 
@@ -389,6 +648,27 @@ and
 
 * `d` : an AbstractDataFrame
 * `i...` : expression for sorting
+
+If an expression provided to `@orderby` begins with `@byrow`, operations
+are applied "by row" along the data frame. To avoid writing `@byrow` multiple
+times, `@orderby` also allows `@byrow`to be placed at the beginning of a block of
+operations. For example, the following two statements are equivalent.
+
+```
+@orderby df @byrow begin
+    :x^2
+    :x^3
+end
+```
+
+and
+
+```
+@orderby df
+    @byrow :x^2
+    @byrow :x^3
+end
+```
 
 ### Examples
 
@@ -448,6 +728,22 @@ end
    8 │     3      3  c
    9 │     3      2  b
   10 │     3      1  a
+
+julia> @orderby d @byrow :x^2
+10×3 DataFrame
+ Row │ x      n      c
+     │ Int64  Int64  String
+─────┼──────────────────────
+   1 │     1      5  e
+   2 │     1      6  f
+   3 │     1      7  g
+   4 │     1      9  i
+   5 │     1     10  j
+   6 │     2      4  d
+   7 │     2      8  h
+   8 │     3      1  a
+   9 │     3      2  b
+  10 │     3      3  c
 ```
 """
 macro orderby(d, args...)
@@ -463,8 +759,8 @@ end
 
 
 function transform_helper(x, args...)
-    exprs = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = false, nolhs = false) for ex in exprs)
+    exprs, wrap_byrow = create_args_vector(args...)
+    t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_byrow = wrap_byrow) for ex in exprs)
     quote
         $DataFrames.transform($x, $(t...))
     end
@@ -503,6 +799,28 @@ and
 @transform(df, a = :x, b = :y)
 ```
 
+`@transform` uses the syntax `@byrow` to wrap transformations in
+the `ByRow` function wrapper from DataFrames, apply a function row-wise,
+similar to broadcasting. For example, the call
+
+```
+@transform(df, @byrow y = :x == 1 ? true : false)
+```
+
+becomes
+
+```
+transform(df, :x => ByRow(x -> x == 1 ? true : false) => :y)
+```
+
+a transformation which cannot be conveniently expressed
+using broadcasting.
+
+To avoid writing `@byrow` multiple times when performing multiple
+transformations by row, `@transform` allows `@byrow` at the
+beginning of a block of transformations (i.e. `@byrow begin... end`).
+All transformations in the block will operate by row.
+
 ### Examples
 
 ```jldoctest
@@ -511,17 +829,38 @@ julia> using DataFramesMeta
 julia> df = DataFrame(A = 1:3, B = [2, 1, 2]);
 
 julia> @transform df begin
-    a = 2 * :A
-    x = :A .+ :B
-end
+           a = 2 * :A
+           x = :A .+ :B
+       end
+3×4 DataFrame
+ Row │ A      B      a      x
+     │ Int64  Int64  Int64  Int64
+─────┼────────────────────────────
+   1 │     1      2      2      3
+   2 │     2      1      4      3
+   3 │     3      2      6      5
+
+julia> @transform df @byrow z = :A * :B
+3×3 DataFrame
+ Row │ A      B      z
+     │ Int64  Int64  Int64
+─────┼─────────────────────
+   1 │     1      2      2
+   2 │     2      1      2
+   3 │     3      2      6
+
+julia> @transform df @byrow begin
+           x = :A * :B
+           y = :A == 1 ? 100 : 200
+       end
 
 3×4 DataFrame
-│ Row │ A     │ B     │ a     │ x     │
-│     │ Int64 │ Int64 │ Int64 │ Int64 │
-├─────┼───────┼───────┼───────┼───────┤
-│ 1   │ 1     │ 2     │ 2     │ 3     │
-│ 2   │ 2     │ 1     │ 4     │ 3     │
-│ 3   │ 3     │ 2     │ 6     │ 5     │
+ Row │ A      B      x      y
+     │ Int64  Int64  Int64  Int64
+─────┼────────────────────────────
+   1 │     1      2      2    100
+   2 │     2      1      2    200
+   3 │     3      2      6    200
 ```
 """
 macro transform(x, args...)
@@ -537,8 +876,8 @@ end
 
 
 function transform!_helper(x, args...)
-    exprs = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = false, nolhs = false) for ex in exprs)
+    exprs, wrap_byrow = create_args_vector(args...)
+    t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_byrow = wrap_byrow) for ex in exprs)
     quote
         $DataFrames.transform!($x, $(t...))
     end
@@ -578,6 +917,27 @@ and
 @transform!(df, a = :x, b = :y)
 ```
 
+`@transform!` uses the syntax `@byrow` to wrap transform!ations in
+the `ByRow` function wrapper from DataFrames, apply a function row-wise,
+similar to broadcasting. For example, the call
+
+```
+@transform!(df, @byrow y = :x == 1 ? true : false)
+```
+
+becomes
+
+```
+transform!(df, :x => ByRow(x -> x == 1 ? true : false) => :y)
+```
+
+a transformation which cannot be conveniently expressed
+using broadcasting.
+
+To avoid writing `@byrow` multiple times when performing multiple
+transform!ations by row, `@transform!` allows `@byrow` at the
+beginning of a block of transform!ations (i.e. `@byrow begin... end`).
+All transform!ations in the block will operate by row.
 
 ### Examples
 
@@ -611,8 +971,8 @@ end
 ##############################################################################
 
 function select_helper(x, args...)
-    exprs = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = false, nolhs = false) for ex in exprs)
+    exprs, wrap_byrow = create_args_vector(args...)
+    t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_byrow = wrap_byrow) for ex in exprs)
     quote
         $DataFrames.select($x, $(t...))
     end
@@ -651,6 +1011,28 @@ and
 ```
 @select(df, :x, :y = :a .+ :b)
 ```
+
+`@select` uses the syntax `@byrow` to wrap transformations in
+the `ByRow` function wrapper from DataFrames, apply a function row-wise,
+similar to broadcasting. For example, the call
+
+```
+@select(df, @byrow y = :x == 1 ? true : false)
+```
+
+becomes
+
+```
+select(df, :x => ByRow(x -> x == 1 ? true : false) => :y)
+```
+
+a transformation which cannot be conveniently expressed
+using broadcasting.
+
+To avoid writing `@byrow` multiple times when performing multiple
+transformations by row, `@select` allows `@byrow` at the
+beginning of a block of selectations (i.e. `@byrow begin... end`).
+All transformations in the block will operate by row.
 
 ### Examples
 
@@ -704,8 +1086,8 @@ end
 ##############################################################################
 
 function select!_helper(x, args...)
-    exprs = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = false, nolhs = false) for ex in exprs)
+    exprs, wrap_byrow = create_args_vector(args...)
+    t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_byrow = wrap_byrow) for ex in exprs)
     quote
         $DataFrames.select!($x, $(t...))
     end
@@ -731,6 +1113,28 @@ in which case each line in the block is a separate
 transformation or selector, or as a series of
 arguments and keyword arguments. For example, the following are
 equivalent:
+
+`@select!` uses the syntax `@byrow` to wrap transformations in
+the `ByRow` function wrapper from DataFrames, apply a function row-wise,
+similar to broadcasting. For example, the call
+
+```
+@select!(df, @byrow y = :x == 1 ? true : false)
+```
+
+becomes
+
+```
+select!(df, :x => ByRow(x -> x == 1 ? true : false) => :y)
+```
+
+a transformation which cannot be conveniently expressed
+using broadcasting.
+
+To avoid writing `@byrow` multiple times when performing multiple
+transformations by row, `@select!` allows `@byrow` at the
+beginning of a block of select!ations (i.e. `@byrow begin... end`).
+All transformations in the block will operate by row.
 
 ### Examples
 
@@ -794,13 +1198,13 @@ function combine_helper(x, args...; deprecation_warning = false)
     deprecation_warning && @warn "`@based_on` is deprecated. Use `@combine` instead."
 
     # Only allow one argument when returning a Table object
-    exprs = create_args_vector(args...)
+    exprs, wrap_byrow = create_args_vector(args...)
     fe = first(exprs)
     if length(exprs) == 1 &&
         !(fe isa QuoteNode) &&
         !(fe.head == :(=) || fe.head == :kw)
 
-        t = fun_to_vec(fe; gensym_names = false, nolhs = true)
+        t = fun_to_vec(fe; gensym_names = false, nolhs = true, wrap_byrow = wrap_byrow)
 
         # 0.22: No pair as first arg, needs AsTable in other args to return table
         if DATAFRAMES_GEQ_22
@@ -814,7 +1218,7 @@ function combine_helper(x, args...; deprecation_warning = false)
             end
         end
     else
-        t = (fun_to_vec(ex; gensym_names = false, nolhs = false) for ex in exprs)
+        t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_byrow = wrap_byrow) for ex in exprs)
         quote
             $DataFrames.combine($x, $(t...))
         end
@@ -922,13 +1326,13 @@ end
 function by_helper(x, what, args...)
     # Only allow one argument when returning a Table object
     # Only allow one argument when returning a Table object
-    exprs = create_args_vector(args...)
+    exprs, wrap_byrow = create_args_vector(args...)
     fe = first(exprs)
     if length(exprs) == 1 &&
         !(fe isa QuoteNode) &&
         !(fe.head == :(=) || fe.head == :kw)
 
-        t = fun_to_vec(fe; gensym_names = false, nolhs = true)
+        t = fun_to_vec(fe; gensym_names = false, nolhs = true, wrap_byrow = wrap_byrow)
 
         # 0.22: No pair as first arg, needs AsTable in other args to return table
         if DATAFRAMES_GEQ_22
@@ -942,7 +1346,7 @@ function by_helper(x, what, args...)
             end
         end
     else
-        t = (fun_to_vec(ex; gensym_names = false, nolhs = false) for ex in exprs)
+        t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_byrow = wrap_byrow) for ex in exprs)
         quote
             $DataFrames.combine($groupby($x, $what), $(t...))
         end

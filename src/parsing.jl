@@ -61,9 +61,11 @@ function args_to_selectors(v)
     :(DataFramesMeta.make_source_concrete($(Expr(:vect, t...))))
 end
 
+is_macro_head(ex, name) = false
+is_macro_head(ex::Expr, name) = ex.head == :macrocall && ex.args[1] == Symbol(name)
 
 """
-    get_source_fun(function_expr)
+    get_source_fun(function_expr; wrap_byrow::Bool=false)
 
 Given an expression that may contain `QuoteNode`s (`:x`)
 and items wrapped in `cols`, return a function
@@ -83,11 +85,16 @@ representing the vector of inputs that will be
 used as the `src` in the `src => fun => dest`
 call later on.
 
+If `wrap_byrow=true` then the function gets wrapped
+in `ByRow`. If the expression begins with `@byrow`,
+then `get_source_fun` is recurively called on the
+expression that `@byrow` acts on, with `wrap_byrow=true`.
+
 ### Examples
 
 julia> using MacroTools
 
-julia> ex = :(:x + :y)
+julia> ex = :(:x + :y);
 
 julia> DataFramesMeta.get_source_fun(ex)
 (:(DataFramesMeta.make_source_concrete([:x, :y])), :+)
@@ -101,10 +108,23 @@ julia> src, fun = DataFramesMeta.get_source_fun(ex);
 julia> MacroTools.prettify(fun)
 :((mammoth, goat)->mammoth .+ 1 .* goat)
 
+julia> ex = :(@byrow :x * :y);
+
+julia> src, fun = DataFramesMeta.get_source_fun(ex);
+
+julia> MacroTools.prettify(fun)
+:(ByRow(*))
+```
+
 """
-function get_source_fun(function_expr)
+function get_source_fun(function_expr; wrap_byrow::Bool=false)
     # recursive step for begin :a + :b end
-    if function_expr isa Expr &&
+    if is_macro_head(function_expr, "@byrow")
+        if wrap_byrow
+            throw(ArgumentError("Redundant `@byrow` calls."))
+        end
+        return get_source_fun(function_expr.args[3], wrap_byrow=true)
+    elseif function_expr isa Expr &&
         function_expr.head == :block &&
         length(function_expr.args) == 1
 
@@ -120,15 +140,11 @@ function get_source_fun(function_expr)
         else
             fun = fun_t
         end
-
-        return source, fun
     elseif is_simple_broadcast_call(function_expr)
         # extract source symbols from quotenodes
         source = args_to_selectors(function_expr.args[2].args)
         fun_t = function_expr.args[1]
         fun = :(DataFrames.ByRow($fun_t))
-
-        return source, fun
     else
         membernames = Dict{Any, Symbol}()
 
@@ -142,15 +158,20 @@ function get_source_fun(function_expr)
                 $body
             end
         end
-        return source, fun
     end
+
+    if wrap_byrow
+        fun = :(ByRow($fun))
+    end
+
+    return source, fun
 end
 
 # `nolhs` needs to be `true` when we have syntax of the form
 # `@combine(gd, fun(:x, :y))` where `fun` returns a `table` object.
 # We don't create the "new name" pair because new names are
 # given by the table.
-function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
+function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false, wrap_byrow::Bool=false)
     # classify the type of expression
     # :x # handled via dispatch
     # cols(:x) # handled as though above
@@ -168,6 +189,13 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
     # cols(:y) = f(cols(:x)) # re-write as simple call, RHS is block, use cols
     # cols(y) = :x + 1 # re-write as complicated col, but RHS is :block
     # cols(:y) = cols(:x) + 1 # re-write as complicated call, RHS is block, use cols
+    # `@byrow` before any of the above
+    if is_macro_head(ex, "@byrow")
+        if wrap_byrow
+            throw(ArgumentError("Redundant `@byrow` call."))
+        end
+        return fun_to_vec(ex.args[3]; nolhs = nolhs, gensym_names = gensym_names, wrap_byrow = true)
+    end
 
     if gensym_names
         ex = Expr(:kw, gensym(), ex)
@@ -213,6 +241,11 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
         throw(ArgumentError("This path should not be reached"))
     end
 
+    if is_macro_head(rhs, "@byrow")
+        s = "In keyword argument inputs, `@byrow` must be on the left hand side. " *
+        "Did you write `y = @byrow f(:x)` instead of `@byrow y = f(:x)`?"
+        throw(ArgumentError(s))
+    end
 
     # y = :x
     if lhs isa Symbol && rhs isa QuoteNode
@@ -258,8 +291,8 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
     # y = f(cols(:x))
     # y = :x + 1
     # y = cols(:x) + 1
+    source, fun = get_source_fun(rhs; wrap_byrow = wrap_byrow)
     if lhs isa Symbol
-        source, fun = get_source_fun(rhs)
         dest = QuoteNode(lhs)
 
         return quote
@@ -269,7 +302,6 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
 
     # cols(:y) = f(:x)
     if onearg(lhs, :cols)
-        source, fun = get_source_fun(rhs)
         dest = lhs.args[2]
 
         return quote
@@ -279,7 +311,7 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false)
 
     throw(ArgumentError("This path should not be reached"))
 end
-fun_to_vec(ex::QuoteNode; nolhs::Bool = false, gensym_names::Bool = false) = ex
+fun_to_vec(ex::QuoteNode; nolhs::Bool = false, gensym_names::Bool = false, wrap_byrow::Bool = false) = ex
 
 function make_source_concrete(x::AbstractVector)
     if isempty(x) || isconcretetype(eltype(x))
@@ -308,29 +340,53 @@ function replace_dotted!(e, membernames)
 end
 
 """
-    create_args_vector(args...)
+    create_args_vector(args...) -> vec, wrap_byrow
 
 Given multiple arguments which can be any type
 of expression-like object (`Expr`, `QuoteNode`, etc.),
 puts them into a single array, removing line numbers.
 """
 function create_args_vector(args...)
-    Any[Base.remove_linenums!(arg) for arg in args]
+    Any[Base.remove_linenums!(arg) for arg in args], false
 end
 
 """
-   create_args_vector(arg)
+   create_args_vector(arg) -> vec, wrap_byrow
 
-Normalize a single input to a vector of expressions.
+Normalize a single input to a vector of expressions,
+with a `wrap_byrow` flag indicating that the
+expressions should operate by row.
+
 If `arg` is a single `:block`, it is unnested.
 Otherwise, return a single-element array.
 Also removes line numbers.
+
+If `arg` is of the form `@byrow ...`, then
+`wrap_byrow` is returned as `true`.
 """
 function create_args_vector(arg)
+    if arg isa Expr && is_macro_head(arg, "@byrow")
+        wrap_byrow = true
+        largs = length(arg.args)
+        if largs == 2
+            throw(ArgumentError("No transformations supplied with `@byrow`"))
+        elseif largs == 3
+            arg = arg.args[3]
+        else
+            arg = Expr(:block, arg.args[3:end]...)
+        end
+    else
+        wrap_byrow = false
+    end
+
     if arg isa Expr && arg.head == :block
         x = Base.remove_linenums!(arg).args
     else
         x = Any[Base.remove_linenums!(arg)]
     end
-    return x
+
+    if wrap_byrow && any(t -> is_macro_head(t, "@byrow"), x)
+        throw(ArgumentError("Redundant `@byrow` calls."))
+    end
+    return x, wrap_byrow
 end
