@@ -12,13 +12,13 @@ Metaprogramming tools for DataFrames.jl objects.
 DataFramesMeta.jl is a registered Julia package. Run either of the following to 
 install:
 
-```
+```julia
 julia> import Pkg; Pkg.add("DataFramesMeta")
 ```
 
 or via the `Pkg` REPL mode (enter by typing `]` at the REPL console)
 
-```
+```julia
 ] add DataFramesMeta
 ```
 
