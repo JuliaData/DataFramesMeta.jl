@@ -271,6 +271,9 @@ end
 
 ## Row-wise transformations with `@byrow`
 
+`@byrow` provides a convenient syntax to apply operations by-row,
+without having to vectorize manually.  
+
 DataFrames.jl provides the function wrapper `ByRow`. `ByRow(f)(x, y)`
 is roughly equivalent to `f.(x, y)`. DataFramesMeta.jl allows users 
 to construct expressions using `ByRow` function wrapper with the 
