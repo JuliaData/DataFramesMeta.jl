@@ -18,7 +18,7 @@ In addition, DataFramesMeta provides
   convenient syntax
 * `@eachrow` and `@eachrow!` for looping through rows in data frame, again with high performance and 
   convenient syntax. 
-* `@byrow` for applying functions by-row of a data frame.
+* `@byrow` for applying functions to each row of a data frame (only supported inside other macros).
 * `@linq`, for piping the above macros together, similar to [magrittr](https://cran.r-project.org/web/packages/magrittr/vignettes/magrittr.html)'s
   `%>%` in R. 
 

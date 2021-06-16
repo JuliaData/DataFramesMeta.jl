@@ -61,6 +61,8 @@ end
 ##
 ##############################################################################
 """
+    @byrow
+
 Broadcast operations within DataFramesMeta.jl macros.
 
 `@byrow` is not a "real" Julia macro but rather serves as a "flag"
@@ -70,7 +72,7 @@ to represent an operation should be applied "by-row".
 If an expression starts with `@byrow`, either of the form `@byrow = f(:x)`
 in transformations or `@byrow f(:x)` in `@orderby`, `@where`, and `@with`,
 then the anonymous function created by DataFramesMeta is wrapped in the
-function-wrapped `DataFrames.ByRow`.
+`DataFrames.ByRow` function wrapper, which broadcasts the function so that it run on each row.
 
 ### Examples
 
@@ -113,7 +115,7 @@ julia> @where df @byrow begin
 
 ### Comparison with `@eachrow`
 
-To re-cap, the `@eachrow` rougly transforms
+To re-cap, the `@eachrow` macro roughly transforms
 
 ```julia
 @eachrow df begin
@@ -157,9 +159,9 @@ tempfun.(df.a, df.b)
 In contrast to `@eachrow`, `@with` combined with `@byrow` returns a vector of the
 broadcasted multiplication and not a data frame.
 
-Additionally, `@eachrow` and `@eachrow!` allow modifying a data
-data frame. Just as with Base Julia broadcasting, `@byrow` will
-not update columns.
+```suggestion 
+Additionally, transformations applied using `@eachrow!` modify the input
+data frame. On the contrary, `@byrow` does not update columns.
 
 ```julia
 julia> df = DataFrame(a = [1, 2], b = [3, 4]);
@@ -264,7 +266,8 @@ julia> @time @with df :a .+ expensive();
 
 ```
 
-This problem comes up when using the `@.` macro as well, but can easily be fixed with `\$`.
+  This problem comes up when using the `@.` macro as well,
+  but can easily be fixed with `\$`.
 
 ```julia
 julia> @time @with df @. :a + expensive();

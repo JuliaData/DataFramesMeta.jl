@@ -117,10 +117,10 @@ julia> MacroTools.prettify(fun)
 ```
 
 """
-function get_source_fun(function_expr; wrap_byrow=false)
+function get_source_fun(function_expr; wrap_byrow::Bool=false)
     # recursive step for begin :a + :b end
     if is_macro_head(function_expr, "@byrow")
-        if wrap_byrow == true
+        if wrap_byrow
             throw(ArgumentError("Redundant `@byrow` calls."))
         end
         return get_source_fun(function_expr.args[3], wrap_byrow=true)
@@ -171,7 +171,7 @@ end
 # `@combine(gd, fun(:x, :y))` where `fun` returns a `table` object.
 # We don't create the "new name" pair because new names are
 # given by the table.
-function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false, wrap_byrow=false)
+function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false, wrap_byrow::Bool=false)
     # classify the type of expression
     # :x # handled via dispatch
     # cols(:x) # handled as though above
@@ -191,7 +191,7 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false, w
     # cols(:y) = cols(:x) + 1 # re-write as complicated call, RHS is block, use cols
     # `@byrow` before any of the above
     if is_macro_head(ex, "@byrow")
-        if wrap_byrow == true
+        if wrap_byrow
             throw(ArgumentError("Redundant `@byrow` call."))
         end
         return fun_to_vec(ex.args[3]; nolhs = nolhs, gensym_names = gensym_names, wrap_byrow = true)
