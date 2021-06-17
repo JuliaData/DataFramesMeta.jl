@@ -415,7 +415,7 @@ end
 
 function where_helper(x, args...)
     exprs, wrap_byrow = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = true, nolhs = true, wrap_byrow = wrap_byrow) for ex in exprs)
+    t = (fun_to_vec(ex; gensym_names = true, wrap_byrow = wrap_byrow) for ex in exprs)
     quote
         $where($x, $(t...))
     end
@@ -590,13 +590,30 @@ end
 
 ##############################################################################
 ##
+## @subset
+##
+##############################################################################
+function subset_helper(x, args...)
+    exprs, wrap_byrow = create_args_vector(args...)
+    t = (fun_to_vec(ex; gensym_names = false, wrap_byrow = wrap_byrow) for ex in exprs)
+    quote
+        $DataFrames.subset($x, $(t...))
+    end
+end
+
+macro subset(x, args...)
+    esc(subset_helper(x, args...))
+end
+
+##############################################################################
+##
 ## @orderby
 ##
 ##############################################################################
 
 function orderby_helper(x, args...)
     exprs, wrap_byrow = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = true, nolhs = true, wrap_byrow = wrap_byrow) for ex in exprs)
+    t = (fun_to_vec(ex; gensym_names = true, wrap_byrow = wrap_byrow) for ex in exprs)
     quote
         $DataFramesMeta.orderby($x, $(t...))
     end
@@ -760,7 +777,7 @@ end
 
 function transform_helper(x, args...)
     exprs, wrap_byrow = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_byrow = wrap_byrow) for ex in exprs)
+    t = (fun_to_vec(ex; gensym_names = false, wrap_byrow = wrap_byrow) for ex in exprs)
     quote
         $DataFrames.transform($x, $(t...))
     end
@@ -877,7 +894,7 @@ end
 
 function transform!_helper(x, args...)
     exprs, wrap_byrow = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_byrow = wrap_byrow) for ex in exprs)
+    t = (fun_to_vec(ex; gensym_names = false, wrap_byrow = wrap_byrow) for ex in exprs)
     quote
         $DataFrames.transform!($x, $(t...))
     end
@@ -972,7 +989,7 @@ end
 
 function select_helper(x, args...)
     exprs, wrap_byrow = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_byrow = wrap_byrow) for ex in exprs)
+    t = (fun_to_vec(ex; gensym_names = false, wrap_byrow = wrap_byrow) for ex in exprs)
     quote
         $DataFrames.select($x, $(t...))
     end
@@ -1087,7 +1104,7 @@ end
 
 function select!_helper(x, args...)
     exprs, wrap_byrow = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_byrow = wrap_byrow) for ex in exprs)
+    t = (fun_to_vec(ex; gensym_names = false, wrap_byrow = wrap_byrow) for ex in exprs)
     quote
         $DataFrames.select!($x, $(t...))
     end
@@ -1194,35 +1211,18 @@ end
 ##
 ##############################################################################
 
-function combine_helper(x, args...; deprecation_warning = false)
-    deprecation_warning && @warn "`@based_on` is deprecated. Use `@combine` instead."
-
+function combine_helper(x, args...)
     # Only allow one argument when returning a Table object
     exprs, wrap_byrow = create_args_vector(args...)
-    fe = first(exprs)
-    if length(exprs) == 1 &&
-        !(fe isa QuoteNode) &&
-        !(fe.head == :(=) || fe.head == :kw)
 
-        t = fun_to_vec(fe; gensym_names = false, nolhs = true, wrap_byrow = wrap_byrow)
-
-        # 0.22: No pair as first arg, needs AsTable in other args to return table
-        if DATAFRAMES_GEQ_22
-            quote
-                $DataFrames.combine($x, $t)
-            end
-        # 0.21: Pair as first arg, other args can't return table
-        else
-            quote
-                $DataFrames.combine($t, $x)
-            end
-        end
-    else
-        t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_byrow = wrap_byrow) for ex in exprs)
-        quote
-            $DataFrames.combine($x, $(t...))
-        end
+    t = (fun_to_vec(ex; gensym_names = false, wrap_byrow = wrap_byrow) for ex in exprs)
+    s = quote
+        $DataFrames.combine($x, $(t...))
     end
+
+    println(Main.MacroTools.prettify(s))
+
+    return s
 end
 
 """
@@ -1307,16 +1307,6 @@ macro combine(x, args...)
     esc(combine_helper(x, args...))
 end
 
-
-"""
-    @based_on(d, args...)
-
-Deprecated version of `@combine`, see: [`@combine`](@ref)
-"""
-macro based_on(x, args...)
-    esc(combine_helper(x, args...; deprecation_warning = true))
-end
-
 ##############################################################################
 ##
 ## @by - grouping
@@ -1324,32 +1314,11 @@ end
 ##############################################################################
 
 function by_helper(x, what, args...)
-    # Only allow one argument when returning a Table object
-    # Only allow one argument when returning a Table object
     exprs, wrap_byrow = create_args_vector(args...)
-    fe = first(exprs)
-    if length(exprs) == 1 &&
-        !(fe isa QuoteNode) &&
-        !(fe.head == :(=) || fe.head == :kw)
 
-        t = fun_to_vec(fe; gensym_names = false, nolhs = true, wrap_byrow = wrap_byrow)
-
-        # 0.22: No pair as first arg, needs AsTable in other args to return table
-        if DATAFRAMES_GEQ_22
-            quote
-                $DataFrames.combine($groupby($x, $what), $t)
-            end
-        # 0.21: Pair as first arg, other args can't return table
-        else
-            quote
-                $DataFrames.combine($t, $groupby($x, $what))
-            end
-        end
-    else
-        t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_byrow = wrap_byrow) for ex in exprs)
-        quote
-            $DataFrames.combine($groupby($x, $what), $(t...))
-        end
+    t = (fun_to_vec(ex; gensym_names = false, wrap_byrow = wrap_byrow) for ex in exprs)
+    quote
+        $DataFrames.combine($groupby($x, $what), $(t...))
     end
 end
 

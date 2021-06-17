@@ -118,6 +118,7 @@ julia> MacroTools.prettify(fun)
 
 """
 function get_source_fun(function_expr; wrap_byrow::Bool=false)
+    println(Main.MacroTools.prettify(function_expr))
     # recursive step for begin :a + :b end
     if is_macro_head(function_expr, "@byrow")
         if wrap_byrow
@@ -175,8 +176,6 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false, w
     # classify the type of expression
     # :x # handled via dispatch
     # cols(:x) # handled as though above
-    # f(:x) # nohls == true, re-write as simple call
-    # (; a = :x, ) # nolhs == true, complicated call
     # y = :x # :x is a QuoteNode
     # y = cols(:x) # use cols on RHS
     # cols(:y) = :x # RHS in :block
@@ -194,14 +193,14 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false, w
         if wrap_byrow
             throw(ArgumentError("Redundant `@byrow` call."))
         end
-        return fun_to_vec(ex.args[3]; nolhs = nolhs, gensym_names = gensym_names, wrap_byrow = true)
+        return fun_to_vec(ex.args[3]; gensym_names = gensym_names, wrap_byrow = true)
     end
 
     if gensym_names
         ex = Expr(:kw, gensym(), ex)
     end
 
-    nokw = (ex.head !== :(=)) && (ex.head !== :kw) && nolhs
+    # nokw = (ex.head !== :(=)) && (ex.head !== :kw) && nolhs
 
     # :x
     # handled below via dispatch on ::QuoteNode
@@ -214,31 +213,28 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false, w
     # The above cases are the only ones allowed
     # if you don't have nolhs explicitely stated
     # or are just `:x` or `cols(x)`
-    if !(ex.head === :(=) || ex.head === :kw || nolhs)
-        throw(ArgumentError("Expressions not of the form `y = f(:x)` are currently disallowed."))
-    end
+    # if !(ex.head === :(=) || ex.head === :kw || nolhs)
+    #     throw(ArgumentError("Expressions not of the form `y = f(:x)` are currently disallowed."))
+    # end
 
     # f(:x) # it's assumed this returns a Table
     # (; a = :x, ) # something more explicit we might see
-    if nokw
-        source, fun = get_source_fun(ex)
+    if is_macro_head(ex, "@astable")
 
+        source, fun = get_source_fun(ex.args[3])
         return quote
             $source => $fun => AsTable
         end
     end
 
-    if !nokw
-        lhs = ex.args[1]
-        rhs_t = ex.args[2]
-        # if lhs is a cols(y) then the rhs gets parsed as a block
-        if onearg(lhs, :cols) && rhs_t.head === :block && length(rhs_t.args) == 1
-            rhs = rhs_t.args[1]
-        else
-            rhs = rhs_t
-        end
+
+    lhs = ex.args[1]
+    rhs_t = ex.args[2]
+    # if lhs is a cols(y) then the rhs gets parsed as a block
+    if onearg(lhs, :cols) && rhs_t.head === :block && length(rhs_t.args) == 1
+        rhs = rhs_t.args[1]
     else
-        throw(ArgumentError("This path should not be reached"))
+        rhs = rhs_t
     end
 
     if is_macro_head(rhs, "@byrow")
@@ -311,7 +307,7 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false, w
 
     throw(ArgumentError("This path should not be reached"))
 end
-fun_to_vec(ex::QuoteNode; nolhs::Bool = false, gensym_names::Bool = false, wrap_byrow::Bool = false) = ex
+fun_to_vec(ex::QuoteNode; gensym_names::Bool = false, wrap_byrow::Bool = false) = ex
 
 function make_source_concrete(x::AbstractVector)
     if isempty(x) || isconcretetype(eltype(x))

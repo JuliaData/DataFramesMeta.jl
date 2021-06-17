@@ -5,11 +5,11 @@ using Reexport
 @reexport using DataFrames
 
 # Basics:
-export @with, @where, @orderby, @transform, @by, @combine, @select,
+export @with, @subset, @orderby, @transform, @by, @combine, @select,
        @transform!, @select!,
        @eachrow, @eachrow!,
        @byrow,
-       @based_on # deprecated
+       @based_on, @where # deprecated
 
 
 global const DATAFRAMES_GEQ_22 = isdefined(DataFrames, :pretty_table) ? true : false
