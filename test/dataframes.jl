@@ -728,4 +728,47 @@ end
     @test @transform(df, cols("X Y Z")) == df
 end
 
+macro linenums_macro(arg)
+    if arg isa Expr && arg.head == :block && length(arg.args) == 1 && arg.args[1] isa LineNumberNode
+        esc(:(true))
+    else
+        esc(:(false))
+    end
+end
+
+@testset "removing lines" begin
+    df = DataFrame(a = [1], b = [2])
+    # Can't use @test because @test remove line numbers
+    d = @transform(df, y = @linenums_macro begin end)
+    @test d.y == [true]
+
+    d = @transform df begin
+        y = @linenums_macro begin end
+    end
+
+    @test d.y == [true]
+
+    d = @transform df @byrow begin
+        y = @linenums_macro begin end
+    end
+
+    @test d.y == [true]
+
+    d = @where(df, @linenums_macro begin end)
+
+    @test nrow(d) == 1
+
+    d = @where df begin
+        @byrow @linenums_macro begin end
+    end
+
+    @test nrow(d) == 1
+
+    d = @where df @byrow begin
+        @linenums_macro begin end
+    end
+
+    @test nrow(d) == 1
+end
+
 end # module

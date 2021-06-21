@@ -118,17 +118,14 @@ julia> MacroTools.prettify(fun)
 
 """
 function get_source_fun(function_expr; wrap_byrow::Bool=false)
+    function_expr = MacroTools.unblock(function_expr)
+
     # recursive step for begin :a + :b end
     if is_macro_head(function_expr, "@byrow")
         if wrap_byrow
             throw(ArgumentError("Redundant `@byrow` calls."))
         end
         return get_source_fun(function_expr.args[3], wrap_byrow=true)
-    elseif function_expr isa Expr &&
-        function_expr.head == :block &&
-        length(function_expr.args) == 1
-
-        return get_source_fun(function_expr.args[1])
     elseif is_simple_non_broadcast_call(function_expr)
         source = args_to_selectors(function_expr.args[2:end])
         fun_t = function_expr.args[1]
@@ -230,13 +227,7 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false, w
 
     if !nokw
         lhs = ex.args[1]
-        rhs_t = ex.args[2]
-        # if lhs is a cols(y) then the rhs gets parsed as a block
-        if onearg(lhs, :cols) && rhs_t.head === :block && length(rhs_t.args) == 1
-            rhs = rhs_t.args[1]
-        else
-            rhs = rhs_t
-        end
+        rhs = MacroTools.unblock(ex.args[2])
     else
         throw(ArgumentError("This path should not be reached"))
     end
@@ -281,7 +272,6 @@ function fun_to_vec(ex::Expr; nolhs::Bool = false, gensym_names::Bool = false, w
     if onearg(lhs, :cols) && onearg(rhs, :cols)
         source = rhs.args[2]
         dest = lhs.args[2]
-
         return quote
             $source => $dest
         end
@@ -347,7 +337,7 @@ of expression-like object (`Expr`, `QuoteNode`, etc.),
 puts them into a single array, removing line numbers.
 """
 function create_args_vector(args...)
-    Any[Base.remove_linenums!(arg) for arg in args], false
+    create_args_vector(Expr(:block, args...))
 end
 
 """
@@ -380,9 +370,9 @@ function create_args_vector(arg)
     end
 
     if arg isa Expr && arg.head == :block
-        x = Base.remove_linenums!(arg).args
+        x = MacroTools.rmlines(arg).args
     else
-        x = Any[Base.remove_linenums!(arg)]
+        x = Any[arg]
     end
 
     if wrap_byrow && any(t -> is_macro_head(t, "@byrow"), x)

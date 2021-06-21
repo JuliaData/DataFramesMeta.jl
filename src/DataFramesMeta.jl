@@ -2,6 +2,8 @@ module DataFramesMeta
 
 using Reexport
 
+using MacroTools
+
 @reexport using DataFrames
 
 # Basics:
