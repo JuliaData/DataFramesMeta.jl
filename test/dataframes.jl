@@ -764,7 +764,7 @@ end
 
     @test nrow(d) == 1
 
-     d = @where df @byrow begin
+    d = @where df @byrow begin
         @linenums_macro begin end
     end
 
