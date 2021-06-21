@@ -126,7 +126,6 @@ function get_source_fun(function_expr; wrap_byrow::Bool=false)
             throw(ArgumentError("Redundant `@byrow` calls."))
         end
         return get_source_fun(function_expr.args[3], wrap_byrow=true)
-
     elseif is_simple_non_broadcast_call(function_expr)
         source = args_to_selectors(function_expr.args[2:end])
         fun_t = function_expr.args[1]
