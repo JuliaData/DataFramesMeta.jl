@@ -10,7 +10,7 @@ using MacroTools
 export @with, @where, @orderby, @transform, @by, @combine, @select,
        @transform!, @select!,
        @eachrow, @eachrow!,
-       @byrow,
+       @byrow, @astable,
        @based_on # deprecated
 
 

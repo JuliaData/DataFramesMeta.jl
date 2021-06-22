@@ -284,6 +284,54 @@ end
 
 ##############################################################################
 ##
+## @astable
+##
+##############################################################################
+
+"""
+    @astable
+
+An internal flag inside DataFramesMeta.jl macros to indicate
+that a transformation returns a Tables.jl-compatible object.
+
+`@astable` is not a "real" Julia macro but rather serves as a "flag"
+to indicate that the `dest` in the `source => fun => dest` expression
+within DataFramesMeta should be `AsTable`. For example, the expression
+
+```
+@transform(df, @astable (x = :a, y = :b))
+```
+
+is equivalent to
+
+```
+transform(df, [:a, :b] => ((a, b) -> (x = a, y = b)) => AsTable)
+```
+
+`@astable` is most useful in `@combine` and `@by`
+
+### Examples
+
+```
+julia> df = DataFrame(a = [1, 1, 2, 2], b = [4, 5, 6, 7]);
+
+julia> @by df :a @astable begin
+           (firstb = first(:b), lastb = last(:b))
+       end
+2×3 DataFrame
+ Row │ a      firstb  lastb
+     │ Int64  Int64   Int64
+─────┼──────────────────────
+   1 │     1       4      5
+   2 │     2       6      7
+```
+"""
+macro astable(args...)
+    throw(ArgumentError("@astable is only allowed inside DataFramesMeta macros."))
+end
+
+##############################################################################
+##
 ## @with
 ##
 ##############################################################################

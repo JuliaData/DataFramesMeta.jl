@@ -322,7 +322,7 @@ function fun_to_vec(ex::Expr; gensym_names::Bool=false, no_dest::Bool=false, wra
 
     throw(ArgumentError("This path should not be reached"))
 end
-fun_to_vec(ex::QuoteNode; no_dest::Bool=true, gensym_names::Bool=false, wrap_byrow::Bool=false) = ex
+fun_to_vec(ex::QuoteNode; no_dest::Bool=false, gensym_names::Bool=false, wrap_byrow::Bool=false) = ex
 
 function make_source_concrete(x::AbstractVector)
     if isempty(x) || isconcretetype(eltype(x))
