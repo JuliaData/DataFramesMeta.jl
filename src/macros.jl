@@ -288,15 +288,22 @@ end
 ##
 ##############################################################################
 
-exec(df, v, fun) = fun(map(c -> DataFramesMeta.getsinglecolumn(df, c), v)...)
+function exec(df, p::Pair)
+    cols = first(p)
+    fun = last(p)
+    fun(map(c -> DataFramesMeta.getsinglecolumn(df, c), cols)...)
+end
 
 getsinglecolumn(df, s::DataFrames.ColumnIndex) = df[!, s]
 getsinglecolumn(df, s) = throw(ArgumentError("Only indexing with Symbols, strings and integers " *
     "is currently allowed with cols"))
 
 function with_helper(d, body)
-    source, fun = get_source_fun(body)
-    :(DataFramesMeta.exec($d, $source, $fun))
+    # Make body an expression to force the
+    # complicated method of fun_to_vec
+    # in the case of QuoteNode
+    t = fun_to_vec(Expr(:block, body); no_dest=true)
+    :(DataFramesMeta.exec($d, $t))
 end
 
 """
@@ -415,7 +422,7 @@ end
 
 function where_helper(x, args...)
     exprs, wrap_byrow = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = true, nolhs = true, wrap_byrow = wrap_byrow) for ex in exprs)
+    t = (fun_to_vec(ex; gensym_names = true, wrap_byrow = wrap_byrow) for ex in exprs)
     quote
         $where($x, $(t...))
     end
@@ -596,7 +603,7 @@ end
 
 function orderby_helper(x, args...)
     exprs, wrap_byrow = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = true, nolhs = true, wrap_byrow = wrap_byrow) for ex in exprs)
+    t = (fun_to_vec(ex; gensym_names = true, wrap_byrow = wrap_byrow) for ex in exprs)
     quote
         $DataFramesMeta.orderby($x, $(t...))
     end
@@ -760,7 +767,7 @@ end
 
 function transform_helper(x, args...)
     exprs, wrap_byrow = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_byrow = wrap_byrow) for ex in exprs)
+    t = (fun_to_vec(ex; gensym_names = false, wrap_byrow = wrap_byrow) for ex in exprs)
     quote
         $DataFrames.transform($x, $(t...))
     end
@@ -877,7 +884,7 @@ end
 
 function transform!_helper(x, args...)
     exprs, wrap_byrow = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_byrow = wrap_byrow) for ex in exprs)
+    t = (fun_to_vec(ex; gensym_names = false, wrap_byrow = wrap_byrow) for ex in exprs)
     quote
         $DataFrames.transform!($x, $(t...))
     end
@@ -972,7 +979,7 @@ end
 
 function select_helper(x, args...)
     exprs, wrap_byrow = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_byrow = wrap_byrow) for ex in exprs)
+    t = (fun_to_vec(ex; gensym_names = false, wrap_byrow = wrap_byrow) for ex in exprs)
     quote
         $DataFrames.select($x, $(t...))
     end
@@ -1087,7 +1094,7 @@ end
 
 function select!_helper(x, args...)
     exprs, wrap_byrow = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_byrow = wrap_byrow) for ex in exprs)
+    t = (fun_to_vec(ex; gensym_names = false, wrap_byrow = wrap_byrow) for ex in exprs)
     quote
         $DataFrames.select!($x, $(t...))
     end
@@ -1197,31 +1204,23 @@ end
 function combine_helper(x, args...; deprecation_warning = false)
     deprecation_warning && @warn "`@based_on` is deprecated. Use `@combine` instead."
 
-    # Only allow one argument when returning a Table object
     exprs, wrap_byrow = create_args_vector(args...)
+
     fe = first(exprs)
     if length(exprs) == 1 &&
-        !(fe isa QuoteNode) &&
-        !(fe.head == :(=) || fe.head == :kw)
+        !(fe isa QuoteNode || onearg(fe, :cols)) &&
+        !(fe.head == :(=) || fe.head == :kw) &&
+        !(fe.args[1] == Symbol("@astable"))
 
-        t = fun_to_vec(fe; gensym_names = false, nolhs = true, wrap_byrow = wrap_byrow)
+        @warn "Returning a Table object from @by and @combine now requires an explicit @astable flag"
 
-        # 0.22: No pair as first arg, needs AsTable in other args to return table
-        if DATAFRAMES_GEQ_22
-            quote
-                $DataFrames.combine($x, $t)
-            end
-        # 0.21: Pair as first arg, other args can't return table
-        else
-            quote
-                $DataFrames.combine($t, $x)
-            end
-        end
-    else
-        t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_byrow = wrap_byrow) for ex in exprs)
-        quote
-            $DataFrames.combine($x, $(t...))
-        end
+        exprs = ((:(@astable $fe)),)
+    end
+
+    t = (fun_to_vec(ex; gensym_names = false, wrap_byrow = wrap_byrow) for ex in exprs)
+
+    quote
+        $DataFrames.combine($x, $(t...))
     end
 end
 
@@ -1329,27 +1328,19 @@ function by_helper(x, what, args...)
     exprs, wrap_byrow = create_args_vector(args...)
     fe = first(exprs)
     if length(exprs) == 1 &&
-        !(fe isa QuoteNode) &&
-        !(fe.head == :(=) || fe.head == :kw)
+        !(fe isa QuoteNode || onearg(fe, :cols)) &&
+        !(fe.head == :(=) || fe.head == :kw) &&
+        !(fe.args[1] == Symbol("@astable"))
 
-        t = fun_to_vec(fe; gensym_names = false, nolhs = true, wrap_byrow = wrap_byrow)
+        @warn "Returning a Table object from @by and @combine now requires an explicit @astable flag"
 
-        # 0.22: No pair as first arg, needs AsTable in other args to return table
-        if DATAFRAMES_GEQ_22
-            quote
-                $DataFrames.combine($groupby($x, $what), $t)
-            end
-        # 0.21: Pair as first arg, other args can't return table
-        else
-            quote
-                $DataFrames.combine($t, $groupby($x, $what))
-            end
-        end
-    else
-        t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_byrow = wrap_byrow) for ex in exprs)
-        quote
-            $DataFrames.combine($groupby($x, $what), $(t...))
-        end
+        exprs = ((:(@astable $fe)),)
+    end
+
+    t = (fun_to_vec(ex; gensym_names = false, wrap_byrow = wrap_byrow) for ex in exprs)
+
+    quote
+        $DataFrames.combine($groupby($x, $what), $(t...))
     end
 end
 
