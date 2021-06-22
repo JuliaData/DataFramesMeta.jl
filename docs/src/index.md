@@ -333,7 +333,7 @@ DataFrames.jl exports the data type `AsTable` which indicates that a transformat
 returns a Tables.jl-compatible object. DataFramesMeta.jl emulates this behavior
 with the macro-flag `@astable`. 
 
-For more information, see the [DataFramesMeta.@astable](@ref). 
+For more information, see the [API](@ref) section. 
 
 ## Working with column names programmatically with `cols`
 
