@@ -19,6 +19,7 @@ In addition, DataFramesMeta provides
 * `@eachrow` and `@eachrow!` for looping through rows in data frame, again with high performance and 
   convenient syntax. 
 * `@byrow` for applying functions to each row of a data frame (only supported inside other macros).
+* `@astable` for signalling that a function returns a [Tables.jl](https://github.com/JuliaData/Tables.jl)-compatible object.
 * `@linq`, for piping the above macros together, similar to [magrittr](https://cran.r-project.org/web/packages/magrittr/vignettes/magrittr.html)'s
   `%>%` in R. 
 
@@ -325,6 +326,14 @@ however, like with `ByRow` in DataFrames.jl, when `@byrow` is
 used, functions do not take into account the grouping, so for
 example the result of `@transform(df, @byrow y = f(:x))` and 
 `@transform(groupby(df, :g), @byrow y = f(:x))` is the same.
+
+## Returning a Table with `@astable`
+
+DataFrames.jl exports the data type `AsTable` which indicates that a transformation
+returns a Tables.jl-compatible object. DataFramesMeta.jl emulates this behavior
+with the macro-flag `@astable`. 
+
+For more information, see the [DataFramesMeta.@astable](@ref). 
 
 ## Working with column names programmatically with `cols`
 
