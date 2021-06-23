@@ -8,7 +8,9 @@ my_tests = ["dataframes.jl",
             "function_compilation.jl",
             "chaining.jl",
             "linqmacro.jl",
-            "deprecated.jl"]
+            "deprecated.jl",
+            "byrow.jl",
+            "astable.jl"]
 
 println("Running tests:")
 

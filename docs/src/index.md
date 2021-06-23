@@ -329,9 +329,12 @@ example the result of `@transform(df, @byrow y = f(:x))` and
 
 ## Returning a Table with `@astable`
 
-DataFrames.jl exports the data type `AsTable` which indicates that a transformation
-returns a Tables.jl-compatible object. DataFramesMeta.jl emulates this behavior
-with the macro-flag `@astable`. 
+Use the syntax `@astable` for transformations which return 
+table-like objects, such as `NamedTuple`s. This is the DataFramesMeta.jl
+equivelent of the `AsTable` syntax in DataFrames.jl.
+
+`@astable` can be used inside `@transform`, `@transform!`,
+`@select`, `@select!`, `@combine`, and `@by`.
 
 For more information, see the [API](@ref) section. 
 
