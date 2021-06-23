@@ -454,7 +454,8 @@ functions.
 
 ## Chaining operations together with `@chain`
 
-DataFramesMeta.jl re-exports the `@chain` macro from 
+To enable connecting multiple commands together in 
+a pipe, DataFramesMeta.jl re-exports the `@chain` macro from 
 [Chain.jl](https://github.com/jkrumbiegel/Chain.jl). 
 
 ```julia
