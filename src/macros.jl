@@ -113,11 +113,6 @@ julia> @where df @byrow begin
    1 │     2      4
 ```
 
-`@byrow` can be combined with `@astable` in the same way
-that in DataFrames.jl `AsTable` can be combined with
-`ByRow`. The returned object must be a `NamedTuple`,
-a vector, or other "row-like" object.
-
 ### Comparison with `@eachrow`
 
 To re-cap, the `@eachrow` macro roughly transforms
@@ -287,71 +282,6 @@ macro byrow(args...)
     throw(ArgumentError("@byrow is deprecated outside of DataFramesMeta macros."))
 end
 
-##############################################################################
-##
-## @astable
-##
-##############################################################################
-
-"""
-    @astable
-
-An internal flag inside DataFramesMeta.jl macros to indicate
-that a transformation returns a Tables.jl-compatible object.
-
-`@astable` is not a "real" Julia macro but rather serves as a "flag"
-to indicate that the `dest` in the `source => fun => dest` expression
-within DataFramesMeta should be `AsTable`. For example, the expression
-
-```
-@transform(df, @astable (x = :a, y = :b))
-```
-
-is equivalent to
-
-```
-transform(df, [:a, :b] => ((a, b) -> (x = a, y = b)) => AsTable)
-```
-
-`@astable` is especially useful in `@combine` and `@by` for
-generating summary statistics by group.
-
-`@astable` can be combined with `@byrow` in the same way
-that in DataFrames.jl `AsTable` can be combined with
-`ByRow`. The returned object must be a `NamedTuple`,
-a vector, or other "row-like" object.
-
-### Examples
-
-```
-julia> df = DataFrame(a = [1, 1, 2, 2], b = [4, 5, 6, 7]);
-
-julia> @by df :a @astable begin
-           (firstb = first(:b), lastb = last(:b))
-       end
-2×3 DataFrame
- Row │ a      firstb  lastb
-     │ Int64  Int64   Int64
-─────┼──────────────────────
-   1 │     1       4      5
-   2 │     2       6      7
-
-julia> df = DataFrame(a = [1, 1, 2, 2], b = [4, 5, 6, 7]);
-
-julia> @transform df @byrow @astable (x = :a + 1, y = :b - 1)
-4×4 DataFrame
- Row │ a      b      x      y
-     │ Int64  Int64  Int64  Int64
-─────┼────────────────────────────
-   1 │     1      4      2      3
-   2 │     1      5      2      4
-   3 │     2      6      3      5
-   4 │     2      7      3      6
-```
-"""
-macro astable(args...)
-    throw(ArgumentError("@astable is only allowed inside DataFramesMeta macros."))
-end
 
 ##############################################################################
 ##
@@ -835,13 +765,6 @@ end
 ##
 ##############################################################################
 
-astable_docstring = """
-The `@astable` flag can be used for transformations that return
-Tables.jl compatible objects, such as `NamedTuple`s of `Vector`s.
-When combined with `@byrow`, transformations marked with `@astable`
-must return row-like objects, such as `NamedTuple`s of scalars or
-`Vector`s.
-"""
 
 function transform_helper(x, args...)
     exprs, wrap_byrow = create_args_vector(args...)
@@ -906,8 +829,6 @@ transformations by row, `@transform` allows `@byrow` at the
 beginning of a block of transformations (i.e. `@byrow begin... end`).
 All transformations in the block will operate by row.
 
-$astable_docstring
-
 ### Examples
 
 ```jldoctest
@@ -949,16 +870,6 @@ julia> @transform df @byrow begin
    2 │     2      1      2    200
    3 │     3      2      6    200
 
-julia> @transform df @astable begin
-           (A1 = :A .+ 1, B1 = :B .+ 1)
-       end
-3×4 DataFrame
- Row │ A      B      A1     B1
-     │ Int64  Int64  Int64  Int64
-─────┼────────────────────────────
-   1 │     1      2      2      3
-   2 │     2      1      3      2
-   3 │     3      2      4      3
 ```
 """
 macro transform(x, args...)
@@ -1036,8 +947,6 @@ To avoid writing `@byrow` multiple times when performing multiple
 transform!ations by row, `@transform!` allows `@byrow` at the
 beginning of a block of transform!ations (i.e. `@byrow begin... end`).
 All transform!ations in the block will operate by row.
-
-$astable_docstring
 
 ### Examples
 
@@ -1134,8 +1043,6 @@ transformations by row, `@select` allows `@byrow` at the
 beginning of a block of selectations (i.e. `@byrow begin... end`).
 All transformations in the block will operate by row.
 
-$astable_docstring
-
 ### Examples
 
 ```jldoctest
@@ -1173,23 +1080,6 @@ julia> @select df begin
    6 │     6      7
    7 │     7      9
    8 │     8      9
-
-julia> @select df @astable begin
-           (a1 = :a .+ 1, b2 = :b .+ 1)
-       end
-
-8×2 DataFrame
- Row │ a1     b2
-     │ Int64  Int64
-─────┼──────────────
-   1 │     2      3
-   2 │     3      2
-   3 │     4      3
-   4 │     5      2
-   5 │     2      3
-   6 │     3      2
-   7 │     4      3
-   8 │     5      2
 ```
 """
 macro select(x, args...)
@@ -1253,8 +1143,6 @@ To avoid writing `@byrow` multiple times when performing multiple
 transformations by row, `@select!` allows `@byrow` at the
 beginning of a block of select!ations (i.e. `@byrow begin... end`).
 All transformations in the block will operate by row.
-
-$astable_docstring
 
 ### Examples
 
@@ -1322,12 +1210,11 @@ function combine_helper(x, args...; deprecation_warning = false)
     fe = first(exprs)
     if length(exprs) == 1 &&
         !(fe isa QuoteNode || onearg(fe, :cols)) &&
-        !(fe.head == :(=) || fe.head == :kw) &&
-        !(fe.args[1] == Symbol("@astable"))
+        !(fe.head == :(=) || fe.head == :kw)
 
-        @warn "Returning a Table object from @by and @combine now requires an explicit @astable flag"
+        @warn "Returning a Table object from @by and @combine now requires `cols(AsTable)` on the LHS."
 
-        exprs = ((:(@astable $fe)),)
+        exprs = ((:(cols(AsTable) = $fe)),)
     end
 
     t = (fun_to_vec(ex; gensym_names = false, wrap_byrow = wrap_byrow) for ex in exprs)
@@ -1364,8 +1251,6 @@ and
 ```
 @combine(df, mx = mean(:x), sx = std(:x))
 ```
-
-$astable_docstring
 
 ### Examples
 
@@ -1416,14 +1301,6 @@ julia> @combine g begin
   19 │     3      6     27
   20 │     3      6     27
 
-julia> @combine g @astable (n_sum = sum(:n), n_min = minimum(:n))
-3×3 DataFrame
- Row │ x      n_sum  n_min
-     │ Int64  Int64  Int64
-─────┼─────────────────────
-   1 │     1     99      5
-   2 │     2     84      8
-   3 │     3     27      1
 ```
 """
 macro combine(x, args...)
@@ -1453,12 +1330,11 @@ function by_helper(x, what, args...)
     fe = first(exprs)
     if length(exprs) == 1 &&
         !(fe isa QuoteNode || onearg(fe, :cols)) &&
-        !(fe.head == :(=) || fe.head == :kw) &&
-        !(fe.args[1] == Symbol("@astable"))
+        !(fe.head == :(=) || fe.head == :kw)
 
-        @warn "Returning a Table object from @by and @combine now requires an explicit @astable flag"
+        @warn "Returning a Table object from @by and @combine now requires `cols(AsTable)` on the LHS."
 
-        exprs = ((:(@astable $fe)),)
+        exprs = ((:(cols(AsTable) = $fe)),)
     end
 
     t = (fun_to_vec(ex; gensym_names = false, wrap_byrow = wrap_byrow) for ex in exprs)
@@ -1467,7 +1343,6 @@ function by_helper(x, what, args...)
         $DataFrames.combine($groupby($x, $what), $(t...))
     end
 end
-
 
 """
     @by(d::AbstractDataFrame, cols, e...)
@@ -1501,8 +1376,6 @@ and
 ```
 @by(df, :g, mx = mean(:x), sx = std(:x))
 ```
-
-$astable_docstring
 
 ### Examples
 
@@ -1567,17 +1440,6 @@ julia> @by df :a begin
    7 │     4      4      6.0
    8 │     4      8      6.0
 
-julia> @by df :a @astable begin
-           (c_sum = first(:c), c_mean = mean(:c))
-       end
-4×3 DataFrame
- Row │ a      c_sum  c_mean
-     │ Int64  Int64  Float64
-─────┼───────────────────────
-   1 │     1      1      3.0
-   2 │     2      2      4.0
-   3 │     3      3      5.0
-   4 │     4      4      6.0
 ```
 """
 macro by(x, what, args...)

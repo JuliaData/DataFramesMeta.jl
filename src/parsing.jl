@@ -64,8 +64,8 @@ end
 is_macro_head(ex, name) = false
 is_macro_head(ex::Expr, name) = ex.head == :macrocall && ex.args[1] == Symbol(name)
 
-extract_macro_flags(ex, exprflags = (;Symbol("@byrow") => Ref(false), Symbol("@astable") => Ref(false))) = (ex, exprflags)
-function extract_macro_flags(ex::Expr, exprflags = (;Symbol("@byrow") => Ref(false), Symbol("@astable") => Ref(false)))
+extract_macro_flags(ex, exprflags = (;Symbol("@byrow") => Ref(false),)) = (ex, exprflags)
+function extract_macro_flags(ex::Expr, exprflags = (;Symbol("@byrow") => Ref(false),))
     if ex.head == :macrocall
         macroname = ex.args[1]
         if macroname in keys(exprflags)
@@ -181,9 +181,8 @@ end
 # We don't create the "new name" pair because new names are
 # given by the table.
 # We need wrap_byrow as a keyword argument here in case someone
-# uses `@transform df @byrow begin ... end`. But we don't
-# provide the same convenience for @astable so it does not
-# need to be a keyword argument.
+# uses `@transform df @byrow begin ... end`, which we
+# deal with outside of this function.
 function fun_to_vec(ex::Expr; gensym_names::Bool=false, no_dest::Bool=false, wrap_byrow::Bool=false)
     # classify the type of expression
     # :x # handled via dispatch
@@ -201,19 +200,16 @@ function fun_to_vec(ex::Expr; gensym_names::Bool=false, no_dest::Bool=false, wra
     # cols(:y) = f(cols(:x)) # re-write as simple call, RHS is block, use cols
     # cols(y) = :x + 1 # re-write as complicated col, but RHS is :block
     # cols(:y) = cols(:x) + 1 # re-write as complicated call, RHS is block, use cols
-    # `@byrow` or `@astable` before any of the above
+    # `@byrow` before any of the above
     ex, flags = extract_macro_flags(MacroTools.unblock(ex))
 
-    wrap_byrow_t, astable = (flags[Symbol("@byrow")][], flags[Symbol("@astable")][])
+    # Use tuple syntax in future when we add more flags
+    wrap_byrow_t = flags[Symbol("@byrow")][]
 
     if wrap_byrow_t && wrap_byrow
         throw(ArgumentError("Redundant @byrow calls."))
     else
         wrap_byrow = wrap_byrow || wrap_byrow_t
-    end
-
-    if gensym_names && astable
-        throw(ArgumentError("@astable only used in transformation macros."))
     end
 
     if gensym_names
@@ -228,10 +224,6 @@ function fun_to_vec(ex::Expr; gensym_names::Bool=false, no_dest::Bool=false, wra
         return ex.args[2]
     end
 
-    if no_dest && astable
-        throw(ArgumentError("@astable only used in transformation macros."))
-    end
-
     if no_dest
         source, fun = get_source_fun(ex, wrap_byrow = wrap_byrow)
         return quote
@@ -239,22 +231,12 @@ function fun_to_vec(ex::Expr; gensym_names::Bool=false, no_dest::Bool=false, wra
         end
     end
 
-    # f(:x) # it's assumed this returns a Table
-    # (; a = :x, ) # something more explicit we might see
-    if astable
-        source, fun = get_source_fun(ex, wrap_byrow = wrap_byrow)
-
-        return quote
-            $source => $fun => AsTable
-        end
-    end
-
     @assert ex.head == :kw || ex.head == :(=)
     lhs = ex.args[1]
     rhs = MacroTools.unblock(ex.args[2])
 
-    if is_macro_head(rhs, "@byrow") || is_macro_head(rhs, "@astable")
-        s = "In keyword argument inputs, `@byrow` and `@astable' must be on the left hand side. " *
+    if is_macro_head(rhs, "@byrow")
+        s = "In keyword argument inputs, `@byrow` must be on the left hand side. " *
         "Did you write `y = @byrow f(:x)` instead of `@byrow y = f(:x)`?"
         throw(ArgumentError(s))
     end

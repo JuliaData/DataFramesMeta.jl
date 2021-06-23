@@ -7,7 +7,7 @@ using Statistics
 
 const ≅ = isequal
 
-@testset "@transform with @astable" begin
+@testset "@transform with cols(AsTable)" begin
     df = DataFrame(
         g = [1, 1, 1, 2, 2],
         i = 1:5,
@@ -15,23 +15,23 @@ const ≅ = isequal
         y = [:v, :w, :x, :y, :z],
         c = [:g, :quote, :body, :transform, missing])
 
-    d = @transform df @astable (a = 1, b = 2)
+    d = @transform df cols(AsTable) =  (a = 1, b = 2)
 
     @test d ≅ transform(df, [] => (() -> (a = 1, b = 2)) => AsTable)
 
-    d = @transform df @astable (a = :i, b = :g)
+    d = @transform df cols(AsTable) =  (a = :i, b = :g)
 
     @test d.a == df.i
 
     d = @transform df begin
         a = 1
-        @astable (a1 = :i, a2 = :g)
+        cols(AsTable) =  (a1 = :i, a2 = :g)
     end
 
     @test d.a1 == df.i
 end
 
-@testset "@select with @astable" begin
+@testset "@select with cols(AsTable) = " begin
     df = DataFrame(
         g = [1, 1, 1, 2, 2],
         i = 1:5,
@@ -39,23 +39,23 @@ end
         y = [:v, :w, :x, :y, :z],
         c = [:g, :quote, :body, :transform, missing])
 
-    d = @select df @astable (a = 1, b = 2)
+    d = @select df cols(AsTable) =  (a = 1, b = 2)
 
     @test d ≅ select(df, [] => (() -> (a = 1, b = 2)) => AsTable)
 
-    d = @select df @astable (a = :i, b = :g)
+    d = @select df cols(AsTable) =  (a = :i, b = :g)
 
     @test d.a == df.i
 
     d = @select df begin
         a = 1
-        @astable (a1 = :i, a2 = :g)
+        cols(AsTable) =  (a1 = :i, a2 = :g)
     end
 
     @test d.a1 == df.i
 end
 
-@testset "@transform! with @astable" begin
+@testset "@transform! with cols(AsTable) = " begin
     df = DataFrame(
         g = [1, 1, 1, 2, 2],
         i = 1:5,
@@ -63,23 +63,23 @@ end
         y = [:v, :w, :x, :y, :z],
         c = [:g, :quote, :body, :transform, missing])
 
-    d = @transform! copy(df) @astable (a = 1, b = 2)
+    d = @transform! copy(df) cols(AsTable) =  (a = 1, b = 2)
 
     @test d ≅ transform(df, [] => (() -> (a = 1, b = 2)) => AsTable)
 
-    d = @transform! copy(df) @astable (a = :i, b = :g)
+    d = @transform! copy(df) cols(AsTable) =  (a = :i, b = :g)
 
     @test d.a == df.i
 
     d = @transform! copy(df) begin
         a = 1
-        @astable (a1 = :i, a2 = :g)
+        cols(AsTable) =  (a1 = :i, a2 = :g)
     end
 
     @test d.a1 == df.i
 end
 
-@testset "@select! with @astable" begin
+@testset "@select! with cols(AsTable) = " begin
     df = DataFrame(
         g = [1, 1, 1, 2, 2],
         i = 1:5,
@@ -87,23 +87,23 @@ end
         y = [:v, :w, :x, :y, :z],
         c = [:g, :quote, :body, :transform, missing])
 
-    d = @select! copy(df) @astable (a = 1, b = 2)
+    d = @select! copy(df) cols(AsTable) =  (a = 1, b = 2)
 
     @test d ≅ select(df, [] => (() -> (a = 1, b = 2)) => AsTable)
 
-    d = @select! copy(df) @astable (a = :i, b = :g)
+    d = @select! copy(df) cols(AsTable) =  (a = :i, b = :g)
 
     @test d.a == df.i
 
     d = @select! copy(df) begin
         a = 1
-        @astable (a1 = :i, a2 = :g)
+        cols(AsTable) =  (a1 = :i, a2 = :g)
     end
 
     @test d.a1 == df.i
 end
 
-@testset "@combine with @astable" begin
+@testset "@combine with cols(AsTable) = " begin
     df = DataFrame(
         g = [1, 1, 1, 2, 2],
         i = 1:5,
@@ -113,23 +113,23 @@ end
 
     g = groupby(df, :g)
 
-    d = @combine g @astable (a = 1, b = 2)
+    d = @combine g cols(AsTable) =  (a = 1, b = 2)
 
     @test d ≅ combine(g, [] => (() -> (a = 1, b = 2)) => AsTable)
 
-    d = @combine df @astable (a = first(:i), b = first(:g))
+    d = @combine df cols(AsTable) =  (a = first(:i), b = first(:g))
 
     @test d == DataFrame(a = 1, b = 1)
 
     d = @combine df begin
         a = 1
-        @astable (a1 = 1, a2 = 2)
+        cols(AsTable) =  (a1 = 1, a2 = 2)
     end
 
     @test d == DataFrame(a = 1, a1 = 1, a2 = 2)
 end
 
-@testset "@by with @astable" begin
+@testset "@by with cols(AsTable) = " begin
     df = DataFrame(
         g = [1, 1, 1, 2, 2],
         i = 1:5,
@@ -139,7 +139,7 @@ end
 
     g = groupby(df, :g)
 
-    d = @by df :g @astable (a = 1, b = 2)
+    d = @by df :g cols(AsTable) =  (a = 1, b = 2)
 
     @test d ≅ combine(groupby(df, :g), [] => (() -> (a = 1, b = 2)) => AsTable)
 end
