@@ -294,6 +294,7 @@ function exec(df, p::Pair)
     fun = last(p)
     fun(map(c -> DataFramesMeta.getsinglecolumn(df, c), cols)...)
 end
+exec(df, s::Union{Symbol, AbstractString}) = df[!, s]
 
 getsinglecolumn(df, s::DataFrames.ColumnIndex) = df[!, s]
 getsinglecolumn(df, s) = throw(ArgumentError("Only indexing with Symbols, strings and integers " *
