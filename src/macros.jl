@@ -837,7 +837,7 @@ end
 
 astable_docstring = """
 The `@astable` flag can be used for transformations that return
-Tables-jl compatible objects, such as `NamedTuple`s of `Vector`s.
+Tables.jl compatible objects, such as `NamedTuple`s of `Vector`s.
 When combined with `@byrow`, transformations marked with `@astable`
 must return row-like objects, such as `NamedTuple`s of scalars or
 `Vector`s.
