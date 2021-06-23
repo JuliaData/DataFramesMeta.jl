@@ -6,6 +6,8 @@ using MacroTools
 
 @reexport using DataFrames
 
+@reexport using Chain
+
 # Basics:
 export @with, @where, @orderby, @transform, @by, @combine, @select,
        @transform!, @select!,

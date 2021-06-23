@@ -19,7 +19,7 @@ In addition, DataFramesMeta provides
 * `@eachrow` and `@eachrow!` for looping through rows in data frame, again with high performance and 
   convenient syntax. 
 * `@byrow` for applying functions to each row of a data frame (only supported inside other macros).
-* `@linq`, for piping the above macros together, similar to [magrittr](https://cran.r-project.org/web/packages/magrittr/vignettes/magrittr.html)'s
+* `@chain`, from [Chain.jl](https://github.com/jkrumbiegel/Chain.jl) for piping the above macros together, similar to [magrittr](https://cran.r-project.org/web/packages/magrittr/vignettes/magrittr.html)'s
   `%>%` in R. 
 
 See below the convenience of DataFramesMeta compared to DataFrames.
@@ -452,36 +452,13 @@ functions.
     @select           select           Select
 
 
-## `@linq` and other chaining macros
+## Chaining operations together with `@chain`
 
-There is also a `@linq` macro that supports chaining and all of the
-functionality defined in other macros. Here is an example of `@linq`:
-
-```julia
-df = DataFrame(a = repeat(1:5, outer = 20),
-               b = repeat(["a", "b", "c", "d"], inner = 25),
-               x = repeat(1:20, inner = 5))
-
-x_thread = @linq df |>
-    transform(y = 10 * :x) |>
-    where(:a .> 2) |>
-    by(:b, meanX = mean(:x), meanY = mean(:y)) |>
-    orderby(:meanX) |>
-    select(:meanX, :meanY, var = :b)
-```
-
-Relative to the use of individual macros, chaining looks cleaner and
-more obvious with less noise from `@` symbols. This approach also
-avoids filling up the limited macro name space. The main downside is
-that more magic happens under the hood.
-
-Alternatively you can use Chain.jl, which exports the `@chain` macro. With Chain.jl,
-there is no need for `|>` and the result of the previous expression is 
-assumed to be the first argument of the current call, unless otherwise specified 
-with `_`.
+DataFramesMeta.jl re-exports the `@chain` macro from 
+[Chain.jl](https://github.com/jkrumbiegel/Chain.jl). 
 
 ```julia
-using Chain, Statistics
+using Statistics 
 
 df = DataFrame(a = repeat(1:5, outer = 20),
                b = repeat(["a", "b", "c", "d"], inner = 25),
@@ -496,25 +473,32 @@ x_thread = @chain df begin
 end
 ```
 
-Another alternative is Pipe.jl which exports the `@pipe` macro for piping. 
-The piping mechanism in Pipe requires explicit specification of the piped
-object via `_` instead of assuming it is the first argument to the next function.
-The Pipe.jl equivalent of the above is:
+By default, `@chain` places the argument returned from the 
+previous expression into the first argument of the current
+expression. The placeholder `_` is used to break that convention
+and refer to the argument returned from the previous 
+expression.
 
 ```julia
-using Pipe, Statistics
-
-df = DataFrame(a = repeat(1:5, outer = 20),
-               b = repeat(["a", "b", "c", "d"], inner = 25),
-               x = repeat(1:20, inner = 5))
-
-x_thread = @pipe df |>
-    @transform(_, y = 10 * :x) |>
-    @where(_, :a .> 2) |>
-    @by(_, :b, meanX = mean(:x), meanY = mean(:y)) |>
-    @orderby(_, :meanX) |>
-    @select(_, :meanX, :meanY, var = :b)
+@chain df begin 
+    map(_.a, _.x) do a, x
+        a + x
+    end
+end
 ```
+
+`@chain` also provides the `@aside` macro-flag to perform opertaions
+in the middle of a `@chain` block. 
+
+```julia
+@chain df begin 
+    @transform y = 10 .* :x
+    @aside y_mean = mean(_.y)
+    @select y_standardize = :y .- y_mean
+end
+```
+
+
 
 ```@contents
 Pages = ["api/api.md"]
