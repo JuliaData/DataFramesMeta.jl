@@ -474,7 +474,7 @@ x_thread = @chain df begin
 end
 ```
 
-By default, `@chain` places the argument returned from the 
+By default, `@chain` places the value of the 
 previous expression into the first argument of the current
 expression. The placeholder `_` is used to break that convention
 and refer to the argument returned from the previous 
