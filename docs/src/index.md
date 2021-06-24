@@ -497,7 +497,7 @@ in the middle of a `@chain` block.
 ```julia
 @chain df begin 
     @transform y = 10 .* :x
-    @aside y_mean = mean(_.y)
+    @aside y_mean = mean(_.y) # From Chain.jl, not DataFramesMeta.jl
     @select y_standardize = :y .- y_mean
 end
 ```

@@ -45,7 +45,24 @@ x_chain = @chain df begin
    @select(var = :b, :meanX, :meanY)
 end
 
+x_chain_2 = @chain df begin
+   @where :a .> 2
+   @transform @byrow y = 10 * :x
+   @by :b begin
+      meanX = mean(:x)
+      meanY = mean(:y)
+   end
+   @orderby (:b) (-:meanX)
+   @select begin
+      var = :b
+      :meanX
+      :meanY
+   end
+end
+
 @test x == x_as
 @test x == x_thread
+@test x == x_chain
+@test x == x_chain_2
 
 end # module
