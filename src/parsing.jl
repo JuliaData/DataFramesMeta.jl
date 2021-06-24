@@ -64,8 +64,8 @@ end
 is_macro_head(ex, name) = false
 is_macro_head(ex::Expr, name) = ex.head == :macrocall && ex.args[1] == Symbol(name)
 
-extract_macro_flags(ex, exprflags = (;Symbol("@byrow") => Ref(false),)) = (ex, exprflags)
-function extract_macro_flags(ex::Expr, exprflags = (;Symbol("@byrow") => Ref(false),))
+extract_macro_flags(ex, exprflags = (;Symbol("@byrow") => Ref(false), Symbol("@skipmissing") => Ref(false))) = (ex, exprflags)
+function extract_macro_flags(ex::Expr, exprflags = (;Symbol("@byrow") => Ref(false), Symbol("@skipmissing") => Ref(false)))
     if ex.head == :macrocall
         macroname = ex.args[1]
         if macroname in keys(exprflags)
@@ -183,7 +183,7 @@ end
 # We need wrap_byrow as a keyword argument here in case someone
 # uses `@transform df @byrow begin ... end`, which we
 # deal with outside of this function.
-function fun_to_vec(ex::Expr; gensym_names::Bool=false, no_dest::Bool=false, wrap_byrow::Bool=false)
+function fun_to_vec(ex::Expr; gensym_names::Bool=false, outer_flags=nothing, no_dest::Bool=false)
     # classify the type of expression
     # :x # handled via dispatch
     # cols(:x) # handled as though above
@@ -201,15 +201,16 @@ function fun_to_vec(ex::Expr; gensym_names::Bool=false, no_dest::Bool=false, wra
     # cols(y) = :x + 1 # re-write as complicated col, but RHS is :block
     # cols(:y) = cols(:x) + 1 # re-write as complicated call, RHS is block, use cols
     # `@byrow` before any of the above
-    ex, flags = extract_macro_flags(MacroTools.unblock(ex))
+    ex, inner_flags = extract_macro_flags(MacroTools.unblock(ex))
 
     # Use tuple syntax in future when we add more flags
-    wrap_byrow_t = flags[Symbol("@byrow")][]
+    inner_wrap_byrow = inner_flags[Symbol("@byrow")][]
+    outer_wrap_byrow = outer_flags === nothing ? false : outer_flags[Symbol("@byrow")][]
 
-    if wrap_byrow_t && wrap_byrow
+    if inner_wrap_byrow && outer_wrap_byrow
         throw(ArgumentError("Redundant @byrow calls."))
     else
-        wrap_byrow = wrap_byrow || wrap_byrow_t
+        wrap_byrow = inner_wrap_byrow || outer_wrap_byrow
     end
 
     if gensym_names
@@ -304,7 +305,7 @@ function fun_to_vec(ex::Expr; gensym_names::Bool=false, no_dest::Bool=false, wra
 
     throw(ArgumentError("This path should not be reached"))
 end
-fun_to_vec(ex::QuoteNode; no_dest::Bool=false, gensym_names::Bool=false, wrap_byrow::Bool=false) = ex
+fun_to_vec(ex::QuoteNode; no_dest::Bool=false, gensym_names::Bool=false, outer_flags=nothing) = ex
 
 function make_source_concrete(x::AbstractVector)
     if isempty(x) || isconcretetype(eltype(x))
@@ -344,33 +345,10 @@ function create_args_vector(args...)
 end
 
 """
-   create_args_vector(arg) -> vec, wrap_byrow
-
-Normalize a single input to a vector of expressions,
-with a `wrap_byrow` flag indicating that the
-expressions should operate by row.
-
-If `arg` is a single `:block`, it is unnested.
-Otherwise, return a single-element array.
-Also removes line numbers.
-
-If `arg` is of the form `@byrow ...`, then
-`wrap_byrow` is returned as `true`.
+   create_args_vector(arg) -> vec, outer_flags
 """
 function create_args_vector(arg)
-    if arg isa Expr && is_macro_head(arg, "@byrow")
-        wrap_byrow = true
-        largs = length(arg.args)
-        if largs == 2
-            throw(ArgumentError("No transformations supplied with `@byrow`"))
-        elseif largs == 3
-            arg = arg.args[3]
-        else
-            arg = Expr(:block, arg.args[3:end]...)
-        end
-    else
-        wrap_byrow = false
-    end
+    arg, outer_flags = extract_macro_flags(MacroTools.unblock(arg))
 
     if arg isa Expr && arg.head == :block
         x = MacroTools.rmlines(arg).args
@@ -378,8 +356,5 @@ function create_args_vector(arg)
         x = Any[arg]
     end
 
-    if wrap_byrow && any(t -> is_macro_head(t, "@byrow"), x)
-        throw(ArgumentError("Redundant `@byrow` calls."))
-    end
-    return x, wrap_byrow
+    return x, outer_flags
 end

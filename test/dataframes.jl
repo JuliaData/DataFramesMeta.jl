@@ -734,9 +734,9 @@ end
 
 macro linenums_macro(arg)
     if arg isa Expr && arg.head == :block && length(arg.args) == 1 && arg.args[1] isa LineNumberNode
-        esc(:(true))
+        esc(:([true]))
     else
-        esc(:(false))
+        esc(:([false]))
     end
 end
 

@@ -7,11 +7,14 @@ using MacroTools
 @reexport using DataFrames
 
 # Basics:
-export @with, @where, @orderby, @transform, @by, @combine, @select,
-       @transform!, @select!,
+export @with,
+       @subset, @subset!,
+       @orderby,
+       @by, @combine,
+       @transform, @select, @transform!, @select!,
        @eachrow, @eachrow!,
        @byrow,
-       @based_on # deprecated
+       @based_on, @where # deprecated
 
 include("parsing.jl")
 include("macros.jl")
