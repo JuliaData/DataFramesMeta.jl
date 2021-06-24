@@ -740,6 +740,14 @@ macro linenums_macro(arg)
     end
 end
 
+macro linenums_macro_byrow(arg)
+    if arg isa Expr && arg.head == :block && length(arg.args) == 1 && arg.args[1] isa LineNumberNode
+        esc(:(true))
+    else
+        esc(:(false))
+    end
+end
+
 @testset "removing lines" begin
     df = DataFrame(a = [1], b = [2])
     # Can't use @test because @test remove line numbers
@@ -753,7 +761,7 @@ end
     @test d.y == [true]
 
     d = @transform df @byrow begin
-        y = @linenums_macro begin end
+        y = @linenums_macro_byrow begin end
     end
 
     @test d.y == [true]
@@ -763,13 +771,13 @@ end
     @test nrow(d) == 1
 
     d = @where df begin
-        @byrow @linenums_macro begin end
+        @byrow @linenums_macro_byrow begin end
     end
 
     @test nrow(d) == 1
 
     d = @where df @byrow begin
-        @linenums_macro begin end
+        @linenums_macro_byrow begin end
     end
 
     @test nrow(d) == 1
