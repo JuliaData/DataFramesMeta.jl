@@ -488,7 +488,7 @@ expression.
 end
 ```
 
-`@chain` also provides the `@aside` macro-flag to perform opertaions
+`@chain` also provides the `@aside` macro-flag to perform operations
 in the middle of a `@chain` block. 
 
 ```julia
