@@ -481,10 +481,13 @@ and refer to the argument returned from the previous
 expression.
 
 ```julia
+# Get the sum of all columns after 
+# a few transformations
 @chain df begin 
-    map(_.a, _.x) do a, x
-        a + x
-    end
+    @transform(y = 10 .* :x)
+    @where(:a .> 2)
+    @select(:a, :y, :x)
+    reduce(+, eachcol(_))
 end
 ```
 
