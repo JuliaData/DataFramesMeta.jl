@@ -64,8 +64,8 @@ end
 is_macro_head(ex, name) = false
 is_macro_head(ex::Expr, name) = ex.head == :macrocall && ex.args[1] == Symbol(name)
 
-extract_macro_flags(ex, exprflags = (;Symbol("@byrow") => Ref(false), Symbol("@skipmissing") => Ref(false))) = (ex, exprflags)
-function extract_macro_flags(ex::Expr, exprflags = (;Symbol("@byrow") => Ref(false), Symbol("@skipmissing") => Ref(false)))
+extract_macro_flags(ex, exprflags = (;Symbol("@byrow") => Ref(false),)) = (ex, exprflags)
+function extract_macro_flags(ex::Expr, exprflags = (;Symbol("@byrow") => Ref(false),))
     if ex.head == :macrocall
         macroname = ex.args[1]
         if macroname in keys(exprflags)

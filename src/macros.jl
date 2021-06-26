@@ -417,16 +417,15 @@ end
 
 ##############################################################################
 ##
-## @subset - select row subsets
+## @subset and subset! - select row subsets
 ##
 ##############################################################################
 
 function subset_helper(x, args...)
     exprs, outer_flags = create_args_vector(args...)
     t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
-    skipmissing = outer_flags[Symbol("@skipmissing")][]
     quote
-        $subset($x, $(t...); skipmissing=$skipmissing)
+        $subset($x, $(t...); skipmissing=true)
     end
 end
 
@@ -472,20 +471,10 @@ and
 ```
 
 !!! note
-    `@subset` will error on `missing`, unlike `@where`. To
-    recover the old behavior of `@where`, use the macro-flag
-    `@skipmissing`
-
-    ```julia
-    julia> df = DataFrame(a = [1, missing], b = [3, 4]);
-
-    julia> @subset df @skipmissing :a .== 1
-    1×2 DataFrame
-     Row │ a       b
-         │ Int64?  Int64
-    ─────┼───────────────
-       1 │      1      3
-    ```
+    `@subset` treats `missing` values as `false` when filtering rows.
+    Unlike `DataFrames.subset` and other boolean operations with
+    `missing`, `@subset` will *not* error on missing values, and
+    will only keep `true` values.
 
 If an expression provided to `@subset` begins with `@byrow`, operations
 are applied "by row" along the data frame. To avoid writing `@byrow` multiple
@@ -597,6 +586,156 @@ macro where(x, args...)
     @warn "`@where is deprecated, use `@subset`  with `@skipmissing` instead."
     esc(where_helper(x, args...))
 end
+
+function subset!_helper(x, args...)
+    exprs, outer_flags = create_args_vector(args...)
+    t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
+    quote
+        $subset!($x, $(t...); skipmissing=true)
+    end
+end
+
+"""
+    @subset!(d, i...)
+
+Select row subsets in `AbstractDataFrame`s and `GroupedDataFrame`s,
+mutating the underlying data-frame in-place.
+
+### Arguments
+
+* `d` : an AbstractDataFrame or GroupedDataFrame
+* `i...` : expression for selecting rows
+
+Multiple `i` expressions are "and-ed" together.
+
+If given a `GroupedDataFrame`, `@subset!` applies transformations by
+group, and returns a fresh `DataFrame` containing the rows
+for which the generated values are all `true`.
+
+Inputs to `@subset!` can come in two formats: a `begin ... end` block, in which case each
+line is a separate selector, or as multiple arguments.
+For example the following two statements are equivalent:
+
+```julia
+@subset! df begin
+    :x .> 1
+    :y .< 2
+end
+```
+
+and
+
+```
+@subset!(df, :x .> 1, :y .< 2)
+```
+
+!!! note
+    `@subset!` treats `missing` values as `false` when filtering rows.
+    Unlike `DataFrames.subset!` and other boolean operations with
+    `missing`, `@subset!` will *not* error on missing values, and
+    will only keep `true` values.
+
+If an expression provided to `@subset!` begins with `@byrow`, operations
+are applied "by row" along the data frame. To avoid writing `@byrow` multiple
+times, `@orderby` also allows `@byrow`to be placed at the beginning of a block of
+operations. For example, the following two statements are equivalent.
+
+```
+@subset! df @byrow begin
+    :x > 1
+    :y < 2
+end
+```
+
+and
+
+```
+@subset! df
+    @byrow :x > 1
+    @byrow :y < 2
+end
+```
+
+### Examples
+
+```jldoctest
+julia> using DataFramesMeta, Statistics
+
+julia> df = DataFrame(x = 1:3, y = [2, 1, 2]);
+
+julia> globalvar = [2, 1, 0];
+
+julia> @subset!(df, :x .> 1)
+2×2 DataFrame
+ Row │ x      y
+     │ Int64  Int64
+─────┼──────────────
+   1 │     2      1
+   2 │     3      2
+
+julia> @subset!(df, :x .> globalvar)
+2×2 DataFrame
+ Row │ x      y
+     │ Int64  Int64
+─────┼──────────────
+   1 │     2      1
+   2 │     3      2
+
+julia> @subset! df begin
+    :x .> globalvar
+    :y .== 3
+end
+0×2 DataFrame
+
+julia> d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
+                                    2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
+
+julia> g = groupby(d, :x);
+
+julia> @subset!(g, :n .> mean(:n))
+8×2 DataFrame
+ Row │ n      x
+     │ Int64  Int64
+─────┼──────────────
+   1 │    12      1
+   2 │    13      1
+   3 │    15      2
+   4 │    16      2
+   5 │    17      3
+   6 │    18      1
+   7 │    19      1
+   8 │    20      2
+
+julia> @subset! g begin
+           :n .> mean(:n)
+           :n .< 20
+       end
+7×2 DataFrame
+ Row │ n      x
+     │ Int64  Int64
+─────┼──────────────
+   1 │    12      1
+   2 │    13      1
+   3 │    15      2
+   4 │    16      2
+   5 │    17      3
+   6 │    18      1
+   7 │    19      1
+
+julia> d = DataFrame(a = [1, 2, missing], b = ["x", "y", missing]);
+
+julia> @subset!(d, :a .== 1)
+1×2 DataFrame
+│ Row │ a      │ b       │
+│     │ Int64? │ String? │
+├─────┼────────┼─────────┤
+│ 1   │ 1      │ x       │
+```
+"""
+macro subset!(x, args...)
+    esc(subset!_helper(x, args...))
+end
+
 
 ##############################################################################
 ##
