@@ -12,7 +12,7 @@ in C#.
 In addition, DataFramesMeta provides 
 
 * `@orderby`, for sorting data frames
-* `@where`, for keeping rows of a DataFrame matching a given condition
+* `@subset` and `@subset!`, for keeping rows of a DataFrame matching a given condition
 * `@by`, for grouping and combining a data frame in a single step
 * `@with`, for working with the columns of a data frame with high performance and 
   convenient syntax
@@ -96,18 +96,21 @@ gd = groupby(df, :x);
 @transform!(gd, y = 2 .* :y .* first(:y))
 ```
 
-## `@where`
+## `@subset` and `@subset!`
 
 Select row subsets. Operates on both a `DataFrame` and a `GroupedDataFrame`. 
+`@subset` always returns a freshly-allocated data frame whereas 
+`@subset!` modifies the data frame in-place.
 
 ```julia
+using Statistics
 df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
 gd = groupby(df, :x);
 outside_var = 1;
-@where(df, :x .> 1)
-@where(df, :x .> outside_var)
-@where(df, :x .> outside_var, :y .< 102)  # the two expressions are "and-ed"
-@where(gd, :x .> mean(:x))
+@subset(df, :x .> 1)
+@subset(df, :x .> outside_var)
+@subset(df, :x .> outside_var, :y .< 102)  # the two expressions are "and-ed"
+@subset(gd, :x .> mean(:x))
 ```
 
 ## `@combine`
@@ -300,7 +303,7 @@ The following macros accept `@byrow`:
 * `@transform` and `@transform!`, `@select`, `@select!`, and `@combine`. 
   `@byrow` can be used in the left hand side of expressions, e.g.
   `@select(df, @byrow z = :x * :y)`. 
-* `@where` and `@orderby`, with syntax of the form `@where(df, @byrow :x > :y)`
+* `@subset`, `@subset!` and `@orderby`, with syntax of the form `@where(df, @byrow :x > :y)`
 * `@with`, where the anonymous function created by `@with` is wrapped in
   `ByRow`, as in `@with(df, @byrow :x * :y)`.
 
