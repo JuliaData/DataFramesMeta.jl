@@ -5,6 +5,7 @@ quiet = false
 my_tests = ["dataframes.jl",
             "eachrow.jl",
             "grouping.jl",
+            "subset.jl",
             "function_compilation.jl",
             "chaining.jl",
             "linqmacro.jl",
