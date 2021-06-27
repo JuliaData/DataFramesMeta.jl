@@ -336,19 +336,20 @@ function replace_dotted!(e, membernames)
     Expr(:., x_new, y_new)
 end
 
-"""
-    create_args_vector(args...) -> vec, wrap_byrow
-
-Given multiple arguments which can be any type
-of expression-like object (`Expr`, `QuoteNode`, etc.),
-puts them into a single array, removing line numbers.
-"""
 function create_args_vector(args...)
     create_args_vector(Expr(:block, args...))
 end
 
 """
    create_args_vector(arg) -> vec, outer_flags
+
+Given an expression return a vector of operations
+and a `NamedTuple` of the macro-flags that appear
+in the expression.
+
+If a `:block` expression, returns the `args` of
+the block as an array. If a simple expression,
+wrap the expression in a one-element vector.
 """
 function create_args_vector(arg)
     arg, outer_flags = extract_macro_flags(MacroTools.unblock(arg))

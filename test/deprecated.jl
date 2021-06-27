@@ -143,5 +143,20 @@ end
     @test d ≅ @where(df, :A .> 1, :B .> 1)
 end
 
+@testset "@where with a grouped data frame" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5,
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing]
+    )
+
+    gd = groupby(df, :g)
+
+    @test @where(gd, :i .== first(:i)) ≅ df[[1, 4], :]
+    @test @where(gd, cols(:i) .> mean(cols(:i)), :t .== "c") ≅ df[[3], :]
+    @test @where(gd, :c .== :g) ≅ df[[], :]
+end
 
 end # module

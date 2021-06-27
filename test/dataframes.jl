@@ -700,17 +700,17 @@ end
 
     @test d.y == [true]
 
-    d = @where(df, @linenums_macro begin end)
+    d = @subset(df, @linenums_macro begin end)
 
     @test nrow(d) == 1
 
-    d = @where df begin
+    d = @subset df begin
         @byrow @linenums_macro_byrow begin end
     end
 
     @test nrow(d) == 1
 
-    d = @where df @byrow begin
+    d = @subset df @byrow begin
         @linenums_macro_byrow begin end
     end
 
