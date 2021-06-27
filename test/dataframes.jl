@@ -589,6 +589,10 @@ end
     @test  x == sum(df.A .* df.B)
     @test  @with(df, df[:A .> 1, ^([:B, :A])]) == df[df.A .> 1, [:B, :A]]
     @test  @with(df, DataFrame(a = :A * 2, b = :A .+ :B)) == DataFrame(a = df.A * 2, b = df.A .+ df.B)
+
+    @test @with(df, :A) === df.A
+    @test @with(df, cols(:A)) === df.A
+    @test @with(df, cols("A")) === df.A
 end
 
 @testset "where" begin
