@@ -12,7 +12,7 @@ in C#.
 In addition, DataFramesMeta provides 
 
 * `@orderby`, for sorting data frames
-* `@subset` and `@subset!`, for keeping rows of a DataFrame matching a given condition
+* `@subset` and `@subset!`, for keeping rows of a data frame matching a given condition
 * `@by`, for grouping and combining a data frame in a single step
 * `@with`, for working with the columns of a data frame with high performance and 
   convenient syntax
