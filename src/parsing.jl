@@ -183,7 +183,10 @@ end
 # We need wrap_byrow as a keyword argument here in case someone
 # uses `@transform df @byrow begin ... end`, which we
 # deal with outside of this function.
-function fun_to_vec(ex::Expr; gensym_names::Bool=false, outer_flags=nothing, no_dest::Bool=false)
+function fun_to_vec(ex::Expr;
+                    gensym_names::Bool=false,
+                    outer_flags::Union{NamedTuple, Nothing}=nothing,
+                    no_dest::Bool=false)
     # classify the type of expression
     # :x # handled via dispatch
     # cols(:x) # handled as though above

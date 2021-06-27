@@ -472,7 +472,7 @@ and
 
 !!! note
     `@subset` treats `missing` values as `false` when filtering rows.
-    Unlike `DataFrames.subset` and other boolean operations with
+    Unlike `DataFrames.subset` and other Boolean operations with
     `missing`, `@subset` will *not* error on missing values, and
     will only keep `true` values.
 
@@ -631,7 +631,7 @@ and
 
 !!! note
     `@subset!` treats `missing` values as `false` when filtering rows.
-    Unlike `DataFrames.subset!` and other boolean operations with
+    Unlike `DataFrames.subset!` and other Boolean operations with
     `missing`, `@subset!` will *not* error on missing values, and
     will only keep `true` values.
 
