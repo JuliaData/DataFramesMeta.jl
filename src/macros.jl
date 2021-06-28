@@ -282,21 +282,30 @@ macro byrow(args...)
     throw(ArgumentError("@byrow is deprecated outside of DataFramesMeta macros."))
 end
 
+
 ##############################################################################
 ##
 ## @with
 ##
 ##############################################################################
 
-exec(df, v, fun) = fun(map(c -> DataFramesMeta.getsinglecolumn(df, c), v)...)
+function exec(df, p::Pair)
+    cols = first(p)
+    fun = last(p)
+    fun(map(c -> DataFramesMeta.getsinglecolumn(df, c), cols)...)
+end
+exec(df, s::Union{Symbol, AbstractString}) = df[!, s]
 
 getsinglecolumn(df, s::DataFrames.ColumnIndex) = df[!, s]
 getsinglecolumn(df, s) = throw(ArgumentError("Only indexing with Symbols, strings and integers " *
     "is currently allowed with cols"))
 
 function with_helper(d, body)
-    source, fun = get_source_fun(body)
-    :(DataFramesMeta.exec($d, $source, $fun))
+    # Make body an expression to force the
+    # complicated method of fun_to_vec
+    # in the case of QuoteNode
+    t = fun_to_vec(Expr(:block, body); no_dest=true)
+    :(DataFramesMeta.exec($d, $t))
 end
 
 """
@@ -415,7 +424,7 @@ end
 
 function where_helper(x, args...)
     exprs, wrap_byrow = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = true, nolhs = true, wrap_byrow = wrap_byrow) for ex in exprs)
+    t = (fun_to_vec(ex; gensym_names = true, wrap_byrow = wrap_byrow) for ex in exprs)
     quote
         $where($x, $(t...))
     end
@@ -596,7 +605,7 @@ end
 
 function orderby_helper(x, args...)
     exprs, wrap_byrow = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = true, nolhs = true, wrap_byrow = wrap_byrow) for ex in exprs)
+    t = (fun_to_vec(ex; gensym_names = true, wrap_byrow = wrap_byrow) for ex in exprs)
     quote
         $DataFramesMeta.orderby($x, $(t...))
     end
@@ -760,7 +769,7 @@ end
 
 function transform_helper(x, args...)
     exprs, wrap_byrow = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_byrow = wrap_byrow) for ex in exprs)
+    t = (fun_to_vec(ex; gensym_names = false, wrap_byrow = wrap_byrow) for ex in exprs)
     quote
         $DataFrames.transform($x, $(t...))
     end
@@ -861,6 +870,7 @@ julia> @transform df @byrow begin
    1 │     1      2      2    100
    2 │     2      1      2    200
    3 │     3      2      6    200
+
 ```
 """
 macro transform(x, args...)
@@ -877,7 +887,7 @@ end
 
 function transform!_helper(x, args...)
     exprs, wrap_byrow = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_byrow = wrap_byrow) for ex in exprs)
+    t = (fun_to_vec(ex; gensym_names = false, wrap_byrow = wrap_byrow) for ex in exprs)
     quote
         $DataFrames.transform!($x, $(t...))
     end
@@ -972,7 +982,7 @@ end
 
 function select_helper(x, args...)
     exprs, wrap_byrow = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_byrow = wrap_byrow) for ex in exprs)
+    t = (fun_to_vec(ex; gensym_names = false, wrap_byrow = wrap_byrow) for ex in exprs)
     quote
         $DataFrames.select($x, $(t...))
     end
@@ -1055,7 +1065,6 @@ julia> @select(df, :c, :a)
    7 │     7      3
    8 │     8      4
 
-
 julia> @select df begin
            :c
            x = :b + :c
@@ -1087,7 +1096,7 @@ end
 
 function select!_helper(x, args...)
     exprs, wrap_byrow = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_byrow = wrap_byrow) for ex in exprs)
+    t = (fun_to_vec(ex; gensym_names = false, wrap_byrow = wrap_byrow) for ex in exprs)
     quote
         $DataFrames.select!($x, $(t...))
     end
@@ -1197,31 +1206,22 @@ end
 function combine_helper(x, args...; deprecation_warning = false)
     deprecation_warning && @warn "`@based_on` is deprecated. Use `@combine` instead."
 
-    # Only allow one argument when returning a Table object
     exprs, wrap_byrow = create_args_vector(args...)
+
     fe = first(exprs)
     if length(exprs) == 1 &&
-        !(fe isa QuoteNode) &&
+        !(fe isa QuoteNode || onearg(fe, :cols)) &&
         !(fe.head == :(=) || fe.head == :kw)
 
-        t = fun_to_vec(fe; gensym_names = false, nolhs = true, wrap_byrow = wrap_byrow)
+        @warn "Returning a Table object from @by and @combine now requires `cols(AsTable)` on the LHS."
 
-        # 0.22: No pair as first arg, needs AsTable in other args to return table
-        if DATAFRAMES_GEQ_22
-            quote
-                $DataFrames.combine($x, $t)
-            end
-        # 0.21: Pair as first arg, other args can't return table
-        else
-            quote
-                $DataFrames.combine($t, $x)
-            end
-        end
-    else
-        t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_byrow = wrap_byrow) for ex in exprs)
-        quote
-            $DataFrames.combine($x, $(t...))
-        end
+        exprs = ((:(cols(AsTable) = $fe)),)
+    end
+
+    t = (fun_to_vec(ex; gensym_names = false, wrap_byrow = wrap_byrow) for ex in exprs)
+
+    quote
+        $DataFrames.combine($x, $(t...))
     end
 end
 
@@ -1301,6 +1301,7 @@ julia> @combine g begin
   18 │     3      6     27
   19 │     3      6     27
   20 │     3      6     27
+
 ```
 """
 macro combine(x, args...)
@@ -1329,30 +1330,20 @@ function by_helper(x, what, args...)
     exprs, wrap_byrow = create_args_vector(args...)
     fe = first(exprs)
     if length(exprs) == 1 &&
-        !(fe isa QuoteNode) &&
+        !(fe isa QuoteNode || onearg(fe, :cols)) &&
         !(fe.head == :(=) || fe.head == :kw)
 
-        t = fun_to_vec(fe; gensym_names = false, nolhs = true, wrap_byrow = wrap_byrow)
+        @warn "Returning a Table object from @by and @combine now requires `cols(AsTable)` on the LHS."
 
-        # 0.22: No pair as first arg, needs AsTable in other args to return table
-        if DATAFRAMES_GEQ_22
-            quote
-                $DataFrames.combine($groupby($x, $what), $t)
-            end
-        # 0.21: Pair as first arg, other args can't return table
-        else
-            quote
-                $DataFrames.combine($t, $groupby($x, $what))
-            end
-        end
-    else
-        t = (fun_to_vec(ex; gensym_names = false, nolhs = false, wrap_byrow = wrap_byrow) for ex in exprs)
-        quote
-            $DataFrames.combine($groupby($x, $what), $(t...))
-        end
+        exprs = ((:(cols(AsTable) = $fe)),)
+    end
+
+    t = (fun_to_vec(ex; gensym_names = false, wrap_byrow = wrap_byrow) for ex in exprs)
+
+    quote
+        $DataFrames.combine($groupby($x, $what), $(t...))
     end
 end
-
 
 """
     @by(d::AbstractDataFrame, cols, e...)
@@ -1449,6 +1440,7 @@ julia> @by df :a begin
    6 │     3      7      5.0
    7 │     4      4      6.0
    8 │     4      8      6.0
+
 ```
 """
 macro by(x, what, args...)

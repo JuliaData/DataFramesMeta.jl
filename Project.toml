@@ -9,7 +9,7 @@ MacroTools = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 
 [compat]
-DataFrames = "0.21, 0.22, 1"
+DataFrames = "0.22, 1"
 MacroTools = "0.5"
 Reexport = "0.2, 1"
 julia = "1"
