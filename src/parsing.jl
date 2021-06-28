@@ -350,7 +350,7 @@ Given an expression return a vector of operations
 and a `NamedTuple` of the macro-flags that appear
 in the expression.
 
-If a `:block` expression, returns the `args` of
+If a `:block` expression, return the `args` of
 the block as an array. If a simple expression,
 wrap the expression in a one-element vector.
 """
