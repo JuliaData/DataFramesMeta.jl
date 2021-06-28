@@ -308,7 +308,10 @@ function fun_to_vec(ex::Expr;
 
     throw(ArgumentError("This path should not be reached"))
 end
-fun_to_vec(ex::QuoteNode; no_dest::Bool=false, gensym_names::Bool=false, outer_flags=nothing) = ex
+fun_to_vec(ex::QuoteNode;
+           no_dest::Bool=false,
+           gensym_names::Bool=false,
+           outer_flags::Union{NamedTuple, Nothing}=nothing) = ex
 
 function make_source_concrete(x::AbstractVector)
     if isempty(x) || isconcretetype(eltype(x))
@@ -347,7 +350,7 @@ Given an expression return a vector of operations
 and a `NamedTuple` of the macro-flags that appear
 in the expression.
 
-If a `:block` expression, returns the `args` of
+If a `:block` expression, return the `args` of
 the block as an array. If a simple expression,
 wrap the expression in a one-element vector.
 """
