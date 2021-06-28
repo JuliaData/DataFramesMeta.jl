@@ -308,7 +308,10 @@ function fun_to_vec(ex::Expr;
 
     throw(ArgumentError("This path should not be reached"))
 end
-fun_to_vec(ex::QuoteNode; no_dest::Bool=false, gensym_names::Bool=false, outer_flags=nothing) = ex
+fun_to_vec(ex::QuoteNode;
+           no_dest::Bool=false,
+           gensym_names::Bool=false,
+           outer_flags::Union{NamedTuple, Nothing}=nothing) = ex
 
 function make_source_concrete(x::AbstractVector)
     if isempty(x) || isconcretetype(eltype(x))
