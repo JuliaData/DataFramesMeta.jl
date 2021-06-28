@@ -82,6 +82,7 @@ end
     df2 = copy(df)
     @test @subset!(df2, :A .> 1) === df2
     @test df2 == df[(df.A .> 1) .=== true,:]
+
     @test @subset!(copy(df), :B .> 1) == df[df.B .> 1,:]
     @test @subset!(copy(df), :A .> x) == df[(df.A .> x) .=== true,:]
     @test @subset!(copy(df), :B .> x) ≅ df[df.B .> x,:]
