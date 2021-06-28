@@ -159,4 +159,18 @@ end
     @test @subset(gd, :c .== :g) ≅ df[[], :]
 end
 
+@testset "@subset! with a grouped data frame" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5,
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing]
+    )
+
+    @test @subset!(groupby(copy(df), :g), :i .== first(:i)) ≅ df[[1, 4], :]
+    @test @subset!(groupby(copy(df), :g), cols(:i) .> mean(cols(:i)), :t .== "c") ≅ df[[3], :]
+    @test @subset!(groupby(copy(df), :g), :c .== :g) ≅ df[[], :]
+end
+
 end # module
