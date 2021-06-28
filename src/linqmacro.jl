@@ -62,9 +62,8 @@ julia> @linq df |>
 ```
 """
 macro linq(arg)
-
-    @warn "@linq is deprecated. Use @chain instead. See ?@chain for details"
-
+    msg = "@linq is deprecated. Use @chain instead. See ? @chain for details"
+    Base.depwarn(msg, Symbol("@linq"))
     esc(replacefuns(replacechains(arg)))
 end
 
