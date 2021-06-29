@@ -6,6 +6,8 @@ using MacroTools
 
 @reexport using DataFrames
 
+@reexport using Chain
+
 # Basics:
 export @with,
        @subset, @subset!,
