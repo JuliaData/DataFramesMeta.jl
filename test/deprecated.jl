@@ -77,4 +77,86 @@ const ≅ = isequal
     @test @based_on(gd, cols("new" * "_" * "column") = 2)."new_column" == [2, 2]
 end
 
+@testset "where" begin
+    df = DataFrame(A = [1, 2, 3, missing], B = [2, 1, 2, 1])
+
+    x = [2, 1, 0, 0]
+
+    @test @where(df, :A .> 1) == df[(df.A .> 1) .=== true,:]
+    @test @where(df, :B .> 1) == df[df.B .> 1,:]
+    @test @where(df, :A .> x) == df[(df.A .> x) .=== true,:]
+    @test @where(df, :B .> x) ≅ df[df.B .> x,:]
+    @test @where(df, :A .> :B, :B .> mean(:B)) == DataFrame(A = 3, B = 2)
+    @test @where(df, :A .> 1, :B .> 1) == df[map(&, df.A .> 1, df.B .> 1),:]
+    @test @where(df, :A .> 1, :A .< 4, :B .> 1) == df[map(&, df.A .> 1, df.A .< 4, df.B .> 1),:]
+
+    @test @where(df, :A .> 1).A isa Vector{Union{Missing, Int}}
+
+    @test @where(df, cols(:A) .> 1) == df[(df.A .> 1) .=== true,:]
+    @test @where(df, cols(:B) .> 1) == df[df.B .> 1,:]
+    @test @where(df, cols(:A) .> x) == df[(df.A .> x) .=== true,:]
+    @test @where(df, cols(:B) .> x) ≅ df[df.B .> x,:]
+    @test @where(df, cols(:A) .> :B, cols(:B) .> mean(:B)) == DataFrame(A = 3, B = 2)
+    @test @where(df, cols(:A) .> 1, :B .> 1) == df[map(&, df.A .> 1, df.B .> 1),:]
+    @test @where(df, cols(:A) .> 1, :A .< 4, :B .> 1) == df[map(&, df.A .> 1, df.A .< 4, df.B .> 1),:]
+
+    @test @where(df, :A .> 1, :A .<= 2) == DataFrame(A = 2, B = 1)
+
+    subdf = @view df[df.B .== 2, :]
+
+    @test @where(subdf, :A .== 3) == DataFrame(A = 3, B = 2)
+end
+
+@testset "where with :block" begin
+    df = DataFrame(A = [1, 2, 3, missing], B = [2, 1, 2, 1])
+
+    d = @where df begin
+        :A .> 1
+        :B .> 1
+    end
+    @test d ≅ @where(df, :A .> 1, :B .> 1)
+
+    d = @where df begin
+        cols(:A) .> 1
+        :B .> 1
+    end
+    @test d ≅ @where(df, :A .> 1, :B .> 1)
+
+    d = @where df begin
+        :A .> 1
+        cols(:B) .> 1
+    end
+    @test d ≅ @where(df, :A .> 1, :B .> 1)
+
+    d = @where df begin
+        begin
+            :A .> 1
+        end
+        :B .> 1
+    end
+    @test d ≅ @where(df, :A .> 1, :B .> 1)
+
+    d = @where df begin
+        :A .> 1
+        @. :B > 1
+    end
+    @test d ≅ @where(df, :A .> 1, :B .> 1)
+end
+
+@testset "@where with a grouped data frame" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5,
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing]
+    )
+
+    gd = groupby(df, :g)
+
+    @test @where(gd, :i .== first(:i)) ≅ df[[1, 4], :]
+    @test @where(gd, cols(:i) .> mean(cols(:i)), :t .== "c") ≅ df[[3], :]
+    @test @where(gd, :c .== :g) ≅ df[[], :]
+end
+
 end # module

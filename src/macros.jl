@@ -415,50 +415,30 @@ macro with(d, body)
 end
 
 
+##############################################################################
+##
+## @subset and subset! - select row subsets
+##
+##############################################################################
 
-##############################################################################
-##
-## @where - select row subsets
-##
-##############################################################################
+function subset_helper(x, args...)
+    exprs, outer_flags = create_args_vector(args...)
+    t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
+    quote
+        $subset($x, $(t...); skipmissing=true)
+    end
+end
 
 function where_helper(x, args...)
-    exprs, wrap_byrow = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = true, wrap_byrow = wrap_byrow) for ex in exprs)
+    exprs, outer_flags = create_args_vector(args...)
+    t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
     quote
-        $where($x, $(t...))
+        $subset($x, $(t...); skipmissing=true)
     end
-end
-
-function df_to_bool(res::AbstractDataFrame)
-    if any(t -> !(t isa AbstractVector{<:Union{Missing, Bool}}), eachcol(res))
-        throw(ArgumentError("All arguments in @where must return an " *
-                            "AbstractVector{<:Union{Missing, Bool}}"))
-    end
-
-    return reduce((x, y) -> x .& y, eachcol(res)) .=== true
-end
-
-function where(df::AbstractDataFrame, @nospecialize(args...))
-    res = DataFrames.select(df, args...; copycols = false)
-    tokeep = df_to_bool(res)
-    df[tokeep, :]
-end
-
-function where(gd::GroupedDataFrame, @nospecialize(args...))
-    res = DataFrames.select(gd, args...; copycols = false, keepkeys = false)
-    tokeep = df_to_bool(res)
-    parent(gd)[tokeep, :]
-end
-
-function where(df::SubDataFrame, @nospecialize(args...))
-    res = DataFrames.select(df, args...)
-    tokeep = df_to_bool(res)
-    df[tokeep, :]
 end
 
 """
-    @where(d, i...)
+    @subset(d, i...)
 
 Select row subsets in `AbstractDataFrame`s and `GroupedDataFrame`s.
 
@@ -469,16 +449,16 @@ Select row subsets in `AbstractDataFrame`s and `GroupedDataFrame`s.
 
 Multiple `i` expressions are "and-ed" together.
 
-If given a `GroupedDataFrame`, `@where` applies transformations by
+If given a `GroupedDataFrame`, `@subset` applies transformations by
 group, and returns a fresh `DataFrame` containing the rows
 for which the generated values are all `true`.
 
-Inputs to `@where` can come in two formats: a `begin ... end` block, in which case each
+Inputs to `@subset` can come in two formats: a `begin ... end` block, in which case each
 line is a separate selector, or as multiple arguments.
 For example the following two statements are equivalent:
 
 ```julia
-@where df begin
+@subset df begin
     :x .> 1
     :y .< 2
 end
@@ -487,22 +467,22 @@ end
 and
 
 ```
-@where(df, :x .> 1, :y .< 2)
+@subset(df, :x .> 1, :y .< 2)
 ```
 
 !!! note
-    `@where` treats `missing` values as `false` when filtering rows.
-    Unlike `DataFrames.filter` and other boolean operations with
-    `missing`, `@where` will *not* error on missing values, and
+    `@subset` treats `missing` values as `false` when filtering rows.
+    Unlike `DataFrames.subset` and other Boolean operations with
+    `missing`, `@subset` will *not* error on missing values, and
     will only keep `true` values.
 
-If an expression provided to `@where` begins with `@byrow`, operations
+If an expression provided to `@subset` begins with `@byrow`, operations
 are applied "by row" along the data frame. To avoid writing `@byrow` multiple
 times, `@orderby` also allows `@byrow`to be placed at the beginning of a block of
 operations. For example, the following two statements are equivalent.
 
 ```
-@where df @byrow begin
+@subset df @byrow begin
     :x > 1
     :y < 2
 end
@@ -511,7 +491,7 @@ end
 and
 
 ```
-@orderby df
+@subset df
     @byrow :x > 1
     @byrow :y < 2
 end
@@ -526,7 +506,7 @@ julia> df = DataFrame(x = 1:3, y = [2, 1, 2]);
 
 julia> globalvar = [2, 1, 0];
 
-julia> @where(df, :x .> 1)
+julia> @subset(df, :x .> 1)
 2×2 DataFrame
  Row │ x      y
      │ Int64  Int64
@@ -534,7 +514,7 @@ julia> @where(df, :x .> 1)
    1 │     2      1
    2 │     3      2
 
-julia> @where(df, :x .> globalvar)
+julia> @subset(df, :x .> globalvar)
 2×2 DataFrame
  Row │ x      y
      │ Int64  Int64
@@ -542,7 +522,7 @@ julia> @where(df, :x .> globalvar)
    1 │     2      1
    2 │     3      2
 
-julia> @where df begin
+julia> @subset df begin
     :x .> globalvar
     :y .== 3
 end
@@ -553,7 +533,7 @@ julia> d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
 
 julia> g = groupby(d, :x);
 
-julia> @where(g, :n .> mean(:n))
+julia> @subset(g, :n .> mean(:n))
 8×2 DataFrame
  Row │ n      x
      │ Int64  Int64
@@ -567,7 +547,7 @@ julia> @where(g, :n .> mean(:n))
    7 │    19      1
    8 │    20      2
 
-julia> @where g begin
+julia> @subset g begin
            :n .> mean(:n)
            :n .< 20
        end
@@ -585,7 +565,7 @@ julia> @where g begin
 
 julia> d = DataFrame(a = [1, 2, missing], b = ["x", "y", missing]);
 
-julia> @where(d, :a .== 1)
+julia> @subset(d, :a .== 1)
 1×2 DataFrame
 │ Row │ a      │ b       │
 │     │ Int64? │ String? │
@@ -593,9 +573,169 @@ julia> @where(d, :a .== 1)
 │ 1   │ 1      │ x       │
 ```
 """
+macro subset(x, args...)
+    esc(subset_helper(x, args...))
+end
+
+"""
+    @where(x, args...)
+
+Deprecated version of `@subset`, see `?@subset` for details.
+"""
 macro where(x, args...)
+    @warn "`@where is deprecated, use `@subset`  with `@skipmissing` instead."
     esc(where_helper(x, args...))
 end
+
+function subset!_helper(x, args...)
+    exprs, outer_flags = create_args_vector(args...)
+    t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
+    quote
+        $subset!($x, $(t...); skipmissing=true)
+    end
+end
+
+"""
+    @subset!(d, i...)
+
+Select row subsets in `AbstractDataFrame`s and `GroupedDataFrame`s,
+mutating the underlying data-frame in-place.
+
+### Arguments
+
+* `d` : an AbstractDataFrame or GroupedDataFrame
+* `i...` : expression for selecting rows
+
+Multiple `i` expressions are "and-ed" together.
+
+If given a `GroupedDataFrame`, `@subset!` applies transformations by
+group, and returns a fresh `DataFrame` containing the rows
+for which the generated values are all `true`.
+
+Inputs to `@subset!` can come in two formats: a `begin ... end` block, in which case each
+line is a separate selector, or as multiple arguments.
+For example the following two statements are equivalent:
+
+```julia
+@subset! df begin
+    :x .> 1
+    :y .< 2
+end
+```
+
+and
+
+```
+@subset!(df, :x .> 1, :y .< 2)
+```
+
+!!! note
+    `@subset!` treats `missing` values as `false` when filtering rows.
+    Unlike `DataFrames.subset!` and other Boolean operations with
+    `missing`, `@subset!` will *not* error on missing values, and
+    will only keep `true` values.
+
+If an expression provided to `@subset!` begins with `@byrow`, operations
+are applied "by row" along the data frame. To avoid writing `@byrow` multiple
+times, `@orderby` also allows `@byrow`to be placed at the beginning of a block of
+operations. For example, the following two statements are equivalent.
+
+```
+@subset! df @byrow begin
+    :x > 1
+    :y < 2
+end
+```
+
+and
+
+```
+@subset! df
+    @byrow :x > 1
+    @byrow :y < 2
+end
+```
+
+### Examples
+
+```jldoctest
+julia> using DataFramesMeta, Statistics
+
+julia> df = DataFrame(x = 1:3, y = [2, 1, 2]);
+
+julia> globalvar = [2, 1, 0];
+
+julia> @subset!(df, :x .> 1)
+2×2 DataFrame
+ Row │ x      y
+     │ Int64  Int64
+─────┼──────────────
+   1 │     2      1
+   2 │     3      2
+
+julia> @subset!(df, :x .> globalvar)
+2×2 DataFrame
+ Row │ x      y
+     │ Int64  Int64
+─────┼──────────────
+   1 │     2      1
+   2 │     3      2
+
+julia> @subset! df begin
+    :x .> globalvar
+    :y .== 3
+end
+0×2 DataFrame
+
+julia> d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
+                                    2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
+
+julia> g = groupby(d, :x);
+
+julia> @subset!(g, :n .> mean(:n))
+8×2 DataFrame
+ Row │ n      x
+     │ Int64  Int64
+─────┼──────────────
+   1 │    12      1
+   2 │    13      1
+   3 │    15      2
+   4 │    16      2
+   5 │    17      3
+   6 │    18      1
+   7 │    19      1
+   8 │    20      2
+
+julia> @subset! g begin
+           :n .> mean(:n)
+           :n .< 20
+       end
+7×2 DataFrame
+ Row │ n      x
+     │ Int64  Int64
+─────┼──────────────
+   1 │    12      1
+   2 │    13      1
+   3 │    15      2
+   4 │    16      2
+   5 │    17      3
+   6 │    18      1
+   7 │    19      1
+
+julia> d = DataFrame(a = [1, 2, missing], b = ["x", "y", missing]);
+
+julia> @subset!(d, :a .== 1)
+1×2 DataFrame
+│ Row │ a      │ b       │
+│     │ Int64? │ String? │
+├─────┼────────┼─────────┤
+│ 1   │ 1      │ x       │
+```
+"""
+macro subset!(x, args...)
+    esc(subset!_helper(x, args...))
+end
+
 
 ##############################################################################
 ##
@@ -604,8 +744,8 @@ end
 ##############################################################################
 
 function orderby_helper(x, args...)
-    exprs, wrap_byrow = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = true, wrap_byrow = wrap_byrow) for ex in exprs)
+    exprs, outer_flags = create_args_vector(args...)
+    t = (fun_to_vec(ex; gensym_names = true, outer_flags = outer_flags) for ex in exprs)
     quote
         $DataFramesMeta.orderby($x, $(t...))
     end
@@ -768,8 +908,8 @@ end
 
 
 function transform_helper(x, args...)
-    exprs, wrap_byrow = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = false, wrap_byrow = wrap_byrow) for ex in exprs)
+    exprs, outer_flags = create_args_vector(args...)
+    t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
     quote
         $DataFrames.transform($x, $(t...))
     end
@@ -886,8 +1026,8 @@ end
 
 
 function transform!_helper(x, args...)
-    exprs, wrap_byrow = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = false, wrap_byrow = wrap_byrow) for ex in exprs)
+    exprs, outer_flags = create_args_vector(args...)
+    t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
     quote
         $DataFrames.transform!($x, $(t...))
     end
@@ -981,8 +1121,8 @@ end
 ##############################################################################
 
 function select_helper(x, args...)
-    exprs, wrap_byrow = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = false, wrap_byrow = wrap_byrow) for ex in exprs)
+    exprs, outer_flags = create_args_vector(args...)
+    t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
     quote
         $DataFrames.select($x, $(t...))
     end
@@ -1095,8 +1235,8 @@ end
 ##############################################################################
 
 function select!_helper(x, args...)
-    exprs, wrap_byrow = create_args_vector(args...)
-    t = (fun_to_vec(ex; gensym_names = false, wrap_byrow = wrap_byrow) for ex in exprs)
+    exprs, outer_flags = create_args_vector(args...)
+    t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
     quote
         $DataFrames.select!($x, $(t...))
     end
@@ -1206,7 +1346,7 @@ end
 function combine_helper(x, args...; deprecation_warning = false)
     deprecation_warning && @warn "`@based_on` is deprecated. Use `@combine` instead."
 
-    exprs, wrap_byrow = create_args_vector(args...)
+    exprs, outer_flags = create_args_vector(args...)
 
     fe = first(exprs)
     if length(exprs) == 1 &&
@@ -1218,7 +1358,7 @@ function combine_helper(x, args...; deprecation_warning = false)
         exprs = ((:(cols(AsTable) = $fe)),)
     end
 
-    t = (fun_to_vec(ex; gensym_names = false, wrap_byrow = wrap_byrow) for ex in exprs)
+    t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
 
     quote
         $DataFrames.combine($x, $(t...))
@@ -1327,7 +1467,7 @@ end
 function by_helper(x, what, args...)
     # Only allow one argument when returning a Table object
     # Only allow one argument when returning a Table object
-    exprs, wrap_byrow = create_args_vector(args...)
+    exprs, outer_flags = create_args_vector(args...)
     fe = first(exprs)
     if length(exprs) == 1 &&
         !(fe isa QuoteNode || onearg(fe, :cols)) &&
@@ -1338,7 +1478,7 @@ function by_helper(x, what, args...)
         exprs = ((:(cols(AsTable) = $fe)),)
     end
 
-    t = (fun_to_vec(ex; gensym_names = false, wrap_byrow = wrap_byrow) for ex in exprs)
+    t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
 
     quote
         $DataFrames.combine($groupby($x, $what), $(t...))
