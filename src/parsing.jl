@@ -249,7 +249,7 @@ function fun_to_vec(ex::Expr;
     if lhs isa Symbol
         msg = "Using an un-quoted Symbol on the LHS is deprecated. " *
               "Write $(QuoteNode(lhs)) = ... instead."
-        Base.depwarn(msg, ""; force=true)
+        Base.depwarn(msg, "")
         lhs = QuoteNode(lhs)
     end
 
