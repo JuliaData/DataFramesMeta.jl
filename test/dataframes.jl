@@ -35,35 +35,35 @@ const ≅ = isequal
     n_sym = :new_column
     n_space = "new column"
 
-    @test @transform(df, n = :i).n == df.i
-    @test @transform(df, n = :i .+ :g).n == df.i .+ df.g
-    @test @transform(df, n = :t .* string.(:y)).n == df.t .* string.(df.y)
-    @test @transform(df, n = Symbol.(:y, ^(:t))).n == Symbol.(df.y, :t)
-    @test @transform(df, n = Symbol.(:y, ^(:body))).n == Symbol.(df.y, :body)
-    @test @transform(df, body = :i).body == df.i
-    @test @transform(df, transform = :i).transform == df.i
+    @test @transform(df, :n = :i).n == df.i
+    @test @transform(df, :n = :i .+ :g).n == df.i .+ df.g
+    @test @transform(df, :n = :t .* string.(:y)).n == df.t .* string.(df.y)
+    @test @transform(df, :n = Symbol.(:y, ^(:t))).n == Symbol.(df.y, :t)
+    @test @transform(df, :n = Symbol.(:y, ^(:body))).n == Symbol.(df.y, :body)
+    @test @transform(df, :body = :i).body == df.i
+    @test @transform(df, :transform = :i).transform == df.i
 
-    @test @transform(df, n = cols(iq)).n == df.i
-    @test @transform(df, n = cols(iq) .+ cols(gq)).n == df.i .+ df.g
-    @test @transform(df, n = cols(tq) .* string.(cols(yq))).n == df.t .* string.(df.y)
-    @test @transform(df, n = Symbol.(cols(yq), ^(:t))).n == Symbol.(df.y, :t)
-    @test @transform(df, n = Symbol.(cols(yq), ^(:body))).n == Symbol.(df.y, :body)
-    @test @transform(df, body = cols(iq)).body == df.i
-    @test @transform(df, transform = cols(iq)).transform == df.i
+    @test @transform(df, :n = cols(iq)).n == df.i
+    @test @transform(df, :n = cols(iq) .+ cols(gq)).n == df.i .+ df.g
+    @test @transform(df, :n = cols(tq) .* string.(cols(yq))).n == df.t .* string.(df.y)
+    @test @transform(df, :n = Symbol.(cols(yq), ^(:t))).n == Symbol.(df.y, :t)
+    @test @transform(df, :n = Symbol.(cols(yq), ^(:body))).n == Symbol.(df.y, :body)
+    @test @transform(df, :body = cols(iq)).body == df.i
+    @test @transform(df, :transform = cols(iq)).transform == df.i
 
-    @test @transform(df, n = cols(ir)).n == df.i
-    @test @transform(df, n = cols(ir) .+ cols(gr)).n == df.i .+ df.g
-    @test @transform(df, n = cols(tr) .* string.(cols(yr))).n == df.t .* string.(df.y)
-    @test @transform(df, n = Symbol.(cols(yr), ^(:t))).n == Symbol.(df.y, :t)
-    @test @transform(df, n = Symbol.(cols(yr), ^(:body))).n == Symbol.(df.y, :body)
-    @test @transform(df, body = cols(ir)).body == df.i
-    @test @transform(df, transform = cols(ir)).transform == df.i
-    @test @transform(df, n = cols("g") + cols(:i)).n == df.g + df.i
-    @test @transform(df, n = cols(1) + cols(2)).n == df.g + df.i
+    @test @transform(df, :n = cols(ir)).n == df.i
+    @test @transform(df, :n = cols(ir) .+ cols(gr)).n == df.i .+ df.g
+    @test @transform(df, :n = cols(tr) .* string.(cols(yr))).n == df.t .* string.(df.y)
+    @test @transform(df, :n = Symbol.(cols(yr), ^(:t))).n == Symbol.(df.y, :t)
+    @test @transform(df, :n = Symbol.(cols(yr), ^(:body))).n == Symbol.(df.y, :body)
+    @test @transform(df, :body = cols(ir)).body == df.i
+    @test @transform(df, :transform = cols(ir)).transform == df.i
+    @test @transform(df, :n = cols("g") + cols(:i)).n == df.g + df.i
+    @test @transform(df, :n = cols(1) + cols(2)).n == df.g + df.i
 
-    @test @transform(df, n = :i).g !== df.g
+    @test @transform(df, :n = :i).g !== df.g
 
-    newdf = @transform(df, n = :i)
+    newdf = @transform(df, :n = :i)
     @test newdf[:, Not(:n)] ≅ df
 
     @test @transform(df, :i) ≅ df
@@ -76,9 +76,9 @@ const ≅ = isequal
     @test @transform(df, cols(n_space) = :i)."new column" == df.i
     @test @transform(df, cols("new" * "_" * "column") = :i).new_column == df.i
 
-    @test @transform(df, n = 1).n == fill(1, nrow(df))
+    @test @transform(df, :n = 1).n == fill(1, nrow(df))
 
-    @test @transform(df, n = :i .* :g).n == [1, 2, 3, 8, 10]
+    @test @transform(df, :n = :i .* :g).n == [1, 2, 3, 8, 10]
 end
 
 @testset "@transform with :block" begin
@@ -91,36 +91,36 @@ end
         )
 
     d = @transform df begin
-        n1 = :i
-        n2 = :i .+ :g
+        :n1 = :i
+        :n2 = :i .+ :g
     end
-    @test d ≅ @transform(df, n1 = :i, n2 = :i .+ :g)
+    @test d ≅ @transform(df, :n1 = :i, :n2 = :i .+ :g)
 
     d = @transform df begin
         cols(:n1) = :i
-        n2 = cols(:i) .+ :g
+        :n2 = cols(:i) .+ :g
     end
-    @test d ≅ @transform(df, n1 = :i, n2 = :i .+ :g)
+    @test d ≅ @transform(df, :n1 = :i, :n2 = :i .+ :g)
 
     d = @transform df begin
-        n1 = cols(:i)
+        :n1 = cols(:i)
         cols(:n2) = :i .+ :g
     end
-    @test d ≅ @transform(df, n1 = :i, n2 = :i .+ :g)
+    @test d ≅ @transform(df, :n1 = :i, :n2 = :i .+ :g)
 
     d = @transform df begin
-        n1 = begin
+        :n1 = begin
             :i
         end
-        n2 = :i .+ :g
+        :n2 = :i .+ :g
     end
-    @test d ≅ @transform(df, n1 = :i, n2 = :i .+ :g)
+    @test d ≅ @transform(df, :n1 = :i, :n2 = :i .+ :g)
 
     d = @transform df begin
-        n1 = @. :i * :g
-        n2 = @. :i * :g
+        :n1 = @. :i * :g
+        :n2 = @. :i * :g
     end
-    @test d ≅ @transform(df, n1 = :i .* :g, n2 = :i .* :g)
+    @test d ≅ @transform(df, :n1 = :i .* :g, :n2 = :i .* :g)
 end
 
 @testset "@transform!" begin
@@ -150,31 +150,31 @@ end
     n_sym = :new_column
     n_space = "new column"
 
-    @test @transform!(df, n = :i).n == df.i
-    @test @transform!(df, n = :i .+ :g).n == df.i .+ df.g
-    @test @transform!(df, n = :t .* string.(:y)).n == df.t .* string.(df.y)
-    @test @transform!(df, n = Symbol.(:y, ^(:t))).n == Symbol.(df.y, :t)
-    @test @transform!(df, n = Symbol.(:y, ^(:body))).n == Symbol.(df.y, :body)
-    @test @transform!(df, body = :i).body == df.i
-    @test @transform!(df, transform = :i).transform == df.i
+    @test @transform!(df, :n = :i).n == df.i
+    @test @transform!(df, :n = :i .+ :g).n == df.i .+ df.g
+    @test @transform!(df, :n = :t .* string.(:y)).n == df.t .* string.(df.y)
+    @test @transform!(df, :n = Symbol.(:y, ^(:t))).n == Symbol.(df.y, :t)
+    @test @transform!(df, :n = Symbol.(:y, ^(:body))).n == Symbol.(df.y, :body)
+    @test @transform!(df, :body = :i).body == df.i
+    @test @transform!(df, :transform = :i).transform == df.i
 
-    @test @transform!(df, n = cols(iq)).n == df.i
-    @test @transform!(df, n = cols(iq) .+ cols(gq)).n == df.i .+ df.g
-    @test @transform!(df, n = cols(tq) .* string.(cols(yq))).n == df.t .* string.(df.y)
-    @test @transform!(df, n = Symbol.(cols(yq), ^(:t))).n == Symbol.(df.y, :t)
-    @test @transform!(df, n = Symbol.(cols(yq), ^(:body))).n == Symbol.(df.y, :body)
-    @test @transform!(df, body = cols(iq)).body == df.i
-    @test @transform!(df, transform = cols(iq)).transform == df.i
+    @test @transform!(df, :n = cols(iq)).n == df.i
+    @test @transform!(df, :n = cols(iq) .+ cols(gq)).n == df.i .+ df.g
+    @test @transform!(df, :n = cols(tq) .* string.(cols(yq))).n == df.t .* string.(df.y)
+    @test @transform!(df, :n = Symbol.(cols(yq), ^(:t))).n == Symbol.(df.y, :t)
+    @test @transform!(df, :n = Symbol.(cols(yq), ^(:body))).n == Symbol.(df.y, :body)
+    @test @transform!(df, :body = cols(iq)).body == df.i
+    @test @transform!(df, :transform = cols(iq)).transform == df.i
 
-    @test @transform!(df, n = cols(ir)).n == df.i
-    @test @transform!(df, n = cols(ir) .+ cols(gr)).n == df.i .+ df.g
-    @test @transform!(df, n = cols(tr) .* string.(cols(yr))).n == df.t .* string.(df.y)
-    @test @transform!(df, n = Symbol.(cols(yr), ^(:t))).n == Symbol.(df.y, :t)
-    @test @transform!(df, n = Symbol.(cols(yr), ^(:body))).n == Symbol.(df.y, :body)
-    @test @transform!(df, body = cols(ir)).body == df.i
-    @test @transform!(df, transform = cols(ir)).transform == df.i
-    @test @transform!(df, n = cols("g") + cols(:i)).n == df.g + df.i
-    @test @transform!(df, n = cols(1) + cols(2)).n == df.g + df.i
+    @test @transform!(df, :n = cols(ir)).n == df.i
+    @test @transform!(df, :n = cols(ir) .+ cols(gr)).n == df.i .+ df.g
+    @test @transform!(df, :n = cols(tr) .* string.(cols(yr))).n == df.t .* string.(df.y)
+    @test @transform!(df, :n = Symbol.(cols(yr), ^(:t))).n == Symbol.(df.y, :t)
+    @test @transform!(df, :n = Symbol.(cols(yr), ^(:body))).n == Symbol.(df.y, :body)
+    @test @transform!(df, :body = cols(ir)).body == df.i
+    @test @transform!(df, :transform = cols(ir)).transform == df.i
+    @test @transform!(df, :n = cols("g") + cols(:i)).n == df.g + df.i
+    @test @transform!(df, :n = cols(1) + cols(2)).n == df.g + df.i
 
     @test @transform!(df, cols("new_column") = :i).new_column == df.i
     @test @transform!(df, cols(n_str) = :i).new_column == df.i
@@ -183,17 +183,17 @@ end
     @test @transform!(df, cols(n_space) = :i)."new column" == df.i
     @test @transform!(df, cols("new" * "_" * "column") = :i).new_column == df.i
 
-    @test @transform!(df, n = 1).n == fill(1, nrow(df))
-    @test @transform!(df, n = :i .* :g).n == [1, 2, 3, 8, 10]
+    @test @transform!(df, :n = 1).n == fill(1, nrow(df))
+    @test @transform!(df, :n = :i .* :g).n == [1, 2, 3, 8, 10]
 
     # non-copying
-    @test @transform!(df, n = :i).g === df.g
+    @test @transform!(df, :n = :i).g === df.g
     # mutating
     df2 = copy(df)
     @test @transform!(df, :i) === df
     @test df ≅ df2
     @test @transform!(df, :i, :g) ≅ df2
-    @transform!(df, n2 = :i)
+    @transform!(df, :n2 = :i)
     @test df[:, Not(:n2)] ≅ df2
 end
 
@@ -207,36 +207,36 @@ end
         )
 
     d = @transform! df begin
-        n1 = :i
-        n2 = :i .+ :g
+        :n1 = :i
+        :n2 = :i .+ :g
     end
-    @test d ≅ @transform!(df, n1 = :i, n2 = :i .+ :g)
+    @test d ≅ @transform!(df, :n1 = :i, :n2 = :i .+ :g)
 
     d = @transform! df begin
         cols(:n1) = :i
-        n2 = cols(:i) .+ :g
+        :n2 = cols(:i) .+ :g
     end
-    @test d ≅ @transform!(df, n1 = :i, n2 = :i .+ :g)
+    @test d ≅ @transform!(df, :n1 = :i, :n2 = :i .+ :g)
 
     d = @transform df begin
-        n1 = cols(:i)
-        cols(:n2) = :i .+ :g
+        :n1 = cols(:i)
+        :n1 = cols(:n2) = :i .+ :g
     end
-    @test d ≅ @transform!(df, n1 = :i, n2 = :i .+ :g)
+    @test d ≅ @transform!(df, :n1 = :i, :n2 = :i .+ :g)
 
     d = @transform! df begin
-        n1 = begin
+        :n1 = begin
             :i
         end
-        n2 = :i .+ :g
+        :n2 = :i .+ :g
     end
-    @test d ≅ @transform!(df, n1 = :i, n2 = :i .+ :g)
+    @test d ≅ @transform!(df, :n1 = :i, :n2 = :i .+ :g)
 
     d = @transform! df begin
-        n1 = @. :i * :g
-        n2 = @. :i * :g
+        :n1 = @. :i * :g
+        :n2 = @. :i * :g
     end
-    @test d ≅ @transform!(df, n1 = :i .* :g, n2 = :i .* :g)
+    @test d ≅ @transform!(df, :n1 = :i .* :g, :n2 = :i .* :g)
 end
 
 # Defined outside of `@testset` due to use of `@eval`
@@ -278,8 +278,8 @@ s = [:i, :g]
     @test_throws LoadError @eval @transform(df, Between(:i, :t)).Between == df.i
     @test_throws LoadError @eval @transform(df, Not(:i)).Not == df.i
     @test_throws LoadError @eval @transform(df, Not([:i, :g]))
-    @test_throws MethodError @eval @transform(df, n = sum(Between(:i, :t)))
-    @test_throws ArgumentError @eval @transform(df, n = sum(cols(s)))
+    @test_throws MethodError @eval @transform(df, :n = sum(Between(:i, :t)))
+    @test_throws ArgumentError @eval @transform(df, :n = sum(cols(s)))
     @test_throws ArgumentError @eval @transform(df, y = :i + cols(1))
 end
 
@@ -315,35 +315,35 @@ end
     @test @select(df, :i, :g) == df[!, [:i, :g]]
     df2 = copy(df)
     df2.n = df2.i .+ df2.g
-    @test @select(df, :i, :g, n = :i .+ :g) == df2[!, [:i, :g, :n]]
+    @test @select(df, :i, :g, :n = :i .+ :g) == df2[!, [:i, :g, :n]]
 
-    @test @select(df, n = :i).n == df.i
-    @test @select(df, n = :i .+ :g).n == df.i .+ df.g
-    @test @select(df, n = :t .* string.(:y)).n == df.t .* string.(df.y)
-    @test @select(df, n = Symbol.(:y, ^(:t))).n == Symbol.(df.y, :t)
-    @test @select(df, n = Symbol.(:y, ^(:body))).n == Symbol.(df.y, :body)
-    @test @select(df, body = :i).body == df.i
-    @test @select(df, transform = :i).transform == df.i
+    @test @select(df, :n = :i).n == df.i
+    @test @select(df, :n = :i .+ :g).n == df.i .+ df.g
+    @test @select(df, :n = :t .* string.(:y)).n == df.t .* string.(df.y)
+    @test @select(df, :n = Symbol.(:y, ^(:t))).n == Symbol.(df.y, :t)
+    @test @select(df, :n = Symbol.(:y, ^(:body))).n == Symbol.(df.y, :body)
+    @test @select(df, :body = :i).body == df.i
+    @test @select(df, :transform = :i).transform == df.i
 
-    @test @select(df, n = cols(iq)).n == df.i
-    @test @select(df, n = cols(iq) .+ cols(gq)).n == df.i .+ df.g
-    @test @select(df, n = cols(tq) .* string.(cols(yq))).n == df.t .* string.(df.y)
-    @test @select(df, n = Symbol.(cols(yq), ^(:t))).n == Symbol.(df.y, :t)
-    @test @select(df, n = Symbol.(cols(yq), ^(:body))).n == Symbol.(df.y, :body)
-    @test @select(df, body = cols(iq)).body == df.i
-    @test @select(df, transform = cols(iq)).transform == df.i
+    @test @select(df, :n = cols(iq)).n == df.i
+    @test @select(df, :n = cols(iq) .+ cols(gq)).n == df.i .+ df.g
+    @test @select(df, :n = cols(tq) .* string.(cols(yq))).n == df.t .* string.(df.y)
+    @test @select(df, :n = Symbol.(cols(yq), ^(:t))).n == Symbol.(df.y, :t)
+    @test @select(df, :n = Symbol.(cols(yq), ^(:body))).n == Symbol.(df.y, :body)
+    @test @select(df, :body = cols(iq)).body == df.i
+    @test @select(df, :transform = cols(iq)).transform == df.i
 
-    @test @select(df, n = cols(ir)).n == df.i
-    @test @select(df, n = cols(ir) .+ cols(gr)).n == df.i .+ df.g
-    @test @select(df, n = cols(tr) .* string.(cols(yr))).n == df.t .* string.(df.y)
-    @test @select(df, n = Symbol.(cols(yr), ^(:t))).n == Symbol.(df.y, :t)
-    @test @select(df, n = Symbol.(cols(yr), ^(:body))).n == Symbol.(df.y, :body)
-    @test @select(df, body = cols(ir)).body == df.i
-    @test @select(df, transform = cols(ir)).transform == df.i
-    @test @select(df, n = cols("g") + cols(:i)).n == df.g + df.i
-    @test @select(df, n = cols(1) + cols(2)).n == df.g + df.i
+    @test @select(df, :n = cols(ir)).n == df.i
+    @test @select(df, :n = cols(ir) .+ cols(gr)).n == df.i .+ df.g
+    @test @select(df, :n = cols(tr) .* string.(cols(yr))).n == df.t .* string.(df.y)
+    @test @select(df, :n = Symbol.(cols(yr), ^(:t))).n == Symbol.(df.y, :t)
+    @test @select(df, :n = Symbol.(cols(yr), ^(:body))).n == Symbol.(df.y, :body)
+    @test @select(df, :body = cols(ir)).body == df.i
+    @test @select(df, :transform = cols(ir)).transform == df.i
+    @test @select(df, :n = cols("g") + cols(:i)).n == df.g + df.i
+    @test @select(df, :n = cols(1) + cols(2)).n == df.g + df.i
 
-    @test @select(df, n = 1).n == fill(1, nrow(df))
+    @test @select(df, :n = 1).n == fill(1, nrow(df))
 
     @test @select(df, cols("new_column") = :i).new_column == df.i
     @test @select(df, cols(n_str) = :i).new_column == df.i
@@ -352,7 +352,7 @@ end
     @test @select(df, cols(n_space) = :i)."new column" == df.i
     @test @select(df, cols("new" * "_" * "column") = :i).new_column == df.i
 
-    @test @transform(df, n = :i .* :g).n == [1, 2, 3, 8, 10]
+    @test @transform(df, :n = :i .* :g).n == [1, 2, 3, 8, 10]
 end
 
 @testset "select with :block" begin
@@ -365,36 +365,36 @@ end
         )
 
     d = @select df begin
-        n1 = :i
-        n2 = :i .+ :g
+        :n1 = :i
+        :n2 = :i .+ :g
     end
-    @test d ≅ @select(df, n1 = :i, n2 = :i .+ :g)
+    @test d ≅ @select(df, :n1 = :i, :n2 = :i .+ :g)
 
     d = @select df begin
         cols(:n1) = :i
-        n2 = cols(:i) .+ :g
+        :n2 = cols(:i) .+ :g
     end
-    @test d ≅ @select(df, n1 = :i, n2 = :i .+ :g)
+    @test d ≅ @select(df, :n1 = :i, :n2 = :i .+ :g)
 
     d = @select df begin
-        n1 = cols(:i)
+        :n1 = cols(:i)
         cols(:n2) = :i .+ :g
     end
-    @test d ≅ @select(df, n1 = :i, n2 = :i .+ :g)
+    @test d ≅ @select(df, :n1 = :i, :n2 = :i .+ :g)
 
     d = @select df begin
-        n1 = begin
+        :n1 = begin
             :i
         end
-        n2 = :i .+ :g
+        :n2 = :i .+ :g
     end
-    @test d ≅ @select(df, n1 = :i, n2 = :i .+ :g)
+    @test d ≅ @select(df, :n1 = :i, :n2 = :i .+ :g)
 
     d = @select df begin
-        n1 = @. :i * :g
-        n2 = @. :i * :g
+        :n1 = @. :i * :g
+        :n2 = @. :i * :g
     end
-    @test d ≅ @select(df, n1 = :i .* :g, n2 = :i .* :g)
+    @test d ≅ @select(df, :n1 = :i .* :g, :n2 = :i .* :g)
 end
 
 @testset "@select!" begin
@@ -428,38 +428,38 @@ end
     df2 = copy(df)
     df2.n = df2.i .+ df2.g
 
-    @test @select!(copy(df), :i, :g, n = :i .+ :g) == df2[!, [:i, :g, :n]]
+    @test @select!(copy(df), :i, :g, :n = :i .+ :g) == df2[!, [:i, :g, :n]]
     @test @select!(copy(df), :i, :g) == df2[!, [:i, :g]]
     @test @select!(copy(df), :i) == df2[!, [:i]]
 
-    @test @select!(copy(df), n = :i .+ :g).n == df.i .+ df.g
-    @test @select!(copy(df), n = :i).n == df.i
-    @test @select!(copy(df), n = :t .* string.(:y)).n == df.t .* string.(df.y)
-    @test @select!(copy(df), n = Symbol.(:y, ^(:t))).n == Symbol.(df.y, :t)
-    @test @select!(copy(df), n = Symbol.(:y, ^(:body))).n == Symbol.(df.y, :body)
-    @test @select!(copy(df), body = :i).body == df.i
-    @test @select!(copy(df), transform = :i).transform == df.i
+    @test @select!(copy(df), :n = :i .+ :g).n == df.i .+ df.g
+    @test @select!(copy(df), :n = :i).n == df.i
+    @test @select!(copy(df), :n = :t .* string.(:y)).n == df.t .* string.(df.y)
+    @test @select!(copy(df), :n = Symbol.(:y, ^(:t))).n == Symbol.(df.y, :t)
+    @test @select!(copy(df), :n = Symbol.(:y, ^(:body))).n == Symbol.(df.y, :body)
+    @test @select!(copy(df), :body = :i).body == df.i
+    @test @select!(copy(df), :transform = :i).transform == df.i
 
-    @test @select!(copy(df), n = cols(iq)).n == df.i
-    @test @select!(copy(df), n = cols(iq) .+ cols(gq)).n == df.i .+ df.g
-    @test @select!(copy(df), n = cols(tq) .* string.(cols(yq))).n == df.t .* string.(df.y)
-    @test @select!(copy(df), n = Symbol.(cols(yq), ^(:t))).n == Symbol.(df.y, :t)
-    @test @select!(copy(df), n = Symbol.(cols(yq), ^(:body))).n == Symbol.(df.y, :body)
-    @test @select!(copy(df), body = cols(iq)).body == df.i
-    @test @select!(copy(df), transform = cols(iq)).transform == df.i
+    @test @select!(copy(df), :n = cols(iq)).n == df.i
+    @test @select!(copy(df), :n = cols(iq) .+ cols(gq)).n == df.i .+ df.g
+    @test @select!(copy(df), :n = cols(tq) .* string.(cols(yq))).n == df.t .* string.(df.y)
+    @test @select!(copy(df), :n = Symbol.(cols(yq), ^(:t))).n == Symbol.(df.y, :t)
+    @test @select!(copy(df), :n = Symbol.(cols(yq), ^(:body))).n == Symbol.(df.y, :body)
+    @test @select!(copy(df), :body = cols(iq)).body == df.i
+    @test @select!(copy(df), :transform = cols(iq)).transform == df.i
 
-    @test @select!(copy(df), n = cols(ir)).n == df.i
-    @test @select!(copy(df), n = cols(ir) .+ cols(gr)).n == df.i .+ df.g
-    @test @select!(copy(df), n = cols(tr) .* string.(cols(yr))).n == df.t .* string.(df.y)
-    @test @select!(copy(df), n = Symbol.(cols(yr), ^(:t))).n == Symbol.(df.y, :t)
-    @test @select!(copy(df), n = Symbol.(cols(yr), ^(:body))).n == Symbol.(df.y, :body)
-    @test @select!(copy(df), body = cols(ir)).body == df.i
-    @test @select!(copy(df), transform = cols(ir)).transform == df.i
-    @test @select!(copy(df), n = cols("g") + cols(:i)).n == df.g + df.i
-    @test @select!(copy(df), n = cols(1) + cols(2)).n == df.g + df.i
+    @test @select!(copy(df), :n = cols(ir)).n == df.i
+    @test @select!(copy(df), :n = cols(ir) .+ cols(gr)).n == df.i .+ df.g
+    @test @select!(copy(df), :n = cols(tr) .* string.(cols(yr))).n == df.t .* string.(df.y)
+    @test @select!(copy(df), :n = Symbol.(cols(yr), ^(:t))).n == Symbol.(df.y, :t)
+    @test @select!(copy(df), :n = Symbol.(cols(yr), ^(:body))).n == Symbol.(df.y, :body)
+    @test @select!(copy(df), :body = cols(ir)).body == df.i
+    @test @select!(copy(df), :transform = cols(ir)).transform == df.i
+    @test @select!(copy(df), :n = cols("g") + cols(:i)).n == df.g + df.i
+    @test @select!(copy(df), :n = cols(1) + cols(2)).n == df.g + df.i
 
 
-    @test @select!(copy(df), n = 1).n == fill(1, nrow(df))
+    @test @select!(copy(df), :n = 1).n == fill(1, nrow(df))
 
     @test @select!(copy(df), cols("new_column") = :i).new_column == df.i
     @test @select!(copy(df), cols(n_str) = :i).new_column == df.i
@@ -490,36 +490,36 @@ end
         )
 
     d = @select! copy(df) begin
-        n1 = :i
-        n2 = :i .+ :g
+        :n1 = :i
+        :n2 = :i .+ :g
     end
-    @test d ≅ @select!(copy(df), n1 = :i, n2 = :i .+ :g)
+    @test d ≅ @select!(copy(df), :n1 = :i, :n2 = :i .+ :g)
 
     d = @select! copy(df) begin
         cols(:n1) = :i
-        n2 = cols(:i) .+ :g
+        :n2 = cols(:i) .+ :g
     end
-    @test d ≅ @select!(copy(df), n1 = :i, n2 = :i .+ :g)
+    @test d ≅ @select!(copy(df), :n1 = :i, :n2 = :i .+ :g)
 
     d = @select! copy(df) begin
-        n1 = cols(:i)
+        :n1 = cols(:i)
         cols(:n2) = :i .+ :g
     end
-    @test d ≅ @select!(copy(df), n1 = :i, n2 = :i .+ :g)
+    @test d ≅ @select!(copy(df), :n1 = :i, :n2 = :i .+ :g)
 
     d = @select! copy(df) begin
-        n1 = begin
+        :n1 = begin
             :i
         end
-        n2 = :i .+ :g
+        :n2 = :i .+ :g
     end
-    @test d ≅ @select!(copy(df), n1 = :i, n2 = :i .+ :g)
+    @test d ≅ @select!(copy(df), :n1 = :i, :n2 = :i .+ :g)
 
     d = @select! copy(df) begin
-        n1 = @. :i * :g
-        n2 = @. :i * :g
+        :n1 = @. :i * :g
+        :n2 = @. :i * :g
     end
-    @test d ≅ @select!(copy(df), n1 = :i .* :g, n2 = :i .* :g)
+    @test d ≅ @select!(copy(df), :n1 = :i .* :g, :n2 = :i .* :g)
 end
 
 # Defined outside of `@testset` due to use of `@eval`
@@ -552,14 +552,14 @@ cr = "c"
     @test_throws LoadError @eval @select(df, Between(:i, :t)).Between == df.i
     @test_throws LoadError @eval  @select(df, Not(:i)).Not == df.i
     @test_throws LoadError @eval @select(df, Not([:i, :g]))
-    @test_throws MethodError @eval @select(df, n = sum(Between(:i, :t)))
-    @test_throws ArgumentError @eval @select(df, n = sum(cols(s)))
+    @test_throws MethodError @eval @select(df, :n = sum(Between(:i, :t)))
+    @test_throws ArgumentError @eval @select(df, :n = sum(cols(s)))
     @test_throws ArgumentError @eval @select(df, y = :i + cols(1))
 end
 
 @testset "Keyword arguments failure" begin
-    @test_throws LoadError @eval @transform(df; n = :i)
-    @test_throws LoadError @eval @select(df; n = :i)
+    @test_throws LoadError @eval @transform(df; :n = :i)
+    @test_throws LoadError @eval @select(df; :n = :i)
 end
 
 @testset "with" begin
