@@ -51,12 +51,12 @@ DMA = DataFrame(
 );
 
 function dt_timings(D)
-    @time @by(D, :id1, sv =sum(:v1));
-    @time @by(D, :id1, sv =sum(:v1));
-    @time @by(D, [:id1, :id2], sv =sum(:v1));
-    @time @by(D, [:id1, :id2], sv =sum(:v1));
-    @time @by(D, :id3, sv = sum(:v1), mv3 = mean(:v3));
-    @time @by(D, :id3, sv = sum(:v1), mv3 = mean(:v3));
+    @time @by(D, :id1, :sv =sum(:v1));
+    @time @by(D, :id1, :sv =sum(:v1));
+    @time @by(D, [:id1, :id2], :sv =sum(:v1));
+    @time @by(D, [:id1, :id2], :sv =sum(:v1));
+    @time @by(D, :id3, :sv = sum(:v1), :mv3 = mean(:v3));
+    @time @by(D, :id3, :sv = sum(:v1), :mv3 = mean(:v3));
     @time aggregate(D[!, [4;7:9]], :id4, mean);
     @time aggregate(D[!, [4;7:9]], :id4, mean);
     @time aggregate(D[!, [6;7:9]], :id6, sum);
@@ -68,4 +68,4 @@ dt_timings(DA)
 dt_timings(DCA)
 dt_timings(DMA)
 
-@profile @by(DA, :id1, sv =sum(:v1));
+@profile @by(DA, :id1, :sv =sum(:v1));

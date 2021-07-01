@@ -220,7 +220,7 @@ end
 
     d = @transform df begin
         :n1 = cols(:i)
-        :n1 = cols(:n2) = :i .+ :g
+        :n2 = cols(:n2) = :i .+ :g
     end
     @test d ≅ @transform!(df, :n1 = :i, :n2 = :i .+ :g)
 
