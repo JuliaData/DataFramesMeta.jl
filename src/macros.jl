@@ -7,7 +7,7 @@
 """
     @col(kw)
 
-`@col` transforms an expression of the form `z = :x + :y` into it's equivalent in
+`@col` transforms an expression of the form `:z = :x + :y` into it's equivalent in
 DataFrames's `source => fun => destination` syntax.
 
 ### Details
@@ -24,7 +24,7 @@ a `source => fun => destination` pair that is suitable for the `select`, `transf
 ### Examples
 
 ```julia
-julia> @col z = :x + :y
+julia> @col :z = :x + :y
 [:x, :y] => (##595 => :z)
 ```
 
@@ -41,7 +41,7 @@ julia> df = DataFrame(x = [1, 2], y = [3, 4]);
 
 julia> import DataFramesMeta: @col;
 
-julia> DataFrames.transform(df, @col z = :x .* :y)
+julia> DataFrames.transform(df, @col :z = :x .* :y)
 2×3 DataFrame
 │ Row │ x     │ y     │ z     │
 │     │ Int64 │ Int64 │ Int64 │
