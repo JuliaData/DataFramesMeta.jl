@@ -11,41 +11,41 @@ df = DataFrame(a = repeat(1:5, outer = 20),
                x = repeat(1:20, inner = 5))
 
 x = @where(df, :a .> 2, :b .!= "c")
-x = @transform(x, y = 10 * :x)
+x = @transform(x, :y = 10 * :x)
 x = @orderby(x, :x .- mean(:x))
-x = @by(x, :b, meanX = mean(:x), meanY = mean(:y))
+x = @by(x, :b, :meanX = mean(:x), :meanY = mean(:y))
 x = @select(x, var = :b, :meanX, :meanY)
 
-x1 = @linq transform(where(df, :a .> 2, :b .!= "c"), y = 10 * :x)
-x1 = @linq by(orderby(x1, :x .- mean(:x)), :b, meanX = mean(:x), meanY = mean(:y))
-x1 = @linq select(x1, var = :b, :meanX, :meanY)
+x1 = @linq transform(where(df, :a .> 2, :b .!= "c"), :y = 10 * :x)
+x1 = @linq by(orderby(x1, :x .- mean(:x)), :b, :meanX = mean(:x), :meanY = mean(:y))
+x1 = @linq select(x1, :var = :b, :meanX, :meanY)
 
 ## chaining
 xlinq = @linq df  |>
     where(:a .> 2, :b .!= "c")  |>
-    transform(y = 10 * :x)  |>
+    transform(:y = 10 * :x)  |>
     orderby(:x .- mean(:x)) |>
-    by(:b, meanX = mean(:x), meanY = mean(:y))  |>
-    select(var = :b, :meanX, :meanY)
+    by(:b, :meanX = mean(:x), :meanY = mean(:y))  |>
+    select(:var = :b, :meanX, :meanY)
 
 @test x == x1
 @test x == xlinq
 
 xlinq2 = @linq df  |>
     where(:a .> 2, :b .!= "c")  |>
-    transform(y = 10 * :x)  |>
+    transform(:y = 10 * :x)  |>
     orderby(:x .- mean(:x)) |>
     groupby(:b) |>
-    combine(meanX = mean(:x), meanY = mean(:y))
+    combine(:meanX = mean(:x), :meanY = mean(:y))
 
 @test xlinq2[!, [:meanX, :meanY]] == xlinq[!, [:meanX, :meanY]]
 
 xlinq3 = @linq df  |>
     where(:a .> 2, :b .!= "c")  |>
-    transform(y = 10 * :x)  |>
+    transform(:y = 10 * :x)  |>
     orderby(:x .- mean(:x)) |>
     DataFrames.groupby(:b) |>
-    combine(meanX = mean(:x), meanY = mean(:y))
+    combine(:meanX = mean(:x), :meanY = mean(:y))
 
 @test xlinq3[!, [:meanX, :meanY]] == xlinq[!, [:meanX, :meanY]]
 
@@ -68,7 +68,7 @@ xlinq3 = @linq df  |>
         transform(cols(y_str) = 10 * cols(x_sym))  |>
         orderby(cols(x_sym) .- mean(cols(x_sym)))  |>
         groupby(b_str) |>
-        combine(cols("meanX") = mean(:x), meanY = mean(:y))
+        combine(cols("meanX") = mean(:x), :meanY = mean(:y))
 
     @test isequal(xlinq3, DataFrame(b = "d", meanX = 40.0, meanY = 400.0))
 end
