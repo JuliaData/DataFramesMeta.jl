@@ -74,13 +74,13 @@ end
 
 function DataFramesMeta_timings(df, gd)
 	df_res = @transform(df,
-		res1 = :v1 .- mean(:v1),
-		res2 = demean(:v2),
-		res3 = :v1 + :v2,
-		res4 = string(:id),
-		res5 = complicated_vec(:v1, :v2, :v3),
-		res6a = @.(:v1 + :v2 + :v3 * :v3 + :v1),
-		res6b = begin
+		:res1 = :v1 .- mean(:v1),
+		:res2 = demean(:v2),
+		:res3 = :v1 + :v2,
+		:res4 = string(:id),
+		:res5 = complicated_vec(:v1, :v2, :v3),
+		:res6a = @.(:v1 + :v2 + :v3 * :v3 + :v1),
+		:res6b = begin
 			d = Vector{Float64}(undef, length(:v1))
 			for i in eachindex(d)
 				d[i] = :v1[i] + :v2[i] * :v3[i] * :v3[i] + :v1[i]
@@ -90,11 +90,11 @@ function DataFramesMeta_timings(df, gd)
 	)
 
 	gd_res = @combine(gd,
-		res7 = mean(:v1),
-		res8 = (t -> mean(t))(:v2),
-		res9 = std(:v1) + std(:v2),
-		res10 = complicated_scalar(:v1, :v2, :v3),
-		res11 = first(:v1) + mean(:v2) * std(:v1) + last(:v3)
+		:res7 = mean(:v1),
+		:res8 = (t -> mean(t))(:v2),
+		:res9 = std(:v1) + std(:v2),
+		:res10 = complicated_scalar(:v1, :v2, :v3),
+		:res11 = first(:v1) + mean(:v2) * std(:v1) + last(:v3)
 	)
 
 	return(df_res, gd_res)
@@ -109,20 +109,20 @@ N = 10
 K = 10
 
 df2 = DataFrame(
-	id = rand([Symbol("id", i) for i=1:K], N),
-	v1 = rand(1:5, N),
-	v2 = rand(1:5, N),
-	v3 = rand(N)
+	:id = rand([Symbol("id", i) for i=1:K], N),
+	:v1 = rand(1:5, N),
+	:v2 = rand(1:5, N),
+	:v3 = rand(N)
 );
 
 println("DataFramesMeta raw timing")
-@time @select(df2, res1 = :v1 .- mean(:v1));
-@time @select(df2, res2 = demean(:v2));
-@time @select(df2, res3 = :v1 + :v2);
-@time @select(df2, res4 = string(:id));
-@time @select(df2, res5 = complicated_vec(:v1, :v2, :v3));
-@time @select(df2, res6a = @.(:v1 + :v2 + :v3 * :v3 + :v1));
-@time @select(df2, res6b = begin
+@time @select(df2, :res1 = :v1 .- mean(:v1));
+@time @select(df2, :res2 = demean(:v2));
+@time @select(df2, :res3 = :v1 + :v2);
+@time @select(df2, :res4 = string(:id));
+@time @select(df2, :res5 = complicated_vec(:v1, :v2, :v3));
+@time @select(df2, :res6a = @.(:v1 + :v2 + :v3 * :v3 + :v1));
+@time @select(df2, :res6b = begin
 	d = Vector{Float64}(undef, length(:v1))
 	for i in eachindex(d)
 		d[i] = :v1[i] + :v2[i] * :v3[i] * :v3[i] + :v1[i]
