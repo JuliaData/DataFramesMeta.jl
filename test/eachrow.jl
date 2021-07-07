@@ -22,8 +22,8 @@ y = 0
 
     df = DataFrame(A = 1:3, B = [2, 1, 2])
     df2 = @eachrow df begin
-        @newcol colX::Array{Float64}
-        @newcol colY::Array{Float64}
+        @newcol :colX::Array{Float64}
+        @newcol :colY::Array{Float64}
         :colX = :B == 2 ? pi * :A : :B
         if :A > 1
             :colY = :A * :B
@@ -138,8 +138,8 @@ y = 0
 
     df = DataFrame(A = 1:3, B = [2, 1, 2])
     df2 = @eachrow! df begin
-        @newcol colX::Array{Float64}
-        @newcol colY::Array{Float64}
+        @newcol :colX::Array{Float64}
+        @newcol :colY::Array{Float64}
         :colX = :B == 2 ? pi * :A : :B
         if :A > 1
             :colY = :A * :B

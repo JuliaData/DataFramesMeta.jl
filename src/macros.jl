@@ -7,7 +7,7 @@
 """
     @col(kw)
 
-`@col` transforms an expression of the form `z = :x + :y` into it's equivalent in
+`@col` transforms an expression of the form `:z = :x + :y` into it's equivalent in
 DataFrames's `source => fun => destination` syntax.
 
 ### Details
@@ -24,7 +24,7 @@ a `source => fun => destination` pair that is suitable for the `select`, `transf
 ### Examples
 
 ```julia
-julia> @col z = :x + :y
+julia> @col :z = :x + :y
 [:x, :y] => (##595 => :z)
 ```
 
@@ -41,7 +41,7 @@ julia> df = DataFrame(x = [1, 2], y = [3, 4]);
 
 julia> import DataFramesMeta: @col;
 
-julia> DataFrames.transform(df, @col z = :x .* :y)
+julia> DataFrames.transform(df, @col :z = :x .* :y)
 2×3 DataFrame
 │ Row │ x     │ y     │ z     │
 │     │ Int64 │ Int64 │ Int64 │
@@ -69,7 +69,7 @@ Broadcast operations within DataFramesMeta.jl macros.
 to indicate that the anonymous function created by DataFramesMeta
 to represent an operation should be applied "by-row".
 
-If an expression starts with `@byrow`, either of the form `@byrow = f(:x)`
+If an expression starts with `@byrow`, either of the form `@byrow :y = f(:x)`
 in transformations or `@byrow f(:x)` in `@orderby`, `@where`, and `@with`,
 then the anonymous function created by DataFramesMeta is wrapped in the
 `DataFrames.ByRow` function wrapper, which broadcasts the function so that it run on each row.
@@ -79,7 +79,7 @@ then the anonymous function created by DataFramesMeta is wrapped in the
 ```julia
 julia> df = DataFrame(a = [1, 2, 3, 4], b = [5, 6, 7, 8]);
 
-julia> @transform(df, @byrow c = :a * :b)
+julia> @transform(df, @byrow :c = :a * :b)
 4×3 DataFrame
  Row │ a      b      c
      │ Int64  Int64  Int64
@@ -931,21 +931,21 @@ Add additional columns or keys based on keyword arguments.
 
 Inputs to `@transform` can come in two formats: a `begin ... end` block,
 in which case each line in the block is a separate
-transformation, (`y = f(:x)`), or as a series of
+transformation, (`:y = f(:x)`), or as a series of
 keyword arguments. For example, the following are
 equivalent:
 
 ```julia
 @transform df begin
-    a = :x
-    b = :y
+    :a = :x
+    :b = :y
 end
 ```
 
 and
 
 ```
-@transform(df, a = :x, b = :y)
+@transform(df, :a = :x, :b = :y)
 ```
 
 `@transform` uses the syntax `@byrow` to wrap transformations in
@@ -953,7 +953,7 @@ the `ByRow` function wrapper from DataFrames, apply a function row-wise,
 similar to broadcasting. For example, the call
 
 ```
-@transform(df, @byrow y = :x == 1 ? true : false)
+@transform(df, @byrow :y = :x == 1 ? true : false)
 ```
 
 becomes
@@ -978,8 +978,8 @@ julia> using DataFramesMeta
 julia> df = DataFrame(A = 1:3, B = [2, 1, 2]);
 
 julia> @transform df begin
-           a = 2 * :A
-           x = :A .+ :B
+           :a = 2 * :A
+           :x = :A .+ :B
        end
 3×4 DataFrame
  Row │ A      B      a      x
@@ -989,7 +989,7 @@ julia> @transform df begin
    2 │     2      1      4      3
    3 │     3      2      6      5
 
-julia> @transform df @byrow z = :A * :B
+julia> @transform df @byrow :z = :A * :B
 3×3 DataFrame
  Row │ A      B      z
      │ Int64  Int64  Int64
@@ -999,8 +999,8 @@ julia> @transform df @byrow z = :A * :B
    3 │     3      2      6
 
 julia> @transform df @byrow begin
-           x = :A * :B
-           y = :A == 1 ? 100 : 200
+           :x = :A * :B
+           :y = :A == 1 ? 100 : 200
        end
 
 3×4 DataFrame
@@ -1050,21 +1050,21 @@ No copies of existing columns are made.
 
 Inputs to `@transform!` can come in two formats: a `begin ... end` block,
 in which case each line in the block is a separate
-transformation, (`y = f(:x)`), or as a series of
+transformation, (`:y = f(:x)`), or as a series of
 keyword arguments. For example, the following are
 equivalent:
 
 ```julia
 @transform! df begin
-    a = :x
-    b = :y
+    :a = :x
+    :b = :y
 end
 ```
 
 and
 
 ```
-@transform!(df, a = :x, b = :y)
+@transform!(df, :a = :x, :b = :y)
 ```
 
 `@transform!` uses the syntax `@byrow` to wrap transform!ations in
@@ -1072,7 +1072,7 @@ the `ByRow` function wrapper from DataFrames, apply a function row-wise,
 similar to broadcasting. For example, the call
 
 ```
-@transform!(df, @byrow y = :x == 1 ? true : false)
+@transform!(df, @byrow :y = :x == 1 ? true : false)
 ```
 
 becomes
@@ -1096,7 +1096,7 @@ julia> using DataFramesMeta
 
 julia> df = DataFrame(A = 1:3, B = [2, 1, 2]);
 
-julia> df2 = @transform!(df, a = 2 * :A, x = :A .+ :B)
+julia> df2 = @transform!(df, :a = 2 * :A, :x = :A .+ :B)
 3×4 DataFrame
 │ Row │ A     │ B     │ a     │ x     │
 │     │ Int64 │ Int64 │ Int64 │ Int64 │
@@ -1152,7 +1152,7 @@ equivalent:
 ```julia
 @select df begin
     :x
-    y = :a .+ :b
+    :y = :a .+ :b
 end
 ```
 
@@ -1167,7 +1167,7 @@ the `ByRow` function wrapper from DataFrames, apply a function row-wise,
 similar to broadcasting. For example, the call
 
 ```
-@select(df, @byrow y = :x == 1 ? true : false)
+@select(df, @byrow :y = :x == 1 ? true : false)
 ```
 
 becomes
@@ -1207,7 +1207,7 @@ julia> @select(df, :c, :a)
 
 julia> @select df begin
            :c
-           x = :b + :c
+           :x = :b + :c
        end
 8×2 DataFrame
  Row │ c      x
@@ -1268,7 +1268,7 @@ the `ByRow` function wrapper from DataFrames, apply a function row-wise,
 similar to broadcasting. For example, the call
 
 ```
-@select!(df, @byrow y = :x == 1 ? true : false)
+@select!(df, @byrow :y = :x == 1 ? true : false)
 ```
 
 becomes
@@ -1313,7 +1313,7 @@ julia> df = DataFrame(a = repeat(1:4, outer = 2), b = repeat(2:-1:1, outer = 4),
 
 julia> df2 = @select! df begin
            :c
-           x = :b + :c
+           :x = :b + :c
        end
 8×2 DataFrame
  Row │ c      x
@@ -1382,15 +1382,15 @@ For example, the following are equivalent:
 
 ```
 @combine df begin
-    mx = mean(:x)
-    sx = std(:x)
+    :mx = mean(:x)
+    :sx = std(:x)
 end
 ```
 
 and
 
 ```
-@combine(df, mx = mean(:x), sx = std(:x))
+@combine(df, :mx = mean(:x), :sx = std(:x))
 ```
 
 ### Examples
@@ -1404,7 +1404,7 @@ julia> d = DataFrame(
 
 julia> g = groupby(d, :x);
 
-julia> @combine(g, nsum = sum(:n))
+julia> @combine(g, :nsum = sum(:n))
 3×2 DataFrame
  Row │ x      nsum
      │ Int64  Int64
@@ -1414,8 +1414,8 @@ julia> @combine(g, nsum = sum(:n))
    3 │     3     27
 
 julia> @combine g begin
-           x2 = 2 * :x
-           nsum = sum(:n)
+           :x2 = 2 * :x
+           :nsum = sum(:n)
        end
 20×3 DataFrame
  Row │ x      x2     nsum
@@ -1466,7 +1466,6 @@ end
 
 function by_helper(x, what, args...)
     # Only allow one argument when returning a Table object
-    # Only allow one argument when returning a Table object
     exprs, outer_flags = create_args_vector(args...)
     fe = first(exprs)
     if length(exprs) == 1 &&
@@ -1507,8 +1506,8 @@ For example, the following are equivalent:
 
 ```
 @by df :g begin
-    mx = mean(:x)
-    sx = std(:x)
+    :mx = mean(:x)
+    :sx = std(:x)
 end
 ```
 
@@ -1528,7 +1527,7 @@ julia> df = DataFrame(
             b = repeat(2:-1:1, outer = 4),
             c = 1:8);
 
-julia> @by(df, :a, d = sum(:c))
+julia> @by(df, :a, :d = sum(:c))
 4×2 DataFrame
  Row │ a      d
      │ Int64  Int64
@@ -1539,7 +1538,7 @@ julia> @by(df, :a, d = sum(:c))
    4 │     4     12
 
 julia> @by df :a begin
-           d = 2 * :c
+           :d = 2 * :c
        end
 8×2 DataFrame
  Row │ a      d
@@ -1554,7 +1553,7 @@ julia> @by df :a begin
    7 │     4      8
    8 │     4     16
 
-julia> @by(df, :a, c_sum = sum(:c), c_mean = mean(:c))
+julia> @by(df, :a, :c_sum = sum(:c), :c_mean = mean(:c))
 4×3 DataFrame
  Row │ a      c_sum  c_mean
      │ Int64  Int64  Float64
@@ -1565,8 +1564,8 @@ julia> @by(df, :a, c_sum = sum(:c), c_mean = mean(:c))
    4 │     4     12      6.0
 
 julia> @by df :a begin
-           c = :c
-           c_mean = mean(:c)
+           :c = :c
+           :c_mean = mean(:c)
        end
 8×3 DataFrame
  Row │ a      c      c_mean

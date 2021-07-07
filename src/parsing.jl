@@ -245,20 +245,28 @@ function fun_to_vec(ex::Expr;
         throw(ArgumentError(s))
     end
 
-    # y = :x
-    if lhs isa Symbol && rhs isa QuoteNode
+    # y = ...
+    if lhs isa Symbol
+        msg = "Using an un-quoted Symbol on the LHS is deprecated. " *
+              "Write $(QuoteNode(lhs)) = ... instead."
+        Base.depwarn(msg, "")
+        lhs = QuoteNode(lhs)
+    end
+
+    # :y = :x
+    if lhs isa QuoteNode && rhs isa QuoteNode
         source = rhs
-        dest = QuoteNode(lhs)
+        dest = lhs
 
         return quote
             $source => $dest
         end
     end
 
-    # y = cols(:x)
-    if lhs isa Symbol && onearg(rhs, :cols)
+    # :y = cols(:x)
+    if lhs isa QuoteNode && onearg(rhs, :cols)
         source = rhs.args[2]
-        dest = QuoteNode(lhs)
+        dest = lhs
 
         return quote
             $source => $dest
@@ -284,14 +292,13 @@ function fun_to_vec(ex::Expr;
         end
     end
 
-    # y = f(:x)
-    # y = f(cols(:x))
-    # y = :x + 1
-    # y = cols(:x) + 1
+    # :y = f(:x)
+    # :y = f(cols(:x))
+    # :y = :x + 1
+    # :y = cols(:x) + 1
     source, fun = get_source_fun(rhs; wrap_byrow = wrap_byrow)
-    if lhs isa Symbol
-        dest = QuoteNode(lhs)
-
+    if lhs isa QuoteNode
+        dest = lhs
         return quote
             $source => $fun => $dest
         end

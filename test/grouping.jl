@@ -42,41 +42,41 @@ g = groupby(d, :x, sort=true)
     n_sym = :new_column
     n_space = "new column"
 
-    @test @combine(gd, n = mean(:i)).n == [2.0, 4.5]
-    @test @combine(gd, n = mean(:i) + mean(:g)).n == [3.0, 6.5]
-    @test @combine(gd, n = first(:t .* string.(:y))).n == ["av", "cy"]
-    @test @combine(gd, n = first(Symbol.(:y, ^(:t)))).n == [:vt, :yt]
-    @test @combine(gd, n = first(Symbol.(:y, ^(:body)))).n == [:vbody, :ybody]
-    @test @combine(gd, body = :i).body == df.i
-    @test @combine(gd, transform = :i).transform == df.i
+    @test @combine(gd, :n = mean(:i)).n == [2.0, 4.5]
+    @test @combine(gd, :n = mean(:i) + mean(:g)).n == [3.0, 6.5]
+    @test @combine(gd, :n = first(:t .* string.(:y))).n == ["av", "cy"]
+    @test @combine(gd, :n = first(Symbol.(:y, ^(:t)))).n == [:vt, :yt]
+    @test @combine(gd, :n = first(Symbol.(:y, ^(:body)))).n == [:vbody, :ybody]
+    @test @combine(gd, :body =  :i).body == df.i
+    @test @combine(gd, :transform = :i).transform == df.i
     @test @combine(gd, (n1 = [first(:i)], n2 = [first(:y)])).n1 == [1, 4]
 
-    @test @combine(gd, n = mean(cols(iq))).n == [2.0, 4.5]
-    @test @combine(gd, n = mean(cols(iq)) + mean(cols(gq))).n == [3.0, 6.5]
-    @test @combine(gd, n = first(cols(tq) .* string.(cols(yq)))).n == ["av", "cy"]
-    @test @combine(gd, n = first(Symbol.(cols(yq), ^(:t)))).n == [:vt, :yt]
-    @test @combine(gd, n = first(Symbol.(cols(yq), ^(:body)))).n == [:vbody, :ybody]
+    @test @combine(gd, :n = mean(cols(iq))).n == [2.0, 4.5]
+    @test @combine(gd, :n = mean(cols(iq)) + mean(cols(gq))).n == [3.0, 6.5]
+    @test @combine(gd, :n = first(cols(tq) .* string.(cols(yq)))).n == ["av", "cy"]
+    @test @combine(gd, :n = first(Symbol.(cols(yq), ^(:t)))).n == [:vt, :yt]
+    @test @combine(gd, :n = first(Symbol.(cols(yq), ^(:body)))).n == [:vbody, :ybody]
     @test @combine(gd, cols(:n) = mean(cols(:i))).n == [2.0, 4.5]
-    @test @combine(gd, body = cols(iq)).body == df.i
-    @test @combine(gd, transform = cols(iq)).transform == df.i
+    @test @combine(gd, :body =  cols(iq)).body == df.i
+    @test @combine(gd, :transform = cols(iq)).transform == df.i
     @test @combine(gd, (n1 = [first(cols(iq))], n2 = [first(cols(yq))])).n1 == [1, 4]
 
-    @test @combine(gd, n = mean(cols(ir))).n == [2.0, 4.5]
-    @test @combine(gd, n = mean(cols(ir)) + mean(cols(gr))).n == [3.0, 6.5]
-    @test @combine(gd, n = first(cols(tr) .* string.(cols(yr)))).n == ["av", "cy"]
-    @test @combine(gd, n = first(Symbol.(cols(yr), ^(:t)))).n == [:vt, :yt]
-    @test @combine(gd, n = first(Symbol.(cols(yr), ^(:body)))).n == [:vbody, :ybody]
-    @test @combine(gd, body = cols(ir)).body == df.i
-    @test @combine(gd, transform = cols(ir)).transform == df.i
+    @test @combine(gd, :n = mean(cols(ir))).n == [2.0, 4.5]
+    @test @combine(gd, :n = mean(cols(ir)) + mean(cols(gr))).n == [3.0, 6.5]
+    @test @combine(gd, :n = first(cols(tr) .* string.(cols(yr)))).n == ["av", "cy"]
+    @test @combine(gd, :n = first(Symbol.(cols(yr), ^(:t)))).n == [:vt, :yt]
+    @test @combine(gd, :n = first(Symbol.(cols(yr), ^(:body)))).n == [:vbody, :ybody]
+    @test @combine(gd, :body =  cols(ir)).body == df.i
+    @test @combine(gd, :transform = cols(ir)).transform == df.i
     @test @combine(gd, (n1 = [first(cols(ir))], n2 = [first(cols(yr))])).n1 == [1, 4]
-    @test @combine(gd, n = mean(cols("i")) + 0 * first(cols(:g))).n == [2.0, 4.5]
-    @test @combine(gd, n = mean(cols(2)) + first(cols(1))).n == [3.0, 6.5]
+    @test @combine(gd, :n = mean(cols("i")) + 0 * first(cols(:g))).n == [2.0, 4.5]
+    @test @combine(gd, :n = mean(cols(2)) + first(cols(1))).n == [3.0, 6.5]
 
 
     @test @combine(gd, :i) == select(df, :g, :i)
     @test @combine(gd, :i, :g) ≅ select(df, :g, :i)
 
-    @test @combine(gd, :i, n = 1).n == fill(1, nrow(df))
+    @test @combine(gd, :i, :n = 1).n == fill(1, nrow(df))
 
     @test @combine(gd, cols("new_column") = 2).new_column == [2, 2]
     @test @combine(gd, cols(n_str) = 2).new_column == [2, 2]
@@ -97,30 +97,30 @@ end
     g = groupby(df, :g)
 
     d = @combine g begin
-        im = mean(:i)
-        tf = first(:t)
+        :im = mean(:i)
+        :tf = first(:t)
     end
-    @test d ≅ @combine(g, im = mean(:i), tf = first(:t))
+    @test d ≅ @combine(g, :im = mean(:i), :tf = first(:t))
 
     d = @combine g begin
         cols(:im) = mean(:i)
-        tf = first(:t)
+        :tf = first(:t)
     end
-    @test d ≅ @combine(g, im = mean(:i), tf = first(:t))
+    @test d ≅ @combine(g, :im = mean(:i), :tf = first(:t))
 
     d = @combine g begin
-        im = mean(:i)
-        tf = first(cols(:t))
+        :im = mean(:i)
+        :tf = first(cols(:t))
     end
-    @test d ≅ @combine(g, im = mean(:i), tf = first(:t))
+    @test d ≅ @combine(g, :im = mean(:i), :tf = first(:t))
 
     d = @combine g begin
-        im = begin
+        :im = begin
             mean(:i)
         end
-        tf = first(:t)
+        :tf = first(:t)
     end
-    @test d ≅ @combine(g, im = mean(:i), tf = first(:t))
+    @test d ≅ @combine(g, :im = mean(:i), :tf = first(:t))
 end
 
 # Defined outside of `@testset` due to use of `@eval`
@@ -151,9 +151,9 @@ gd = groupby(df, :g)
 newvar = :n
 
 @testset "Limits of @combine" begin
-    @test_throws MethodError @eval @combine(gd, n = sum(Between(:i, :t)))
-    @test_throws LoadError @eval @combine(gd; n = mean(:i))
-    @test_throws ArgumentError @eval @combine(gd, n = mean(:i) + mean(cols(1)))
+    @test_throws MethodError @eval @combine(gd, :n = sum(Between(:i, :t)))
+    @test_throws LoadError @eval @combine(gd; :n = mean(:i))
+    @test_throws ArgumentError @eval @combine(gd, :n = mean(:i) + mean(cols(1)))
 end
 
 @testset "@by" begin
@@ -185,41 +185,41 @@ end
     n_sym = :new_column
     n_space = "new column"
 
-    @test @by(df, :g, n = mean(:i)).n == [2.0, 4.5]
-    @test @by(df, :g, n = mean(:i) + mean(:g)).n == [3.0, 6.5]
-    @test @by(df, :g, n = first(:t .* string.(:y))).n == ["av", "cy"]
-    @test @by(df, :g, n = first(Symbol.(:y, ^(:t)))).n == [:vt, :yt]
-    @test @by(df, :g, n = first(Symbol.(:y, ^(:body)))).n == [:vbody, :ybody]
-    @test @by(df, :g, body = :i).body == df.i
-    @test @by(df, :g, transform = :i).transform == df.i
+    @test @by(df, :g, :n = mean(:i)).n == [2.0, 4.5]
+    @test @by(df, :g, :n = mean(:i) + mean(:g)).n == [3.0, 6.5]
+    @test @by(df, :g, :n = first(:t .* string.(:y))).n == ["av", "cy"]
+    @test @by(df, :g, :n = first(Symbol.(:y, ^(:t)))).n == [:vt, :yt]
+    @test @by(df, :g, :n = first(Symbol.(:y, ^(:body)))).n == [:vbody, :ybody]
+    @test @by(df, :g, :body =  :i).body == df.i
+    @test @by(df, :g, :transform = :i).transform == df.i
     @test @by(df, :g, (n1 = [first(:i)], n2 = [first(:y)])).n1 == [1, 4]
 
-    @test @by(df, :g, n = mean(cols(iq))).n == [2.0, 4.5]
-    @test @by(df, :g, n = mean(cols(iq)) + mean(cols(gq))).n == [3.0, 6.5]
-    @test @by(df, :g, n = first(cols(tq) .* string.(cols(yq)))).n == ["av", "cy"]
-    @test @by(df, :g, n = first(Symbol.(cols(yq), ^(:t)))).n == [:vt, :yt]
-    @test @by(df, :g, n = first(Symbol.(cols(yq), ^(:body)))).n == [:vbody, :ybody]
+    @test @by(df, :g, :n = mean(cols(iq))).n == [2.0, 4.5]
+    @test @by(df, :g, :n = mean(cols(iq)) + mean(cols(gq))).n == [3.0, 6.5]
+    @test @by(df, :g, :n = first(cols(tq) .* string.(cols(yq)))).n == ["av", "cy"]
+    @test @by(df, :g, :n = first(Symbol.(cols(yq), ^(:t)))).n == [:vt, :yt]
+    @test @by(df, :g, :n = first(Symbol.(cols(yq), ^(:body)))).n == [:vbody, :ybody]
     @test @by(df, :g, cols(:n) = mean(cols(:i))).n == [2.0, 4.5]
-    @test @by(df, :g, body = cols(iq)).body == df.i
-    @test @by(df, :g, transform = cols(iq)).transform == df.i
+    @test @by(df, :g, :body =  cols(iq)).body == df.i
+    @test @by(df, :g, :transform = cols(iq)).transform == df.i
     @test @by(df, :g, (n1 = [first(cols(iq))], n2 = [first(cols(yq))])).n1 == [1, 4]
 
-    @test @by(df, "g", n = mean(cols(ir))).n == [2.0, 4.5]
-    @test @by(df, "g", n = mean(cols(ir)) + mean(cols(gr))).n == [3.0, 6.5]
-    @test @by(df, "g", n = first(cols(tr) .* string.(cols(yr)))).n == ["av", "cy"]
-    @test @by(df, "g", n = first(Symbol.(cols(yr), ^(:t)))).n == [:vt, :yt]
-    @test @by(df, "g", n = first(Symbol.(cols(yr), ^(:body)))).n == [:vbody, :ybody]
-    @test @by(df, "g", body = cols(ir)).body == df.i
-    @test @by(df, "g", transform = cols(ir)).transform == df.i
+    @test @by(df, "g", :n = mean(cols(ir))).n == [2.0, 4.5]
+    @test @by(df, "g", :n = mean(cols(ir)) + mean(cols(gr))).n == [3.0, 6.5]
+    @test @by(df, "g", :n = first(cols(tr) .* string.(cols(yr)))).n == ["av", "cy"]
+    @test @by(df, "g", :n = first(Symbol.(cols(yr), ^(:t)))).n == [:vt, :yt]
+    @test @by(df, "g", :n = first(Symbol.(cols(yr), ^(:body)))).n == [:vbody, :ybody]
+    @test @by(df, "g", :body =  cols(ir)).body == df.i
+    @test @by(df, "g", :transform = cols(ir)).transform == df.i
     @test @by(df, "g", (n1 = [first(cols(ir))], n2 = [first(cols(yr))])).n1 == [1, 4]
-    @test @by(df, "g", n = mean(cols("i")) + 0 * first(cols(:g))).n == [2.0, 4.5]
-    @test @by(df, "g", n = mean(cols(2)) + first(cols(1))).n == [3.0, 6.5]
+    @test @by(df, "g", :n = mean(cols("i")) + 0 * first(cols(:g))).n == [2.0, 4.5]
+    @test @by(df, "g", :n = mean(cols(2)) + first(cols(1))).n == [3.0, 6.5]
 
 
     @test @by(df, :g, :i) == select(df, :g, :i)
     @test @by(df, :g, :i, :g) ≅ select(df, :g, :i)
 
-    @test @by(df, :g, :i, n = 1).n == fill(1, nrow(df))
+    @test @by(df, :g, :i, :n = 1).n == fill(1, nrow(df))
 
     @test @by(df, :g, cols("new_column") = 2).new_column == [2, 2]
     @test @by(df, :g, cols(n_str) = 2).new_column == [2, 2]
@@ -240,30 +240,30 @@ end
     g = groupby(df, :g)
 
     d = @by df :g begin
-        im = mean(:i)
-        tf = first(:t)
+        :im = mean(:i)
+        :tf = first(:t)
     end
-    @test d ≅ @by(df, :g, im = mean(:i), tf = first(:t))
+    @test d ≅ @by(df, :g, :im = mean(:i), :tf = first(:t))
 
     d = @by df :g begin
         cols(:im) = mean(:i)
-        tf = first(:t)
+        :tf = first(:t)
     end
-    @test d ≅ @by(df, :g, im = mean(:i), tf = first(:t))
+    @test d ≅ @by(df, :g, :im = mean(:i), :tf = first(:t))
 
     d = @by df :g begin
-        im = mean(:i)
-        tf = first(cols(:t))
+        :im = mean(:i)
+        :tf = first(cols(:t))
     end
-    @test d ≅ @by(df, :g, im = mean(:i), tf = first(:t))
+    @test d ≅ @by(df, :g, :im = mean(:i), :tf = first(:t))
 
     d = @by df :g begin
-        im = begin
+        :im = begin
             mean(:i)
         end
-        tf = first(:t)
+        :tf = first(:t)
     end
-    @test d ≅ @by(df, :g, im = mean(:i), tf = first(:t))
+    @test d ≅ @by(df, :g, :im = mean(:i), :tf = first(:t))
 end
 
 # Defined outside of `@testset` due to use of `@eval`
@@ -294,9 +294,8 @@ gd = groupby(df, :g)
 newvar = :n
 
 @testset "limits of @by" begin
-    @test_throws MethodError @eval @by(df, :g, n = sum(Between(:i, :t)))
-    @test_throws MethodError @eval @by(df, :g; n = mean(:i))
-    @test_throws ArgumentError @eval @by(df, :g, n = mean(:i) + mean(cols(1)))
+    @test_throws MethodError @eval @by(df, :g, :n = sum(Between(:i, :t)))
+    @test_throws ArgumentError @eval @by(df, :g, :n = mean(:i) + mean(cols(1)))
 end
 
 @testset "@transform with grouped data frame" begin
@@ -312,49 +311,49 @@ end
 
       ## Scalar output
 	# Type promotion Int -> Float
-	t = @transform(g, t = :b[1]).t
-	s = @select(g, t = :b[1]).t
+	t = @transform(g, :t = :b[1]).t
+	s = @select(g, :t = :b[1]).t
 	@test t ≅ s ≅ [1.0, 1.0, 1.0, missing, missing, 6.0, 6.0, 1.0] &&
 	      t isa Vector{Union{Float64, Missing}}
 
 	# Type promotion Number -> Any
-	t = @transform(g, t = isequal(:b[1], 1) ? :b[1] : "a").t
-	s = @select(g, t = isequal(:b[1], 1) ? :b[1] : "a").t
+	t = @transform(g, :t = isequal(:b[1], 1) ? :b[1] : "a").t
+	s = @select(g, :t = isequal(:b[1], 1) ? :b[1] : "a").t
 	@test t ≅ s ≅ [1, 1, 1, "a", "a", "a", "a", 1] &&
 	      t isa Vector{Any}
 	## Vector output
 	# Normal use
-	t = @transform(g, t = :b .- mean(:b)).t
-	s = @select(g, t = :b .- mean(:b)).t
+	t = @transform(g, :t = :b .- mean(:b)).t
+	s = @select(g, :t = :b .- mean(:b)).t
 	@test t ≅ s ≅ [-1.5, -0.5, 0.5, missing, missing, 0.5, -0.5, 1.5] &&
 	      t isa Vector{Union{Float64, Missing}}
 	# Type promotion
-	t = @transform(g, t = isequal(:b[1], 1) ? fill(1, length(:b)) : fill(2.0, length(:b))).t
-	s = @transform(g, t = isequal(:b[1], 1) ? fill(1, length(:b)) : fill(2.0, length(:b))).t
+	t = @transform(g, :t = isequal(:b[1], 1) ? fill(1, length(:b)) : fill(2.0, length(:b))).t
+	s = @transform(g, :t = isequal(:b[1], 1) ? fill(1, length(:b)) : fill(2.0, length(:b))).t
 	@test t ≅ s ≅ [1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0, 1.0] &&
 	      t isa Vector{Float64}
 	# Vectors whose eltypes promote to any
-	t = @transform(g, t = isequal(:b[1], 1) ? :b : fill("a", length(:b))).t
-	s = @transform(g, t = isequal(:b[1], 1) ? :b : fill("a", length(:b))).t
+	t = @transform(g, :t = isequal(:b[1], 1) ? :b : fill("a", length(:b))).t
+	s = @transform(g, :t = isequal(:b[1], 1) ? :b : fill("a", length(:b))).t
 	@test s ≅ t ≅ [1, 2, 3, "a", "a", "a", "a", 4] &&
 	      t isa Vector{Any}
 	# Categorical Array
 	# Scalar
-	t = @transform(g, t = :c[1]).t
-	s = @transform(g, t = :c[1]).t
+	t = @transform(g, :t = :c[1]).t
+	s = @transform(g, :t = :c[1]).t
 	@test t ≅ s ≅  [1, 1, 1, 1, 1, 3, 3, 1] &&
 	      t isa CategoricalVector{Int}
 	# Vector
-	t = @transform(g, t = :c).t
-	s = @transform(g, t = :c).t
+	t = @transform(g, :t = :c).t
+	s = @transform(g, :t = :c).t
 	@test t ≅ s ≅ [1, 2, 3, 1, 2, 3, 1, 2] &&
 	      t isa CategoricalVector{Int}
 
-	@test @transform(g, t = :c).a ≅ d.a
-	@test @select(g, :a, t = :c).a ≅ d.a
+	@test @transform(g, :t = :c).a ≅ d.a
+	@test @select(g, :a, :t = :c).a ≅ d.a
 
-	@test @transform(g, @byrow t = :a ^ 2).t ≅ d.a .^ 2
-	@test @select(g, :a, @byrow t = :a ^ 2).t ≅ d.a .^ 2
+	@test @transform(g, @byrow :t = :a ^ 2).t ≅ d.a .^ 2
+	@test @select(g, :a, @byrow :t = :a ^ 2).t ≅ d.a .^ 2
 end
 
 end # module

@@ -159,4 +159,46 @@ end
     @test @where(gd, :c .== :g) ≅ df[[], :]
 end
 
+@testset "Unquoted symbols on LHS" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5,
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing]
+    )
+
+    gd = groupby(df, :g)
+
+    newdf = @transform df :n = :i
+
+    @test (@transform df n = :i) ≅ newdf
+    @test (@transform(df, n = identity(:i))) ≅ newdf
+    @test (@transform df @byrow n = :i) ≅ newdf
+    d = @transform df begin
+        n = identity(:i)
+    end
+    @test d ≅ newdf
+
+    d = @eachrow df begin
+        @newcol n::Vector{Int}
+        :n = :i
+    end
+    @test d ≅ newdf
+
+    newdf = @select df :n = :i
+
+    @test (@select df n = :i) ≅ newdf
+    @test (@select(df, n = identity(:i))) ≅ newdf
+    d = @select df begin
+        n = identity(:i)
+    end
+    @test (@select df @byrow n = :i) ≅ newdf
+    @test d ≅ newdf
+
+    newdf = @combine gd :n = first(:i)
+    @test (@combine gd n = first(:i)) ≅ newdf
+    @test (@combine(gd, n = first(:i))) ≅ newdf
+end
+
 end # module
