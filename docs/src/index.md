@@ -31,7 +31,7 @@ df = DataFrame(a = [1, 2], b = [3, 4]);
 transform(df, [:a, :b] => ((a, b) -> a .* b .+ first(a) .- sum(b)) => :c);
 
 # With DataFramesMeta
-@transform(df, c = :a .* :b .+ first(:a) .- sum(:b))
+@transform(df, :c = :a .* :b .+ first(:a) .- sum(:b))
 ```
 
 To reference columns inside DataFramesMeta macros, use `Symbol`s. For example, use `:x`
@@ -66,11 +66,11 @@ data frame.
 df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
 gd = groupby(df, :x);
 @select(df, :x, :y)
-@select(df, x2 = 2 * :x, :y)
-@select(gd, x2 = 2 .* :y .* first(:y))
+@select(df, :x2 = 2 * :x, :y)
+@select(gd, :x2 = 2 .* :y .* first(:y))
 @select!(df, :x, :y)
-@select!(df, x = 2 * :x, :y)
-@select!(gd, y = 2 .* :y .* first(:y))
+@select!(df, :x = 2 * :x, :y)
+@select!(gd, :y = 2 .* :y .* first(:y))
 ```
 
 ## `@transform` and `@transform!`
@@ -89,11 +89,11 @@ data frame.
 df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
 gd = groupby(df, :x);
 @transform(df, :x, :y)
-@transform(df, x2 = 2 * :x, :y)
-@transform(gd, x2 = 2 .* :y .* first(:y))
+@transform(df, :x2 = 2 * :x, :y)
+@transform(gd, :x2 = 2 .* :y .* first(:y))
 @transform!(df, :x, :y)
-@transform!(df, x = 2 * :x, :y)
-@transform!(gd, y = 2 .* :y .* first(:y))
+@transform!(df, :x = 2 * :x, :y)
+@transform!(gd, :y = 2 .* :y .* first(:y))
 ```
 
 ## `@subset` and `@subset!`
@@ -124,8 +124,8 @@ Examples:
 ```julia
 df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
 gd = groupby(df, :x);
-@combine(gd, x2 = sum(:y))
-@combine(gd, x2 = :y .- sum(:y))
+@combine(gd, :x2 = sum(:y))
+@combine(gd, :x2 = :y .- sum(:y))
 @combine(gd, (n1 = sum(:y), n2 = first(:y)))
 ```
 
@@ -255,14 +255,14 @@ end
 
 `@eachrow` also supports special syntax for allocating new columns to make
 `@eachrow` more useful for data transformations. The syntax `@newcol
-x::Vector{Int}` allocates a new column `:x` with an `Vector` container with eltype
+:x::Vector{Int}` allocates a new column `:x` with an `Vector` container with eltype
 `Int`. Here is an example where two new columns are added:
 
 ```julia
 df = DataFrame(A = 1:3, B = [2, 1, 2])
 df2 = @eachrow df begin
-    @newcol colX::Vector{Float64}
-    @newcol colY::Vector{Union{Int,Missing}}
+    @newcol :colX::Vector{Float64}
+    @newcol :colY::Vector{Union{Int,Missing}}
     :colX = :B == 2 ? pi * :A : :B
     if :A > 1
         :colY = :A * :B
@@ -289,7 +289,7 @@ Thought of as a macro `@byrow` accepts a single argument and
 creates an anonymous function wrapped in `ByRow`.  For example,
 
 ```julia
-@transform(df, @byrow y = :x == 1 ? true : false)
+@transform(df, @byrow :y = :x == 1 ? true : false)
 ```
 
 is equivalent to
@@ -327,7 +327,7 @@ julia> @where df @byrow begin
 however, like with `ByRow` in DataFrames.jl, when `@byrow` is
 used, functions do not take into account the grouping, so for
 example the result of `@transform(df, @byrow y = f(:x))` and 
-`@transform(groupby(df, :g), @byrow y = f(:x))` is the same.
+`@transform(groupby(df, :g), @byrow :y = f(:x))` is the same.
 
 ## Working with column names programmatically with `cols`
 
@@ -469,11 +469,11 @@ df = DataFrame(a = repeat(1:5, outer = 20),
                x = repeat(1:20, inner = 5))
 
 x_thread = @chain df begin
-    @transform(y = 10 * :x)
+    @transform(:y = 10 * :x)
     @where(:a .> 2)
-    @by(:b, meanX = mean(:x), meanY = mean(:y))
+    @by(:b, :meanX = mean(:x), :meanY = mean(:y))
     @orderby(:meanX)
-    @select(:meanX, :meanY, var = :b)
+    @select(:meanX, :meanY, :var = :b)
 end
 ```
 
@@ -487,7 +487,7 @@ expression.
 # Get the sum of all columns after 
 # a few transformations
 @chain df begin 
-    @transform(y = 10 .* :x)
+    @transform(:y = 10 .* :x)
     @where(:a .> 2)
     @select(:a, :y, :x)
     reduce(+, eachcol(_))
@@ -499,13 +499,11 @@ in the middle of a `@chain` block.
 
 ```julia
 @chain df begin 
-    @transform y = 10 .* :x
+    @transform :y = 10 .* :x
     @aside y_mean = mean(_.y) # From Chain.jl, not DataFramesMeta.jl
-    @select y_standardize = :y .- y_mean
+    @select :y_standardize = :y .- y_mean
 end
 ```
-
-
 
 ```@contents
 Pages = ["api/api.md"]

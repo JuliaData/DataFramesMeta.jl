@@ -9,7 +9,6 @@ export @linq, linq
 """
     @linq df ...
 
-
 !!! note
     `@linq` is deprecated. Use `@chain` instead. See `? @chain` for details.
 
