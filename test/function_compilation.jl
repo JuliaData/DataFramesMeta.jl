@@ -154,7 +154,7 @@ using DataFramesMeta
 
             gd = groupby(df, :a)
 
-            @test @combine(gd, testnt(:b)) == DataFrame(a = [1], :c =  [2])
+            @test @combine(gd, testnt(:b)) == DataFrame(a = [1], c =  [2])
 
             fasttime = @timed @combine(gd, testnt(:b))
             slowtime = @timed combine(gd, :b => (b -> testnt(b)) => AsTable)
