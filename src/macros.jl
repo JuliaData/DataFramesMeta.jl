@@ -577,6 +577,31 @@ macro subset(x, args...)
     esc(subset_helper(x, args...))
 end
 
+function rsubset_helper(x, args...)
+    exprs, outer_flags = create_args_vector(args...)
+    if outer_flags[Symbol("@byrow")][] == true
+        throw(ArgumentError("Redundant @byrow calls"))
+    end
+
+    outer_flags[Symbol("@byrow")][] = true
+
+    t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
+    quote
+        $subset($x, $(t...); skipmissing=true)
+    end
+end
+
+
+"""
+    @rsubset(d, i...)
+
+Row-wise version of `@subset!`. See `? @subset!` for details.
+"""
+macro rsubset(x, args...)
+    esc(rsubset_helper(x, args...))
+end
+
+
 """
     @where(x, args...)
 
@@ -611,7 +636,7 @@ end
 
 
 """
-    @subset!(d, i...)
+    @rsubset!(d, i...)
 
 Row-wise version of `@subset!`. See `? @subset!` for details.
 """
@@ -921,6 +946,30 @@ julia> @orderby d @byrow :x^2
 """
 macro orderby(d, args...)
     esc(orderby_helper(d, args...))
+end
+
+function rorderby_helper(x, args...)
+    exprs, outer_flags = create_args_vector(args...)
+    if outer_flags[Symbol("@byrow")][] == true
+        throw(ArgumentError("Redundant @byrow calls"))
+    end
+
+    outer_flags[Symbol("@byrow")][] = true
+
+
+    t = (fun_to_vec(ex; gensym_names = true, outer_flags = outer_flags) for ex in exprs)
+    quote
+        $DataFramesMeta.orderby($x, $(t...))
+    end
+end
+
+"""
+    rorderby(d, args...)
+
+Row-wise version of `@orderby`. See `? @orderby` for details.
+"""
+macro rorderby(d, args...)
+    esc(rorderby_helper(d, args...))
 end
 
 
