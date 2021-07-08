@@ -10,11 +10,11 @@ using MacroTools
 
 # Basics:
 export @with,
-       @subset, @subset!,
-       @orderby,
+       @subset, @subset!, @rsubset, @rsubset!,
+       @orderby, @orderby,
        @by, @combine,
        @transform, @select, @transform!, @select!,
-       @rtransform,
+       @rtransform, @rselect, @rtransform!, @rselect!,
        @eachrow, @eachrow!,
        @byrow,
        @based_on, @where # deprecated
