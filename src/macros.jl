@@ -1270,6 +1270,28 @@ macro select(x, args...)
     esc(select_helper(x, args...))
 end
 
+function rselect_helper(x, args...)
+    exprs, outer_flags = create_args_vector(args...)
+    if outer_flags[Symbol("@byrow")][] == true
+        throw(ArgumentError("Redundant @byrow calls"))
+    end
+    outer_flags[Symbol("@byrow")][] = true
+
+    t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
+    quote
+        $DataFrames.select($x, $(t...))
+    end
+end
+
+"""
+    @rtransform(x, args...)
+
+Row-wise version of `@transform`, see `? @transform` for details.
+"""
+macro rselect(x, args...)
+    esc(rselect_helper(x, args...))
+end
+
 
 ##############################################################################
 ##
