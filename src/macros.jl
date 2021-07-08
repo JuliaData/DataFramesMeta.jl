@@ -1017,6 +1017,23 @@ macro transform(x, args...)
     esc(transform_helper(x, args...))
 end
 
+function rtransform_helper(x, args...)
+    exprs, outer_flags = create_args_vector(args...)
+    outer_flags[Symbol("@byrow")][] = true
+    t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
+    quote
+        $DataFrames.transform($x, $(t...))
+    end
+end
+
+"""
+    @rtransform(x, args...)
+
+Row-wise version of `@transform`, see `? @transform` for details.
+"""
+macro rtransform(x, args...)
+    esc(rtransform_helper(x, args...))
+end
 
 ##############################################################################
 ##

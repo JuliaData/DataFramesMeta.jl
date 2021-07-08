@@ -14,6 +14,7 @@ export @with,
        @orderby,
        @by, @combine,
        @transform, @select, @transform!, @select!,
+       @rtransform,
        @eachrow, @eachrow!,
        @byrow,
        @based_on, @where # deprecated
