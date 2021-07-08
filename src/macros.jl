@@ -595,6 +595,30 @@ function subset!_helper(x, args...)
     end
 end
 
+function rsubset!_helper(x, args...)
+    exprs, outer_flags = create_args_vector(args...)
+    if outer_flags[Symbol("@byrow")][] == true
+        throw(ArgumentError("Redundant @byrow calls"))
+    end
+
+    outer_flags[Symbol("@byrow")][] = true
+
+    t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
+    quote
+        $subset!($x, $(t...); skipmissing=true)
+    end
+end
+
+
+"""
+    @subset!(d, i...)
+
+Row-wise version of `@subset!`. See `? @subset!` for details.
+"""
+macro rsubset!(x, args...)
+    esc(rsubset!_helper(x, args...))
+end
+
 """
     @subset!(d, i...)
 
@@ -1148,9 +1172,9 @@ function rtransform!_helper(x, args...)
 end
 
 """
-    @rtransform(x, args...)
+    @rtransform!(x, args...)
 
-Row-wise version of `@transform`, see `? @transform!` for details.
+Row-wise version of `@transform!`, see `? @transform!` for details.
 """
 macro rtransform!(x, args...)
     esc(rtransform_helper(x, args...))
@@ -1284,9 +1308,9 @@ function rselect_helper(x, args...)
 end
 
 """
-    @rtransform(x, args...)
+    @rselect(x, args...)
 
-Row-wise version of `@transform`, see `? @transform` for details.
+Row-wise version of `@select`, see `? @select` for details.
 """
 macro rselect(x, args...)
     esc(rselect_helper(x, args...))
@@ -1401,6 +1425,27 @@ macro select!(x, args...)
     esc(select!_helper(x, args...))
 end
 
+function rselect!_helper(x, args...)
+    exprs, outer_flags = create_args_vector(args...)
+    if outer_flags[Symbol("@byrow")][] == true
+        throw(ArgumentError("Redundant @byrow calls"))
+    end
+    outer_flags[Symbol("@byrow")][] = true
+
+    t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
+    quote
+        $DataFrames.select($x, $(t...))
+    end
+end
+
+"""
+    @rselect!(x, args...)
+
+Row-wise version of `@select!`, see `? @select!` for details.
+"""
+macro rselect!(x, args...)
+    esc(rselect_helper(x, args...))
+end
 
 ##############################################################################
 ##
