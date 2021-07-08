@@ -1019,7 +1019,11 @@ end
 
 function rtransform_helper(x, args...)
     exprs, outer_flags = create_args_vector(args...)
+    if outer_flags[Symbol("@byrow")][] == true
+        throw(ArgumentError("Redundant @byrow calls"))
+    end
     outer_flags[Symbol("@byrow")][] = true
+
     t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
     quote
         $DataFrames.transform($x, $(t...))
@@ -1128,6 +1132,28 @@ true
 """
 macro transform!(x, args...)
     esc(transform!_helper(x, args...))
+end
+
+function rtransform!_helper(x, args...)
+    exprs, outer_flags = create_args_vector(args...)
+    if outer_flags[Symbol("@byrow")][] == true
+        throw(ArgumentError("Redundant @byrow calls"))
+    end
+    outer_flags[Symbol("@byrow")][] = true
+
+    t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
+    quote
+        $DataFrames.transform!($x, $(t...))
+    end
+end
+
+"""
+    @rtransform(x, args...)
+
+Row-wise version of `@transform`, see `? @transform!` for details.
+"""
+macro rtransform!(x, args...)
+    esc(rtransform_helper(x, args...))
 end
 
 
