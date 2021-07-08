@@ -298,7 +298,7 @@ exec(df, s::Union{Symbol, AbstractString}) = df[!, s]
 
 getsinglecolumn(df, s::DataFrames.ColumnIndex) = df[!, s]
 getsinglecolumn(df, s) = throw(ArgumentError("Only indexing with Symbols, strings and integers " *
-    "is currently allowed with cols"))
+    "is currently allowed with \$"))
 
 function with_helper(d, body)
     # Make body an expression to force the
@@ -342,7 +342,7 @@ tempfun(d[!, :a], d[!, :b])
 ```
 
 If an expression is wrapped in `^(expr)`, `expr` gets passed through untouched.
-If an expression is wrapped in  `cols(expr)`, the column is referenced by the
+If an expression is wrapped in  `\$(expr)`, the column is referenced by the
 variable `expr` rather than a symbol.
 
 If the expression provide to `@with` begins with `@byrow`, the function
@@ -388,7 +388,7 @@ julia> @with(df, df[:x .> 1, ^(:y)]) # The ^ means leave the :y alone
 
 julia> colref = :x;
 
-julia> @with(df, :y + cols(colref)) # Equivalent to df[!, :y] + df[!, colref]
+julia> @with(df, :y + \$colref) # Equivalent to df[!, :y] + df[!, colref]
 3-element Array{Int64,1}:
  3
  3
@@ -1350,12 +1350,13 @@ function combine_helper(x, args...; deprecation_warning = false)
 
     fe = first(exprs)
     if length(exprs) == 1 &&
-        !(fe isa QuoteNode || onearg(fe, :cols)) &&
+        !(fe isa QuoteNode || onearg(fe, :cols) || is_column_expr(fe)) &&
         !(fe.head == :(=) || fe.head == :kw)
 
-        @warn "Returning a Table object from @by and @combine now requires `cols(AsTable)` on the LHS."
+        @warn "Returning a Table object from @by and @combine now requires `\$AsTable` on the LHS."
 
-        exprs = ((:(cols(AsTable) = $fe)),)
+        lhs = Expr(:$, :AsTable)
+        exprs = ((:($lhs = $fe)),)
     end
 
     t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
@@ -1469,12 +1470,13 @@ function by_helper(x, what, args...)
     exprs, outer_flags = create_args_vector(args...)
     fe = first(exprs)
     if length(exprs) == 1 &&
-        !(fe isa QuoteNode || onearg(fe, :cols)) &&
+        !(fe isa QuoteNode || onearg(fe, :cols) || is_column_expr(fe)) &&
         !(fe.head == :(=) || fe.head == :kw)
 
-        @warn "Returning a Table object from @by and @combine now requires `cols(AsTable)` on the LHS."
+        @warn "Returning a Table object from @by and @combine now requires `\$AsTable` on the LHS."
 
-        exprs = ((:(cols(AsTable) = $fe)),)
+        lhs = Expr(:$, :AsTable)
+        exprs = ((:($lhs = $fe)),)
     end
 
     t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
