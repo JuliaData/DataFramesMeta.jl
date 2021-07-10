@@ -11,7 +11,7 @@ using MacroTools
 # Basics:
 export @with,
        @subset, @subset!, @rsubset, @rsubset!,
-       @orderby, @orderby,
+       @orderby, @rorderby,
        @by, @combine,
        @transform, @select, @transform!, @select!,
        @rtransform, @rselect, @rtransform!, @rselect!,
