@@ -595,7 +595,8 @@ end
 """
     @rsubset(d, i...)
 
-Row-wise version of `@subset!`. See `? @subset!` for details.
+Row-wise version of `@subset`, i.e. all opertaions use `@byrow` by
+default. See `? @subset` for details.
 """
 macro rsubset(x, args...)
     esc(rsubset_helper(x, args...))
@@ -634,15 +635,6 @@ function rsubset!_helper(x, args...)
     end
 end
 
-
-"""
-    @rsubset!(d, i...)
-
-Row-wise version of `@subset!`. See `? @subset!` for details.
-"""
-macro rsubset!(x, args...)
-    esc(rsubset!_helper(x, args...))
-end
 
 """
     @subset!(d, i...)
@@ -783,6 +775,17 @@ julia> @subset!(d, :a .== 1)
 """
 macro subset!(x, args...)
     esc(subset!_helper(x, args...))
+end
+
+
+"""
+    @rsubset!(d, i...)
+
+Row-wise version of `@subset`, i.e. all opertaions use `@byrow` by
+default. See `? @subset` for details.
+"""
+macro rsubset!(x, args...)
+    esc(rsubset!_helper(x, args...))
 end
 
 
@@ -966,7 +969,8 @@ end
 """
     rorderby(d, args...)
 
-Row-wise version of `@orderby`. See `? @orderby` for details.
+Row-wise version of `@orderby`, i.e. all opertaions use `@byrow` by
+default. See `? @orderby` for details.
 """
 macro rorderby(d, args...)
     esc(rorderby_helper(d, args...))
@@ -1106,7 +1110,8 @@ end
 """
     @rtransform(x, args...)
 
-Row-wise version of `@transform`, see `? @transform` for details.
+Row-wise version of `@transform`, i.e. all opertaions use `@byrow` by
+default. See `? @transform` for details.
 """
 macro rtransform(x, args...)
     esc(rtransform_helper(x, args...))
@@ -1223,8 +1228,8 @@ end
 """
     @rtransform!(x, args...)
 
-Row-wise version of `@transform!`, see `? @transform!` for details.
-"""
+Row-wise version of `@transform!`, i.e. all opertaions use `@byrow` by
+default. See `? @transform!` for details."""
 macro rtransform!(x, args...)
     esc(rtransform_helper(x, args...))
 end
@@ -1359,8 +1364,8 @@ end
 """
     @rselect(x, args...)
 
-Row-wise version of `@select`, see `? @select` for details.
-"""
+Row-wise version of `@select`, i.e. all opertaions use `@byrow` by
+default. See `? @select` for details."""
 macro rselect(x, args...)
     esc(rselect_helper(x, args...))
 end
