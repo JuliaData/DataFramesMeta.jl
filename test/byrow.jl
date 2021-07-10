@@ -54,6 +54,54 @@ const ≅ = isequal
     @test d ≅ @transform(df, :n1 = :i .* :g, :n2 = :i .* :g)
 end
 
+@testset "@rtransform" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5,
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing])
+
+    @test @rtransform(df, :n = :i + :g) ≅ @transform(df, :n = :i + :g)
+    @test @rtransform(df, :n = :t * string(:y)) ≅ @transform(df, :n = :t .* string.(:y))
+    @test @rtransform(df, :n = :g == 1 ? 100 : 500) ≅ @transform(df, :n = ifelse.(:g .== 1, 100, 500))
+    @test @rtransform(df, :n = :g == 1 && :t == "a") ≅ @transform(df, :n = map((g, t) -> g == 1 && t == "a", :g, :t))
+    @test @rtransform(df, :n = first(:g)) ≅ @transform(df, :n = first.(:g))
+
+    d = @rtransform df begin
+        :n1 = :i
+        :n2 = :i * :g
+    end
+    @test d ≅ @transform(df, :n1 = :i, :n2 = :i .* :g)
+    @test d ≅ @transform(df, @byrow(:n1 = :i), @byrow(:n2 = :i * :g))
+
+    d = @rtransform df begin
+        cols(:n1) = :i
+        :n2 = cols(:i) * :g
+    end
+    @test d ≅ @transform(df, :n1 = :i, :n2 = :i .* :g)
+
+    d = @rtransform df begin
+        :n1 = cols(:i)
+        cols(:n2) = :i * :g
+    end
+    @test d ≅ @transform(df, :n1 = :i, :n2 = :i .* :g)
+
+    d = @rtransform df begin
+        :n1 = begin
+            :i
+        end
+        :n2 = :i * :g
+    end
+    @test d ≅ @transform(df, :n1 = :i, :n2 = :i .* :g)
+
+    d = @rtransform df begin
+        :n1 = :i * :g
+        :n2 = :i * :g
+    end
+    @test d ≅ @transform(df, :n1 = :i .* :g, :n2 = :i .* :g)
+end
+
 @testset "@transform! with @byrow" begin
     df = DataFrame(
         g = [1, 1, 1, 2, 2],
