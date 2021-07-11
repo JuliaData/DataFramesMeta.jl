@@ -64,11 +64,11 @@ xlinq3 = @linq df  |>
     x_sym = :x
     y_str = "y"
     xlinq3 = @linq df  |>
-        where(cols(a_sym) .> 2, :b .!= "c")  |>
-        transform(cols(y_str) = 10 * cols(x_sym))  |>
-        orderby(cols(x_sym) .- mean(cols(x_sym)))  |>
+        where($a_sym .> 2, :b .!= "c")  |>
+        transform($y_str = 10 * $x_sym)  |>
+        orderby($x_sym .- mean($x_sym))  |>
         groupby(b_str) |>
-        combine(cols("meanX") = mean(:x), :meanY = mean(:y))
+        combine($"meanX" = mean(:x), :meanY = mean(:y))
 
     @test isequal(xlinq3, DataFrame(b = "d", meanX = 40.0, meanY = 400.0))
 end
