@@ -97,14 +97,14 @@ end
     @test d ≅ @transform(df, :n1 = :i, :n2 = :i .+ :g)
 
     d = @transform df begin
-        cols(:n1) = :i
+        $:n1 = :i
         :n2 = $:i .+ :g
     end
     @test d ≅ @transform(df, :n1 = :i, :n2 = :i .+ :g)
 
     d = @transform df begin
         :n1 = $:i
-        cols(:n2) = :i .+ :g
+        $:n2 = :i .+ :g
     end
     @test d ≅ @transform(df, :n1 = :i, :n2 = :i .+ :g)
 
@@ -213,14 +213,14 @@ end
     @test d ≅ @transform!(df, :n1 = :i, :n2 = :i .+ :g)
 
     d = @transform! df begin
-        cols(:n1) = :i
+        $:n1 = :i
         :n2 = $:i .+ :g
     end
     @test d ≅ @transform!(df, :n1 = :i, :n2 = :i .+ :g)
 
     d = @transform df begin
         :n1 = $:i
-        :n2 = cols(:n2) = :i .+ :g
+        :n2 = $:n2 = :i .+ :g
     end
     @test d ≅ @transform!(df, :n1 = :i, :n2 = :i .+ :g)
 
@@ -369,14 +369,14 @@ end
     @test d ≅ @select(df, :n1 = :i, :n2 = :i .+ :g)
 
     d = @select df begin
-        cols(:n1) = :i
+        $:n1 = :i
         :n2 = $:i .+ :g
     end
     @test d ≅ @select(df, :n1 = :i, :n2 = :i .+ :g)
 
     d = @select df begin
         :n1 = $:i
-        cols(:n2) = :i .+ :g
+        $:n2 = :i .+ :g
     end
     @test d ≅ @select(df, :n1 = :i, :n2 = :i .+ :g)
 
@@ -494,14 +494,14 @@ end
     @test d ≅ @select!(copy(df), :n1 = :i, :n2 = :i .+ :g)
 
     d = @select! copy(df) begin
-        cols(:n1) = :i
+        $:n1 = :i
         :n2 = $:i .+ :g
     end
     @test d ≅ @select!(copy(df), :n1 = :i, :n2 = :i .+ :g)
 
     d = @select! copy(df) begin
         :n1 = $:i
-        cols(:n2) = :i .+ :g
+        $:n2 = :i .+ :g
     end
     @test d ≅ @select!(copy(df), :n1 = :i, :n2 = :i .+ :g)
 
@@ -575,10 +575,10 @@ end
         res
     end
     idx = :A
-    @test  @with(df, cols(idx) .+ :B)  ==  df.A .+ df.B
+    @test  @with(df, $idx) .+ :B  ==  df.A .+ df.B
     idx2 = :B
-    @test  @with(df, cols(idx) .+ cols(idx2))  ==  df.A .+ df.B
-    @test  @with(df, cols(:A) .+ cols("B"))  ==  df.A .+ df.B
+    @test  @with(df, $idx) .+ cols(idx2)  ==  df.A .+ df.B
+    @test  @with(df, $:A) .+ cols("B")  ==  df.A .+ df.B
 
     @test_throws ArgumentError @with(df, :A + $2)
 
@@ -587,8 +587,8 @@ end
     @test  @with(df, DataFrame(a = :A * 2, b = :A .+ :B)) == DataFrame(a = df.A * 2, b = df.A .+ df.B)
 
     @test @with(df, :A) === df.A
-    @test @with(df, cols(:A)) === df.A
-    @test @with(df, cols("A")) === df.A
+    @test @with(df, $:A) === df.A
+    @test @with(df, $"A") === df.A
 end
 
 @testset "orderby" begin
@@ -627,14 +627,14 @@ end
     @test d ≅ @orderby(df, :c, :g .* 2)
 
     d = @orderby df begin
-        cols(:c)
+        $:c
         :g .*  2
     end
     @test d ≅ @orderby(df, :c, :g .* 2)
 
     d = @orderby df begin
         :c
-        cols(:g) .*  2
+        $:g .*  2
     end
     @test d ≅ @orderby(df, :c, :g .* 2)
 
@@ -656,10 +656,10 @@ end
 @testset "cols with @select fix" begin
     df = DataFrame("X" => 1, "X Y Z" => 2)
 
-    @test @select(df, cols("X")) == select(df, "X")
-    @test @select(df, cols("X Y Z")) == select(df, "X Y Z")
-    @test @transform(df, cols("X")) == df
-    @test @transform(df, cols("X Y Z")) == df
+    @test @select(df, $"X")) == select(df, "X"
+    @test @select(df, $"X Y Z")) == select(df, "X Y Z"
+    @test @transform(df, $"X") == df
+    @test @transform(df, $"X Y Z") == df
 end
 
 macro linenums_macro(arg)
