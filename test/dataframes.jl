@@ -280,7 +280,6 @@ s = [:i, :g]
     @test_throws LoadError @eval @transform(df, Not([:i, :g]))
     @test_throws MethodError @eval @transform(df, :n = sum(Between(:i, :t)))
     @test_throws ArgumentError @eval @transform(df, :n = sum($s))
-    @test_throws ArgumentError @eval @transform(df, :y = :i + $1)
 end
 
 @testset "@select" begin
@@ -554,7 +553,6 @@ cr = "c"
     @test_throws LoadError @eval @select(df, Not([:i, :g]))
     @test_throws MethodError @eval @select(df, :n = sum(Between(:i, :t)))
     @test_throws ArgumentError @eval @select(df, :n = sum($s))
-    @test_throws ArgumentError @eval @select(df, :y = :i + $1)
 end
 
 @testset "Keyword arguments failure" begin
