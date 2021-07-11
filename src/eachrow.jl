@@ -161,7 +161,7 @@ julia> varA = :A; varB = :B;
 
 julia> df2 = @eachrow df begin
            @newcol :colX::Vector{Float64}
-           :colX = cols(varB) == 2 ? pi * cols(varA) : cols(varB)
+           :colX = \$varB == 2 ? pi * \$varA : \$varB
        end
 3×3 DataFrame
  Row │ A      B      colX
@@ -310,7 +310,7 @@ julia> df2 = copy(df);
 
 julia> @eachrow! df2 begin
            @newcol :colX::Vector{Float64}
-           :colX = cols(varB) == 2 ? pi * cols(varA) : cols(varB)
+           :colX = \$varB == 2 ? pi * \$varA : \$varB
        end
 3×3 DataFrame
  Row │ A      B      colX

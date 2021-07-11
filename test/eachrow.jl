@@ -123,7 +123,7 @@ end
 
 
 # `y` needs to be in global scope here because the testset relies on `y`
-y = 0
+y = 0`
 @testset "eachrow!" begin
     df = DataFrame(A = 1:3, B = [2, 1, 2])
 
