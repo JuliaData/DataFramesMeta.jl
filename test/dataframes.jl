@@ -575,10 +575,10 @@ end
         res
     end
     idx = :A
-    @test  @with(df, $idx) .+ :B  ==  df.A .+ df.B
+    @test  @with(df, $idx .+ :B)  ==  df.A .+ df.B
     idx2 = :B
-    @test  @with(df, $idx) .+ cols(idx2)  ==  df.A .+ df.B
-    @test  @with(df, $:A) .+ cols("B")  ==  df.A .+ df.B
+    @test  @with(df, $idx .+ $idx2)  ==  df.A .+ df.B
+    @test  @with(df, $:A .+ $"B")  ==  df.A .+ df.B
 
     @test_throws ArgumentError @with(df, :A + $2)
 
@@ -656,8 +656,8 @@ end
 @testset "cols with @select fix" begin
     df = DataFrame("X" => 1, "X Y Z" => 2)
 
-    @test @select(df, $"X")) == select(df, "X"
-    @test @select(df, $"X Y Z")) == select(df, "X Y Z"
+    @test @select(df, $"X") == select(df, "X")
+    @test @select(df, $"X Y Z") == select(df, "X Y Z")
     @test @transform(df, $"X") == df
     @test @transform(df, $"X Y Z") == df
 end
