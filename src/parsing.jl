@@ -263,7 +263,7 @@ function fun_to_vec(ex::Expr;
 
     if onearg(rhs, :cols)
         @warn "cols is deprecated, use \$ instead"
-        rhs = Expr(:$, lhs.args[2])
+        rhs = Expr(:$, rhs.args[2])
     end
 
     if is_macro_head(rhs, "@byrow")
