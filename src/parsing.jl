@@ -41,7 +41,7 @@ function is_simple_non_broadcast_call(expr::Expr)
     expr.head == :call &&
         length(expr.args) >= 2 &&
         expr.args[1] isa Symbol &&
-        all(x -> x isa QuoteNode || onearg(x, :cols), expr.args[2:end])
+        all(x -> x isa QuoteNode || onearg(x, :cols) || is_column_expr(x), expr.args[2:end])
 end
 
 is_simple_broadcast_call(x) = false
@@ -51,7 +51,7 @@ function is_simple_broadcast_call(expr::Expr)
         expr.args[1] isa Symbol &&
         expr.args[2] isa Expr &&
         expr.args[2].head == :tuple &&
-        all(x -> x isa QuoteNode || onearg(x, :cols), expr.args[2].args)
+        all(x -> x isa QuoteNode || onearg(x, :cols) || is_column_expr(x), expr.args[2].args)
 end
 
 function args_to_selectors(v)
