@@ -51,7 +51,7 @@ xlinq3 = @linq df  |>
 
 @test (@linq df |> with(:a)) == df.a
 
-@testset "@linq with `cols`" begin
+@testset "@linq with `$`" begin
     df = DataFrame(
             a = [1, 2, 3, 4],
             b = ["a", "b", "c", "d"],

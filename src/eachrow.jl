@@ -102,8 +102,8 @@ by `@eachrow`. Also note that the returned data frame does not share columns
 with `df`. See [`@eachrow!`](@ref) which employs the same syntax but modifies
 the data frame in-place.
 
-Like with `@transform`, `@eachrow` supports the use of `cols` to work with column names
-stored as variables. Using `cols` with a multi-column selector, such as a `Vector` of
+Like with `@transform`, `@eachrow` supports the use of `\$` to work with column names
+stored as variables. Using `\$` with a multi-column selector, such as a `Vector` of
 `Symbol`s, is currently unsupported.
 
 ### Arguments
@@ -243,8 +243,8 @@ Changes to the rows directly affect `df`. The operation will modify the
 data frame in place. See [`@eachrow`](@ref) which employs the same syntax but allocates
 a fresh data frame.
 
-Like with `@transform!`, `@eachrow!` supports the use of `cols` to work with column names
-stored as variables. Using `cols` with a multi-column selector, such as a `Vector` of
+Like with `@transform!`, `@eachrow!` supports the use of `\$` to work with column names
+stored as variables. Using `\$` with a multi-column selector, such as a `Vector` of
 `Symbol`s, is currently unsupported.
 
 ### Arguments

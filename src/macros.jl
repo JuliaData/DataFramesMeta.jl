@@ -15,7 +15,7 @@ DataFrames's `source => fun => destination` syntax.
 Parsing follows the same convention as other DataFramesMeta.jl macros, such as `@with`. All
 terms in the expression that are `Symbol`s are treated as columns in the data frame, except
 `Symbol`s wrapped in `^`. To use a variable representing a column name, wrap the variable
-in `cols`.
+in `$`.
 
 `@col` constructs an anonymous function `fun` based on the given expression. It then creates
 a `source => fun => destination` pair that is suitable for the `select`, `transform`, and
