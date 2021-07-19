@@ -153,7 +153,7 @@ newvar = :n
 @testset "Limits of @combine" begin
     @test_throws MethodError @eval @combine(gd, :n = sum(Between(:i, :t)))
     @test_throws LoadError @eval @combine(gd; :n = mean(:i))
-    @test_throws ArgumentError @eval @combine(gd, :n = mean(:i) + mean($1))
+    @test_throws ArgumentError @eval @combine(gd, :n = mean(:i) + mean(cols(1)))
 end
 
 @testset "@by" begin
@@ -295,7 +295,7 @@ newvar = :n
 
 @testset "limits of @by" begin
     @test_throws MethodError @eval @by(df, :g, :n = sum(Between(:i, :t)))
-    @test_throws ArgumentError @eval @by(df, :g, :n = mean(:i) + mean($1))
+    @test_throws ArgumentError @eval @by(df, :g, :n = mean(:i) + mean(cols(1)))
 end
 
 @testset "@transform with grouped data frame" begin

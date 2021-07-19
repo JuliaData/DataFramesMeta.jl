@@ -110,13 +110,13 @@ df = DataFrame(A = 1:3, B = [2, 1, 2])
 
 @testset "limits of @eachrow" begin
     @eval Testeachrow n = ["A", "B"]
-    @test_throws ArgumentError @eval @eachrow df begin $n end
+    @test_throws ArgumentError @eval @eachrow df begin cols(n) end
 
     @eval Testeachrow n = [:A, :B]
-    @test_throws ArgumentError @eval @eachrow df begin $n end
+    @test_throws ArgumentError @eval @eachrow df begin cols(n) end
 
     @eval Testeachrow n = [1, 2]
-    @test_throws ArgumentError @eval @eachrow df begin $n end
+    @test_throws ArgumentError @eval @eachrow df begin cols(n) end
 
     @test_throws ArgumentError @eachrow df $1 + $:A
 end
