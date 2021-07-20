@@ -579,7 +579,7 @@ end
 
 function rsubset_helper(x, args...)
     exprs, outer_flags = create_args_vector(args...)
-    if outer_flags[Symbol("@byrow")][] == true
+    if outer_flags[Symbol("@byrow")][]
         throw(ArgumentError("Redundant @byrow calls"))
     end
 
@@ -595,8 +595,8 @@ end
 """
     @rsubset(d, i...)
 
-Row-wise version of `@subset`, i.e. all opertaions use `@byrow` by
-default. See `? @subset` for details.
+Row-wise version of `@subset`, i.e. all operations use `@byrow` by
+default. See [`@subset`](@ref) for details.
 """
 macro rsubset(x, args...)
     esc(rsubset_helper(x, args...))

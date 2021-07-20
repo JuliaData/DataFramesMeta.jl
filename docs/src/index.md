@@ -13,7 +13,8 @@ In addition, DataFramesMeta provides
 
 * `@orderby`, for sorting data frames
 * `@subset` and `@subset!`, for keeping rows of a data frame matching a given condition
-* Row-wise version of the above macros in the form of `@rtransform`, `@rtransform!`, `@rselect`, `@rselect!`, `@rorderby`, `@rsubset`, and `@rsubset!`.
+* Row-wise versions of the above macros in the form of `@rtransform`, `@rtransform!`,
+  `@rselect`, `@rselect!`, `@rorderby`, `@rsubset`, and `@rsubset!`.
 * `@by`, for grouping and combining a data frame in a single step
 * `@with`, for working with the columns of a data frame with high performance and 
   convenient syntax
@@ -273,7 +274,7 @@ df2 = @eachrow df begin
 end
 ```
 
-## Row-wise transformations with `@byrow` and `@rtransform` and friends
+## Row-wise transformations with `@byrow` and `@rtransform`/`@rselect`/etc.
 
 `@byrow` provides a convenient syntax to apply operations by-row,
 without having to vectorize manually. Additionally, the macros
@@ -283,7 +284,7 @@ without having to vectorize manually. Additionally, the macros
 DataFrames.jl provides the function wrapper `ByRow`. `ByRow(f)(x, y)`
 is roughly equivalent to `f.(x, y)`. DataFramesMeta.jl allows users 
 to construct expressions using `ByRow` function wrapper with the 
-syntax `@byrow` or the row-wise macros `@rtransform` etc.
+syntax `@byrow` or the row-wise macros `@rtransform`, etc.
 
 `@byrow` is not a "real" macro and cannot be used outside of 
 DataFramesMeta.jl macros. However its behavior within DataFramesMeta.jl
