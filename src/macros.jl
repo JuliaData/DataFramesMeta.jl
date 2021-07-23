@@ -769,8 +769,8 @@ end
 """
     @rsubset!(d, i...)
 
-Row-wise version of `@subset`, i.e. all opertaions use `@byrow` by
-default. See `? @subset` for details.
+Row-wise version of `@subset!`, i.e. all opertaions use `@byrow` by
+default. See [`@subset!`](@ref) for details.
 """
 macro rsubset!(x, args...)
     esc(rsubset!_helper(x, args...))
@@ -951,7 +951,7 @@ end
     rorderby(d, args...)
 
 Row-wise version of `@orderby`, i.e. all opertaions use `@byrow` by
-default. See `? @orderby` for details.
+default. See [`@orderby`](@ref)for details.
 """
 macro rorderby(d, args...)
     esc(rorderby_helper(d, args...))
@@ -1088,7 +1088,7 @@ end
     @rtransform(x, args...)
 
 Row-wise version of `@transform`, i.e. all opertaions use `@byrow` by
-default. See `? @transform` for details.
+default. See [`@transform`](@ref) for details.
 """
 macro rtransform(x, args...)
     esc(rtransform_helper(x, args...))
@@ -1202,11 +1202,10 @@ end
     @rtransform!(x, args...)
 
 Row-wise version of `@transform!`, i.e. all opertaions use `@byrow` by
-default. See `? @transform!` for details."""
+default. See [`@transform!`](@ref) for details."""
 macro rtransform!(x, args...)
     esc(rtransform_helper(x, args...))
 end
-
 
 ##############################################################################
 ##
@@ -1334,7 +1333,8 @@ end
     @rselect(x, args...)
 
 Row-wise version of `@select`, i.e. all opertaions use `@byrow` by
-default. See `? @select` for details."""
+default. See [`@select`](@ref)for details.
+"""
 macro rselect(x, args...)
     esc(rselect_helper(x, args...))
 end
@@ -1460,7 +1460,8 @@ end
 """
     @rselect!(x, args...)
 
-Row-wise version of `@select!`, see `? @select!` for details.
+Row-wise version of `@select!`, i.e. all opertaions use `@byrow` by
+default. See [`@select!`](@ref)for details.
 """
 macro rselect!(x, args...)
     esc(rselect_helper(x, args...))
