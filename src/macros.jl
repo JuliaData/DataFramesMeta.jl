@@ -579,7 +579,6 @@ end
 
 function rsubset_helper(x, args...)
     exprs, outer_flags = create_args_vector(args...; wrap_byrow = true)
-
     t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
     quote
         $subset($x, $(t...); skipmissing=true)
@@ -618,7 +617,6 @@ end
 
 function rsubset!_helper(x, args...)
     exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
-
     t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
     quote
         $subset!($x, $(t...); skipmissing=true)
@@ -943,7 +941,6 @@ end
 
 function rorderby_helper(x, args...)
     exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
-
     t = (fun_to_vec(ex; gensym_names = true, outer_flags = outer_flags) for ex in exprs)
     quote
         $DataFramesMeta.orderby($x, $(t...))
