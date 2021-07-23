@@ -578,12 +578,7 @@ macro subset(x, args...)
 end
 
 function rsubset_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...)
-    if outer_flags[Symbol("@byrow")][]
-        throw(ArgumentError("Redundant @byrow calls"))
-    end
-
-    outer_flags[Symbol("@byrow")][] = true
+    exprs, outer_flags = create_args_vector(args...; wrap_byrow = true)
 
     t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
     quote
@@ -622,12 +617,7 @@ function subset!_helper(x, args...)
 end
 
 function rsubset!_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...)
-    if outer_flags[Symbol("@byrow")][] == true
-        throw(ArgumentError("Redundant @byrow calls"))
-    end
-
-    outer_flags[Symbol("@byrow")][] = true
+    exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
 
     t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
     quote
@@ -952,13 +942,7 @@ macro orderby(d, args...)
 end
 
 function rorderby_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...)
-    if outer_flags[Symbol("@byrow")][] == true
-        throw(ArgumentError("Redundant @byrow calls"))
-    end
-
-    outer_flags[Symbol("@byrow")][] = true
-
+    exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
 
     t = (fun_to_vec(ex; gensym_names = true, outer_flags = outer_flags) for ex in exprs)
     quote
@@ -1095,11 +1079,7 @@ macro transform(x, args...)
 end
 
 function rtransform_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...)
-    if outer_flags[Symbol("@byrow")][] == true
-        throw(ArgumentError("Redundant @byrow calls"))
-    end
-    outer_flags[Symbol("@byrow")][] = true
+    exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
 
     t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
     quote
@@ -1213,11 +1193,7 @@ macro transform!(x, args...)
 end
 
 function rtransform!_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...)
-    if outer_flags[Symbol("@byrow")][] == true
-        throw(ArgumentError("Redundant @byrow calls"))
-    end
-    outer_flags[Symbol("@byrow")][] = true
+    exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
 
     t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
     quote
@@ -1349,11 +1325,7 @@ macro select(x, args...)
 end
 
 function rselect_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...)
-    if outer_flags[Symbol("@byrow")][] == true
-        throw(ArgumentError("Redundant @byrow calls"))
-    end
-    outer_flags[Symbol("@byrow")][] = true
+    exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
 
     t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
     quote
@@ -1480,11 +1452,7 @@ macro select!(x, args...)
 end
 
 function rselect!_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...)
-    if outer_flags[Symbol("@byrow")][] == true
-        throw(ArgumentError("Redundant @byrow calls"))
-    end
-    outer_flags[Symbol("@byrow")][] = true
+    exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
 
     t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
     quote
