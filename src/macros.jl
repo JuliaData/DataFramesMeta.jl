@@ -583,7 +583,7 @@ end
 Deprecated version of `@subset`, see `?@subset` for details.
 """
 macro where(x, args...)
-    @warn "`@where is deprecated, use `@subset`  with `@skipmissing` instead."
+    @warn "`@where is deprecated, use `@subset` instead."
     esc(where_helper(x, args...))
 end
 
