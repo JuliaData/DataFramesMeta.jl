@@ -361,8 +361,16 @@ If a `:block` expression, return the `args` of
 the block as an array. If a simple expression,
 wrap the expression in a one-element vector.
 """
-function create_args_vector(arg)
+function create_args_vector(arg; wrap_byrow::Bool=false)
     arg, outer_flags = extract_macro_flags(MacroTools.unblock(arg))
+
+    if wrap_byrow
+        if outer_flags[Symbol("@byrow")][]
+            throw(ArgumentError("Redundant @byrow calls"))
+        end
+
+        outer_flags[Symbol("@byrow")][] = true
+    end
 
     if arg isa Expr && arg.head == :block
         x = MacroTools.rmlines(arg).args
