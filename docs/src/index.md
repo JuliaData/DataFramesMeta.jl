@@ -303,7 +303,7 @@ The following macros accept `@byrow`:
 * `@transform` and `@transform!`, `@select`, `@select!`, and `@combine`. 
   `@byrow` can be used in the left hand side of expressions, e.g.
   `@select(df, @byrow z = :x * :y)`. 
-* `@subset`, `@subset!` and `@orderby`, with syntax of the form `@where(df, @byrow :x > :y)`
+* `@subset`, `@subset!` and `@orderby`, with syntax of the form `@subset(df, @byrow :x > :y)`
 * `@with`, where the anonymous function created by `@with` is wrapped in
   `ByRow`, as in `@with(df, @byrow :x * :y)`.
 
@@ -312,7 +312,7 @@ operations, it is allowed to use`@byrow` at the beginning of a block of
 operations. All transformations in the block will operate by row.
 
 ```julia
-julia> @where df @byrow begin 
+julia> @subset df @byrow begin
            :a > 1
            :b < 5
        end
@@ -446,7 +446,7 @@ functions.
 
     Julia             dplyr            LINQ
     ---------------------------------------------
-    @where            filter           Where
+    @subset           filter           Where
     @transform        mutate           Select (?)
     @by                                GroupBy
     groupby           group_by         GroupBy
@@ -470,7 +470,7 @@ df = DataFrame(a = repeat(1:5, outer = 20),
 
 x_thread = @chain df begin
     @transform(:y = 10 * :x)
-    @where(:a .> 2)
+    @subset(:a .> 2)
     @by(:b, :meanX = mean(:x), :meanY = mean(:y))
     @orderby(:meanX)
     @select(:meanX, :meanY, :var = :b)
@@ -488,7 +488,7 @@ expression.
 # a few transformations
 @chain df begin 
     @transform(:y = 10 .* :x)
-    @where(:a .> 2)
+    @subset(:a .> 2)
     @select(:a, :y, :x)
     reduce(+, eachcol(_))
 end

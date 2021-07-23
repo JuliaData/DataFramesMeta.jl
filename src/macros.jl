@@ -70,7 +70,7 @@ to indicate that the anonymous function created by DataFramesMeta
 to represent an operation should be applied "by-row".
 
 If an expression starts with `@byrow`, either of the form `@byrow :y = f(:x)`
-in transformations or `@byrow f(:x)` in `@orderby`, `@where`, and `@with`,
+in transformations or `@byrow f(:x)` in `@orderby`, `@subset`, and `@with`,
 then the anonymous function created by DataFramesMeta is wrapped in the
 `DataFrames.ByRow` function wrapper, which broadcasts the function so that it run on each row.
 
@@ -89,7 +89,7 @@ julia> @transform(df, @byrow :c = :a * :b)
    3 │     3      7     21
    4 │     4      8     32
 
-julia> @where(df, @byrow :a == 1 ? true : false)
+julia> @subset(df, @byrow :a == 1 ? true : false)
 1×2 DataFrame
  Row │ a      b
      │ Int64  Int64
@@ -102,7 +102,7 @@ operations, it is allowed to use`@byrow` at the beginning of a block of
 operations. All transformations in the block will operate by row.
 
 ```julia
-julia> @where df @byrow begin
+julia> @subset df @byrow begin
            :a > 1
            :b < 5
        end
@@ -578,12 +578,12 @@ macro subset(x, args...)
 end
 
 """
-    @where(x, args...)
+    @subset(x, args...)
 
 Deprecated version of `@subset`, see `?@subset` for details.
 """
 macro where(x, args...)
-    @warn "`@where is deprecated, use `@subset`  with `@skipmissing` instead."
+    @warn "`@where is deprecated, use `@subset` instead."
     esc(where_helper(x, args...))
 end
 
