@@ -578,7 +578,7 @@ macro subset(x, args...)
 end
 
 function rsubset_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...; wrap_byrow = true)
+    exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
     t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
     quote
         $subset($x, $(t...); skipmissing=true)
@@ -769,7 +769,7 @@ end
 """
     @rsubset!(d, i...)
 
-Row-wise version of `@subset!`, i.e. all opertaions use `@byrow` by
+Row-wise version of `@subset!`, i.e. all operations use `@byrow` by
 default. See [`@subset!`](@ref) for details.
 """
 macro rsubset!(x, args...)
@@ -941,7 +941,7 @@ end
 
 function rorderby_helper(x, args...)
     exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
-    t = (fun_to_vec(ex; gensym_names = true, outer_flags = outer_flags) for ex in exprs)
+    t = (fun_to_vec(ex; gensym_names=true, outer_flags=outer_flags) for ex in exprs)
     quote
         $DataFramesMeta.orderby($x, $(t...))
     end
@@ -950,8 +950,8 @@ end
 """
     rorderby(d, args...)
 
-Row-wise version of `@orderby`, i.e. all opertaions use `@byrow` by
-default. See [`@orderby`](@ref)for details.
+Row-wise version of `@orderby`, i.e. all operations use `@byrow` by
+default. See [`@orderby`](@ref) for details.
 """
 macro rorderby(d, args...)
     esc(rorderby_helper(d, args...))
@@ -1078,7 +1078,7 @@ end
 function rtransform_helper(x, args...)
     exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
 
-    t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
+    t = (fun_to_vec(ex; gensym_names=false, outer_flags=outer_flags) for ex in exprs)
     quote
         $DataFrames.transform($x, $(t...))
     end
@@ -1087,7 +1087,7 @@ end
 """
     @rtransform(x, args...)
 
-Row-wise version of `@transform`, i.e. all opertaions use `@byrow` by
+Row-wise version of `@transform`, i.e. all operations use `@byrow` by
 default. See [`@transform`](@ref) for details.
 """
 macro rtransform(x, args...)
@@ -1192,7 +1192,7 @@ end
 function rtransform!_helper(x, args...)
     exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
 
-    t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
+    t = (fun_to_vec(ex; gensym_names=false, outer_flags=outer_flags) for ex in exprs)
     quote
         $DataFrames.transform!($x, $(t...))
     end
@@ -1201,7 +1201,7 @@ end
 """
     @rtransform!(x, args...)
 
-Row-wise version of `@transform!`, i.e. all opertaions use `@byrow` by
+Row-wise version of `@transform!`, i.e. all operations use `@byrow` by
 default. See [`@transform!`](@ref) for details."""
 macro rtransform!(x, args...)
     esc(rtransform_helper(x, args...))
@@ -1323,7 +1323,7 @@ end
 function rselect_helper(x, args...)
     exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
 
-    t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
+    t = (fun_to_vec(ex; gensym_names=false, outer_flags=outer_flags) for ex in exprs)
     quote
         $DataFrames.select($x, $(t...))
     end
@@ -1332,8 +1332,8 @@ end
 """
     @rselect(x, args...)
 
-Row-wise version of `@select`, i.e. all opertaions use `@byrow` by
-default. See [`@select`](@ref)for details.
+Row-wise version of `@select`, i.e. all operations use `@byrow` by
+default. See [`@select`](@ref) for details.
 """
 macro rselect(x, args...)
     esc(rselect_helper(x, args...))
@@ -1451,7 +1451,7 @@ end
 function rselect!_helper(x, args...)
     exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
 
-    t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
+    t = (fun_to_vec(ex; gensym_names=false, outer_flags=outer_flags) for ex in exprs)
     quote
         $DataFrames.select($x, $(t...))
     end
@@ -1460,8 +1460,8 @@ end
 """
     @rselect!(x, args...)
 
-Row-wise version of `@select!`, i.e. all opertaions use `@byrow` by
-default. See [`@select!`](@ref)for details.
+Row-wise version of `@select!`, i.e. all operations use `@byrow` by
+default. See [`@select!`](@ref) for details.
 """
 macro rselect!(x, args...)
     esc(rselect_helper(x, args...))
