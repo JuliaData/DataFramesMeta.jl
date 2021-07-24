@@ -9,7 +9,7 @@
 function eachrow_replace(e::Expr)
     # Traverse the syntax tree of e
     if onearg(e, :cols)
-        @warn "cols is deprecated, use \$ instead"
+        @warn "cols(x) is deprecated, use \$x instead"
         # cols(:x) becomes cols(:x)[row]
         return Expr(:ref, Expr(:call, :cols, e.args[2]), :row)
     elseif is_column_expr(e)

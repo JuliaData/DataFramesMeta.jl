@@ -23,7 +23,7 @@ function replace_syms!(e::Expr, membernames)
         @warn "_I_() for escaping variables is deprecated, use cols() instead"
         addkey!(membernames, :($(e.args[2])))
     elseif onearg(e, :cols)
-        @warn "cols() for escaping variables is deprecated, use \$ instead"
+        @warn "cols(x) for escaping variables is deprecated, use \$x instead"
         addkey!(membernames, :($(e.args[2])))
     elseif is_column_expr(e)
         addkey!(membernames, :($(e.args[1])))
@@ -59,7 +59,7 @@ function args_to_selectors(v)
         if arg isa QuoteNode
             arg
         elseif onearg(arg, :cols)
-            @warn "cols is deprecated, use \$ instead"
+            @warn "cols(x) is deprecated, use \$x instead"
             arg.args[2]
         elseif is_column_expr(arg)
             arg.args[1]
@@ -210,7 +210,7 @@ function fun_to_vec(ex::Expr;
     # :y = :x + 1 # re-write as complicated call
     # :y = $:x + 1 # re-write as complicated call, interpolation elsewhere
     # $:y = f(:x) # re-write as simple call, unblock extract function
-    # $:y = f(cols(:x)) # re-write as simple call, unblock, interpolation elsewhere
+    # $:y = f($:x) # re-write as simple call, unblock, interpolation elsewhere
     # $y = :x + 1 # re-write as complicated col, unblock
     # $:y = $:x + 1 # re-write as complicated call, unblock, interpolation elsewhere
     # `@byrow` before any of the above
@@ -262,7 +262,7 @@ function fun_to_vec(ex::Expr;
     rhs = MacroTools.unblock(ex.args[2])
 
     if onearg(rhs, :cols)
-        @warn "cols is deprecated, use \$ instead"
+        @warn "cols(x) is deprecated, use \$x instead"
         rhs = Expr(:$, rhs.args[2])
     end
 
