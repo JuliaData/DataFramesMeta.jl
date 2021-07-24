@@ -36,7 +36,7 @@ transform(df, [:a, :b] => ((a, b) -> a .* b .+ first(a) .- sum(b)) => :c);
 
 To reference columns inside DataFramesMeta macros, use `Symbol`s. For example, use `:x`
 to refer to the column `df.x`. To use a variable `varname` representing a `Symbol` to refer to 
-a column, use the syntax `cols(varname)`. 
+a column, use the syntax `$varname`. 
 
 Use `passmissing`  to propagate `missing` values more easily. See `?passmissing` for 
 details. `passmissing` is defined in [Missings.jl](https://github.com/JuliaData/Missings.jl)
@@ -329,9 +329,9 @@ used, functions do not take into account the grouping, so for
 example the result of `@transform(df, @byrow y = f(:x))` and 
 `@transform(groupby(df, :g), @byrow :y = f(:x))` is the same.
 
-## Working with column names programmatically with `cols`
+## Working with column names programmatically with `\$`
 
-DataFramesMeta provides the special syntax `cols` for referring to 
+DataFramesMeta provides the special syntax `\$` for referring to 
 columns in a data frame via a `Symbol`, string, or column position as either
 a literal or a variable. 
 
@@ -339,36 +339,36 @@ a literal or a variable.
 df = DataFrame(A = 1:3, B = [2, 1, 2])
 
 nameA = :A
-df2 = @transform(df, C = :B - cols(nameA))
+df2 = @transform(df, C = :B - $nameA)
 
 nameA_string = "A"
-df3 = @transform(df, C = :B - cols(nameA_string))
+df3 = @transform(df, C = :B - $nameA_string)
 
 nameB = "B"
 df4 = @eachrow df begin 
-    :A = cols(nameB)
+    :A = $nameB
 end
 ```
 
-`cols` can also be used to create new columns in a data frame. 
+`\$` can also be used to create new columns in a data frame. 
 
 ```julia
 df = DataFrame(A = 1:3, B = [2, 1, 2])
 
 newcol = "C"
-@select(df, cols(newcol) = :A + :B)
+@select(df, $newcol = :A + :B)
 
-@by(df, :B, cols("A complicated" * " new name") = first(:A))
+@by(df, :B, $("A complicated" * " new name") = first(:A))
 
 nameC = "C"
 df3 = @eachrow df begin 
-    @newcol cols(nameC)::Vector{Int}
-    cols(nameC) = :A
+    @newcol $nameC::Vector{Int}
+    $nameC = :A
 end
 ```
 
 DataFramesMeta macros do not allow mixing of integer column references with references 
-of other types. This means `@transform(df, y = :A + cols(2))`, attempting to add the columns 
+of other types. This means `@transform(df, y = :A + $2)`, attempting to add the columns 
 `df[!, :A]` and `df[!, 2]`, will fail. This is because in DataFrames, the command 
 
 ```julia
@@ -381,7 +381,7 @@ to this rule. `Symbol`s and strings are allowed to be mixed inside DataFramesMet
 Consequently, 
 
 ```
-@transform(df, y = :A + cols("B"))
+@transform(df, y = :A + $"B")
 ```
 
 will not error even though 
@@ -400,11 +400,11 @@ references in `@with` and `@eachrow` in any part of the expression, but you can 
 ```julia
 df = DataFrame(A = 1:3, B = [2, 1, 2])
 @eachrow df begin 
-    :A = cols(2)
+    :A = $2
 end
 
 @with df begin 
-    cols(1) + cols("A")
+    $1 + $"A"
 end
 ```
 
@@ -412,18 +412,13 @@ while the following will work without error
 
 ```julia
 @eachrow df begin 
-    cols(1) = cols(2)
+    $1 + $2
 end
 
 @with df begin 
-    cols(1) + cols(2)
+    $1 + $2
 end
 ```
-
-Note that `cols` is *not* a standard Julia function. It is only used to modify the 
-way that macros in DataFramesMeta escape arguments and has no behavior of its own 
-outside of DataFramesMeta macros.
-
 
 # Working with `Symbol`s without referring to columns
 
