@@ -54,6 +54,54 @@ const ≅ = isequal
     @test d ≅ @transform(df, :n1 = :i .* :g, :n2 = :i .* :g)
 end
 
+@testset "@rtransform" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5,
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing])
+
+    @test @rtransform(df, :n = :i + :g) ≅ @transform(df, :n = :i + :g)
+    @test @rtransform(df, :n = :t * string(:y)) ≅ @transform(df, :n = :t .* string.(:y))
+    @test @rtransform(df, :n = :g == 1 ? 100 : 500) ≅ @transform(df, :n = ifelse.(:g .== 1, 100, 500))
+    @test @rtransform(df, :n = :g == 1 && :t == "a") ≅ @transform(df, :n = map((g, t) -> g == 1 && t == "a", :g, :t))
+    @test @rtransform(df, :n = first(:g)) ≅ @transform(df, :n = first.(:g))
+
+    d = @rtransform df begin
+        :n1 = :i
+        :n2 = :i * :g
+    end
+    @test d ≅ @transform(df, :n1 = :i, :n2 = :i .* :g)
+    @test d ≅ @transform(df, @byrow(:n1 = :i), @byrow(:n2 = :i * :g))
+
+    d = @rtransform df begin
+        cols(:n1) = :i
+        :n2 = cols(:i) * :g
+    end
+    @test d ≅ @transform(df, :n1 = :i, :n2 = :i .* :g)
+
+    d = @rtransform df begin
+        :n1 = cols(:i)
+        cols(:n2) = :i * :g
+    end
+    @test d ≅ @transform(df, :n1 = :i, :n2 = :i .* :g)
+
+    d = @rtransform df begin
+        :n1 = begin
+            :i
+        end
+        :n2 = :i * :g
+    end
+    @test d ≅ @transform(df, :n1 = :i, :n2 = :i .* :g)
+
+    d = @rtransform df begin
+        :n1 = :i * :g
+        :n2 = :i * :g
+    end
+    @test d ≅ @transform(df, :n1 = :i .* :g, :n2 = :i .* :g)
+end
+
 @testset "@transform! with @byrow" begin
     df = DataFrame(
         g = [1, 1, 1, 2, 2],
@@ -101,6 +149,54 @@ end
     @test d ≅ @transform!(copy(df), :n1 = :i .* :g, :n2 = :i .* :g)
 end
 
+@testset "@rtransform!" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5,
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform!, missing])
+
+    @test @rtransform!(copy(df), :n = :i + :g) ≅ @transform!(copy(df), :n = :i + :g)
+    @test @rtransform!(copy(df), :n = :t * string(:y)) ≅ @transform!(copy(df), :n = :t .* string.(:y))
+    @test @rtransform!(copy(df), :n = :g == 1 ? 100 : 500) ≅ @transform!(copy(df), :n = ifelse.(:g .== 1, 100, 500))
+    @test @rtransform!(copy(df), :n = :g == 1 && :t == "a") ≅ @transform!(copy(df), :n = map((g, t) -> g == 1 && t == "a", :g, :t))
+    @test @rtransform!(copy(df), :n = first(:g)) ≅ @transform!(copy(df), :n = first.(:g))
+
+    d = @rtransform! df begin
+        :n1 = :i
+        :n2 = :i * :g
+    end
+    @test d ≅ @transform!(copy(df), :n1 = :i, :n2 = :i .* :g)
+    @test d ≅ @transform!(copy(df), @byrow(:n1 = :i), @byrow(:n2 = :i * :g))
+
+    d = @rtransform! df begin
+        cols(:n1) = :i
+        :n2 = cols(:i) * :g
+    end
+    @test d ≅ @transform!(copy(df), :n1 = :i, :n2 = :i .* :g)
+    d = @rtransform! df begin
+        :n1 = cols(:i)
+        cols(:n2) = :i * :g
+    end
+    @test d ≅ @transform!(copy(df), :n1 = :i, :n2 = :i .* :g)
+
+    d = @rtransform! df begin
+        :n1 = begin
+            :i
+        end
+        :n2 = :i * :g
+    end
+    @test d ≅ @transform!(copy(df), :n1 = :i, :n2 = :i .* :g)
+
+    d = @rtransform! df begin
+        :n1 = :i * :g
+        :n2 = :i * :g
+    end
+    @test d ≅ @transform!(copy(df), :n1 = :i .* :g, :n2 = :i .* :g)
+end
+
+
 @testset "@select with @byrow" begin
     df = DataFrame(
         g = [1, 1, 1, 2, 2],
@@ -142,6 +238,53 @@ end
     @test d ≅ @select(df, :n1 = :i, :n2 = :i .* :g)
 
     d = @select df @byrow begin
+        :n1 = :i * :g
+        :n2 = :i * :g
+    end
+    @test d ≅ @select(df, :n1 = :i .* :g, :n2 = :i .* :g)
+end
+
+@testset "@rselect" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5,
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :select, missing])
+
+    @test @rselect(df, :n = :i + :g) ≅ @select(df, :n = :i + :g)
+    @test @rselect(df, :n = :t * string(:y)) ≅ @select(df, :n = :t .* string.(:y))
+    @test @rselect(df, :n = :g == 1 ? 100 : 500) ≅ @select(df, :n = ifelse.(:g .== 1, 100, 500))
+    @test @rselect(df, :n = :g == 1 && :t == "a") ≅ @select(df, :n = map((g, t) -> g == 1 && t == "a", :g, :t))
+    @test @rselect(df, :n = first(:g)) ≅ @select(df, :n = first.(:g))
+
+    d = @rselect df begin
+        :n1 = :i
+        :n2 = :i * :g
+    end
+    @test d ≅ @select(df, :n1 = :i, :n2 = :i .* :g)
+    @test d ≅ @select(df, @byrow(:n1 = :i), @byrow(:n2 = :i * :g))
+
+    d = @rselect df begin
+        cols(:n1) = :i
+        :n2 = cols(:i) * :g
+    end
+    @test d ≅ @select(df, :n1 = :i, :n2 = :i .* :g)
+    d = @rselect df begin
+        :n1 = cols(:i)
+        cols(:n2) = :i * :g
+    end
+    @test d ≅ @select(df, :n1 = :i, :n2 = :i .* :g)
+
+    d = @rselect df begin
+        :n1 = begin
+            :i
+        end
+        :n2 = :i * :g
+    end
+    @test d ≅ @select(df, :n1 = :i, :n2 = :i .* :g)
+
+    d = @rselect df begin
         :n1 = :i * :g
         :n2 = :i * :g
     end
@@ -195,6 +338,53 @@ end
     @test d ≅ @select!(copy(df), :n1 = :i .* :g, :n2 = :i .* :g)
 end
 
+@testset "@rselect!" begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5,
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :select!, missing])
+
+    @test @rselect!(copy(df), :n = :i + :g) ≅ @select!(copy(df), :n = :i + :g)
+    @test @rselect!(copy(df), :n = :t * string(:y)) ≅ @select!(copy(df), :n = :t .* string.(:y))
+    @test @rselect!(copy(df), :n = :g == 1 ? 100 : 500) ≅ @select!(copy(df), :n = ifelse.(:g .== 1, 100, 500))
+    @test @rselect!(copy(df), :n = :g == 1 && :t == "a") ≅ @select!(copy(df), :n = map((g, t) -> g == 1 && t == "a", :g, :t))
+    @test @rselect!(copy(df), :n = first(:g)) ≅ @select!(copy(df), :n = first.(:g))
+
+    d = @rselect! copy(df) begin
+        :n1 = :i
+        :n2 = :i * :g
+    end
+    @test d ≅ @select!(copy(df), :n1 = :i, :n2 = :i .* :g)
+    @test d ≅ @select!(copy(df), @byrow(:n1 = :i), @byrow(:n2 = :i * :g))
+
+    d = @rselect! copy(df) begin
+        cols(:n1) = :i
+        :n2 = cols(:i) * :g
+    end
+    @test d ≅ @select!(copy(df), :n1 = :i, :n2 = :i .* :g)
+    d = @rselect! copy(df) begin
+        :n1 = cols(:i)
+        cols(:n2) = :i * :g
+    end
+    @test d ≅ @select!(copy(df), :n1 = :i, :n2 = :i .* :g)
+
+    d = @rselect! copy(df) begin
+        :n1 = begin
+            :i
+        end
+        :n2 = :i * :g
+    end
+    @test d ≅ @select!(copy(df), :n1 = :i, :n2 = :i .* :g)
+
+    d = @rselect! copy(df) begin
+        :n1 = :i * :g
+        :n2 = :i * :g
+    end
+    @test d ≅ @select!(copy(df), :n1 = :i .* :g, :n2 = :i .* :g)
+end
+
 @testset "@with with @byrow" begin
     df = DataFrame(A = 1:3, B = [2, 1, 2])
 
@@ -212,23 +402,71 @@ end
     @test t == df.A .* df.B
 end
 
-@testset "where with @byrow" begin
+@testset "@subset with @byrow" begin
     df = DataFrame(A = [1, 2, 3, missing], B = [2, 1, 2, 1])
 
-    d = @where df begin
+    d = @subset df begin
         @byrow :A > 1
         @byrow :B > 1
     end
-    @test d ≅ @where(df, :A .> 1, :B .> 1)
+    @test d ≅ @subset(df, :A .> 1, :B .> 1)
 
-    d = @where df @byrow begin
+    d = @subset df @byrow begin
         :A > 1
         :B > 1
     end
-    @test d ≅ @where(df, :A .> 1, :B .> 1)
+    @test d ≅ @subset(df, :A .> 1, :B .> 1)
 end
 
-@testset "orderby with @byrow" begin
+@testset "@rsubset" begin
+    df = DataFrame(A = [1, 2, 3, missing], B = [2, 1, 2, 1])
+
+    d = @rsubset df begin
+        :A > 1
+        :B > 1
+    end
+    @test d ≅ @subset(df, :A .> 1, :B .> 1)
+
+    d = @rsubset df begin
+        :A > 1
+        :B > 1
+    end
+    @test d ≅ @subset(df, :A .> 1, :B .> 1)
+end
+
+@testset "@subset! with @byrow" begin
+    df = DataFrame(A = [1, 2, 3, missing], B = [2, 1, 2, 1])
+
+    d = @subset! copy(df) begin
+        @byrow :A > 1
+        @byrow :B > 1
+    end
+    @test d ≅ @subset(df, :A .> 1, :B .> 1)
+
+    d = @subset! copy(df) @byrow begin
+        :A > 1
+        :B > 1
+    end
+    @test d ≅ @subset(df, :A .> 1, :B .> 1)
+end
+
+@testset "@rsubset!" begin
+    df = DataFrame(A = [1, 2, 3, missing], B = [2, 1, 2, 1])
+
+    d = @rsubset! copy(df) begin
+        :A > 1
+        :B > 1
+    end
+    @test d ≅ @subset(df, :A .> 1, :B .> 1)
+
+    d = @rsubset! copy(df) begin
+        :A > 1
+        :B > 1
+    end
+    @test d ≅ @subset(df, :A .> 1, :B .> 1)
+end
+
+@testset "@orderby with @byrow" begin
     df = DataFrame(
         g = [1, 1, 1, 2, 2],
         i = 1:5,
@@ -244,6 +482,28 @@ end
     @test d ≅ @orderby(df, :c, :g .* 2)
 
     d = @orderby df @byrow begin
+        :c
+        :g *  2
+    end
+    @test d ≅ @orderby(df, :c, :g .* 2)
+end
+
+@testset "@rorderby " begin
+    df = DataFrame(
+        g = [1, 1, 1, 2, 2],
+        i = 1:5,
+        t = ["a", "b", "c", "c", "e"],
+        y = [:v, :w, :x, :y, :z],
+        c = [:g, :quote, :body, :transform, missing]
+        )
+
+    d = @rorderby df begin
+        :c
+        :g *  2
+    end
+    @test d ≅ @orderby(df, :c, :g .* 2)
+
+    d = @rorderby df begin
         :c
         :g *  2
     end
