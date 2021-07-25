@@ -168,7 +168,7 @@ julia> MacroTools.prettify(fun)
 ```
 
 """
-function get_source_fun(function_expr; exprflags = DEFAULT_FLAGS)
+function get_source_fun(function_expr; exprflags = deepcopy(DEFAULT_FLAGS))
     function_expr = MacroTools.unblock(function_expr)
 
     if is_simple_non_broadcast_call(function_expr)
@@ -222,7 +222,7 @@ end
 # deal with outside of this function.
 function fun_to_vec(ex::Expr;
                     gensym_names::Bool=false,
-                    outer_flags::Union{NamedTuple, Nothing}=nothing,
+                    outer_flags::NamedTuple=deepcopy(DEFAULT_FLAGS),
                     no_dest::Bool=false)
     # classify the type of expression
     # :x # handled via dispatch
@@ -241,7 +241,7 @@ function fun_to_vec(ex::Expr;
     # $y = :x + 1 # re-write as complicated col, unblock
     # $:y = $:x + 1 # re-write as complicated call, unblock, interpolation elsewhere
     # `@byrow` before any of the above
-    ex, final_flags = extract_macro_flags(MacroTools.unblock(ex), outer_flags)
+    ex, final_flags = extract_macro_flags(MacroTools.unblock(ex), deepcopy(outer_flags))
 
     if gensym_names
         ex = Expr(:kw, gensym(), ex)
