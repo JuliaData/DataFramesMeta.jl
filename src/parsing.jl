@@ -8,19 +8,25 @@ end
 onearg(e::Expr, f) = e.head == :call && length(e.args) == 2 && e.args[1] == f
 onearg(e, f) = false
 
+is_column_expr(x) = false
+is_column_expr(e::Expr) = e.head == :$
+
 mapexpr(f, e) = Expr(e.head, map(f, e.args)...)
 
 replace_syms!(x, membernames) = x
 replace_syms!(q::QuoteNode, membernames) =
     replace_syms!(Meta.quot(q.value), membernames)
-replace_syms!(e::Expr, membernames) =
+function replace_syms!(e::Expr, membernames)
     if onearg(e, :^)
         e.args[2]
     elseif onearg(e, :_I_)
         @warn "_I_() for escaping variables is deprecated, use cols() instead"
         addkey!(membernames, :($(e.args[2])))
     elseif onearg(e, :cols)
+        @warn "cols(x) for escaping variables is deprecated, use \$x instead"
         addkey!(membernames, :($(e.args[2])))
+    elseif is_column_expr(e)
+        addkey!(membernames, :($(e.args[1])))
     elseif e.head == :quote
         addkey!(membernames, Meta.quot(e.args[1]) )
     elseif e.head == :.
@@ -28,13 +34,14 @@ replace_syms!(e::Expr, membernames) =
     else
         mapexpr(x -> replace_syms!(x, membernames), e)
     end
+end
 
 is_simple_non_broadcast_call(x) = false
 function is_simple_non_broadcast_call(expr::Expr)
     expr.head == :call &&
         length(expr.args) >= 2 &&
         expr.args[1] isa Symbol &&
-        all(x -> x isa QuoteNode || onearg(x, :cols), expr.args[2:end])
+        all(x -> x isa QuoteNode || onearg(x, :cols) || is_column_expr(x), expr.args[2:end])
 end
 
 is_simple_broadcast_call(x) = false
@@ -44,7 +51,7 @@ function is_simple_broadcast_call(expr::Expr)
         expr.args[1] isa Symbol &&
         expr.args[2] isa Expr &&
         expr.args[2].head == :tuple &&
-        all(x -> x isa QuoteNode || onearg(x, :cols), expr.args[2].args)
+        all(x -> x isa QuoteNode || onearg(x, :cols) || is_column_expr(x), expr.args[2].args)
 end
 
 function args_to_selectors(v)
@@ -52,7 +59,10 @@ function args_to_selectors(v)
         if arg isa QuoteNode
             arg
         elseif onearg(arg, :cols)
+            @warn "cols(x) is deprecated, use \$x instead"
             arg.args[2]
+        elseif is_column_expr(arg)
+            arg.args[1]
         else
             throw(ArgumentError("This path should not be reached, arg: $(arg)"))
         end
@@ -189,20 +199,20 @@ function fun_to_vec(ex::Expr;
                     no_dest::Bool=false)
     # classify the type of expression
     # :x # handled via dispatch
-    # cols(:x) # handled as though above
-    # f(:x) # requires pass_as_is, for `@with` and `@subset` in future
-    # y = :x # :x is a QuoteNode
-    # y = cols(:x) # use cols on RHS
-    # cols(:y) = :x # RHS in :block
-    # cols(:y) = cols(:x)
-    # y = f(:x) # re-write as simple call
-    # y = f(cols(:x)) # re-write as simple call, use cols
-    # y = :x + 1 # re-write as complicated call
-    # y = cols(:x) + 1 # re-write as complicated call, with cols
-    # cols(:y) = f(:x) # re-write as simple call, but RHS is :block
-    # cols(:y) = f(cols(:x)) # re-write as simple call, RHS is block, use cols
-    # cols(y) = :x + 1 # re-write as complicated col, but RHS is :block
-    # cols(:y) = cols(:x) + 1 # re-write as complicated call, RHS is block, use cols
+    # $:x # handled as though above
+    # f(:x) # requires no_dest, for `@with` and `@subset` in future
+    # :y = :x # Simple pair
+    # :y = $:x # Extract and return simple pair (no function)
+    # $:y = :x # Simple pair
+    # $:y = $:x # Simple pair
+    # :y = f(:x) # re-write as simple call
+    # :y = f($:x) # re-write as simple call, interpolation elsewhere
+    # :y = :x + 1 # re-write as complicated call
+    # :y = $:x + 1 # re-write as complicated call, interpolation elsewhere
+    # $:y = f(:x) # re-write as simple call, unblock extract function
+    # $:y = f($:x) # re-write as simple call, unblock, interpolation elsewhere
+    # $y = :x + 1 # re-write as complicated col, unblock
+    # $:y = $:x + 1 # re-write as complicated call, unblock, interpolation elsewhere
     # `@byrow` before any of the above
     ex, inner_flags = extract_macro_flags(MacroTools.unblock(ex))
 
@@ -223,9 +233,15 @@ function fun_to_vec(ex::Expr;
     # :x
     # handled below via dispatch on ::QuoteNode
 
-    # cols(:x)
+    # Fix any references to `cols` and replace them
+    # with $
     if onearg(ex, :cols)
-        return ex.args[2]
+        ex = Expr(:$, ex.args[2])
+    end
+
+    # $:x
+    if is_column_expr(ex)
+        return ex.args[1]
     end
 
     if no_dest
@@ -237,7 +253,18 @@ function fun_to_vec(ex::Expr;
 
     @assert ex.head == :kw || ex.head == :(=)
     lhs = ex.args[1]
+
+    # fix cols
+    if onearg(lhs, :cols)
+        lhs = Expr(:$, lhs.args[2])
+    end
+
     rhs = MacroTools.unblock(ex.args[2])
+
+    if onearg(rhs, :cols)
+        @warn "cols(x) is deprecated, use \$x instead"
+        rhs = Expr(:$, rhs.args[2])
+    end
 
     if is_macro_head(rhs, "@byrow")
         s = "In keyword argument inputs, `@byrow` must be on the left hand side. " *
@@ -263,9 +290,9 @@ function fun_to_vec(ex::Expr;
         end
     end
 
-    # :y = cols(:x)
-    if lhs isa QuoteNode && onearg(rhs, :cols)
-        source = rhs.args[2]
+    # :y = $:x
+    if lhs isa QuoteNode && is_column_expr(rhs)
+        source = rhs.args[1]
         dest = lhs
 
         return quote
@@ -273,29 +300,29 @@ function fun_to_vec(ex::Expr;
         end
     end
 
-    # cols(:y) = :x
-    if onearg(lhs, :cols) && rhs isa QuoteNode
+    # $:y = :x
+    if is_column_expr(lhs) && rhs isa QuoteNode
         source = rhs
-        dest = lhs.args[2]
+        dest = lhs.args[1]
 
         return quote
             $source => $dest
         end
     end
 
-    # cols(:y) = cols(:x)
-    if onearg(lhs, :cols) && onearg(rhs, :cols)
-        source = rhs.args[2]
-        dest = lhs.args[2]
+    # $:y = $:x
+    if is_column_expr(lhs) && is_column_expr(rhs)
+        source = rhs.args[1]
+        dest = lhs.args[1]
         return quote
             $source => $dest
         end
     end
 
     # :y = f(:x)
-    # :y = f(cols(:x))
+    # :y = f($:x)
     # :y = :x + 1
-    # :y = cols(:x) + 1
+    # :y = $:x + 1
     source, fun = get_source_fun(rhs; wrap_byrow = wrap_byrow)
     if lhs isa QuoteNode
         dest = lhs
@@ -304,9 +331,9 @@ function fun_to_vec(ex::Expr;
         end
     end
 
-    # cols(:y) = f(:x)
-    if onearg(lhs, :cols)
-        dest = lhs.args[2]
+    # $:y = f(:x)
+    if is_column_expr(lhs)
+        dest = lhs.args[1]
 
         return quote
             $source => $fun => $dest

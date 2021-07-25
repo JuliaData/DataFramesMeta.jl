@@ -15,7 +15,7 @@ DataFrames's `source => fun => destination` syntax.
 Parsing follows the same convention as other DataFramesMeta.jl macros, such as `@with`. All
 terms in the expression that are `Symbol`s are treated as columns in the data frame, except
 `Symbol`s wrapped in `^`. To use a variable representing a column name, wrap the variable
-in `cols`.
+in `\$`.
 
 `@col` constructs an anonymous function `fun` based on the given expression. It then creates
 a `source => fun => destination` pair that is suitable for the `select`, `transform`, and
@@ -70,7 +70,7 @@ to indicate that the anonymous function created by DataFramesMeta
 to represent an operation should be applied "by-row".
 
 If an expression starts with `@byrow`, either of the form `@byrow :y = f(:x)`
-in transformations or `@byrow f(:x)` in `@orderby`, `@where`, and `@with`,
+in transformations or `@byrow f(:x)` in `@orderby`, `@subset`, and `@with`,
 then the anonymous function created by DataFramesMeta is wrapped in the
 `DataFrames.ByRow` function wrapper, which broadcasts the function so that it run on each row.
 
@@ -89,7 +89,7 @@ julia> @transform(df, @byrow :c = :a * :b)
    3 │     3      7     21
    4 │     4      8     32
 
-julia> @where(df, @byrow :a == 1 ? true : false)
+julia> @subset(df, @byrow :a == 1 ? true : false)
 1×2 DataFrame
  Row │ a      b
      │ Int64  Int64
@@ -102,7 +102,7 @@ operations, it is allowed to use`@byrow` at the beginning of a block of
 operations. All transformations in the block will operate by row.
 
 ```julia
-julia> @where df @byrow begin
+julia> @subset df @byrow begin
            :a > 1
            :b < 5
        end
@@ -298,7 +298,7 @@ exec(df, s::Union{Symbol, AbstractString}) = df[!, s]
 
 getsinglecolumn(df, s::DataFrames.ColumnIndex) = df[!, s]
 getsinglecolumn(df, s) = throw(ArgumentError("Only indexing with Symbols, strings and integers " *
-    "is currently allowed with cols"))
+    "is currently allowed with \$"))
 
 function with_helper(d, body)
     # Make body an expression to force the
@@ -342,7 +342,7 @@ tempfun(d[!, :a], d[!, :b])
 ```
 
 If an expression is wrapped in `^(expr)`, `expr` gets passed through untouched.
-If an expression is wrapped in  `cols(expr)`, the column is referenced by the
+If an expression is wrapped in  `\$(expr)`, the column is referenced by the
 variable `expr` rather than a symbol.
 
 If the expression provide to `@with` begins with `@byrow`, the function
@@ -388,7 +388,7 @@ julia> @with(df, df[:x .> 1, ^(:y)]) # The ^ means leave the :y alone
 
 julia> colref = :x;
 
-julia> @with(df, :y + cols(colref)) # Equivalent to df[!, :y] + df[!, colref]
+julia> @with(df, :y + \$colref) # Equivalent to df[!, :y] + df[!, colref]
 3-element Array{Int64,1}:
  3
  3
@@ -598,12 +598,12 @@ end
 
 
 """
-    @where(x, args...)
+    @subset(x, args...)
 
 Deprecated version of `@subset`, see `?@subset` for details.
 """
 macro where(x, args...)
-    @warn "`@where is deprecated, use `@subset`  with `@skipmissing` instead."
+    @warn "`@where is deprecated, use `@subset` instead."
     esc(where_helper(x, args...))
 end
 
@@ -1480,12 +1480,13 @@ function combine_helper(x, args...; deprecation_warning = false)
 
     fe = first(exprs)
     if length(exprs) == 1 &&
-        !(fe isa QuoteNode || onearg(fe, :cols)) &&
+        !(fe isa QuoteNode || onearg(fe, :cols) || is_column_expr(fe)) &&
         !(fe.head == :(=) || fe.head == :kw)
 
-        @warn "Returning a Table object from @by and @combine now requires `cols(AsTable)` on the LHS."
+        @warn "Returning a Table object from @by and @combine now requires `\$AsTable` on the LHS."
 
-        exprs = ((:(cols(AsTable) = $fe)),)
+        lhs = Expr(:$, :AsTable)
+        exprs = ((:($lhs = $fe)),)
     end
 
     t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
@@ -1599,12 +1600,13 @@ function by_helper(x, what, args...)
     exprs, outer_flags = create_args_vector(args...)
     fe = first(exprs)
     if length(exprs) == 1 &&
-        !(fe isa QuoteNode || onearg(fe, :cols)) &&
+        !(fe isa QuoteNode || onearg(fe, :cols) || is_column_expr(fe)) &&
         !(fe.head == :(=) || fe.head == :kw)
 
-        @warn "Returning a Table object from @by and @combine now requires `cols(AsTable)` on the LHS."
+        @warn "Returning a Table object from @by and @combine now requires `\$AsTable` on the LHS."
 
-        exprs = ((:(cols(AsTable) = $fe)),)
+        lhs = Expr(:$, :AsTable)
+        exprs = ((:($lhs = $fe)),)
     end
 
     t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)

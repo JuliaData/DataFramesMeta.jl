@@ -51,6 +51,29 @@ xlinq3 = @linq df  |>
 
 @test (@linq df |> with(:a)) == df.a
 
+# commented out due to interpolation issues
+# @testset "@linq with `$`" begin
+    df = DataFrame(
+            a = [1, 2, 3, 4],
+            b = ["a", "b", "c", "d"],
+            x = [10, 20, 30, 40],
+            y = [40, 50, 60, 70]
+        )
+
+    a_sym = :a
+    b_str = "b"
+    x_sym = :x
+    y_str = "y"
+    xlinq3 = @linq df  |>
+        where($a_sym .> 2, :b .!= "c") |>
+        transform($y_str = 10 * $x_sym) |>
+        orderby($x_sym .- mean($x_sym))  |>
+        groupby(b_str) |>
+        combine($"meanX" = mean(:x), :meanY = mean(:y))
+
+    @test isequal(xlinq3, DataFrame(b = "d", meanX = 40.0, meanY = 400.0))
+# end
+
 @testset "@linq with `cols`" begin
     df = DataFrame(
             a = [1, 2, 3, 4],
@@ -65,12 +88,13 @@ xlinq3 = @linq df  |>
     y_str = "y"
     xlinq3 = @linq df  |>
         where(cols(a_sym) .> 2, :b .!= "c")  |>
-        transform(cols(y_str) = 10 * cols(x_sym))  |>
+        transform(cols(y_str) = 10 * cols(x_sym)) |>
         orderby(cols(x_sym) .- mean(cols(x_sym)))  |>
         groupby(b_str) |>
         combine(cols("meanX") = mean(:x), :meanY = mean(:y))
 
     @test isequal(xlinq3, DataFrame(b = "d", meanX = 40.0, meanY = 400.0))
 end
+
 
 end # module

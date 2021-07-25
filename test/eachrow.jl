@@ -64,44 +64,44 @@ end
     df = DataFrame(A = 1:3, B = [2, 1, 2])
     n = :A
     df2 = @eachrow df begin
-        :B = cols(n)
+        :B = $n
     end
     @test df2 == DataFrame(A = 1:3, B = 1:3)
 
     n = "A"
     df2 = @eachrow df begin
-        :B = cols(n)
+        :B = $n
     end
     @test df2 == DataFrame(A = 1:3, B = 1:3)
 
     df2 = @eachrow df begin
-        :A = cols(:A) + cols("B")
+        :A = $:A + $"B"
     end
     @test df2.A == df.A + df.B
 
     n = :A
     df2 = @eachrow df begin
-        cols(n) = :B
+        $n = :B
     end
     @test df2 == DataFrame(A = [2, 1, 2], B = [2, 1, 2])
 
     n = "A"
     df2 = @eachrow df begin
-        cols(n) = :B
+        $n = :B
     end
     @test df2 == DataFrame(A = [2, 1, 2], B = [2, 1, 2])
 
     n = :C
     df2 = @eachrow df begin
-        @newcol cols(n)::Vector{Int}
-        cols(n) = :B
+        @newcol $n::Vector{Int}
+        $n = :B
     end
     @test df2 == DataFrame(A = [1, 2, 3], B = [2, 1, 2], C = [2, 1, 2])
 
     n = "C"
     df2 = @eachrow df begin
-        @newcol cols(n)::Vector{Int}
-        cols(n) = :B
+        @newcol $n::Vector{Int}
+        $n = :B
     end
     @test df2 == DataFrame(A = [1, 2, 3], B = [2, 1, 2], C = [2, 1, 2])
 end
@@ -118,7 +118,7 @@ df = DataFrame(A = 1:3, B = [2, 1, 2])
     @eval Testeachrow n = [1, 2]
     @test_throws ArgumentError @eval @eachrow df begin cols(n) end
 
-    @test_throws ArgumentError @eachrow df cols(1) + cols(:A)
+    @test_throws ArgumentError @eachrow df $1 + $:A
 end
 
 

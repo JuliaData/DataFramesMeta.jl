@@ -29,13 +29,13 @@ const ≅ = isequal
     @test d ≅ @transform(df, @byrow(:n1 = :i), @byrow(:n2 = :i * :g))
 
     d = @transform df @byrow begin
-        cols(:n1) = :i
-        :n2 = cols(:i) * :g
+        $:n1 = :i
+        :n2 = $"i" * :g
     end
     @test d ≅ @transform(df, :n1 = :i, :n2 = :i .* :g)
     d = @transform df @byrow begin
-        :n1 = cols(:i)
-        cols(:n2) = :i * :g
+        :n1 = $"i"
+        $:n2 = :i * :g
     end
     @test d ≅ @transform(df, :n1 = :i, :n2 = :i .* :g)
 
@@ -124,13 +124,13 @@ end
     @test d ≅ @transform!(copy(df), @byrow(:n1 = :i), @byrow(:n2 = :i * :g))
 
     d = @transform! df @byrow begin
-        cols(:n1) = :i
-        :n2 = cols(:i) * :g
+        $:n1 = :i
+        :n2 = $"i" * :g
     end
     @test d ≅ @transform!(copy(df), :n1 = :i, :n2 = :i .* :g)
     d = @transform! df @byrow begin
-        :n1 = cols(:i)
-        cols(:n2) = :i * :g
+        :n1 = $"i"
+        $:n2 = :i * :g
     end
     @test d ≅ @transform!(copy(df), :n1 = :i, :n2 = :i .* :g)
 
@@ -219,13 +219,13 @@ end
     @test d ≅ @select(df, @byrow(:n1 = :i), @byrow(:n2 = :i * :g))
 
     d = @select df @byrow begin
-        cols(:n1) = :i
-        :n2 = cols(:i) * :g
+        $:n1 = :i
+        :n2 = $"i" * :g
     end
     @test d ≅ @select(df, :n1 = :i, :n2 = :i .* :g)
     d = @select df @byrow begin
-        :n1 = cols(:i)
-        cols(:n2) = :i * :g
+        :n1 = $"i"
+        $:n2 = :i * :g
     end
     @test d ≅ @select(df, :n1 = :i, :n2 = :i .* :g)
 
@@ -313,13 +313,13 @@ end
     @test d ≅ @select!(copy(df), @byrow(:n1 = :i), @byrow(:n2 = :i * :g))
 
     d = @select! copy(df) @byrow begin
-        cols(:n1) = :i
-        :n2 = cols(:i) * :g
+        $:n1 = :i
+        :n2 = $"i" * :g
     end
     @test d ≅ @select!(copy(df), :n1 = :i, :n2 = :i .* :g)
     d = @select! copy(df) @byrow begin
-        :n1 = cols(:i)
-        cols(:n2) = :i * :g
+        :n1 = $"i"
+        $:n2 = :i * :g
     end
     @test d ≅ @select!(copy(df), :n1 = :i, :n2 = :i .* :g)
 
@@ -534,13 +534,13 @@ end
     @test d ≅ @combine(gd, @byrow(:n1 = :i), @byrow(:n2 = :i * :g))
 
     d = @combine gd @byrow begin
-        cols(:n1) = :i
-        :n2 = cols(:i) * :g
+        $:n1 = :i
+        :n2 = $"i" * :g
     end
     @test d ≅ @combine(gd, :n1 = :i, :n2 = :i .* :g)
     d = @combine gd @byrow begin
-        :n1 = cols(:i)
-        cols(:n2) = :i * :g
+        :n1 = $"i"
+        $:n2 = :i * :g
     end
     @test d ≅ @combine(gd, :n1 = :i, :n2 = :i .* :g)
 
@@ -581,14 +581,14 @@ end
     @test d ≅ @by(df, :g, @byrow(:n1 = :i), @byrow(:n2 = :i * :g))
 
     d = @by df :g @byrow begin
-        cols(:n1) = :i
-        :n2 = cols(:i) * :g
+        $:n1 = :i
+        :n2 = $"i" * :g
     end
     @test d ≅ @by(df, :g, :n1 = :i, :n2 = :i .* :g)
 
     d = @by df :g @byrow begin
-        :n1 = cols(:i)
-        cols(:n2) = :i * :g
+        :n1 = $"i"
+        $:n2 = :i * :g
     end
     @test d ≅ @by(df, :g, :n1 = :i, :n2 = :i .* :g)
 
