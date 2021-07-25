@@ -74,8 +74,12 @@ end
 is_macro_head(ex, name) = false
 is_macro_head(ex::Expr, name) = ex.head == :macrocall && ex.args[1] == Symbol(name)
 
-extract_macro_flags(ex, exprflags = (;Symbol("@byrow") => Ref(false),)) = (ex, exprflags)
-function extract_macro_flags(ex::Expr, exprflags = (;Symbol("@byrow") => Ref(false),))
+const BYROW_SYM = Symbol("@byrow")
+const PASSMISSING_SYM = Symbol("@passmissing")
+const DEFAULT_FLAGS = (;BYROW_SYM => Ref(false), PASSMISSING_SYM => Ref(false))
+
+extract_macro_flags(ex, exprflags = deepcopy(DEFAULT_FLAGS)) = (ex, exprflags)
+function extract_macro_flags(ex::Expr, exprflags = deepcopy(DEFAULT_FLAGS))
     if ex.head == :macrocall
         macroname = ex.args[1]
         if macroname in keys(exprflags)
@@ -92,6 +96,25 @@ function extract_macro_flags(ex::Expr, exprflags = (;Symbol("@byrow") => Ref(fal
 
     return (ex, exprflags)
 end
+
+"""
+    check_macro_flags_consistency(exprflags)
+
+Check that the macro flags are consistent with
+one another. For now this only checks that
+`@passmissing` is only called when `@byrow` is
+also called. In the future we may expand
+this function or eliminate it all together.
+"""
+function check_macro_flags_consistency(exprflags)
+    if exprflags[PASSMISSING_SYM][]
+        if !exprflags[BYROW_SYM][]
+            s = "The `@passmissing` flag is currently only allowed with the `@byrow` flag"
+            throw(ArgumentError(s))
+        end
+    end
+end
+
 """
     get_source_fun(function_expr; wrap_byrow::Bool=false)
 
@@ -145,7 +168,7 @@ julia> MacroTools.prettify(fun)
 ```
 
 """
-function get_source_fun(function_expr; wrap_byrow::Bool=false)
+function get_source_fun(function_expr; exprflags = DEFAULT_FLAGS)
     function_expr = MacroTools.unblock(function_expr)
 
     if is_simple_non_broadcast_call(function_expr)
@@ -179,8 +202,12 @@ function get_source_fun(function_expr; wrap_byrow::Bool=false)
         end
     end
 
-    if wrap_byrow
-        fun = :(ByRow($fun))
+    if exprflags[BYROW_SYM][]
+        if exprflags[PASSMISSING_SYM][]
+            fun = :(ByRow(Missings.passmissing($fun)))
+        else
+            fun = :(ByRow($fun))
+        end
     end
 
     return source, fun
@@ -214,17 +241,7 @@ function fun_to_vec(ex::Expr;
     # $y = :x + 1 # re-write as complicated col, unblock
     # $:y = $:x + 1 # re-write as complicated call, unblock, interpolation elsewhere
     # `@byrow` before any of the above
-    ex, inner_flags = extract_macro_flags(MacroTools.unblock(ex))
-
-    # Use tuple syntax in future when we add more flags
-    inner_wrap_byrow = inner_flags[Symbol("@byrow")][]
-    outer_wrap_byrow = outer_flags === nothing ? false : outer_flags[Symbol("@byrow")][]
-
-    if inner_wrap_byrow && outer_wrap_byrow
-        throw(ArgumentError("Redundant @byrow calls."))
-    else
-        wrap_byrow = inner_wrap_byrow || outer_wrap_byrow
-    end
+    ex, final_flags = extract_macro_flags(MacroTools.unblock(ex), outer_flags)
 
     if gensym_names
         ex = Expr(:kw, gensym(), ex)
@@ -245,7 +262,7 @@ function fun_to_vec(ex::Expr;
     end
 
     if no_dest
-        source, fun = get_source_fun(ex, wrap_byrow = wrap_byrow)
+        source, fun = get_source_fun(ex, exprflags = final_flags)
         return quote
             $source => $fun
         end
@@ -323,7 +340,7 @@ function fun_to_vec(ex::Expr;
     # :y = f($:x)
     # :y = :x + 1
     # :y = $:x + 1
-    source, fun = get_source_fun(rhs; wrap_byrow = wrap_byrow)
+    source, fun = get_source_fun(rhs; exprflags = final_flags)
     if lhs isa QuoteNode
         dest = lhs
         return quote
@@ -392,11 +409,11 @@ function create_args_vector(arg; wrap_byrow::Bool=false)
     arg, outer_flags = extract_macro_flags(MacroTools.unblock(arg))
 
     if wrap_byrow
-        if outer_flags[Symbol("@byrow")][]
+        if outer_flags[BYROW_SYM][]
             throw(ArgumentError("Redundant @byrow calls"))
         end
 
-        outer_flags[Symbol("@byrow")][] = true
+        outer_flags[BYROW_SYM][] = true
     end
 
     if arg isa Expr && arg.head == :block
