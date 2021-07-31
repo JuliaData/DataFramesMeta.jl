@@ -129,7 +129,7 @@ df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
 gd = groupby(df, :x);
 @combine(gd, :x2 = sum(:y))
 @combine(gd, :x2 = :y .- sum(:y))
-@combine(gd, (n1 = sum(:y), n2 = first(:y)))
+@combine(gd, $AsTable = (n1 = sum(:y), n2 = first(:y)))
 ```
 
 Requires a `DataFrame` or `GroupedDataFrame` as the first argument, unlike 
@@ -140,7 +140,7 @@ as the first argument. The following, however, will work.
 ```
 df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
 gd = groupby(df, :x);
-@combine(gd, (a = sum(:x), b = sum(:y)))
+@combine(gd, $AsTable = (a = sum(:x), b = sum(:y)))
 ```
 
 For arguments which return a table-like object, such as `(a = sum(:x), b = sum(:y))`, above,
@@ -148,7 +148,7 @@ For arguments which return a table-like object, such as `(a = sum(:x), b = sum(:
 Consider the call 
 
 ```
-@combine(gd, (a = sum(:x), b = sum(:y)), c = first(:x))
+@combine(gd, $AsTable = (a = sum(:x), b = sum(:y)), c = first(:x))
 ```
 
 the above will fail because `@combine` does not accept a "keyword argument"-style column 
