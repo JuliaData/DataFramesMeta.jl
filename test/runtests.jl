@@ -11,7 +11,8 @@ my_tests = ["dataframes.jl",
             "linqmacro.jl",
             "deprecated.jl",
             "byrow.jl",
-            "astable.jl"]
+            "astable.jl",
+            "passmissing.jl"]
 
 println("Running tests:")
 

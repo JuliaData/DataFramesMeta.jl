@@ -242,6 +242,7 @@ function fun_to_vec(ex::Expr;
     # $:y = $:x + 1 # re-write as complicated call, unblock, interpolation elsewhere
     # `@byrow` before any of the above
     ex, final_flags = extract_macro_flags(MacroTools.unblock(ex), deepcopy(outer_flags))
+    check_macro_flags_consistency(final_flags)
 
     if gensym_names
         ex = Expr(:kw, gensym(), ex)

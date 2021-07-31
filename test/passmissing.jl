@@ -7,6 +7,8 @@ using Statistics
 
 const ≅ = isequal
 
+df = DataFrame(a = [1, 2, missing], b = [4, 5, 6])
+
 @testset "passmissing by row" begin
 
     no_missing(x::Int, y::Int) = x + y
@@ -28,10 +30,10 @@ const ≅ = isequal
     d = @rselect df @passmissing :c = no_missing(:a, :b)
     @test d.c ≅ [5, 7, missing]
 
-    d = @rselect df @passmissing @byrow :c = no_missing(:a, :b)
+    d = @rselect df @passmissing :c = no_missing(:a, :b)
     @test d.c ≅ [5, 7, missing]
 
-    d = @rselect df @byrow begin
+    d = @rselect df begin
         :c = :a + :b
         @passmissing :d = no_missing(:a, :b)
     end
@@ -39,6 +41,8 @@ const ≅ = isequal
 
     d = @rorderby df @passmissing no_missing(:a, :b)
     @test d ≅ df
+
+    @test_throws LoadError @eval @transform df @passmissing :c = :a + :b
 end
 
 end # module
