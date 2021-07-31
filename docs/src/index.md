@@ -3,7 +3,7 @@
 Metaprogramming tools for DataFrames.jl objects to provide more convenient syntax.
 
 DataFrames.jl has the functions `select`, `transform`, and `combine`, as well as the in-place `select!` and `transform!`
-for manipulating data frames. DataFramesMeta provides the macros 
+for manipulating data frames. DataFramesMeta.jl provides the macros 
 `@select`, `@transform`, `@combine`, `@select!`, and `@transform!` to mirror these functions with 
 more convenient syntax. Inspired by [dplyr](https://dplyr.tidyverse.org/) in R 
 and [LINQ](https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/linq/)
@@ -21,6 +21,7 @@ In addition, DataFramesMeta provides
 * `@eachrow` and `@eachrow!` for looping through rows in data frame, again with high performance and 
   convenient syntax. 
 * `@byrow` for applying functions to each row of a data frame (only supported inside other macros).
+* `@passmissing` for propagating missing values inside row-wise DataFramesMeta.jl transformations.
 * `@chain`, from [Chain.jl](https://github.com/jkrumbiegel/Chain.jl) for piping the above macros together, similar to [magrittr](https://cran.r-project.org/web/packages/magrittr/vignettes/magrittr.html)'s
   `%>%` in R. 
 
@@ -332,6 +333,73 @@ however, like with `ByRow` in DataFrames.jl, when `@byrow` is
 used, functions do not take into account the grouping, so for
 example the result of `@transform(df, @byrow y = f(:x))` and 
 `@transform(groupby(df, :g), @byrow :y = f(:x))` is the same.
+
+## Propagating missing values with `@passmissing`
+
+Many Julia functions to not automatically propagate missing values. For instance, 
+`parse(Int, missing)` will error. 
+
+Missings.jl provides the `passmissing` function-wrapper to help get around these
+roadblocks: `passmissing(f)(args...)` will return `missing` if any of `args` is
+missing. Similarly, DataFramesMeta.jl provides the `@passmissing` function to wrap
+the anonymous functions created by row-wise transformations in DataFramesMeta.jl 
+in `Missings.passmissing`.
+
+The expression 
+
+```julia
+@transform df @byrow @passmissing :c = f(:a, :b)
+```
+
+is translated to 
+
+```
+transform(df, [:a, :b] => ByRow(passmissing(f)) => :c)
+```
+
+See more examples below.
+
+```julia
+julia> no_missing(x::Int, y::Int) = x + y;
+
+julia> df = DataFrame(a = [1, 2, missing], b = [4, 5, 6])
+3×2 DataFrame
+ Row │ a        b
+     │ Int64?   Int64
+─────┼────────────────
+   1 │       1      4
+   2 │       2      5
+   3 │ missing      6
+
+julia> @transform df @passmissing @byrow c = no_missing(:a, :b)
+3×3 DataFrame
+ Row │ a        b      c
+     │ Int64?   Int64  Int64?
+─────┼─────────────────────────
+   1 │       1      4        5
+   2 │       2      5        7
+   3 │ missing      6  missing
+
+julia> df = DataFrame(x_str = ["1", "2", missing])
+3×1 DataFrame
+ Row │ x_str
+     │ String?
+─────┼─────────
+   1 │ 1
+   2 │ 2
+   3 │ missing
+
+julia> @rtransform df @passmissing x = parse(Int, :x_str)
+3×2 DataFrame
+ Row │ x_str    x
+     │ String?  Int64?
+─────┼──────────────────
+   1 │ 1              1
+   2 │ 2              2
+   3 │ missing  missing
+```
+
+
 
 ## Working with column names programmatically with `\$`
 
