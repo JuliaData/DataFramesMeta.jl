@@ -3,7 +3,7 @@
 Metaprogramming tools for DataFrames.jl objects to provide more convenient syntax.
 
 DataFrames.jl has the functions `select`, `transform`, and `combine`, as well as the in-place `select!` and `transform!`
-for manipulating data frames. DataFramesMeta provides the macros 
+for manipulating data frames. DataFramesMeta.jl provides the macros 
 `@select`, `@transform`, `@combine`, `@select!`, and `@transform!` to mirror these functions with 
 more convenient syntax. Inspired by [dplyr](https://dplyr.tidyverse.org/) in R 
 and [LINQ](https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/linq/)
@@ -21,7 +21,7 @@ In addition, DataFramesMeta provides
 * `@eachrow` and `@eachrow!` for looping through rows in data frame, again with high performance and 
   convenient syntax. 
 * `@byrow` for applying functions to each row of a data frame (only supported inside other macros).
-* `@passmissing` for propagating missing values inside DataFramesMeta.jl transformations.
+* `@passmissing` for propagating missing values inside row-wise DataFramesMeta.jl transformations.
 * `@chain`, from [Chain.jl](https://github.com/jkrumbiegel/Chain.jl) for piping the above macros together, similar to [magrittr](https://cran.r-project.org/web/packages/magrittr/vignettes/magrittr.html)'s
   `%>%` in R. 
 
@@ -342,7 +342,8 @@ Many Julia functions to not automatically propagate missing values. For instance
 Missings.jl provides the `passmissing` function-wrapper to help get around these
 roadblocks: `passmissing(f)(args...)` will return `missing` if any of `args` is
 missing. Similarly, DataFramesMeta.jl provides the `@passmissing` function to wrap
-the anonymous functions created by DataFramesMeta.jl in `Missings.passmissing`.
+the anonymous functions created by row-wise transformations in DataFramesMeta.jl 
+in `Missings.passmissing`.
 
 The expression 
 
