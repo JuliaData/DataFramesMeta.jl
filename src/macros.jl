@@ -283,6 +283,101 @@ macro byrow(args...)
 end
 
 
+struct SpreadMissings{F} <: Function
+    f::F
+end
+
+function (f::SpreadMissings{F})(vecs::AbstractVector...) where {F}
+    if any(x -> x isa AbstractVector{>:Missing}, vecs)
+
+        firstindices = eachindex(first(vecs))
+        if !all(x -> eachindex(x) == firstindices, vecs)
+            err_str = "Indices of arguments do not match. Indices are " *
+                      join(string.eachindex.(vecs), ", ", " and ") * "."
+
+            throw(ArgumentError(err_str))
+        end
+
+        nonmissingmask = fill(true, length(vecs[1]))
+        for v in vecs
+            nonmissingmask .&= .!ismissing.(v)
+        end
+
+        nonmissinginds = findall(nonmissingmask)
+
+        vecs_counter = 1
+        newargs = ntuple(i -> view(vecs[i], nonmissinginds), length(vecs))
+
+        res = f.f(newargs...)
+
+        if res isa AbstractVector && length(res) == length(nonmissinginds)
+            out = similar(res, Union{eltype(res), Missing}, length(vecs[1]))
+            fill!(out, missing)
+            out[nonmissinginds] .= res
+
+            return out
+        else
+            return res
+        end
+    else
+        return f.f(vecs...)
+    end
+end
+
+"""
+    spreadmissings(f)
+
+Given a function `f`, wraps `f` so that a `view` selecting non-missing
+values of `AbstractVector` argument is applied before calling `f`. After `f`
+is called, if the result is a `AbstractVector` of the appropriate length,
+is is "spread" across the length of the original inputs, imputing `missing` where
+indices of inputs contain `missing` values.
+
+Consider `spreadmissing(f)(x1, x2)`, where `x1` and `x2` are defined as
+
+```
+x = [1, missing, 3, 4]
+y = [5, 6, 7, missing]
+```
+
+and the function
+
+```
+no_missing(x::Int, y::Int) = x + y
+f(x::AbstractVector, y::AbstractVector) = no_missing.(last(x), y)
+```
+
+Then the indices for which both `x` and `y` are non-missing are `[1, 2]`.
+`spreadmissings(f)` then calls `f(view(x, [1, 3]), view(y, [1, 3]))`. This will return
+`[8, 10]`.
+
+Finally, `spreadmissings(f)` will "spread" the vector `[7, 8]` across the non-missing
+indices of the inputs, filling in `missing`, otherwise. As a result we have
+
+```
+julia> DataFramesMeta.spreadmissings(f)(x, y)
+4-element Vector{Union{Missing, Int64}}:
+  8
+   missing
+ 10
+   missing
+```
+
+If the result of `f(view()...)` is not a vector, the it is returned as-is.
+
+### Examples
+
+```
+julia> x = [1, 2, 3, 4, missing, 6]; y = [11, 5, missing, 8, 15, 12];
+
+julia> DataFramesMeta.spreadmissings(cor)(x, y)
+0.3803061508332227
+```
+
+
+"""
+spreadmissings(f) = SpreadMissings{Core.Typeof(f)}(f)
+
 ##############################################################################
 ##
 ## @with
