@@ -290,18 +290,18 @@ Propograte missing values inside DataFramesMeta.jl macros.
 
 
 `@passmissing` is not a "real" Julia macro but rather serves as a "flag"
-to indicate that the anonymous function created by DataFramesMeta
+to indicate that the anonymous function created by DataFramesMeta.jl
 to represent an operation should be wrapped in `passmissing` from Missings.jl.
 
 `@passmissing` can only be combined with `@byrow` or the row-wise versions of macros
-such as `@rtransform` and `@rselect`, etc. If any of the values passed
-to the row-wise anonymous function created by DataFramesMeta with `@byrow`, the
+such as `@rtransform` and `@rselect`, etc. If any of the arguments passed
+to the row-wise anonymous function created by DataFramesMeta.jl with `@byrow`, the
 result will automatically be `missing`.
 
 In the below example, `@transform` would throw an error without the `@passmissing`
 flag.
 
-`@passmissing` is especially useful for functions which operate on `String`s, such as
+`@passmissing` is especially useful for functions which operate on strings, such as
 `parse`.
 
 ### Examples
