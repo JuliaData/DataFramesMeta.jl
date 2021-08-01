@@ -16,7 +16,7 @@ In addition, DataFramesMeta provides
 * Row-wise versions of the above macros in the form of `@rtransform`, `@rtransform!`,
   `@rselect`, `@rselect!`, `@rorderby`, `@rsubset`, and `@rsubset!`.
 * `@by`, for grouping and combining a data frame in a single step
-* `@with`, for working with the columns of a data frame with high performance and 
+* `@withcols`, for working with the columns of a data frame with high performance and 
   convenient syntax
 * `@eachrow` and `@eachrow!` for looping through rows in data frame, again with high performance and 
   convenient syntax. 
@@ -166,19 +166,19 @@ df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
 @orderby(df, :x, :y .- mean(:y))
 ```
 
-## `@with`
+## `@withcols`
 
-`@with` creates a scope in which all symbols that appear are aliases for the columns
+`@withcols` creates a scope in which all symbols that appear are aliases for the columns
 in a DataFrame. 
 
 ```julia
 df = DataFrame(x = 1:3, y = [2, 1, 2])
 x = [2, 1, 0]
 
-@with(df, :y .+ 1)
-@with(df, :x + x)  # the two x's are different
+@withcols(df, :y .+ 1)
+@withcols(df, :x + x)  # the two x's are different
 
-x = @with df begin
+x = @withcols df begin
     res = 0.0
     for i in 1:length(:x)
         res += :x[i] * :y[i]
@@ -186,12 +186,12 @@ x = @with df begin
     res
 end
 
-@with(df, df[:x .> 1, ^(:y)]) # The ^ means leave the :y alone
+@withcols(df, df[:x .> 1, ^(:y)]) # The ^ means leave the :y alone
 
 ```
 
 !!! note 
-    `@with` creates a function, so scope within `@with` is a local scope.
+    `@withcols` creates a function, so scope within `@withcols` is a local scope.
     Variables in the parent can be read. Writing to variables in the parent scope
     differs depending on the type of scope of the parent. If the parent scope is a
     global scope, then a variable cannot be assigned without using the `global` keyword.
@@ -199,12 +199,12 @@ end
     the `global` keyword is not needed to assign to that parent scope.
 
 !!! note
-    Because `@with` creates a function, be careful with the use of `return`. 
+    Because `@withcols` creates a function, be careful with the use of `return`. 
 
     ```
     function data_transform(df; returnearly = false)
         if returnearly
-            @with df begin 
+            @withcols df begin 
                 z = :x + :y
                 return z
             end
@@ -216,10 +216,10 @@ end
     end
     ```
 
-    The above function will return `[4, 5, 6]` because the `return` inside the `@with`
-    applies to the anonymous function created by `@with`. 
+    The above function will return `[4, 5, 6]` because the `return` inside the `@withcols`
+    applies to the anonymous function created by `@withcols`. 
 
-    Given that `@eachrow` (below) is implemented with `@with`, the same caveat applies to 
+    Given that `@eachrow` (below) is implemented with `@withcols`, the same caveat applies to 
     `@eachrow` blocks. 
 
 
@@ -228,7 +228,7 @@ end
 Act on each row of a data frame. Includes support for control flow and `begin end` 
 blocks. Since the "environment" induced by `@eachrow df` is implicitly a 
 single row of `df`, one uses regular operators and comparisons instead of 
-their elementwise counterparts as in `@with`. Does not change the input data 
+their elementwise counterparts as in `@withcols`. Does not change the input data 
 frame argument.
 
 `@eachrow!` is identical to `@eachrow` but acts on a data frame in-place, modifying
@@ -309,8 +309,8 @@ The following macros accept `@byrow`:
   `@byrow` can be used in the left hand side of expressions, e.g.
   `@select(df, @byrow z = :x * :y)`. 
 * `@subset`, `@subset!` and `@orderby`, with syntax of the form `@subset(df, @byrow :x > :y)`
-* `@with`, where the anonymous function created by `@with` is wrapped in
-  `ByRow`, as in `@with(df, @byrow :x * :y)`.
+* `@withcols`, where the anonymous function created by `@withcols` is wrapped in
+  `ByRow`, as in `@withcols(df, @byrow :x * :y)`.
 
 To avoid writing `@byrow` multiple times when performing multiple
 operations, it is allowed to use`@byrow` at the beginning of a block of 
@@ -464,9 +464,9 @@ transform(df, [:A, "B"] => (+) => :y)
 
 will error in DataFrames. 
 
-For consistency, this restriction in the input column types also applies to `@with`
+For consistency, this restriction in the input column types also applies to `@withcols`
 and `@eachrow`. You cannot mix integer column references with `Symbol` or string column 
-references in `@with` and `@eachrow` in any part of the expression, but you can mix 
+references in `@withcols` and `@eachrow` in any part of the expression, but you can mix 
 `Symbol`s and strings. The following will fail:
 
 ```julia
@@ -475,7 +475,7 @@ df = DataFrame(A = 1:3, B = [2, 1, 2])
     :A = $2
 end
 
-@with df begin 
+@withcols df begin 
     $1 + $"A"
 end
 ```
@@ -487,7 +487,7 @@ while the following will work without error
     $1 + $2
 end
 
-@with df begin 
+@withcols df begin 
     $1 + $2
 end
 ```

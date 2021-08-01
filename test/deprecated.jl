@@ -201,4 +201,54 @@ end
     @test (@combine(gd, n = first(:i))) ≅ newdf
 end
 
+@testset "with" begin
+    df = DataFrame(A = 1:3, B = [2, 1, 2])
+
+    x = [2, 1, 0]
+
+    @test  @with(df, :A .+ 1)   ==  df.A .+ 1
+    @test  @with(df, :A .+ :B)  ==  df.A .+ df.B
+    @test  @with(df, :A .+ x)   ==  df.A .+ x
+
+    x = @with df begin
+        res = 0.0
+        for i in 1:length(:A)
+            res += :A[i] * :B[i]
+        end
+        res
+    end
+    idx = :A
+    @test  @with(df, $idx .+ :B)  ==  df.A .+ df.B
+    idx2 = :B
+    @test  @with(df, $idx .+ $idx2)  ==  df.A .+ df.B
+    @test  @with(df, $:A .+ $"B")  ==  df.A .+ df.B
+
+    @test_throws ArgumentError @with(df, :A + $2)
+
+    @test  x == sum(df.A .* df.B)
+    @test  @with(df, df[:A .> 1, ^([:B, :A])]) == df[df.A .> 1, [:B, :A]]
+    @test  @with(df, DataFrame(a = :A * 2, b = :A .+ :B)) == DataFrame(a = df.A * 2, b = df.A .+ df.B)
+
+    @test @with(df, :A) === df.A
+    @test @with(df, $:A) === df.A
+    @test @with(df, $"A") === df.A
+end
+
+@testset "@with with @byrow" begin
+    df = DataFrame(A = 1:3, B = [2, 1, 2])
+
+    @test @with(df, @byrow :A * 1)   ==  df.A .* 1
+    @test @with(df, @byrow :A * :B)  ==  df.A .* df.B
+
+    t = @with df @byrow begin
+        :A * 1
+    end
+    @test t == df.A .* 1
+
+    t = @with df @byrow begin
+        :A * :B
+    end
+    @test t == df.A .* df.B
+end
+
 end # module

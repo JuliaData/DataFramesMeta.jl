@@ -9,7 +9,7 @@ using MacroTools
 @reexport using Chain
 
 # Basics:
-export @with,
+export @withcols,
        @subset, @subset!, @rsubset, @rsubset!,
        @orderby, @rorderby,
        @by, @combine,
@@ -17,7 +17,7 @@ export @with,
        @rtransform, @rselect, @rtransform!, @rselect!,
        @eachrow, @eachrow!,
        @byrow,
-       @based_on, @where # deprecated
+       @based_on, @where, @with # deprecated
 
 include("parsing.jl")
 include("macros.jl")

@@ -12,7 +12,7 @@ DataFrames's `source => fun => destination` syntax.
 
 ### Details
 
-Parsing follows the same convention as other DataFramesMeta.jl macros, such as `@with`. All
+Parsing follows the same convention as other DataFramesMeta.jl macros, such as `@withcols`. All
 terms in the expression that are `Symbol`s are treated as columns in the data frame, except
 `Symbol`s wrapped in `^`. To use a variable representing a column name, wrap the variable
 in `\$`.
@@ -70,7 +70,7 @@ to indicate that the anonymous function created by DataFramesMeta
 to represent an operation should be applied "by-row".
 
 If an expression starts with `@byrow`, either of the form `@byrow :y = f(:x)`
-in transformations or `@byrow f(:x)` in `@orderby`, `@subset`, and `@with`,
+in transformations or `@byrow f(:x)` in `@orderby`, `@subset`, and `@withcols`,
 then the anonymous function created by DataFramesMeta is wrapped in the
 `DataFrames.ByRow` function wrapper, which broadcasts the function so that it run on each row.
 
@@ -144,7 +144,7 @@ Rather, `@eachrow` and `@eachrow!` return data frames.
 Now consider `@byrow`. `@byrow` transforms
 
 ```julia
-@with df @byrow begin
+@withcols df @byrow begin
     :a * :b
 end
 ```
@@ -156,7 +156,7 @@ tempfun(a, b) = a * b
 tempfun.(df.a, df.b)
 ```
 
-In contrast to `@eachrow`, `@with` combined with `@byrow` returns a vector of the
+In contrast to `@eachrow`, `@withcols` combined with `@byrow` returns a vector of the
 broadcasted multiplication and not a data frame.
 
 Additionally, transformations applied using `@eachrow!` modify the input
@@ -165,7 +165,7 @@ data frame. On the contrary, `@byrow` does not update columns.
 ```julia
 julia> df = DataFrame(a = [1, 2], b = [3, 4]);
 
-julia> @with df @byrow begin
+julia> @withcols df @byrow begin
            :a = 500
        end
 2-element Vector{Int64}:
@@ -198,7 +198,7 @@ df = DataFrame(a = [1, 2], b = [3, 4])
   is not possible in Julia versions below 1.7.
 
 ```
-julia> @with df @byrow begin
+julia> @withcols df @byrow begin
            if :a == 1
                5
            else
@@ -209,7 +209,7 @@ julia> @with df @byrow begin
   5
  10
 
-julia> @with df @. begin
+julia> @withcols df @. begin
            if :a == 1
                5
            else
@@ -225,7 +225,7 @@ julia> @with df @. begin
 
 ```julia
 julia> df = DataFrame(a = [1, 2], b = [3, 4]);
-julia> @with df @byrow :x + [5, 6]
+julia> @withcols df @byrow :x + [5, 6]
 ```
 
   will error, because the `:x` in the above expression refers
@@ -234,7 +234,7 @@ julia> @with df @byrow :x + [5, 6]
   On the other hand
 
 ```julia
-@with df @. :x + [5, 6]
+@withcols df @. :x + [5, 6]
 ```
 
   will succeed, as `df.x` is a 2-element vector as is `[5, 6]`.
@@ -257,10 +257,10 @@ julia> function expensive()
            return 1
        end;
 
-julia> @time @with df @byrow :a + expensive();
+julia> @time @withcols df @byrow :a + expensive();
   1.037073 seconds (51.67 k allocations: 3.035 MiB, 3.19% compilation time)
 
-julia> @time @with df :a .+ expensive();
+julia> @time @withcols df :a .+ expensive();
   0.539900 seconds (110.67 k allocations: 6.525 MiB, 7.05% compilation time)
 
 ```
@@ -269,10 +269,10 @@ julia> @time @with df :a .+ expensive();
   but can easily be fixed with `\$`.
 
 ```julia
-julia> @time @with df @. :a + expensive();
+julia> @time @withcols df @. :a + expensive();
   1.036888 seconds (97.55 k allocations: 5.617 MiB, 3.20% compilation time)
 
-julia> @time @with df @. :a + \$expensive();
+julia> @time @withcols df @. :a + \$expensive();
   0.537961 seconds (110.68 k allocations: 6.525 MiB, 6.73% compilation time)
 ```
 
@@ -352,7 +352,7 @@ end
 
 ##############################################################################
 ##
-## @with
+## @withcols
 ##
 ##############################################################################
 
@@ -367,7 +367,7 @@ getsinglecolumn(df, s::DataFrames.ColumnIndex) = df[!, s]
 getsinglecolumn(df, s) = throw(ArgumentError("Only indexing with Symbols, strings and integers " *
     "is currently allowed with \$"))
 
-function with_helper(d, body)
+function withcols_helper(d, body)
     # Make body an expression to force the
     # complicated method of fun_to_vec
     # in the case of QuoteNode
@@ -376,9 +376,9 @@ function with_helper(d, body)
 end
 
 """
-    @with(d, expr)
+    @withcols(d, expr)
 
-`@with` allows DataFrame columns keys to be referenced as symbols.
+`@withcols` allows DataFrame columns keys to be referenced as symbols.
 
 ### Arguments
 
@@ -387,7 +387,7 @@ end
 
 ### Details
 
-`@with` works by parsing the expression body for all columns indicated
+`@withcols` works by parsing the expression body for all columns indicated
 by symbols (e.g. `:colA`). Then, a function is created that wraps the
 body and passes the columns as function arguments. This function is
 then called. Operations are efficient because:
@@ -398,7 +398,7 @@ then called. Operations are efficient because:
 The following
 
 ```julia
-@with(d, :a .+ :b .+ 1)
+@withcols(d, :a .+ :b .+ 1)
 ```
 
 becomes
@@ -412,8 +412,8 @@ If an expression is wrapped in `^(expr)`, `expr` gets passed through untouched.
 If an expression is wrapped in  `\$(expr)`, the column is referenced by the
 variable `expr` rather than a symbol.
 
-If the expression provide to `@with` begins with `@byrow`, the function
-created by the `@with` block is broadcasted along the columns of the
+If the expression provide to `@withcols` begins with `@byrow`, the function
+created by the `@withcols` block is broadcasted along the columns of the
 data frame.
 
 ### Examples
@@ -427,19 +427,19 @@ julia> df = DataFrame(x = 1:3, y = [2, 1, 2]);
 
 julia> x = [2, 1, 0];
 
-julia> @with(df, :y .+ 1)
+julia> @withcols(df, :y .+ 1)
 3-element Array{Int64,1}:
  3
  2
  3
 
-julia> @with(df, :x + x)
+julia> @withcols(df, :x + x)
 3-element Array{Int64,1}:
  3
  3
  3
 
-julia> @with df begin
+julia> @withcols df begin
             res = 0.0
             for i in 1:length(:x)
                 res += :x[i] * :y[i]
@@ -448,20 +448,20 @@ julia> @with df begin
         end
 10.0
 
-julia> @with(df, df[:x .> 1, ^(:y)]) # The ^ means leave the :y alone
+julia> @withcols(df, df[:x .> 1, ^(:y)]) # The ^ means leave the :y alone
 2-element Array{Int64,1}:
  1
  2
 
 julia> colref = :x;
 
-julia> @with(df, :y + \$colref) # Equivalent to df[!, :y] + df[!, colref]
+julia> @withcols(df, :y + \$colref) # Equivalent to df[!, :y] + df[!, colref]
 3-element Array{Int64,1}:
  3
  3
  5
 
-julia> @with df @byrow :x * :y
+julia> @withcols df @byrow :x * :y
 3-element Vector{Int64}:
  2
  2
@@ -470,7 +470,7 @@ julia> @with df @byrow :x * :y
 ```
 
 !!! note
-    `@with` creates a function, so the scope within `@with` is a local scope.
+    `@withcols` creates a function, so the scope within `@withcols` is a local scope.
     Variables in the parent can be read. Writing to variables in the parent scope
     differs depending on the type of scope of the parent. If the parent scope is a
     global scope, then a variable cannot be assigned without using the `global` keyword.
