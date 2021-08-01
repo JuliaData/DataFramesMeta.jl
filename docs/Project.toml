@@ -1,5 +1,8 @@
 [deps]
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+DataFramesMeta = "1313f7d8-7da2-5740-9ea0-a2ca25f37964"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 
 [compat]
 Documenter = "0.27"
