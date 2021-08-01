@@ -116,7 +116,7 @@ To select a range of columns by name, use the `Between` operator:
 To select all columns that start with the character string `"sl"` use regular expressions. 
 
 ```jldoctest dplyr
-@select msleep $r"^sl"
+@select msleep $(r"^sl")
 ```
 
 Regular expressions are powerful, but can be difficult for new users to understand. Here are some quick tips.  
