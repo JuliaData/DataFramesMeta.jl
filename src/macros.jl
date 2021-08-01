@@ -43,11 +43,11 @@ julia> import DataFramesMeta: @col;
 
 julia> DataFrames.transform(df, @col :z = :x .* :y)
 2×3 DataFrame
-│ Row │ x     │ y     │ z     │
-│     │ Int64 │ Int64 │ Int64 │
-├─────┼───────┼───────┼───────┤
-│ 1   │ 1     │ 3     │ 3     │
-│ 2   │ 2     │ 4     │ 8     │
+ Row │ x      y      z
+     │ Int64  Int64  Int64
+─────┼─────────────────────
+   1 │     1      3      3
+   2 │     2      4      8
 
 ```
 """

@@ -16,7 +16,7 @@ export @with,
        @transform, @select, @transform!, @select!,
        @rtransform, @rselect, @rtransform!, @rselect!,
        @eachrow, @eachrow!,
-       @byrow,
+       @byrow, @passmissing,
        @based_on, @where # deprecated
 
 include("parsing.jl")
