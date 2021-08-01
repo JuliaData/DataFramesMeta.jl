@@ -7,8 +7,8 @@ makedocs(
 		canonical = "https://juliadata.github.io/DataFramesMeta.jl/stable/"
 	),
 	pages = Any[
-		# "Introduction" => "index.md",
-		# "Tutorial for coming from dplyr" => "dplyr.md",
+		"Introduction" => "index.md",
+		"Tutorial for coming from dplyr" => "dplyr.md",
 		"API" => "api/api.md"])
 
 deploydocs(

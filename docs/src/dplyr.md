@@ -26,24 +26,28 @@ DataFramesMeta.jl provides a convenient syntax for working with the vectors in a
 
 To install DataFramesMeta.jl:
 
-```jldoctest dplyr
+```julia
 import Pkg
 Pkg.activate(; temp=true) # activate a temprary environment for this tutorial
-Pkg.add("DataFramesMeta.jl")
+Pkg.add("DataFramesMeta");
 ```
 
 To load DataFramesMeta.jl
 
-```jldoctest dplyr
+```@example 1
 using DataFramesMeta
 ```
 
 For this tutorial, we will install some additional packages as well. 
 
-```jldoctest dplyr
+```julia dplyr
 Pkg.add(["CSV", "HTTP"])
-using CSV, HTTP
-using Statistics
+```
+
+Now we load them. We also load the Statistics standard library, which is shipped with Julia, so does not need to be installed.
+
+```@example 1
+using CSV, HTTP, Statistics
 ```
 
 We will use [CSV.jl](https://csv.juliadata.org/stable/) and [HTTP.jl](https://juliaweb.github.io/HTTP.jl/stable/) for downloading our dataset from the internet.
@@ -54,7 +58,7 @@ The `msleep` (mammals sleep) data set contains the sleep times and weights for a
 
 We can loads the data directly into a DataFrame from the `url`. 
 
-```jldoctest dplyr
+```@example 1
 url = "https://raw.githubusercontent.com/genomicsclass/dagdata/master/inst/extdata/msleep_ggplot2.csv"
 msleep = CSV.read(HTTP.get(url).body, DataFrame; missingstring="NA")
 ```
@@ -97,25 +101,25 @@ Two of the most basic functions are `@select` and `@subset`, which selects colum
 
 Select a set of columns: the `:name` and the `:sleep_total` columns. 
 
-```jldoctest dplyr
+```@example 1
 sleepData = @select msleep :name :sleep_total
 ```
 
 To select all the columns *except* a specific column, use the `Not` function for inverse selection. We preface the `Not` with `$` because it does not reference a column directly as a `Symbol`.
 
-```jldoctest dplyr
-@select msleep $Not(:name)
+```@example 1
+@select msleep $(Not(:name))
 ```
 
 To select a range of columns by name, use the `Between` operator:
 
-```jldoctest dplyr
+```@example 1
 @select msleep $(Between(:name, :order))
 ```
 
 To select all columns that start with the character string `"sl"` use regular expressions. 
 
-```jldoctest dplyr
+```@example 1
 @select msleep $(r"^sl")
 ```
 
@@ -129,19 +133,19 @@ Regular expressions are powerful, but can be difficult for new users to understa
 
 Filter the rows for mammals that sleep a total of more than 16 hours. 
 
-```jldoctest dplyr
+```@example 1
 @subset msleep :sleep_total .>= 16
 ```
 
 In the above expression, the `.>=` means we "broadcast" the `>=` comparison across the whole column. We can use a simpler syntax, `@rsubset` which automatically broadcasts all operations.
 
-```jldoctest dplyr
+```@example 1
 @rsubset msleep :sleep_total > 16
 ```
 
 Subset the rows for mammals that sleep a total of more than 16 hours *and* have a body weight of greater than 1 kilogram. For this we put multiple operations on separate lines in a single block. 
 
-```jldoctest dplyr
+```@example 1
 @rsubset msleep begin 
     :sleep_total >= 16 
     :bodywt >= 1
@@ -150,7 +154,7 @@ end
 
 Filter the rows for mammals in the Perissodactyla and Primates taxonomic order
 
-```jldoctest dplyr
+```@example 1
 @rsubset msleep :order in ["Perissodactyla", "Primates"]
 ```
 
@@ -169,7 +173,7 @@ msleep_2 = @rsubset msleep_1 :sleep_total > 16
 
 Now in this case, we will pipe the msleep data frame to the function that will select two columns (name and sleep\_total) and then pipe the new data frame to the `@rsubset` opertaion. This method involves awkwardly creating and naming temporary data frames. This can be avoided with `@chain`.
 
-```jldoctest dplyr
+```@example 1
 @chain msleep begin 
   @select :name :sleep_total
   @rsubset :sleep_total > 16
@@ -186,14 +190,13 @@ Now that you know about the `@chain` macro, we will use it throughout the rest o
 
 To arrange (or re-order) rows by a particular column, such as the taxonomic order, list the name of the column you want to arrange the rows by:
 
-
-```
+```@example 1
 @orderby msleep :order
 ```
 
 Now we will select three columns from msleep, arrange the rows by the taxonomic order and then arrange the rows by sleep\_total. Finally, keep the first 10 rows of the data frame.
 
-```jldoctest dplyr
+```@example 1
 @chain msleep begin 
     @select :name :order :sleep_total
     @orderby :order :sleep_total
@@ -203,7 +206,7 @@ end
 
 Same as above, except here we filter the rows for mammals that sleep for 16 or more hours, instead of showing the head of the final data frame:
 
-```jldoctest dplyr
+```@example 1
 @chain msleep begin 
     @select :name :order :sleep_total
     @orderby :order :sleep_total 
@@ -213,12 +216,12 @@ end
 
 Something slightly more complicated: same as above, except arrange the rows in the `:sleep_total` column in a descending order. For this, use the function `sortperm` with the keyword argument `rev=true`.
 
-```jldoctest dplyr
+```@example 1
 @chain msleep begin 
     @select :name :order :sleep_total
     @orderby begin 
         :order 
-        sortperm(:sleep_total, rev=true))
+        sortperm(:sleep_total, rev=true)
     end 
     @rsubset :sleep_total >= 16
 end
@@ -228,15 +231,15 @@ end
 
 The `@transform` macro will add new columns to the data frame. Like with other macros, use `@rtransform` to operate row-wise. Create a new column called `:rem_proportion`, which is the ratio of rem sleep to total amount of sleep. 
 
-```jldoctest dplyr
+```@example 1
 @rtransform msleep :rem_proportion = :sleep_rem / :sleep_total
 ```
 
 You can many new columns using `@transform` by placing multiple operations in a block.
 
-```jldoctest dplyr
+```@example 1
 @rtransform msleep begin 
-    :rem_proportion = :sleep_rem ./ :sleep_total 
+    :rem_proportion = :sleep_rem / :sleep_total 
     :bodywt_grams = :bodywt * 1000
 end
 ```
@@ -245,13 +248,13 @@ end
 
 The `@combine` macro will create summary statistics for a given column in the data frame, such as finding the mean. For example, to compute the average number of hours of sleep, apply the `mean` function to the column `:sleep_total` and call the summary value `:avg_sleep`. 
 
-```
+```@example 1
 @chain msleep @combine :avg_sleep = mean(:sleep_total)
 ```
 
 There are many other summary statistics you could consider such `std`, `minimum`, `maximum`, `median`, `sum`, `length` (returns the length of vector), `first` (returns first value in vector), and `last` (returns last value in vector).
 
-```jldoctest dplyr
+```@example 1
 @combine msleep begin 
     avg_sleep = mean(:sleep_total) 
     min_sleep = minimum(:sleep_total)
@@ -266,7 +269,7 @@ The `groupby` verb is an important function in DataFrames.jl (it does not live i
 
 Let's do that: split the `msleep` data frame by the taxonomic order, then ask for the same summary statistics as above. We expect a set of summary statistics for each taxonomic order. 
 
-```jldoctest dplyr
+```@example 1
 @chain msleep begin 
     groupby(:order)
     @combine begin 
@@ -280,7 +283,7 @@ end
 
 Split-apply-combine can also be used with `@transform` to add new variables to a data frame by performing operations by group. For instance, we can de-mean the total hours of sleep of an anymal relative to other animals in the same genus. 
 
-```jldoctest dplyr
+```@example 1
 @chain msleep begin 
     groupby(:order)
     @transform sleep_genus = :sleep_total .- mean(:sleep_total)
