@@ -428,13 +428,13 @@ julia> df = DataFrame(x = 1:3, y = [2, 1, 2]);
 julia> x = [2, 1, 0];
 
 julia> @with(df, :y .+ 1)
-3-element Array{Int64,1}:
+3-element Vector{Int64}:
  3
  2
  3
 
 julia> @with(df, :x + x)
-3-element Array{Int64,1}:
+3-element Vector{Int64}:
  3
  3
  3
@@ -449,14 +449,14 @@ julia> @with df begin
 10.0
 
 julia> @with(df, df[:x .> 1, ^(:y)]) # The ^ means leave the :y alone
-2-element Array{Int64,1}:
+2-element Vector{Int64}:
  1
  2
 
 julia> colref = :x;
 
 julia> @with(df, :y + \$colref) # Equivalent to df[!, :y] + df[!, colref]
-3-element Array{Int64,1}:
+3-element Vector{Int64}:
  3
  3
  5

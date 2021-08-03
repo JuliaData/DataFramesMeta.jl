@@ -148,7 +148,7 @@ To select a range of columns by name, use the `Between` operator:
 @select msleep $(Between(:name, :order))
 ```
 
-To select all columns that start with the character string `"sl"` use [regular expressions](https://regexone.com/), which are . 
+To select all columns that start with the character string `"sl"` use [regular expressions](https://regexone.com/):
 
 ```@repl 1
 @select msleep $(r"^sl")
