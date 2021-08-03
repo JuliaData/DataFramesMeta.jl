@@ -231,7 +231,7 @@ To arrange (or re-order) rows by a particular column, such as the taxonomic orde
 @orderby msleep :order
 ```
 
-Now we will select three columns from msleep, arrange the rows by the taxonomic order and then arrange the rows by sleep\_total. Finally, keep the first 10 rows of the data frame.
+Now we will select three columns from msleep, arrange the rows by the taxonomic order and then arrange the rows by `:sleep_total`. Finally, keep the first 10 rows of the data frame.
 
 ```@repl 1
 @chain msleep begin 
@@ -289,7 +289,7 @@ Using `@transform` instead of `@rtransform` will let us work with the column as 
 @transform msleep :demeand_sleep = :sleep_total .- mean(:sleep_total)
 ```
 
-## Create summaries of the data frame using `@combine`
+## Create Summaries of the Data Frame using `@combine`
 
 The `@combine` macro will create summary statistics for a given column in the data frame, such as finding the mean. For example, to compute the average number of hours of sleep, apply the `mean` function to the column `:sleep_total` and call the summary value `:avg_sleep`. 
 
@@ -308,7 +308,13 @@ There are many other summary statistics you could consider such `std`, `minimum`
 end
 ```
 
-## Group operations using `groupby` and `@combine`
+DataFrames.jl also provides the function `describe` which performs many of these summaries automatically. 
+
+```@repl 1
+describe(msleep)
+```
+
+## Group Operations using `groupby` and `@combine`
 
 The `groupby` verb is an important function in DataFrames.jl (it does not live in DataFramesMeta.jl). As we mentioned before it's related to concept of "split-apply-combine". We literally want to split the data frame by some variable (e.g. taxonomic order), apply a function to the individual data frames and then combine the output.   
 
