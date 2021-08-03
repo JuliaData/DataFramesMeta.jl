@@ -289,6 +289,16 @@ Using `@transform` instead of `@rtransform` will let us work with the column as 
 @transform msleep :demeand_sleep = :sleep_total .- mean(:sleep_total)
 ```
 
+Finally, note that you can create a new column with the name taken from an existing variable, or a new column name with spaces in it, with `$`
+
+```@repl 1
+newname = :rem_proportion
+@rtransform msleep begin 
+    $newname = :sleep_rem / :sleep_total
+    $"Body weight in grams" = :bodywt * 1000
+end
+```
+
 ## Create Summaries of the Data Frame using `@combine`
 
 The `@combine` macro will create summary statistics for a given column in the data frame, such as finding the mean. For example, to compute the average number of hours of sleep, apply the `mean` function to the column `:sleep_total` and call the summary value `:avg_sleep`. 
