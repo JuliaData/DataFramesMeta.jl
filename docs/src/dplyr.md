@@ -241,7 +241,7 @@ Now we will select three columns from msleep, arrange the rows by the taxonomic 
 end
 ```
 
-The last line of the above block, `first(10)`, does not have `@`. This is because `first` is a Julia function, not a macro. 
+The last line of the above block, `first(10)`, does not have `@`. This is because `first` is a Julia function, not a macro, whose names always begin with `@`. 
 
 Same as above, except here we filter the rows for mammals that sleep for 16 or more hours, instead of showing the head of the final data frame:
 
