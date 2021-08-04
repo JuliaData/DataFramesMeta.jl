@@ -43,11 +43,11 @@ julia> import DataFramesMeta: @col;
 
 julia> DataFrames.transform(df, @col :z = :x .* :y)
 2×3 DataFrame
-│ Row │ x     │ y     │ z     │
-│     │ Int64 │ Int64 │ Int64 │
-├─────┼───────┼───────┼───────┤
-│ 1   │ 1     │ 3     │ 3     │
-│ 2   │ 2     │ 4     │ 8     │
+ Row │ x      y      z
+     │ Int64  Int64  Int64
+─────┼─────────────────────
+   1 │     1      3      3
+   2 │     2      4      8
 
 ```
 """
@@ -428,13 +428,13 @@ julia> df = DataFrame(x = 1:3, y = [2, 1, 2]);
 julia> x = [2, 1, 0];
 
 julia> @with(df, :y .+ 1)
-3-element Array{Int64,1}:
+3-element Vector{Int64}:
  3
  2
  3
 
 julia> @with(df, :x + x)
-3-element Array{Int64,1}:
+3-element Vector{Int64}:
  3
  3
  3
@@ -449,14 +449,14 @@ julia> @with df begin
 10.0
 
 julia> @with(df, df[:x .> 1, ^(:y)]) # The ^ means leave the :y alone
-2-element Array{Int64,1}:
+2-element Vector{Int64}:
  1
  2
 
 julia> colref = :x;
 
 julia> @with(df, :y + \$colref) # Equivalent to df[!, :y] + df[!, colref]
-3-element Array{Int64,1}:
+3-element Vector{Int64}:
  3
  3
  5
@@ -590,15 +590,15 @@ julia> @subset(df, :x .> globalvar)
    2 │     3      2
 
 julia> @subset df begin
-    :x .> globalvar
-    :y .== 3
-end
+           :x .> globalvar
+           :y .== 3
+       end
 0×2 DataFrame
 
-julia> d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
+julia> df = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
                                     2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
 
-julia> g = groupby(d, :x);
+julia> g = groupby(df, :x);
 
 julia> @subset(g, :n .> mean(:n))
 8×2 DataFrame
@@ -630,14 +630,14 @@ julia> @subset g begin
    6 │    18      1
    7 │    19      1
 
-julia> d = DataFrame(a = [1, 2, missing], b = ["x", "y", missing]);
+julia> df = DataFrame(a = [1, 2, missing], b = ["x", "y", missing]);
 
-julia> @subset(d, :a .== 1)
+julia> @subset(df, :a .== 1)
 1×2 DataFrame
-│ Row │ a      │ b       │
-│     │ Int64? │ String? │
-├─────┼────────┼─────────┤
-│ 1   │ 1      │ x       │
+ Row │ a       b
+     │ Int64?  String?
+─────┼─────────────────
+   1 │      1  x
 ```
 """
 macro subset(x, args...)
@@ -761,7 +761,7 @@ julia> df = DataFrame(x = 1:3, y = [2, 1, 2]);
 
 julia> globalvar = [2, 1, 0];
 
-julia> @subset!(df, :x .> 1)
+julia> @subset!(copy(df), :x .> 1)
 2×2 DataFrame
  Row │ x      y
      │ Int64  Int64
@@ -769,7 +769,7 @@ julia> @subset!(df, :x .> 1)
    1 │     2      1
    2 │     3      2
 
-julia> @subset!(df, :x .> globalvar)
+julia> @subset!(copy(df), :x .> globalvar)
 2×2 DataFrame
  Row │ x      y
      │ Int64  Int64
@@ -777,16 +777,16 @@ julia> @subset!(df, :x .> globalvar)
    1 │     2      1
    2 │     3      2
 
-julia> @subset! df begin
-    :x .> globalvar
-    :y .== 3
-end
+julia> @subset! copy(df) begin
+           :x .> globalvar
+           :y .== 3
+       end
 0×2 DataFrame
 
-julia> d = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
+julia> df = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
                                     2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
 
-julia> g = groupby(d, :x);
+julia> g = groupby(copy(df), :x);
 
 julia> @subset!(g, :n .> mean(:n))
 8×2 DataFrame
@@ -801,6 +801,8 @@ julia> @subset!(g, :n .> mean(:n))
    6 │    18      1
    7 │    19      1
    8 │    20      2
+
+julia> g = groupby(copy(df), :x);
 
 julia> @subset! g begin
            :n .> mean(:n)
@@ -822,10 +824,10 @@ julia> d = DataFrame(a = [1, 2, missing], b = ["x", "y", missing]);
 
 julia> @subset!(d, :a .== 1)
 1×2 DataFrame
-│ Row │ a      │ b       │
-│     │ Int64? │ String? │
-├─────┼────────┼─────────┤
-│ 1   │ 1      │ x       │
+ Row │ a       b
+     │ Int64?  String?
+─────┼─────────────────
+   1 │      1  x
 ```
 """
 macro subset!(x, args...)
@@ -967,9 +969,9 @@ julia> @orderby(d, sortperm(:c, rev = true))
   10 │     3      1  a
 
 julia> @orderby d begin
-    :x
-    abs.(:n .- mean(:n))
-end
+           :x
+           abs.(:n .- mean(:n))
+       end
 10×3 DataFrame
  Row │ x      n      c
      │ Int64  Int64  String
@@ -1127,7 +1129,6 @@ julia> @transform df @byrow begin
            :x = :A * :B
            :y = :A == 1 ? 100 : 200
        end
-
 3×4 DataFrame
  Row │ A      B      x      y
      │ Int64  Int64  Int64  Int64
@@ -1135,7 +1136,6 @@ julia> @transform df @byrow begin
    1 │     1      2      2    100
    2 │     2      1      2    200
    3 │     3      2      6    200
-
 ```
 """
 macro transform(x, args...)
@@ -1241,12 +1241,12 @@ julia> df = DataFrame(A = 1:3, B = [2, 1, 2]);
 
 julia> df2 = @transform!(df, :a = 2 * :A, :x = :A .+ :B)
 3×4 DataFrame
-│ Row │ A     │ B     │ a     │ x     │
-│     │ Int64 │ Int64 │ Int64 │ Int64 │
-├─────┼───────┼───────┼───────┼───────┤
-│ 1   │ 1     │ 2     │ 2     │ 3     │
-│ 2   │ 2     │ 1     │ 4     │ 3     │
-│ 3   │ 3     │ 2     │ 6     │ 5     │
+ Row │ A      B      a      x
+     │ Int64  Int64  Int64  Int64
+─────┼────────────────────────────
+   1 │     1      2      2      3
+   2 │     2      1      4      3
+   3 │     3      2      6      5
 
 julia> df === df2
 true
@@ -1593,7 +1593,7 @@ and
 
 ### Examples
 
-```jldoctest
+```julia
 julia> using DataFramesMeta
 
 julia> d = DataFrame(
@@ -1718,7 +1718,7 @@ and
 
 ### Examples
 
-```jldoctest
+```julia
 julia> using DataFramesMeta, Statistics
 
 julia> df = DataFrame(
