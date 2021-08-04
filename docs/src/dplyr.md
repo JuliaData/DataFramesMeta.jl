@@ -192,7 +192,8 @@ If you are coming from `dplyr`, you can also write the above command in a way th
 Filter the rows for mammals in the Perissodactyla and Primates taxonomic order
 
 ```@repl 1
-@rsubset msleep :order in ["Perissodactyla", "Primates"]
+relevant_orders = Set(["Perissodactyla", "Primates"])
+@rsubset msleep :order in relevant_orders
 ```
 
 You can use the boolean operators (e.g. >, <, >=, <=, !=, in) to create the logical tests. 
