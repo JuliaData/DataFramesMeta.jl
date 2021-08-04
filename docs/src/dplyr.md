@@ -92,7 +92,7 @@ DataFramesMeta.jl macro | By-row version | Description | `dplyr` equivalent
 `@transform` | `@rtransform` | create new columns | `mutate`
 `@subset` | `@rsubset` | filter rows | `filter`
 `@orderby` | `@rorderby` | re-order or arrange rows | `arrange`
-`@combine` | | summarise values | `summarize`
+`@combine` | | summarise values | `summarize` (but `@combine` is more flexible)
 `groupby` | | allows for group operations in the "split-apply-combine" concept | `group_by`
 
 # DataFramesMeta.jl Verbs In Action
@@ -189,11 +189,13 @@ If you are coming from `dplyr`, you can also write the above command in a way th
 @rsubset(msleep, :sleep_total >= 16, :bodywt >= 1)
 ```
 
-Filter the rows for mammals in the Perissodactyla and Primates taxonomic order
+Filter the rows for mammals in the Perissodactyla and Primates taxonomic order. We wrap code in a `let` block to ensure things are fast.
 
 ```@repl 1
-relevant_orders = Set(["Perissodactyla", "Primates"])
-@rsubset msleep :order in relevant_orders
+let
+    relevant_orders = Set(["Perissodactyla", "Primates"])
+    @rsubset msleep :order in relevant_orders
+end
 ```
 
 You can use the boolean operators (e.g. >, <, >=, <=, !=, in) to create the logical tests. 
