@@ -215,8 +215,8 @@ Now in this case, we will pipe the msleep data frame to the function that will s
 
 ```@repl 1
 @chain msleep begin 
-  @select :name :sleep_total
-  @rsubset :sleep_total > 16
+    @select :name :sleep_total
+    @rsubset :sleep_total > 16
 end
 ```
 
