@@ -607,4 +607,30 @@ end
     @test d ≅ @by(df, :g, :n1 = :i .* :g, :n2 = :i .* :g)
 end
 
+@testset "multi-argument r*, #280" begin
+    df = DataFrame(a = [1, 2, 3], b = [4, 5, 6])
+    d = @rtransform(df, :x = :a, :y = :a + :b)
+    @test d.x == df.a
+
+    d = @rtransform!(copy(df), :x = :a, :y = :a + :b)
+    @test d.x == df.a
+
+    d = @rselect(df, :x = :a, :y = :a + :b)
+    @test d.x == df.a
+
+    d = @rselect!(copy(df), :x = :a, :y = :a + :b)
+    @test d.x == df.a
+
+    d = @rsubset(df, :a > 1, :b > 3)
+    @test d == DataFrame(a = [2, 3], b = [5, 6])
+
+    d = @rsubset!(copy(df), :a > 1, :b > 3)
+    @test d == DataFrame(a = [2, 3], b = [5, 6])
+
+    d = @rorderby(df, -:a, -:b)
+    @test d == DataFrame(a = [3, 2, 1], b = [6, 5, 4])
+
+    # no `@orderby!` for some reason.
+end
+
 end

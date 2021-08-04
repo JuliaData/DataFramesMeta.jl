@@ -391,8 +391,8 @@ function replace_dotted!(e, membernames)
     Expr(:., x_new, y_new)
 end
 
-function create_args_vector(args...)
-    create_args_vector(Expr(:block, args...))
+function create_args_vector(args...; wrap_byrow::Bool=false)
+    create_args_vector(Expr(:block, args...); wrap_byrow = wrap_byrow)
 end
 
 """
