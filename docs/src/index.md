@@ -492,7 +492,97 @@ end
 end
 ```
 
-# Working with `Symbol`s without referring to columns
+## Constructing multi-column arguments and `src => fun => dest` calls using `$`
+
+If an argument is entirely wrapped in `$()`, the result bypasses the anonymous function creation of DataFramesMeta.jl and is passed to the underling DataFrames.jl function directly. Importantly, this allows for multi-column selection and passing `src => fun => dest` calls from the DataFrames.jl "mini-language" directly.
+
+### Multi-argument selectors 
+
+To refer to multiple columns in DataFrames.jl, one can write
+
+```julia
+select(df, [:a, :b])
+```
+
+which selects the columns `:a` and `:b` in the data frame. We can generate this command in DataFramesMeta.jl with
+
+```julia
+@select df $[:a, :b]
+```
+
+Similarly, to selct all columns beginning with the letter `"a"`, wrap a regular expression in `$()`. 
+
+```julia
+@select df $(r"^a")
+```
+
+which will construct the command `select(df, r"^a")`. 
+
+Multi-argument selectors *may only* be used when an entire argument is wrapped in `$()`. For example
+
+```julia
+@select df :y = f($[:a, :b])
+```
+
+will fail. 
+
+Not all functions in DataFrames.jl allow for multi-column selectors, so detailed knowledge of the underlying functions DataFrames.jl may be required. For example, the call 
+
+```julia
+subset(df, [:a, :b])
+```
+
+will fail in DataFrames.jl, bcause `DataFrames.subset` does not support vectors of column names. Likewise, `@subset df $[:a, :b]` will fail. The macros which support multi-column selectors are 
+
+* `@select`
+* `@transform` multi-argument selectors are ignored
+* `@combine`
+* `@by`
+
+
+Because arguments wrapped entirely in `$()` get passed directly to underlying DataFrames.jl functions. This allows the use of the DataFrames.jl "mini-language" consisting of `src => fun => dest` pairs inside dataFramesMeta macros. For example, you can do the following:
+
+```julia
+julia> df = DataFrame(a = [1, 2], b = [3, 4]);
+
+julia> my_transformation = :a => (t -> t .+ 100) => :c;
+
+julia> @transform df begin 
+           $my_transformation
+           :d = :b .+ 200
+       end
+2×4 DataFrame
+ Row │ a      b      c      d     
+     │ Int64  Int64  Int64  Int64 
+─────┼────────────────────────────
+   1 │     1      3    101    203
+   2 │     2      4    102    204
+```
+
+or with `@subset`
+
+```julia
+julia> @subset df $(:a => t -> t .>= 2)
+1×2 DataFrame
+ Row │ a      b     
+     │ Int64  Int64 
+─────┼──────────────
+   1 │     2      4
+```
+
+!!! warning
+    The macros `@orderby` and `@with` do not transparently call underlying DataFrames.jl functions. Escaping entire transformations should be considered unstable and may change in future versions.
+
+!!! warning
+    Row-wise macros such as `@rtransform` and `@rsubset` will not automatically wrap functions in `src => fun => dest` in `ByRow`. 
+
+In summary
+
+* To refer to single columns, use `Symbol`s, i.e. `:x`
+* To refer to multiple columns, wrap an entire argument in `$()`. Not all macros support this syntax. 
+* To use the `src => fun => dest` syntax, wrap an entire argument in `$()`. This functionality should be considered unstable for the time being. 
+
+## Working with `Symbol`s without referring to columns
 
 To refer to `Symbol`s without aliasing the column in a data frame, use `^`. 
 
@@ -502,6 +592,8 @@ df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
 ```
 
 This rule applies to all DataFramesMeta macros.
+
+
 
 ## Comparison with `dplyr` and LINQ
 
