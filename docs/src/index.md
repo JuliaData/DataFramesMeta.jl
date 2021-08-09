@@ -492,6 +492,14 @@ end
 end
 ```
 
+To reference columns with more complicated expressions, you must wrap column references in parentheses. 
+
+```
+@transform df :a + $("a column name" * " in two parts")
+@transform df :a + $(get_column_name(x))
+```
+
+
 ## Constructing multi-column arguments and `src => fun => dest` calls using `$`
 
 If an argument is entirely wrapped in `$()`, the result bypasses the anonymous function creation of DataFramesMeta.jl and is passed to the underling DataFrames.jl function directly. Importantly, this allows for multi-column selection and passing `src => fun => dest` calls from the DataFrames.jl "mini-language" directly.
@@ -510,7 +518,7 @@ which selects the columns `:a` and `:b` in the data frame. We can generate this 
 @select df $[:a, :b]
 ```
 
-Similarly, to selct all columns beginning with the letter `"a"`, wrap a regular expression in `$()`. 
+Similarly, to selct all columns beginning with the letter `"a"`, wrap a regular expression in `$()`. As mentioned above, because the regex is a complicated syntax, we need to wrap it in parentheses. 
 
 ```julia
 @select df $(r"^a")
@@ -535,12 +543,12 @@ subset(df, [:a, :b])
 will fail in DataFrames.jl, bcause `DataFrames.subset` does not support vectors of column names. Likewise, `@subset df $[:a, :b]` will fail. The macros which support multi-column selectors are 
 
 * `@select`
-* `@transform` multi-argument selectors are ignored
+* `@transform` multi-argument selectors have no effect.
 * `@combine`
 * `@by`
 
 
-Because arguments wrapped entirely in `$()` get passed directly to underlying DataFrames.jl functions. This allows the use of the DataFrames.jl "mini-language" consisting of `src => fun => dest` pairs inside dataFramesMeta macros. For example, you can do the following:
+Because arguments wrapped entirely in `$()` get passed directly to underlying DataFrames.jl functions. This allows the use of the DataFrames.jl "mini-language" consisting of `src => fun => dest` pairs inside DataFramesMeta.jl macros. For example, you can do the following:
 
 ```julia
 julia> df = DataFrame(a = [1, 2], b = [3, 4]);
@@ -578,9 +586,23 @@ julia> @subset df $(:a => t -> t .>= 2)
 
 In summary
 
-* To refer to single columns, use `Symbol`s, i.e. `:x`
-* To refer to multiple columns, wrap an entire argument in `$()`. Not all macros support this syntax. 
-* To use the `src => fun => dest` syntax, wrap an entire argument in `$()`. This functionality should be considered unstable for the time being. 
+* All arguments that are not *entirely* escaped with `$` or `$()` construct anonymous functions. Inside these expressions only single-column selectors are allowed. This includes
+    * `Symbol`s, i.e. `:x` and `:y`
+    * Strings, escaped with `$`, i.e. `$"A string"` or `$("A string with many" * "parts")`
+    * Integers, escaped with `$`, i.e. `$1`
+    * Any single-column variable representing one of the above, escaped with `$`, i.e. `$x`
+  
+  In transformation operations, i.e. `@transform :y = f(:x)`, the same rules on the right hand side also apply to the left hand side. For example, `@transform $"y" = f(:x)` will work. 
+
+* Arguments wrapped entirely in `$` or `$()` are passed directly to the underlying DataFrames.jl functions. Because of this, *in addition to* the single-column selectors listed above, multi-argument selectors are allowed. These include, but are not limited to
+    * Vectors of `Symbol`s, `$[:x, :y]`, strings, `$["x", "y"]`, or `$[1, 2]`
+    * Regular expressions, `$(r"^a")`
+    * Filtering column selectors, such as `$(Not(:x))` and `$(Between(:a, :z))`
+
+    The macros `@with`, `@subset`, and `@orderby` do not support multi-column selectors. 
+
+* Advanced users of DataFramesMeta.jl and DataFrames.jl may wrap an argument entirely in `$()` to pass `src => fun => dest` pairs directly to DataFrames.jl functions. However this is discouraged and it's behavior may change in future versions. 
+
 
 ## Working with `Symbol`s without referring to columns
 
