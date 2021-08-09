@@ -19,6 +19,8 @@ export @with,
        @byrow,
        @based_on, @where # deprecated
 
+const DOLLAR = raw"$"
+
 include("parsing.jl")
 include("macros.jl")
 include("linqmacro.jl")

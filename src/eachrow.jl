@@ -102,8 +102,8 @@ by `@eachrow`. Also note that the returned data frame does not share columns
 with `df`. See [`@eachrow!`](@ref) which employs the same syntax but modifies
 the data frame in-place.
 
-Like with `@transform`, `@eachrow` supports the use of `\$` to work with column names
-stored as variables. Using `\$` with a multi-column selector, such as a `Vector` of
+Like with `@transform`, `@eachrow` supports the use of `$DOLLAR` to work with column names
+stored as variables. Using `$DOLLAR` with a multi-column selector, such as a `Vector` of
 `Symbol`s, is currently unsupported.
 
 ### Arguments
@@ -161,7 +161,7 @@ julia> varA = :A; varB = :B;
 
 julia> df2 = @eachrow df begin
            @newcol :colX::Vector{Float64}
-           :colX = \$varB == 2 ? pi * \$varA : \$varB
+           :colX = $(DOLLAR)varB == 2 ? pi * $(DOLLAR)varA : $(DOLLAR)varB
        end
 3×3 DataFrame
  Row │ A      B      colX
@@ -243,8 +243,8 @@ Changes to the rows directly affect `df`. The operation will modify the
 data frame in place. See [`@eachrow`](@ref) which employs the same syntax but allocates
 a fresh data frame.
 
-Like with `@transform!`, `@eachrow!` supports the use of `\$` to work with column names
-stored as variables. Using `\$` with a multi-column selector, such as a `Vector` of
+Like with `@transform!`, `@eachrow!` supports the use of `$DOLLAR` to work with column names
+stored as variables. Using `$DOLLAR` with a multi-column selector, such as a `Vector` of
 `Symbol`s, is currently unsupported.
 
 ### Arguments
@@ -310,7 +310,7 @@ julia> df2 = copy(df);
 
 julia> @eachrow! df2 begin
            @newcol :colX::Vector{Float64}
-           :colX = \$varB == 2 ? pi * \$varA : \$varB
+           :colX = $(DOLLAR)varB == 2 ? pi * $(DOLLAR)varA : $(DOLLAR)varB
        end
 3×3 DataFrame
  Row │ A      B      colX
