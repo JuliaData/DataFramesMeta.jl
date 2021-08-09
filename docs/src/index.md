@@ -399,8 +399,6 @@ julia> @rtransform df @passmissing x = parse(Int, :x_str)
    3 │ missing  missing
 ```
 
-
-
 ## Working with column names programmatically with `\$`
 
 DataFramesMeta provides the special syntax `\$` for referring to 
@@ -498,7 +496,6 @@ To reference columns with more complicated expressions, you must wrap column ref
 @transform df :a + $("a column name" * " in two parts")
 @transform df :a + $(get_column_name(x))
 ```
-
 
 ## Constructing multi-column arguments and `src => fun => dest` calls using `$`
 
@@ -603,7 +600,6 @@ In summary
 
 * Advanced users of DataFramesMeta.jl and DataFrames.jl may wrap an argument entirely in `$()` to pass `src => fun => dest` pairs directly to DataFrames.jl functions. However this is discouraged and it's behavior may change in future versions. 
 
-
 ## Working with `Symbol`s without referring to columns
 
 To refer to `Symbol`s without aliasing the column in a data frame, use `^`. 
@@ -614,8 +610,6 @@ df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
 ```
 
 This rule applies to all DataFramesMeta macros.
-
-
 
 ## Comparison with `dplyr` and LINQ
 
