@@ -266,7 +266,7 @@ julia> @time @with df :a .+ expensive();
 ```
 
   This problem comes up when using the `@.` macro as well,
-  but can easily be fixed with `$DOLLAR`. Because $DOLLAR is currently
+  but can easily be fixed with `$DOLLAR`. Because `$DOLLAR` is currently
   reserved for escaping column references, no solution currently exists with
   `@byrow` or in DataFramesMeta.jl at large. The best solution is simply
 
@@ -1550,7 +1550,7 @@ function combine_helper(x, args...; deprecation_warning = false)
         !(fe isa QuoteNode || onearg(fe, :cols) || is_column_expr(fe)) &&
         !(fe.head == :(=) || fe.head == :kw)
 
-        @warn "Returning a Table object from @by and @combine now requires `$DOLLARAsTable` on the LHS."
+        @warn "Returning a Table object from @by and @combine now requires `$(DOLLAR)AsTable` on the LHS."
 
         lhs = Expr(:$, :AsTable)
         exprs = ((:($lhs = $fe)),)
