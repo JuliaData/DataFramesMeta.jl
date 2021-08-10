@@ -399,9 +399,9 @@ julia> @rtransform df @passmissing x = parse(Int, :x_str)
    3 │ missing  missing
 ```
 
-## Working with column names programmatically with `\$`
+## Working with column names programmatically with `$`
 
-DataFramesMeta provides the special syntax `\$` for referring to 
+DataFramesMeta provides the special syntax `$` for referring to 
 columns in a data frame via a `Symbol`, string, or column position as either
 a literal or a variable. 
 
@@ -420,7 +420,7 @@ df4 = @eachrow df begin
 end
 ```
 
-`\$` can also be used to create new columns in a data frame. 
+`$` can also be used to create new columns in a data frame. 
 
 ```julia
 df = DataFrame(A = 1:3, B = [2, 1, 2])
