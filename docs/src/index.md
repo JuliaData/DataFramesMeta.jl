@@ -595,7 +595,7 @@ In summary
   In transformation operations, i.e. `@transform :y = f(:x)`, the same rules on the right hand side also apply to the left hand side. For example, `@transform $"y" = f(:x)` will work. 
 
 * Arguments wrapped entirely in `$` or `$()` are passed directly to the underlying DataFrames.jl functions. Because of this, *in addition to* the single-column selectors listed above, multi-argument selectors are allowed. These include, but are not limited to
-    * Vectors of `Symbol`s, `$[:x, :y]`, strings, `$["x", "y"]`, or `$[1, 2]`
+    * Vectors of `Symbol`s, `$[:x, :y]`, strings, `$["x", "y"]`, or integers `$[1, 2]`
     * Regular expressions, `$(r"^a")`
     * Filtering column selectors, such as `$(Not(:x))` and `$(Between(:a, :z))`
 
