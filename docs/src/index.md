@@ -57,7 +57,7 @@ but exported by DataFramesMeta for convenience.
 
 Column selections and transformations. Only newly created columns are kept. 
 Operates on both a `DataFrame` and a `GroupedDataFrame`. Transformations are 
-called with the keyword argument-like syntax `:y = f(:x)`. 
+called with the keyword-like syntax `:y = f(:x)`. 
 
 `@select` returns a new data frame with newly allocated columns, while `@select!`
 mutates the original data frame and returns it.
@@ -79,9 +79,9 @@ gd = groupby(df, :x);
 
 ## `@transform` and `@transform!`
 
-Add additional columns based on keyword arguments. Operates on both a 
+Add additional columns based on keyword-like arguments. Operates on both a 
 `DataFrame` and a `GroupedDataFrame`. Transformations are 
-called with the keyword argument-like syntax `:y = f(:x)`. 
+called with the keyword-like syntax `:y = f(:x)`. 
 
 `@transform` returns a new data frame with newly allocated columns, while `@transform!`
 mutates the original data frame and returns it.
@@ -123,8 +123,8 @@ Summarize, or collapse, a grouped data frame by performing transformations at th
 collecting the result into a single data frame. Also works on a `DataFrame`, which 
 acts like a `GroupedDataFrame` with one group. 
 
-Like `@select` and `@transform`, transformations are called with the keyword-argument
-like syntax `:y = f(:x)`. 
+Like `@select` and `@transform`, transformations are called with the keyword-like 
+syntax `:y = f(:x)`. 
 
 Examples:
 
