@@ -56,7 +56,8 @@ but exported by DataFramesMeta for convenience.
 ## `@select` and `@select!`
 
 Column selections and transformations. Only newly created columns are kept. 
-Operates on both a `DataFrame` and a `GroupedDataFrame`. 
+Operates on both a `DataFrame` and a `GroupedDataFrame`. Transformations are 
+called with the keyword-like syntax `:y = f(:x)`. 
 
 `@select` returns a new data frame with newly allocated columns, while `@select!`
 mutates the original data frame and returns it.
@@ -78,8 +79,9 @@ gd = groupby(df, :x);
 
 ## `@transform` and `@transform!`
 
-Add additional columns based on keyword arguments. Operates on both a 
-`DataFrame` and a `GroupedDataFrame`. 
+Add additional columns based on keyword-like arguments. Operates on both a 
+`DataFrame` and a `GroupedDataFrame`. Transformations are 
+called with the keyword-like syntax `:y = f(:x)`. 
 
 `@transform` returns a new data frame with newly allocated columns, while `@transform!`
 mutates the original data frame and returns it.
@@ -91,7 +93,6 @@ data frame.
 ```julia
 df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
 gd = groupby(df, :x);
-@transform(df, :x, :y)
 @transform(df, :x2 = 2 * :x, :y)
 @transform(gd, :x2 = 2 .* :y .* first(:y))
 @transform!(df, :x, :y)
@@ -122,6 +123,9 @@ Summarize, or collapse, a grouped data frame by performing transformations at th
 collecting the result into a single data frame. Also works on a `DataFrame`, which 
 acts like a `GroupedDataFrame` with one group. 
 
+Like `@select` and `@transform`, transformations are called with the keyword-like 
+syntax `:y = f(:x)`. 
+
 Examples:
 
 ```julia
@@ -131,6 +135,11 @@ gd = groupby(df, :x);
 @combine(gd, :x2 = :y .- sum(:y))
 @combine(gd, $AsTable = (n1 = sum(:y), n2 = first(:y)))
 ```
+
+The last example tells the underlying DataFrames.jl function `combine` 
+that the output should be a "Table" in the [Tables.jl](https://tables.juliadata.org/stable/) 
+sense. For more information, see the documentation for `DataFrames.combine` and 
+the [section below](@ref dollar) on escaping column identifiers with `$`. 
 
 Requires a `DataFrame` or `GroupedDataFrame` as the first argument, unlike 
 `combine` from DataFrames.jl. For instance, `@combine((a = sum(:x), b = sum(:y)), gd)` 
@@ -142,18 +151,6 @@ df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
 gd = groupby(df, :x);
 @combine(gd, $AsTable = (a = sum(:x), b = sum(:y)))
 ```
-
-For arguments which return a table-like object, such as `(a = sum(:x), b = sum(:y))`, above,
-`@combine` only allows *one* argument and it must be the *second* positional argument. 
-Consider the call 
-
-```
-@combine(gd, $AsTable = (a = sum(:x), b = sum(:y)), c = first(:x))
-```
-
-the above will fail because `@combine` does not accept a "keyword argument"-style column 
-creation after a "return a table"-style column creation call. 
-
 
 ## `@orderby`
 
@@ -399,7 +396,7 @@ julia> @rtransform df @passmissing x = parse(Int, :x_str)
    3 │ missing  missing
 ```
 
-## Working with column names programmatically with `$`
+## [Working with column names programmatically with `$`](@id dollar)
 
 DataFramesMeta provides the special syntax `$` for referring to 
 columns in a data frame via a `Symbol`, string, or column position as either
