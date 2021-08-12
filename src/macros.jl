@@ -1045,12 +1045,12 @@ end
 """
     @transform(d, i...)
 
-Add additional columns or keys based on keyword arguments.
+Add additional columns or keys based on keyword-like arguments.
 
 ### Arguments
 
 * `d` : an `AbstractDataFrame`, or `GroupedDataFrame`
-* `i...` : keyword arguments defining new columns or keys
+* `i...` : keyword-like arguments defining new columns or keys, of the form `:y = f(:x)`
 
 ### Returns
 
@@ -1059,7 +1059,7 @@ Add additional columns or keys based on keyword arguments.
 Inputs to `@transform` can come in two formats: a `begin ... end` block,
 in which case each line in the block is a separate
 transformation, (`:y = f(:x)`), or as a series of
-keyword arguments. For example, the following are
+keyword-like arguments. For example, the following are
 equivalent:
 
 ```julia
@@ -1179,13 +1179,14 @@ end
 """
     @transform!(d, i...)
 
-Mutate `d` inplace to add additional columns or keys based on keyword arguments and return it.
-No copies of existing columns are made.
+Mutate `d` inplace to add additional columns or keys based on keyword-like
+arguments and return it. No copies of existing columns are made.
 
 ### Arguments
 
 * `d` : an `AbstractDataFrame`, or `GroupedDataFrame`
-* `i...` : keyword arguments defining new columns or keys
+* `i...` : keyword-like arguments, of the form `:y = f(:x)` defining
+new columns or keys
 
 ### Returns
 
@@ -1194,7 +1195,7 @@ No copies of existing columns are made.
 Inputs to `@transform!` can come in two formats: a `begin ... end` block,
 in which case each line in the block is a separate
 transformation, (`:y = f(:x)`), or as a series of
-keyword arguments. For example, the following are
+keyword-like arguments. For example, the following are
 equivalent:
 
 ```julia
@@ -1296,8 +1297,8 @@ Select and transform columns.
 ### Arguments
 
 * `d` : an `AbstractDataFrame` or `GroupedDataFrame`
-* `e` :  keyword arguments specifying new columns in terms of existing columns
-  or symbols to specify existing columns
+* `e` :  keyword-like arguments, of the form `:y = f(:x)` specifying
+new columns in terms of existing columns or symbols to specify existing columns
 
 ### Returns
 
@@ -1306,7 +1307,7 @@ Select and transform columns.
 Inputs to `@select` can come in two formats: a `begin ... end` block,
 in which case each line in the block is a separate
 transformation or selector, or as a series of
-arguments and keyword arguments. For example, the following are
+arguments and keyword-like arguments arguments. For example, the following are
 equivalent:
 
 ```julia
@@ -1429,8 +1430,8 @@ Mutate `d` in-place to retain only columns or transformations specified by `e` a
 ### Arguments
 
 * `d` : an AbstractDataFrame
-* `e` :  keyword arguments specifying new columns in terms of existing columns
-  or symbols to specify existing columns
+* `e` :  keyword-like arguments, of the form `:y = f(:x)` specifying
+new columns in terms of existing columns or symbols to specify existing columns
 
 ### Returns
 
@@ -1439,7 +1440,7 @@ Mutate `d` in-place to retain only columns or transformations specified by `e` a
 Inputs to `@select!` can come in two formats: a `begin ... end` block,
 in which case each line in the block is a separate
 transformation or selector, or as a series of
-arguments and keyword arguments. For example, the following are
+arguments and keyword-like arguments. For example, the following are
 equivalent:
 
 `@select!` uses the syntax `@byrow` to wrap transformations in
@@ -1571,11 +1572,11 @@ Summarize a grouping operation
 ### Arguments
 
 * `x` : a `GroupedDataFrame` or `AbstractDataFrame`
-* `args...` : keyword arguments defining new columns
+* `args...` : keyword-like arguments defining new columns, of the form `:y = f(:x)`
 
 Inputs to `@combine` can come in two formats: a `begin ... end` block,
 in which case each line in the block is a separate
-transformation, or as a series of keyword arguments.
+transformation, or as a series of keyword-like arguments.
 For example, the following are equivalent:
 
 ```
@@ -1692,7 +1693,8 @@ Split-apply-combine in one step.
 
 * `d` : an AbstractDataFrame
 * `cols` : a column indicator (Symbol, Int, Vector{Symbol}, etc.)
-* `e` :  keyword arguments specifying new columns in terms of column groupings
+* `e` :  keyword-like arguments, of the form `:y = f(:x)` specifying
+new columns in terms of column groupings
 
 ### Returns
 
@@ -1700,7 +1702,7 @@ Split-apply-combine in one step.
 
 Transformation inputs to `@by` can come in two formats: a `begin ... end` block,
 in which case each line in the block is a separate
-transformation, or as a series of keyword arguments.
+transformation, or as a series of keyword-like arguments.
 For example, the following are equivalent:
 
 ```
