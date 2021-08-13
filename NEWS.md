@@ -1,6 +1,7 @@
 # DataFramesMeta v0.9.0 Release notes
 
-* `@passmissing` flag for skipping missing values in row-wise macros. ([#272](https://github.com/JuliaData/DataFramesMeta.jl/pull/272))
+* Add `@passmissing` flag for skipping missing values in row-wise macros. ([#272](https://github.com/JuliaData/DataFramesMeta.jl/pull/272))
+* Add row-wise transformation macros `@rtransform`, `@rselect`, `@rsubset`, and `@rorderby`. ([#267](https://github.com/JuliaData/DataFramesMeta.jl/pull/267))
 * Add`$` to escape columns rather than `cols`, which is now deprecated. ([#285](https://github.com/JuliaData/DataFramesMeta.jl/pull/285))
 * Fix a bug disallowing multiple arguments in function-like syntax for row-wise macros. ([#281](https://github.com/JuliaData/DataFramesMeta.jl/pull/281))
 * Documentation improvements ([#277](https://github.com/JuliaData/DataFramesMeta.jl/pull/277), [#279](https://github.com/JuliaData/DataFramesMeta.jl/pull/279), [#284](https://github.com/JuliaData/DataFramesMeta.jl/pull/284), [#286](https://github.com/JuliaData/DataFramesMeta.jl/pull/286))
