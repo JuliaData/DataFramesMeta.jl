@@ -345,7 +345,7 @@ Let's do that: split the `msleep` data frame by the taxonomic order, then ask fo
 end
 ```
 
-Split-apply-combine can also be used with `@transform` to add new variables to a data frame by performing operations by group. For instance, we can de-mean the total hours of sleep of an anymal relative to other animals in the same genus. 
+Split-apply-combine can also be used with `@transform` to add new variables to a data frame by performing operations by group. For instance, we can de-mean the total hours of sleep of an animal relative to other animals in the same genus. 
 
 ```@repl 1
 @chain msleep begin 
