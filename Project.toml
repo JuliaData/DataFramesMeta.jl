@@ -1,6 +1,6 @@
 name = "DataFramesMeta"
 uuid = "1313f7d8-7da2-5740-9ea0-a2ca25f37964"
-version = "0.8.0"
+version = "0.9.0"
 
 [deps]
 Chain = "8be319e6-bccf-4806-a6f7-6fae938471bc"
@@ -9,7 +9,7 @@ MacroTools = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 
 [compat]
-DataFrames = "0.22, 1"
+DataFrames = "1"
 MacroTools = "0.5"
 Reexport = "0.2, 1"
 julia = "1"
