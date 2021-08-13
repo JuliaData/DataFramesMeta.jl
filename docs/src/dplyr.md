@@ -4,7 +4,7 @@ This is a port of the HarvardX series PH525x Genomics class tutorial on dplyr. V
 
 ## What is DataFramesMeta.jl?
 
-DataFramesMeta.jl is a Julia package to transform and summarize tabular data. It uses Julia macros to create a domain-specific language for convenient syntax to work with data frames from [DataFrames.jl](https://github.com/JuliaData/DataFrames.jl). DataFramesMeta.jl mirrors concepts in DataFramesMeta.jl as closely as possible, without implementing new features on it's own. For a deeper explanation of DataFramesMeta.jl, see the [documentation](https://github.com/JuliaData/DataFramesMeta.jl). 
+DataFramesMeta.jl is a Julia package to transform and summarize tabular data. It uses Julia macros to create a domain-specific language for convenient syntax to work with data frames from [DataFrames.jl](https://github.com/JuliaData/DataFrames.jl). DataFramesMeta.jl mirrors concepts in DataFrames.jl as closely as possible, without implementing new features on it's own. For a deeper explanation of DataFramesMeta.jl, see the [documentation](https://github.com/JuliaData/DataFramesMeta.jl). 
 
 DataFramesMeta.jl is heavily inspired by R's [`dplyr`](https://cran.r-project.org/web/packages/dplyr/vignettes/dplyr.html). If you are familiar with `dplyr` this guide should get you up to speed with DataFramesMeta.jl. 
 
