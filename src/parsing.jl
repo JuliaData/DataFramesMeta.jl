@@ -36,6 +36,33 @@ function replace_syms!(e::Expr, membernames)
     end
 end
 
+is_col_lhs(x) = false
+function is_col_lhs(x::Expr)
+    if x.head == :(=)
+        xa = x.args[1]
+        return xa isa QuoteNode || is_column_expr(xa)
+    else
+        return false
+    end
+end
+
+function modifiy_column_assignments(expr)
+    membernames = Dict{Any, Symbol}()
+
+    new_expr = MacroTools.postwalk(expr) do x
+        if x isa Expr && x.head == :(=)
+            x.args[1] = replace_syms!(x.args[1], membernames)
+            x
+        else
+            x
+        end
+    end
+    props_iterator = (:(Symbol($k) => $v) for (k, v) in membernames)
+    nt_expr = Expr(:call, :^, Expr(:tuple, Expr(:parameters, props_iterator...)))
+
+    Expr(:block, new_expr, nt_expr)
+end
+
 is_simple_non_broadcast_call(x) = false
 function is_simple_non_broadcast_call(expr::Expr)
     expr.head == :call &&
@@ -266,6 +293,14 @@ function fun_to_vec(ex::Expr;
         source, fun = get_source_fun(ex, exprflags = final_flags)
         return quote
             $source => $fun
+        end
+    end
+
+    if is_macro_head(ex, "@astable")
+        dest = :(AsTable)
+        source, fun = get_source_fun(modifiy_column_assignments(ex.args[3]))
+        return quote
+            $source => $fun => $dest
         end
     end
 
