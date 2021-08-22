@@ -294,7 +294,7 @@ function fun_to_vec(ex::Expr;
         return :($src => $dest)
     end
 
-    if is_macro_head(rhs, "@byrow")
+    if is_macro_head(rhs, "@byrow") || is_macro_head(rhs, "@passmissing")
         s = "In keyword argument inputs, `@byrow` must be on the left hand side. " *
         "Did you write `y = @byrow f(:x)` instead of `@byrow y = f(:x)`?"
         throw(ArgumentError(s))
