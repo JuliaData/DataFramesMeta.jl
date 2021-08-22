@@ -179,4 +179,20 @@ y = 0
     @test df.b == [400]
 end
 
+@testset "eachrow with getproperty" begin
+    df = DataFrame(a = [(x = 1, y = 2), (x = 3, y = 4)], b = 1:2)
+
+    res = @eachrow df begin
+        :b = :a.x + :b
+    end
+
+    @test res.b == [2, 5]
+
+    res = @eachrow df begin
+        :b = $"a".x + :b
+    end
+
+    @test res.b == [2, 5]
+end
+
 end # module
