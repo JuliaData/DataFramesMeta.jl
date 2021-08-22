@@ -8,6 +8,16 @@ end
 onearg(e::Expr, f) = e.head == :call && length(e.args) == 2 && e.args[1] == f
 onearg(e, f) = false
 
+"""
+    get_column_expr(x)
+
+If the input is a valid column identifier, i.e.
+a `QuoteNode` or an expression beginning with
+`$DOLLAR`, returns the underlying identifier.
+
+If input is not a valid column identifier,
+returns nothing.
+"""
 get_column_expr(x) = nothing
 function get_column_expr(e::Expr)
     e.head == :$ && return e.args[1]
@@ -50,7 +60,7 @@ function is_simple_non_broadcast_call(expr::Expr)
     expr.head == :call &&
         length(expr.args) >= 2 &&
         expr.args[1] isa Symbol &&
-        all(x -> x isa QuoteNode || onearg(x, :cols) || is_column_expr(x), expr.args[2:end])
+        all(a -> get_column_expr(a) !== nothing, expr.args[2:end])
 end
 
 is_simple_broadcast_call(x) = false
@@ -193,10 +203,8 @@ function get_source_fun(function_expr; exprflags = deepcopy(DEFAULT_FLAGS))
         membernames = Dict{Any, Symbol}()
 
         body = replace_syms!(function_expr, membernames)
-
         source = :(DataFramesMeta.make_source_concrete($(Expr(:vect, keys(membernames)...))))
         inputargs = Expr(:tuple, values(membernames)...)
-
         fun = quote
             $inputargs -> begin
                 $body
@@ -247,7 +255,7 @@ function fun_to_vec(ex::Expr;
     check_macro_flags_consistency(final_flags)
 
     if gensym_names
-        ex = Expr(:kw, gensym(), ex)
+        ex = Expr(:kw, QuoteNode(gensym()), ex)
     end
 
     # :x
@@ -287,7 +295,6 @@ function fun_to_vec(ex::Expr;
     end
 
     rhs = MacroTools.unblock(ex.args[2])
-
     rhs_col = get_column_expr(rhs)
     if rhs_col !== nothing
         src = rhs_col

@@ -4,35 +4,41 @@
 ##
 ##############################################################################
 
+
 # Recursive function that traverses the syntax tree of e, replaces instances of
 # ":(:(x))" with ":x[row]".
-function eachrow_replace(e::Expr)
-    # Traverse the syntax tree of e
-    if onearg(e, :cols)
-        @warn "cols(x) is deprecated, use \$x instead"
-        # cols(:x) becomes cols(:x)[row]
-        return Expr(:ref, Expr(:call, :cols, e.args[2]), :row)
-    elseif is_column_expr(e)
-        return Expr(:ref, Expr(:$, e.args[1]), :row)
-    end
-
-    if e.head == :.
-        if e.args[1] isa QuoteNode
-            e.args[1] = Expr(:ref, e.args[1], :row)
-            return e
-        else
-            return e
-        end
-    end
-
-    Expr(e.head, (isempty(e.args) ? e.args : map(eachrow_replace, e.args))...)
-end
-
+eachrow_replace(x) = x
 eachrow_replace(e::QuoteNode) = Expr(:ref, e, :row)
 
-# Set the base case for helper, i.e. for when expand hits an object of type
-# other than Expr (generally a Symbol or a literal).
-eachrow_replace(x) = x
+function eachrow_replace(e::Expr)
+    if onearg(e, :^)
+        return e.args[2]
+    end
+
+    # Traverse the syntax tree of e
+    col = get_column_expr(e)
+    if col !== nothing
+        return :($e[row])
+    # equivalent to protect_replace_syms
+    elseif e.head == :.
+        x_new = eachrow_replace(e.args[1])
+        y = e.args[2]
+        y_new = y isa Expr ? eachrow_replace(y) : y
+
+        return Expr(:., x_new, y_new)
+    else
+        mapexpr(eachrow_replace, e)
+    end
+end
+
+protect_eachrow_replace(e) = e
+protect_eachrow_replace(e::Expr) = eachrow_replace(e)
+
+function eachrow_replace_dotted(e, membernames)
+    x_new = eachrow_repalce(e.args[1])
+    y_new = protect_eachrow_repalce(e.args[2])
+    Expr(:., x_new, y_new)
+end
 
 function eachrow_find_newcols(e::Expr, newcol_decl)
     if e.head == :macrocall && e.args[1] == Symbol("@newcol")
