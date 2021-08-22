@@ -275,10 +275,14 @@ function fun_to_vec(ex::Expr;
     lhs = let t = ex.args[1]
         if t isa Symbol
             t = QuoteNode(t)
+            msg = "Using an un-quoted Symbol on the LHS is deprecated. " *
+                  "Write $t = ... instead."
+
+            @warn msg
         end
 
         s = get_column_expr(t)
-        if t === nothing
+        if s === nothing
             throw(ArgumentError("Malformed expression oh LHS in DataFramesMeta.jl macro"))
         end
 
@@ -295,7 +299,8 @@ function fun_to_vec(ex::Expr;
     end
 
     if is_macro_head(rhs, "@byrow") || is_macro_head(rhs, "@passmissing")
-        s = "In keyword argument inputs, `@byrow` must be on the left hand side. " *
+        s = "In keyword argument inputs, `@byrow` and `@passmissing`" *
+        "must be on the left hand side. " *
         "Did you write `y = @byrow f(:x)` instead of `@byrow y = f(:x)`?"
         throw(ArgumentError(s))
     end
