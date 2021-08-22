@@ -16,9 +16,6 @@ function get_column_expr(e::Expr)
 end
 get_column_expr(x::QuoteNode) = x
 
-is_column_expr(x) = false
-is_column_expr(e::Expr) = e.head == :$
-
 mapexpr(f, e) = Expr(e.head, map(f, e.args)...)
 
 replace_syms!(x, membernames) = x
