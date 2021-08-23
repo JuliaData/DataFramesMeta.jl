@@ -26,12 +26,12 @@ function get_column_expr(e::Expr)
 end
 get_column_expr(x::QuoteNode) = x
 
-mapexpr(f, e) = Expr(e.head, map(f, e.args)...)
+mapexpr(f, e) = Expr(e.head, Base.Generator(f, e.args)...)
 
-replace_syms!(x, membernames) = x
-replace_syms!(q::QuoteNode, membernames) = addkey!(membernames, q)
+replace_syms!(membernames, x) = x
+replace_syms!(membernames, q::QuoteNode) = addkey!(membernames, q)
 
-function replace_syms!(e::Expr, membernames)
+function replace_syms!(membernames, e::Expr)
     if onearg(e, :^)
         return e.args[2]
     end
@@ -40,18 +40,18 @@ function replace_syms!(e::Expr, membernames)
     if col !== nothing
         return addkey!(membernames, col)
     elseif e.head == :.
-        return replace_dotted!(e, membernames)
+        return replace_dotted!(membernames, e)
     else
-        return mapexpr(x -> replace_syms!(x, membernames), e)
+        return mapexpr(x -> replace_syms!(membernames, x), e)
     end
 end
 
-protect_replace_syms!(e, membernames) = e
-protect_replace_syms!(e::Expr, membernames) = replace_syms!(e, membernames)
+protect_replace_syms!(membernames, e) = e
+protect_replace_syms!(membernames, e::Expr) = replace_syms!(membernames, e)
 
-function replace_dotted!(e, membernames)
-    x_new = replace_syms!(e.args[1], membernames)
-    y_new = protect_replace_syms!(e.args[2], membernames)
+function replace_dotted!(membernames, e)
+    x_new = replace_syms!(membernames, e.args[1])
+    y_new = protect_replace_syms!(membernames, e.args[2])
     Expr(:., x_new, y_new)
 end
 
@@ -202,7 +202,7 @@ function get_source_fun(function_expr; exprflags = deepcopy(DEFAULT_FLAGS))
     else
         membernames = Dict{Any, Symbol}()
 
-        body = replace_syms!(function_expr, membernames)
+        body = replace_syms!(membernames, function_expr)
         source = :(DataFramesMeta.make_source_concrete($(Expr(:vect, keys(membernames)...))))
         inputargs = Expr(:tuple, values(membernames)...)
         fun = quote
