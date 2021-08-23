@@ -74,7 +74,7 @@ function is_simple_broadcast_call(expr::Expr)
 end
 
 function args_to_selectors(v)
-    t = map(v) do arg
+    t = Base.Generator(v) do arg
         col = get_column_expr(arg)
         col === nothing && throw(ArgumentError("This path should not be reached, arg: $(arg)"))
         col
