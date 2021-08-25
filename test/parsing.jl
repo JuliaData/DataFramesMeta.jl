@@ -6,11 +6,9 @@ using Statistics
 
 const ≅ = isequal
 
-import DataFramesMeta: get_column_expr
-
 @testset "Returning columnn identifiers" begin
     macro protect(x)
-        esc(get_column_expr(x))
+        esc(DataFramesMeta.get_column_expr(x))
     end
 
     v_sym = @protect $[:a, :b]
@@ -38,6 +36,9 @@ import DataFramesMeta: get_column_expr
 
     b = @protect $(Between(:a, :b))
     @test b == Between(:a, :b)
+
+    c = @protect cols(:a)
+    @test c == :a
 
     i = @protect $1
     @test i == 1

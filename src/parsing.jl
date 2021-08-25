@@ -21,7 +21,10 @@ returns nothing.
 get_column_expr(x) = nothing
 function get_column_expr(e::Expr)
     e.head == :$ && return e.args[1]
-    onearg(e, :cols) && return e.args[2]
+    if onearg(e, :cols)
+        @warn "cols is deprecated use $DOLLAR to escape column names instead"
+        return e.args[2]
+    end
     return nothing
 end
 get_column_expr(x::QuoteNode) = x
