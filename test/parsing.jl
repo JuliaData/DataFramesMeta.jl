@@ -6,10 +6,11 @@ using Statistics
 
 const ≅ = isequal
 
+macro protect(x)
+    esc(DataFramesMeta.get_column_expr(x))
+end
+
 @testset "Returning columnn identifiers" begin
-    macro protect(x)
-        esc(DataFramesMeta.get_column_expr(x))
-    end
 
     v_sym = @protect $[:a, :b]
     @test v_sym == [:a, :b]
@@ -24,7 +25,7 @@ const ≅ = isequal
     @test qn_protect == :x
 
     str_protect = @protect $"x"
-    @test qn_protect == "x"
+    @test str_protect == "x"
 
     x = "a"
     sym_protect = @protect $x
