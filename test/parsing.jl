@@ -38,6 +38,9 @@ end
     b = @protect $(Between(:a, :b))
     @test b == Between(:a, :b)
 
+    b = @protect $(begin 1 end)
+    @test b == 1
+
     c = @protect cols(:a)
     @test c == :a
 
