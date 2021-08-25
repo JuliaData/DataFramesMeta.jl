@@ -22,7 +22,7 @@ get_column_expr(x) = nothing
 function get_column_expr(e::Expr)
     e.head == :$ && return e.args[1]
     if onearg(e, :cols)
-        @warn "cols is deprecated use $DOLLAR to escape column names instead"
+        Base.depwarn("cols is deprecated use $DOLLAR to escape column names instead", :cols)
         return e.args[2]
     end
     return nothing
