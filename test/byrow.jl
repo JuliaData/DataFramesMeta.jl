@@ -445,10 +445,12 @@ end
 @testset "@subset! with @byrow" begin
     df = DataFrame(A = [1, 2, 3, missing], B = [2, 1, 2, 1])
 
-    d = @subset! copy(df) begin
+    df2 = copy(df)
+    d = @subset! df2 begin
         @byrow :A > 1
         @byrow :B > 1
     end
+    @test d === df2
     @test d ≅ @subset(df, :A .> 1, :B .> 1)
 
     d = @subset! copy(df) @byrow begin
@@ -461,10 +463,12 @@ end
 @testset "@rsubset!" begin
     df = DataFrame(A = [1, 2, 3, missing], B = [2, 1, 2, 1])
 
-    d = @rsubset! copy(df) begin
+    df2 = copy(df)
+    d = @rsubset! df2 begin
         :A > 1
         :B > 1
     end
+    @test d === df2
     @test d ≅ @subset(df, :A .> 1, :B .> 1)
 
     d = @rsubset! copy(df) begin
