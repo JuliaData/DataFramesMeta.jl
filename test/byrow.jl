@@ -167,6 +167,7 @@ end
         :n1 = :i
         :n2 = :i * :g
     end
+    @test d === df
     @test d ≅ @transform!(copy(df), :n1 = :i, :n2 = :i .* :g)
     @test d ≅ @transform!(copy(df), @byrow(:n1 = :i), @byrow(:n2 = :i * :g))
 
@@ -174,6 +175,7 @@ end
         cols(:n1) = :i
         :n2 = cols(:i) * :g
     end
+    @test d === df
     @test d ≅ @transform!(copy(df), :n1 = :i, :n2 = :i .* :g)
     d = @rtransform! df begin
         :n1 = cols(:i)
@@ -356,6 +358,7 @@ end
         :n1 = :i
         :n2 = :i * :g
     end
+    @test d === df
     @test d ≅ @select!(copy(df), :n1 = :i, :n2 = :i .* :g)
     @test d ≅ @select!(copy(df), @byrow(:n1 = :i), @byrow(:n2 = :i * :g))
 
@@ -363,6 +366,7 @@ end
         cols(:n1) = :i
         :n2 = cols(:i) * :g
     end
+    @test d === df
     @test d ≅ @select!(copy(df), :n1 = :i, :n2 = :i .* :g)
     d = @rselect! copy(df) begin
         :n1 = cols(:i)
