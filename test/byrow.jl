@@ -163,19 +163,21 @@ end
     @test @rtransform!(copy(df), :n = :g == 1 && :t == "a") ≅ @transform!(copy(df), :n = map((g, t) -> g == 1 && t == "a", :g, :t))
     @test @rtransform!(copy(df), :n = first(:g)) ≅ @transform!(copy(df), :n = first.(:g))
 
-    d = @rtransform! df begin
+    df2 = copy(df)
+    d = @rtransform! df2 begin
         :n1 = :i
         :n2 = :i * :g
     end
-    @test d === df
+    @test d === df2
     @test d ≅ @transform!(copy(df), :n1 = :i, :n2 = :i .* :g)
     @test d ≅ @transform!(copy(df), @byrow(:n1 = :i), @byrow(:n2 = :i * :g))
 
-    d = @rtransform! df begin
+    df2 = copy(df)
+    d = @rtransform! df2 begin
         cols(:n1) = :i
         :n2 = cols(:i) * :g
     end
-    @test d === df
+    @test d === df2
     @test d ≅ @transform!(copy(df), :n1 = :i, :n2 = :i .* :g)
     d = @rtransform! df begin
         :n1 = cols(:i)
@@ -354,19 +356,21 @@ end
     @test @rselect!(copy(df), :n = :g == 1 && :t == "a") ≅ @select!(copy(df), :n = map((g, t) -> g == 1 && t == "a", :g, :t))
     @test @rselect!(copy(df), :n = first(:g)) ≅ @select!(copy(df), :n = first.(:g))
 
-    d = @rselect! copy(df) begin
+    df2 = copy(df)
+    d = @rselect! df2 begin
         :n1 = :i
         :n2 = :i * :g
     end
-    @test d === df
+    @test d === df2
     @test d ≅ @select!(copy(df), :n1 = :i, :n2 = :i .* :g)
     @test d ≅ @select!(copy(df), @byrow(:n1 = :i), @byrow(:n2 = :i * :g))
 
-    d = @rselect! copy(df) begin
+    df2 = copy(df)
+    d = @rselect! df2 begin
         cols(:n1) = :i
         :n2 = cols(:i) * :g
     end
-    @test d === df
+    @test d === df2
     @test d ≅ @select!(copy(df), :n1 = :i, :n2 = :i .* :g)
     d = @rselect! copy(df) begin
         :n1 = cols(:i)
