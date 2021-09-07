@@ -641,4 +641,18 @@ end
     # no `@orderby!` for some reason.
 end
 
+@testset "row operations modify" begin
+    df = DataFrame(a = 1, b = 2)
+    cols = ["a", "b"]
+    for c in cols
+        @rtransform! df $c = $c + 100
+    end
+
+    @test df == DataFrame(a = 101, b = 102)
+
+    df = DataFrame(a = 1, b = 2)
+    @rselect! df :x = :a
+    @test names(df) == ["x"]
+end
+
 end
