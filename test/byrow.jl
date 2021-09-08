@@ -163,17 +163,21 @@ end
     @test @rtransform!(copy(df), :n = :g == 1 && :t == "a") ≅ @transform!(copy(df), :n = map((g, t) -> g == 1 && t == "a", :g, :t))
     @test @rtransform!(copy(df), :n = first(:g)) ≅ @transform!(copy(df), :n = first.(:g))
 
-    d = @rtransform! df begin
+    df2 = copy(df)
+    d = @rtransform! df2 begin
         :n1 = :i
         :n2 = :i * :g
     end
+    @test d === df2
     @test d ≅ @transform!(copy(df), :n1 = :i, :n2 = :i .* :g)
     @test d ≅ @transform!(copy(df), @byrow(:n1 = :i), @byrow(:n2 = :i * :g))
 
-    d = @rtransform! df begin
+    df2 = copy(df)
+    d = @rtransform! df2 begin
         cols(:n1) = :i
         :n2 = cols(:i) * :g
     end
+    @test d === df2
     @test d ≅ @transform!(copy(df), :n1 = :i, :n2 = :i .* :g)
     d = @rtransform! df begin
         :n1 = cols(:i)
@@ -352,17 +356,21 @@ end
     @test @rselect!(copy(df), :n = :g == 1 && :t == "a") ≅ @select!(copy(df), :n = map((g, t) -> g == 1 && t == "a", :g, :t))
     @test @rselect!(copy(df), :n = first(:g)) ≅ @select!(copy(df), :n = first.(:g))
 
-    d = @rselect! copy(df) begin
+    df2 = copy(df)
+    d = @rselect! df2 begin
         :n1 = :i
         :n2 = :i * :g
     end
+    @test d === df2
     @test d ≅ @select!(copy(df), :n1 = :i, :n2 = :i .* :g)
     @test d ≅ @select!(copy(df), @byrow(:n1 = :i), @byrow(:n2 = :i * :g))
 
-    d = @rselect! copy(df) begin
+    df2 = copy(df)
+    d = @rselect! df2 begin
         cols(:n1) = :i
         :n2 = cols(:i) * :g
     end
+    @test d === df2
     @test d ≅ @select!(copy(df), :n1 = :i, :n2 = :i .* :g)
     d = @rselect! copy(df) begin
         :n1 = cols(:i)
@@ -437,10 +445,12 @@ end
 @testset "@subset! with @byrow" begin
     df = DataFrame(A = [1, 2, 3, missing], B = [2, 1, 2, 1])
 
-    d = @subset! copy(df) begin
+    df2 = copy(df)
+    d = @subset! df2 begin
         @byrow :A > 1
         @byrow :B > 1
     end
+    @test d === df2
     @test d ≅ @subset(df, :A .> 1, :B .> 1)
 
     d = @subset! copy(df) @byrow begin
@@ -453,10 +463,12 @@ end
 @testset "@rsubset!" begin
     df = DataFrame(A = [1, 2, 3, missing], B = [2, 1, 2, 1])
 
-    d = @rsubset! copy(df) begin
+    df2 = copy(df)
+    d = @rsubset! df2 begin
         :A > 1
         :B > 1
     end
+    @test d === df2
     @test d ≅ @subset(df, :A .> 1, :B .> 1)
 
     d = @rsubset! copy(df) begin
@@ -631,6 +643,20 @@ end
     @test d == DataFrame(a = [3, 2, 1], b = [6, 5, 4])
 
     # no `@orderby!` for some reason.
+end
+
+@testset "row operations modify" begin
+    df = DataFrame(a = 1, b = 2)
+    cols = ["a", "b"]
+    for c in cols
+        @rtransform! df $c = $c + 100
+    end
+
+    @test df == DataFrame(a = 101, b = 102)
+
+    df = DataFrame(a = 1, b = 2)
+    @rselect! df :x = :a
+    @test names(df) == ["x"]
 end
 
 end

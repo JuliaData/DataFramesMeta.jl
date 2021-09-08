@@ -1272,7 +1272,7 @@ end
 Row-wise version of `@transform!`, i.e. all operations use `@byrow` by
 default. See [`@transform!`](@ref) for details."""
 macro rtransform!(x, args...)
-    esc(rtransform_helper(x, args...))
+    esc(rtransform!_helper(x, args...))
 end
 
 ##############################################################################
@@ -1521,7 +1521,7 @@ function rselect!_helper(x, args...)
 
     t = (fun_to_vec(ex; gensym_names=false, outer_flags=outer_flags) for ex in exprs)
     quote
-        $DataFrames.select($x, $(t...))
+        $DataFrames.select!($x, $(t...))
     end
 end
 
@@ -1532,7 +1532,7 @@ Row-wise version of `@select!`, i.e. all operations use `@byrow` by
 default. See [`@select!`](@ref) for details.
 """
 macro rselect!(x, args...)
-    esc(rselect_helper(x, args...))
+    esc(rselect!_helper(x, args...))
 end
 
 ##############################################################################
