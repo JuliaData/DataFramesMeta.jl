@@ -1,3 +1,7 @@
+# DataFramesMeta v0.9.1 Release notes
+
+* Fix a bug with `@rtransform!` and `@rselect!`, where the macros were not actually mutating the data frame. ([#294](https://github.com/JuliaData/DataFramesMeta.jl/pull/294))
+
 # DataFramesMeta v0.9.0 Release notes
 
 * Add `@passmissing` flag for skipping missing values in row-wise macros. ([#272](https://github.com/JuliaData/DataFramesMeta.jl/pull/272))
