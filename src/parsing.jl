@@ -16,7 +16,7 @@ a `QuoteNode` or an expression beginning with
 `$DOLLAR`, returns the underlying identifier.
 
 If input is not a valid column identifier,
-returns nothing.
+returns `nothing`.
 """
 get_column_expr(x) = nothing
 function get_column_expr(e::Expr)
@@ -307,8 +307,8 @@ function fun_to_vec(ex::Expr;
 
     if is_macro_head(rhs, "@byrow") || is_macro_head(rhs, "@passmissing")
         s = "In keyword argument inputs, `@byrow` and `@passmissing`" *
-        "must be on the left hand side. " *
-        "Did you write `y = @byrow f(:x)` instead of `@byrow y = f(:x)`?"
+            "must be on the left hand side. " *
+            "Did you write `y = @byrow f(:x)` instead of `@byrow y = f(:x)`?"
         throw(ArgumentError(s))
     end
 
