@@ -1548,7 +1548,7 @@ function combine_helper(x, args...; deprecation_warning = false)
 
     fe = first(exprs)
     if length(exprs) == 1 &&
-        !(fe isa QuoteNode || onearg(fe, :cols) || is_column_expr(fe)) &&
+        get_column_expr(fe) === nothing &&
         !(fe.head == :(=) || fe.head == :kw)
 
         @warn "Returning a Table object from @by and @combine now requires `$(DOLLAR)AsTable` on the LHS."
@@ -1668,7 +1668,7 @@ function by_helper(x, what, args...)
     exprs, outer_flags = create_args_vector(args...)
     fe = first(exprs)
     if length(exprs) == 1 &&
-        !(fe isa QuoteNode || onearg(fe, :cols) || is_column_expr(fe)) &&
+        get_column_expr(fe) === nothing &&
         !(fe.head == :(=) || fe.head == :kw)
 
         @warn "Returning a Table object from @by and @combine now requires `\$AsTable` on the LHS."

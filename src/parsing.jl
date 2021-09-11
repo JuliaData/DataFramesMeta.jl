@@ -8,32 +8,54 @@ end
 onearg(e::Expr, f) = e.head == :call && length(e.args) == 2 && e.args[1] == f
 onearg(e, f) = false
 
-is_column_expr(x) = false
-is_column_expr(e::Expr) = e.head == :$
+"""
+    get_column_expr(x)
 
-mapexpr(f, e) = Expr(e.head, map(f, e.args)...)
+If the input is a valid column identifier, i.e.
+a `QuoteNode` or an expression beginning with
+`$DOLLAR`, returns the underlying identifier.
 
-replace_syms!(x, membernames) = x
-replace_syms!(q::QuoteNode, membernames) =
-    replace_syms!(Meta.quot(q.value), membernames)
-function replace_syms!(e::Expr, membernames)
-    if onearg(e, :^)
-        e.args[2]
-    elseif onearg(e, :_I_)
-        @warn "_I_() for escaping variables is deprecated, use cols() instead"
-        addkey!(membernames, :($(e.args[2])))
-    elseif onearg(e, :cols)
-        @warn "cols(x) for escaping variables is deprecated, use \$x instead"
-        addkey!(membernames, :($(e.args[2])))
-    elseif is_column_expr(e)
-        addkey!(membernames, :($(e.args[1])))
-    elseif e.head == :quote
-        addkey!(membernames, Meta.quot(e.args[1]) )
-    elseif e.head == :.
-        replace_dotted!(e, membernames)
-    else
-        mapexpr(x -> replace_syms!(x, membernames), e)
+If input is not a valid column identifier,
+returns `nothing`.
+"""
+get_column_expr(x) = nothing
+function get_column_expr(e::Expr)
+    e.head == :$ && return e.args[1]
+    if onearg(e, :cols)
+        Base.depwarn("cols is deprecated use $DOLLAR to escape column names instead", :cols)
+        return e.args[2]
     end
+    return nothing
+end
+get_column_expr(x::QuoteNode) = x
+
+mapexpr(f, e) = Expr(e.head, Base.Generator(f, e.args)...)
+
+replace_syms!(membernames, x) = x
+replace_syms!(membernames, q::QuoteNode) = addkey!(membernames, q)
+
+function replace_syms!(membernames, e::Expr)
+    if onearg(e, :^)
+        return e.args[2]
+    end
+
+    col = get_column_expr(e)
+    if col !== nothing
+        return addkey!(membernames, col)
+    elseif e.head == :.
+        return replace_dotted!(membernames, e)
+    else
+        return mapexpr(x -> replace_syms!(membernames, x), e)
+    end
+end
+
+protect_replace_syms!(membernames, e) = e
+protect_replace_syms!(membernames, e::Expr) = replace_syms!(membernames, e)
+
+function replace_dotted!(membernames, e)
+    x_new = replace_syms!(membernames, e.args[1])
+    y_new = protect_replace_syms!(membernames, e.args[2])
+    Expr(:., x_new, y_new)
 end
 
 is_simple_non_broadcast_call(x) = false
@@ -41,7 +63,7 @@ function is_simple_non_broadcast_call(expr::Expr)
     expr.head == :call &&
         length(expr.args) >= 2 &&
         expr.args[1] isa Symbol &&
-        all(x -> x isa QuoteNode || onearg(x, :cols) || is_column_expr(x), expr.args[2:end])
+        all(a -> get_column_expr(a) !== nothing, expr.args[2:end])
 end
 
 is_simple_broadcast_call(x) = false
@@ -51,21 +73,14 @@ function is_simple_broadcast_call(expr::Expr)
         expr.args[1] isa Symbol &&
         expr.args[2] isa Expr &&
         expr.args[2].head == :tuple &&
-        all(x -> x isa QuoteNode || onearg(x, :cols) || is_column_expr(x), expr.args[2].args)
+        all(a -> get_column_expr(a) !== nothing, expr.args[2].args)
 end
 
 function args_to_selectors(v)
-    t = map(v) do arg
-        if arg isa QuoteNode
-            arg
-        elseif onearg(arg, :cols)
-            @warn "cols(x) is deprecated, use \$x instead"
-            arg.args[2]
-        elseif is_column_expr(arg)
-            arg.args[1]
-        else
-            throw(ArgumentError("This path should not be reached, arg: $(arg)"))
-        end
+    t = Base.Generator(v) do arg
+        col = get_column_expr(arg)
+        col === nothing && throw(ArgumentError("This path should not be reached, arg: $(arg)"))
+        col
     end
 
     :(DataFramesMeta.make_source_concrete($(Expr(:vect, t...))))
@@ -190,11 +205,9 @@ function get_source_fun(function_expr; exprflags = deepcopy(DEFAULT_FLAGS))
     else
         membernames = Dict{Any, Symbol}()
 
-        body = replace_syms!(function_expr, membernames)
-
+        body = replace_syms!(membernames, function_expr)
         source = :(DataFramesMeta.make_source_concrete($(Expr(:vect, keys(membernames)...))))
         inputargs = Expr(:tuple, values(membernames)...)
-
         fun = quote
             $inputargs -> begin
                 $body
@@ -245,121 +258,65 @@ function fun_to_vec(ex::Expr;
     check_macro_flags_consistency(final_flags)
 
     if gensym_names
-        ex = Expr(:kw, gensym(), ex)
+        ex = Expr(:kw, QuoteNode(gensym()), ex)
     end
 
     # :x
     # handled below via dispatch on ::QuoteNode
 
-    # Fix any references to `cols` and replace them
-    # with $
-    if onearg(ex, :cols)
-        ex = Expr(:$, ex.args[2])
-    end
-
-    # $:x
-    if is_column_expr(ex)
-        return ex.args[1]
+    ex_col = get_column_expr(ex)
+    if ex_col !== nothing
+        return ex_col
     end
 
     if no_dest
-        source, fun = get_source_fun(ex, exprflags = final_flags)
+        src, fun = get_source_fun(ex, exprflags = final_flags)
         return quote
-            $source => $fun
+            $src => $fun
         end
     end
 
-    @assert ex.head == :kw || ex.head == :(=)
-    lhs = ex.args[1]
+    if !(ex.head == :kw || ex.head == :(=))
+        throw(ArgumentError("Malformed expression in DataFramesMeta.jl macro"))
+    end
 
-    # fix cols
-    if onearg(lhs, :cols)
-        lhs = Expr(:$, lhs.args[2])
+    lhs = let t = ex.args[1]
+        if t isa Symbol
+            t = QuoteNode(t)
+            msg = "Using an un-quoted Symbol on the LHS is deprecated. " *
+                  "Write $t = ... instead."
+
+            @warn msg
+        end
+
+        s = get_column_expr(t)
+        if s === nothing
+            throw(ArgumentError("Malformed expression oh LHS in DataFramesMeta.jl macro"))
+        end
+
+        s
     end
 
     rhs = MacroTools.unblock(ex.args[2])
-
-    if onearg(rhs, :cols)
-        @warn "cols(x) is deprecated, use \$x instead"
-        rhs = Expr(:$, rhs.args[2])
+    rhs_col = get_column_expr(rhs)
+    if rhs_col !== nothing
+        src = rhs_col
+        dest = lhs
+        return :($src => $dest)
     end
 
-    if is_macro_head(rhs, "@byrow")
-        s = "In keyword argument inputs, `@byrow` must be on the left hand side. " *
-        "Did you write `y = @byrow f(:x)` instead of `@byrow y = f(:x)`?"
+    if is_macro_head(rhs, "@byrow") || is_macro_head(rhs, "@passmissing")
+        s = "In keyword argument inputs, `@byrow` and `@passmissing`" *
+            "must be on the left hand side. " *
+            "Did you write `y = @byrow f(:x)` instead of `@byrow y = f(:x)`?"
         throw(ArgumentError(s))
     end
 
-    # y = ...
-    if lhs isa Symbol
-        msg = "Using an un-quoted Symbol on the LHS is deprecated. " *
-              "Write $(QuoteNode(lhs)) = ... instead."
-        Base.depwarn(msg, "")
-        lhs = QuoteNode(lhs)
-    end
-
-    # :y = :x
-    if lhs isa QuoteNode && rhs isa QuoteNode
-        source = rhs
-        dest = lhs
-
-        return quote
-            $source => $dest
-        end
-    end
-
-    # :y = $:x
-    if lhs isa QuoteNode && is_column_expr(rhs)
-        source = rhs.args[1]
-        dest = lhs
-
-        return quote
-            $source => $dest
-        end
-    end
-
-    # $:y = :x
-    if is_column_expr(lhs) && rhs isa QuoteNode
-        source = rhs
-        dest = lhs.args[1]
-
-        return quote
-            $source => $dest
-        end
-    end
-
-    # $:y = $:x
-    if is_column_expr(lhs) && is_column_expr(rhs)
-        source = rhs.args[1]
-        dest = lhs.args[1]
-        return quote
-            $source => $dest
-        end
-    end
-
-    # :y = f(:x)
-    # :y = f($:x)
-    # :y = :x + 1
-    # :y = $:x + 1
-    source, fun = get_source_fun(rhs; exprflags = final_flags)
-    if lhs isa QuoteNode
-        dest = lhs
-        return quote
-            $source => $fun => $dest
-        end
-    end
-
-    # $:y = f(:x)
-    if is_column_expr(lhs)
-        dest = lhs.args[1]
-
-        return quote
-            $source => $fun => $dest
-        end
-    end
-
-    throw(ArgumentError("This path should not be reached"))
+    dest = lhs
+    src, fun = get_source_fun(rhs; exprflags = final_flags)
+    return :($src => $fun => $dest)
 end
+
 fun_to_vec(ex::QuoteNode;
            no_dest::Bool=false,
            gensym_names::Bool=false,
@@ -374,21 +331,6 @@ function make_source_concrete(x::AbstractVector)
         throw(ArgumentError("Column references must be either all the same " *
                             "type or a a combination of `Symbol`s and strings"))
     end
-end
-
-protect_replace_syms!(e, membernames) = e
-function protect_replace_syms!(e::Expr, membernames)
-    if e.head == :quote
-        e
-    else
-        replace_syms!(e, membernames)
-    end
-end
-
-function replace_dotted!(e, membernames)
-    x_new = replace_syms!(e.args[1], membernames)
-    y_new = protect_replace_syms!(e.args[2], membernames)
-    Expr(:., x_new, y_new)
 end
 
 function create_args_vector(args...; wrap_byrow::Bool=false)
