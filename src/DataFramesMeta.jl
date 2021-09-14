@@ -22,6 +22,7 @@ export @with,
 const DOLLAR = raw"$"
 
 include("parsing.jl")
+include("parsing_astable.jl")
 include("macros.jl")
 include("linqmacro.jl")
 include("eachrow.jl")
