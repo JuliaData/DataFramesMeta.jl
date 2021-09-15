@@ -91,7 +91,8 @@ is_macro_head(ex::Expr, name) = ex.head == :macrocall && ex.args[1] == Symbol(na
 
 const BYROW_SYM = Symbol("@byrow")
 const PASSMISSING_SYM = Symbol("@passmissing")
-const DEFAULT_FLAGS = (;BYROW_SYM => Ref(false), PASSMISSING_SYM => Ref(false))
+const ASTABLE_SYM = Symbol("@astable")
+const DEFAULT_FLAGS = (;BYROW_SYM => Ref(false), PASSMISSING_SYM => Ref(false), ASTABLE_SYM => Ref(false))
 
 extract_macro_flags(ex, exprflags = deepcopy(DEFAULT_FLAGS)) = (ex, exprflags)
 function extract_macro_flags(ex::Expr, exprflags = deepcopy(DEFAULT_FLAGS))
@@ -269,7 +270,13 @@ function fun_to_vec(ex::Expr;
         return ex_col
     end
 
-    if no_dest
+    if final_flags[ASTABLE_SYM][]
+        src, fun = get_source_fun_astable(ex; exprflags = final_flags)
+
+        return :($src => $fun => AsTable)
+    end
+
+    if no_dest # subet and with
         src, fun = get_source_fun(ex, exprflags = final_flags)
         return quote
             $src => $fun
@@ -359,7 +366,7 @@ function create_args_vector(arg; wrap_byrow::Bool=false)
         outer_flags[BYROW_SYM][] = true
     end
 
-    if arg isa Expr && arg.head == :block
+    if arg isa Expr && arg.head == :block && !outer_flags[ASTABLE_SYM][]
         x = MacroTools.rmlines(arg).args
     else
         x = Any[arg]

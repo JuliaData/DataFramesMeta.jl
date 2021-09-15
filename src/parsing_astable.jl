@@ -28,7 +28,7 @@ function replace_syms_astable!(inputs_to_function, lhs_assignments, e::Expr)
 end
 
 protect_replace_syms_astable!(inputs_to_function, lhs_assignments, e) = e
-protect_replace_syms_astable!(inputs_to_function, lhs_assignments, e) =
+protect_replace_syms_astable!(inputs_to_function, lhs_assignments, e::Expr) =
     replace_syms!(inputs_to_function, lhs_assignments, e)
 
 function replace_dotted_astable!(inputs_to_function, lhs_assignments, e)
@@ -42,20 +42,25 @@ function is_column_assigment(ex::Expr)
     ex.head == :(=) && (get_column_expr(ex.args[1]) !== nothing)
 end
 
-function collect_top_level_column_assignments(ex)
+# Taken from MacroTools.jl
+# No docstring so assumed untable
+block(ex) = isexpr(ex, :block) ? ex : :($ex;)
+
+function get_source_fun_astable(ex; exprflags = deepcopy(DEFAULT_FLAGS))
     inputs_to_function = Dict{Any, Symbol}()
     lhs_assignments = Dict{Any, Symbol}()
 
-    ex = MacroTools.flatten(ex)
+    # Make sure all top-level assignments are
+    # in the args vector
+    ex = block(MacroTools.flatten(ex))
     exprs = map(ex.args) do arg
-        @show arg
-        @show is_column_assigment(arg)
         if is_column_assigment(arg)
-            lhs = arg.args[1]
+            lhs = get_column_expr(arg.args[1])
             rhs = arg.args[2]
             new_ex = replace_syms_astable!(inputs_to_function, lhs_assignments, arg.args[2])
             if haskey(inputs_to_function, lhs)
                 new_lhs = inputs_to_function[lhs]
+                lhs_assignments[lhs] = new_lhs
             else
                 new_lhs = addkey!(lhs_assignments, lhs)
             end
@@ -65,6 +70,26 @@ function collect_top_level_column_assignments(ex)
             replace_syms_astable!(inputs_to_function, lhs_assignments, arg)
         end
     end
-    cols_to_add = collect(keys(inputs_to_function))
-    new_ex = Expr(:block, exprs...)
+    source = :(DataFramesMeta.make_source_concrete($(Expr(:vect, keys(inputs_to_function)...))))
+
+    inputargs = Expr(:tuple, values(inputs_to_function)...)
+    nt_iterator = (:(Symbol($k) => $v) for (k, v) in lhs_assignments)
+    nt_expr = Expr(:tuple, Expr(:parameters, nt_iterator...))
+    body = Expr(:block, Expr(:block, exprs...), nt_expr)
+
+    fun = quote
+        $inputargs -> begin
+            $body
+        end
+    end
+
+    # TODO: Add passmissing support by
+    # checking if any input arguments missing,
+    # and if-so, making a named tuple with
+    # missing values
+    if exprflags[BYROW_SYM][]
+        fun = :(ByRow($fun))
+    end
+
+    return source, fun
 end
