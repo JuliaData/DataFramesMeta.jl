@@ -42,7 +42,6 @@ const ≅ = isequal
     @test @based_on(gd, n = first(Symbol.(:y, ^(:body)))).n == [:vbody, :ybody]
     @test @based_on(gd, body = :i).body == df.i
     @test @based_on(gd, transform = :i).transform == df.i
-    @test @based_on(gd, (n1 = [first(:i)], n2 = [first(:y)])).n1 == [1, 4]
 
     @test @based_on(gd, n = mean(cols(iq))).n == [2.0, 4.5]
     @test @based_on(gd, n = mean(cols(iq)) + mean(cols(gq))).n == [3.0, 6.5]
@@ -51,7 +50,6 @@ const ≅ = isequal
     @test @based_on(gd, n = first(Symbol.(cols(yq), ^(:body)))).n == [:vbody, :ybody]
     @test @based_on(gd, body = cols(iq)).body == df.i
     @test @based_on(gd, transform = cols(iq)).transform == df.i
-    @test @based_on(gd, (n1 = [first(cols(iq))], n2 = [first(cols(yq))])).n1 == [1, 4]
 
     @test @based_on(gd, n = mean(cols(ir))).n == [2.0, 4.5]
     @test @based_on(gd, n = mean(cols(ir)) + mean(cols(gr))).n == [3.0, 6.5]
@@ -60,7 +58,6 @@ const ≅ = isequal
     @test @based_on(gd, n = first(Symbol.(cols(yr), ^(:body)))).n == [:vbody, :ybody]
     @test @based_on(gd, body = cols(ir)).body == df.i
     @test @based_on(gd, transform = cols(ir)).transform == df.i
-    @test @based_on(gd, (n1 = [first(cols(ir))], n2 = [first(cols(yr))])).n1 == [1, 4]
     @test @based_on(gd, n = mean(cols("i")) + 0 * first(cols(:g))).n == [2.0, 4.5]
     @test @based_on(gd, n = mean(cols(2)) + first(cols(1))).n == [3.0, 6.5]
 
