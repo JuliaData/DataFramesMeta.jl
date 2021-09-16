@@ -385,7 +385,7 @@ function f(a)
     (; x = x_t, z = z_t)
 end
 
-transform(df, [:a] => f => AsTable)
+transform(df, [:a] => ByRow(f) => AsTable)
 ```
 
 `@astable` is useful when performing intermediate calculations
