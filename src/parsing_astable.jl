@@ -48,7 +48,7 @@ block(ex) = isexpr(ex, :block) ? ex : :($ex;)
 
 function get_source_fun_astable(ex; exprflags = deepcopy(DEFAULT_FLAGS))
     inputs_to_function = Dict{Any, Symbol}()
-    lhs_assignments = Dict{Any, Symbol}()
+    lhs_assignments = OrderedCollections.OrderedDict{Any, Symbol}()
 
     # Make sure all top-level assignments are
     # in the args vector

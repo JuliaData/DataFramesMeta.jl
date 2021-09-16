@@ -4,6 +4,8 @@ using Reexport
 
 using MacroTools
 
+using OrderedCollections: OrderedCollections
+
 @reexport using DataFrames
 
 @reexport using Chain
