@@ -350,6 +350,99 @@ macro passmissing(args...)
     throw(ArgumentError("@passmissing only works inside DataFramesMeta macros."))
 end
 
+"""
+    astable(args...)
+
+Return a `NamedTuple` from a transformation inside DataFramesMeta.jl macros.
+
+`@astable` acts on a single block. It works through all top-level expressions
+and collects all such expressions of the form `:y = x`, i.e. assignments to a
+`Symbol`, which is a syntax error outside of the macro. At the end of the
+expression, all assignments are collected into a `NamedTuple` to be used
+with the `AsTable` destination in the DataFrames.jl transformation
+mini-language.
+
+Concretely, the expressions
+
+```
+df = DataFrame(a = 1)
+
+@rtransform df @astable begin
+    :x = 1
+    y = 50
+    :z = :x + y + :a
+end
+```
+
+becomes the pair
+
+```
+function f(a)
+    x_t = 1
+    y = 50
+    z_t = x_t + y + a
+
+    (; x = x_t, z = z_t)
+end
+
+transform(df, [:a] => f => AsTable)
+```
+
+`@astable` is useful when performing intermediate calculations
+yet store their results in new columns. For example, the following fails.
+
+```
+@rtransform df begin
+    :new_col_1 = :x + :y
+    :new_col_2 = :new_col_1 + :z
+end
+```
+
+This because DataFrames.jl does not guarantee sequential evaluation of
+transformations. `@astable` solves this problem
+
+@rtransform df @astable begin
+    :new_col_1 = :x + :y
+    :new_col_2 = :new_col_1 + :z
+end
+
+### Examples
+
+```
+julia> df = DataFrame(a = [1, 2, 3], b = [4, 5, 6]);
+
+julia> d = @rtransform df @astable begin
+           :x = 1
+           y = 5
+           :z = :x + y
+       end
+3×4 DataFrame
+ Row │ a      b      x      z
+     │ Int64  Int64  Int64  Int64
+─────┼────────────────────────────
+   1 │     1      4      1      6
+   2 │     2      5      1      6
+   3 │     3      6      1      6
+
+julia> df = DataFrame(a = [1, 1, 2, 2], b = [5, 6, 70, 80]);
+
+julia> @by df :a @astable begin
+           $(DOLLAR)"Mean of b" = mean(:b)
+           $(DOLLAR)"Standard deviation of b" = std(:b)
+       end
+2×3 DataFrame
+ Row │ a      Mean of b  Standard deviation of b
+     │ Int64  Float64    Float64
+─────┼───────────────────────────────────────────
+   1 │     1        5.5                 0.707107
+   2 │     2       75.0                 7.07107
+```
+
+"""
+macro astable(args...)
+    throw(ArgumentError("@astable only works inside DataFramesMeta macros."))
+end
+
 ##############################################################################
 ##
 ## @with
@@ -1546,17 +1639,6 @@ function combine_helper(x, args...; deprecation_warning = false)
 
     exprs, outer_flags = create_args_vector(args...)
 
-    fe = first(exprs)
-    if length(exprs) == 1 &&
-        get_column_expr(fe) === nothing &&
-        !(fe.head == :(=) || fe.head == :kw)
-
-        @warn "Returning a Table object from @by and @combine now requires `$(DOLLAR)AsTable` on the LHS."
-
-        lhs = Expr(:$, :AsTable)
-        exprs = ((:($lhs = $fe)),)
-    end
-
     t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
 
     quote
@@ -1666,16 +1748,6 @@ end
 function by_helper(x, what, args...)
     # Only allow one argument when returning a Table object
     exprs, outer_flags = create_args_vector(args...)
-    fe = first(exprs)
-    if length(exprs) == 1 &&
-        get_column_expr(fe) === nothing &&
-        !(fe.head == :(=) || fe.head == :kw)
-
-        @warn "Returning a Table object from @by and @combine now requires `\$AsTable` on the LHS."
-
-        lhs = Expr(:$, :AsTable)
-        exprs = ((:($lhs = $fe)),)
-    end
 
     t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
 
