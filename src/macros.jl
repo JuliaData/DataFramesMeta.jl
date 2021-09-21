@@ -356,7 +356,7 @@ end
 Return a `NamedTuple` from a transformation inside DataFramesMeta.jl macros.
 
 `@astable` acts on a single block. It works through all top-level expressions
-and collects all such expressions of the form `:y = x`, i.e. assignments to a
+and collects all such expressions of the form `:y = ...`, i.e. assignments to a
 `Symbol`, which is a syntax error outside of the macro. At the end of the
 expression, all assignments are collected into a `NamedTuple` to be used
 with the `AsTable` destination in the DataFrames.jl transformation
@@ -374,7 +374,7 @@ df = DataFrame(a = 1)
 end
 ```
 
-becomes the pair
+become the pair
 
 ```
 function f(a)

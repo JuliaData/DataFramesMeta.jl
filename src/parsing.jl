@@ -276,7 +276,7 @@ function fun_to_vec(ex::Expr;
         return :($src => $fun => AsTable)
     end
 
-    if no_dest # subet and with
+    if no_dest # subset and with
         src, fun = get_source_fun(ex, exprflags = final_flags)
         return quote
             $src => $fun
