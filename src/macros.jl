@@ -357,7 +357,7 @@ Return a `NamedTuple` from a single transformation inside DataFramesMeta.jl macr
 
 `@astable` acts on a single block. It works through all top-level expressions
 and collects all such expressions of the form `:y = ...`, i.e. assignments to a
-`Symbol`, which is a syntax error outside of the macro. At the end of the
+`Symbol`, which is a syntax error outside of DataFramesMeta.jl macros. At the end of the
 expression, all assignments are collected into a `NamedTuple` to be used
 with the `AsTable` destination in the DataFrames.jl transformation
 mini-language.
