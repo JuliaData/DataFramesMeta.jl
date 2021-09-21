@@ -353,7 +353,7 @@ end
 """
     astable(args...)
 
-Return a `NamedTuple` from a transformation inside DataFramesMeta.jl macros.
+Return a `NamedTuple` from a single transformation inside DataFramesMeta.jl macros.
 
 `@astable` acts on a single block. It works through all top-level expressions
 and collects all such expressions of the form `:y = ...`, i.e. assignments to a
@@ -388,8 +388,24 @@ end
 transform(df, [:a] => ByRow(f) => AsTable)
 ```
 
-`@astable` is useful when performing intermediate calculations
-yet store their results in new columns. For example, the following fails.
+`@astable` has two major advantages at the cost of increasing complexity.
+First, `@astable` makes it easy to create multiple columns from a single
+transformation, which share a scope. For example, `@astable` allows
+for the following
+
+```
+@transform df @astable begin
+    m = mean(:x)
+    :x_demeaned = :x .- m
+    :x2_demeaned = :x2 .- m
+end
+```
+
+The creation of `:x_demeaned` and `:x2_demeaned` both share the variable `m`,
+which does not need to be calculated twice.
+
+Second, `@astable` is useful when performing intermediate calculations
+and storing their results in new columns. For example, the following fails.
 
 ```
 @rtransform df begin

@@ -2,10 +2,8 @@ function conditionally_add_symbols!(inputs_to_function::AbstractDict,
                                     lhs_assignments::OrderedCollections.OrderedDict, col)
     # if it's already been assigned at top-level,
     # don't add it to the inputs
-    if haskey(lhs_assignments, col)
-        return lhs_assignments[col]
-    else
-        return addkey!(inputs_to_function, col)
+    return get!(lhs_assignments, col) do
+        gensym()
     end
 end
 
@@ -69,7 +67,8 @@ function get_source_fun_astable(ex; exprflags = deepcopy(DEFAULT_FLAGS))
                 new_lhs = inputs_to_function[lhs]
                 lhs_assignments[lhs] = new_lhs
             else
-                new_lhs = addkey!(lhs_assignments, lhs)
+                new_lhs = gensym()
+                lhs_assignments[lhs] = new_lhs
             end
 
             Expr(:(=), new_lhs, new_ex)
