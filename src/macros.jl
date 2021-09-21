@@ -422,6 +422,10 @@ transformations. `@astable` solves this problem
     :new_col_2 = :new_col_1 + :z
 end
 
+Column assignment in `@astable` follows the same rules as
+column assignment more generally. Construct a new column
+from a string by escaping it with `$DOLLAR`.
+
 ### Examples
 
 ```
