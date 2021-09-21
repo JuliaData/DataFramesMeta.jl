@@ -1,4 +1,5 @@
-function conditionally_add_symbols!(inputs_to_function, lhs_assignments, col)
+function conditionally_add_symbols!(inputs_to_function::AbstractDict,
+                                    lhs_assignments::OrderedCollections.OrderedDict, col)
     # if it's already been assigned at top-level,
     # don't add it to the inputs
     if haskey(lhs_assignments, col)
@@ -8,11 +9,14 @@ function conditionally_add_symbols!(inputs_to_function, lhs_assignments, col)
     end
 end
 
-replace_syms_astable!(inputs_to_function, lhs_assignments, x) = x
-replace_syms_astable!(inputs_to_function, lhs_assignments, q::QuoteNode) =
+replace_syms_astable!(inputs_to_function::AbstractDict,
+                      lhs_assignments::OrderedCollections.OrderedDict, x) = x
+replace_syms_astable!(inputs_to_function::AbstractDict,
+                      lhs_assignments::OrderedCollections.OrderedDict, q::QuoteNode) =
     conditionally_add_symbols!(inputs_to_function, lhs_assignments, q)
 
-function replace_syms_astable!(inputs_to_function, lhs_assignments, e::Expr)
+function replace_syms_astable!(inputs_to_function::AbstractDict,
+                               lhs_assignments::OrderedCollections.OrderedDict, e::Expr)
     if onearg(e, :^)
         return e.args[2]
     end
@@ -27,11 +31,14 @@ function replace_syms_astable!(inputs_to_function, lhs_assignments, e::Expr)
     end
 end
 
-protect_replace_syms_astable!(inputs_to_function, lhs_assignments, e) = e
-protect_replace_syms_astable!(inputs_to_function, lhs_assignments, e::Expr) =
+protect_replace_syms_astable!(inputs_to_function::AbstractDict,
+                              lhs_assignments::OrderedCollections.OrderedDict, e) = e
+protect_replace_syms_astable!(inputs_to_function::AbstractDict,
+                              lhs_assignments::OrderedCollections.OrderedDict, e::Expr) =
     replace_syms!(inputs_to_function, lhs_assignments, e)
 
-function replace_dotted_astable!(inputs_to_function, lhs_assignments, e)
+function replace_dotted_astable!(inputs_to_function::AbstractDict,
+                                 lhs_assignments::OrderedCollections.OrderedDict, e)
     x_new = replace_syms_astable!(inputs_to_function, lhs_assignments, e.args[1])
     y_new = protect_replace_syms_astable!(inputs_to_function, lhs_assignments, e.args[2])
     Expr(:., x_new, y_new)
@@ -43,7 +50,7 @@ function is_column_assigment(ex::Expr)
 end
 
 # Taken from MacroTools.jl
-# No docstring so assumed untable
+# No docstring so assumed unstable
 block(ex) = isexpr(ex, :block) ? ex : :($ex;)
 
 function get_source_fun_astable(ex; exprflags = deepcopy(DEFAULT_FLAGS))

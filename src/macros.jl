@@ -427,15 +427,16 @@ julia> d = @rtransform df @astable begin
 julia> df = DataFrame(a = [1, 1, 2, 2], b = [5, 6, 70, 80]);
 
 julia> @by df :a @astable begin
-           $(DOLLAR)"Mean of b" = mean(:b)
-           $(DOLLAR)"Standard deviation of b" = std(:b)
+            ex = extrema(:b)
+            :min_b = first(ex)
+            :max_b = last(ex)
        end
 2×3 DataFrame
- Row │ a      Mean of b  Standard deviation of b
-     │ Int64  Float64    Float64
-─────┼───────────────────────────────────────────
-   1 │     1        5.5                 0.707107
-   2 │     2       75.0                 7.07107
+ Row │ a      min_b  max_b
+     │ Int64  Int64  Int64
+─────┼─────────────────────
+   1 │     1      5      6
+   2 │     2     70     80
 ```
 
 """
