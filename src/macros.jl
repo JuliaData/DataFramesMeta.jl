@@ -351,7 +351,7 @@ macro passmissing(args...)
 end
 
 """
-    astable(args...)
+    @astable(args...)
 
 Return a `NamedTuple` from a single transformation inside DataFramesMeta.jl macros.
 
@@ -391,7 +391,7 @@ transform(df, [:a] => ByRow(f) => AsTable)
 `@astable` has two major advantages at the cost of increasing complexity.
 First, `@astable` makes it easy to create multiple columns from a single
 transformation, which share a scope. For example, `@astable` allows
-for the following
+for the following (where `:x` and `:x_2` exist in the `DataFrame` already).
 
 ```
 @transform df @astable begin
@@ -457,6 +457,20 @@ julia> @by df :a @astable begin
 ─────┼─────────────────────
    1 │     1      5      6
    2 │     2     70     80
+
+julia> @rtransform df @astable begin
+           f_a = first(:a)
+           $(DOLLAR)new_col = :a + :b + f_a
+           :y = :a * :b
+       end
+4×4 DataFrame
+ Row │ a      b      New Column  y
+     │ Int64  Int64  Int64       Int64
+─────┼─────────────────────────────────
+   1 │     1      5           7      5
+   2 │     1      6           8      6
+   3 │     2     70          74    140
+   4 │     2     80          84    160
 ```
 
 """

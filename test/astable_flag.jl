@@ -121,4 +121,11 @@ end
 end
 
 
+
+@testset "bad assignments" begin
+    @eval df = DataFrame(y = 1)
+    @test_throws ArgumentError @eval @transform df @astable cols(1) = :y
+    @test_throws ArgumentError @eval @transform df @astable cols(AsTable) = :y
+end
+
 end # module
