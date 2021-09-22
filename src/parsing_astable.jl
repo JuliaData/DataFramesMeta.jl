@@ -53,6 +53,12 @@ end
 # No docstring so assumed unstable
 block(ex) = isexpr(ex, :block) ? ex : :($ex;)
 
+sym_or_str_to_sym(x::Union{AbstractString, Symbol}) = Symbol(x)
+function sym_or_str_to_sym(x)
+    e = "New columns created inside @astable must be Symbols or AbstractStrings"
+    throw(ArgumentError(e))
+end
+
 function get_source_fun_astable(ex; exprflags = deepcopy(DEFAULT_FLAGS))
     inputs_to_function = Dict{Any, Symbol}()
     lhs_assignments = OrderedCollections.OrderedDict{Any, Symbol}()
@@ -80,7 +86,7 @@ function get_source_fun_astable(ex; exprflags = deepcopy(DEFAULT_FLAGS))
     source = :(DataFramesMeta.make_source_concrete($(Expr(:vect, keys(inputs_to_function)...))))
 
     inputargs = Expr(:tuple, values(inputs_to_function)...)
-    nt_iterator = (:(Symbol($k) => $v) for (k, v) in lhs_assignments)
+    nt_iterator = (:(DataFramesMeta.sym_or_str_to_sym($k) => $v) for (k, v) in lhs_assignments)
     nt_expr = Expr(:tuple, Expr(:parameters, nt_iterator...))
     body = Expr(:block, Expr(:block, exprs...), nt_expr)
 

@@ -404,7 +404,8 @@ new variables in the same operation, yet have them share
 information. 
 
 In a single block, all assignments of the form `:y = f(:x)` 
-or `$y = f(:x)` at the top-level are generate new columns.
+or `$y = f(:x)` at the top-level generate new columns. In the 2nd example, `y`
+must be a string, `Symbol`. 
 
 ```
 julia> df = DataFrame(a = [1, 2, 3], b = [400, 500, 600]);
