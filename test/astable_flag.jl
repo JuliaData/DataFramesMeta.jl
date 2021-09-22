@@ -120,6 +120,44 @@ end
     @test d == DataFrame(x = 1, z = 6)
 end
 
+@testset "grouping astable flag" begin
+    df = DataFrame(a = [1, 1, 2, 2], b = [5, 6, 7, 8])
+
+    gd = groupby(df, :a)
+
+    d = @combine gd @astable begin
+        ex = extrema(:b)
+        :b_min = ex[1]
+        :b_max = ex[2]
+    end
+
+    @test sort(d.b_min) == [5, 7]
+
+    d = @combine gd @astable begin
+        ex = extrema(:b)
+        $"b_min" = ex[1]
+        $"b_max" = ex[2]
+    end
+
+    @test sort(d.b_min) == [5, 7]
+
+    d = @by df :a @astable begin
+        ex = extrema(:b)
+        :b_min = ex[1]
+        :b_max = ex[2]
+    end
+
+    @test sort(d.b_min) == [5, 7]
+
+    d = @by df :a @astable begin
+        ex = extrema(:b)
+        $"b_min" = ex[1]
+        $"b_max" = ex[2]
+    end
+
+    @test sort(d.b_min) == [5, 7]
+end
+
 
 
 @testset "bad assignments" begin

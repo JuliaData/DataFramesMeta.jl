@@ -284,7 +284,7 @@ end
 
 
 """
-    passmissing(args...)
+    @passmissing(args...)
 
 Propograte missing values inside DataFramesMeta.jl macros.
 
@@ -353,7 +353,8 @@ end
 """
     @astable(args...)
 
-Return a `NamedTuple` from a single transformation inside DataFramesMeta.jl macros.
+Return a `NamedTuple` from a single transformation inside the DataFramesMeta.jl
+macros, `@select`, `@transform`, and their mutating and row-wise equivalents.
 
 `@astable` acts on a single block. It works through all top-level expressions
 and collects all such expressions of the form `:y = ...`, i.e. assignments to a
@@ -424,7 +425,10 @@ end
 
 Column assignment in `@astable` follows the same rules as
 column assignment more generally. Construct a new column
-from a string by escaping it with `$DOLLAR`.
+from a string by escaping it with `$DOLLAR`, which can be a
+`Symbol` or an `AbstractString`. References to existing
+columns may be a `Symbol`, `AbstractString`, or an
+integer.
 
 ### Examples
 
