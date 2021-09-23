@@ -131,7 +131,9 @@ end
         :b_max = ex[2]
     end
 
-    @test sort(d.b_min) == [5, 7]
+    res_sorted = DataFrame(a = [1, 2], b_min = [5, 7], b_max = [6, 8])
+
+    @test sort(d, :b_min) == res_sorted
 
     d = @combine gd @astable begin
         ex = extrema(:b)
@@ -139,7 +141,7 @@ end
         $"b_max" = ex[2]
     end
 
-    @test sort(d.b_min) == [5, 7]
+    @test sort(d, :b_min) == res_sorted
 
     d = @by df :a @astable begin
         ex = extrema(:b)
@@ -147,7 +149,7 @@ end
         :b_max = ex[2]
     end
 
-    @test sort(d.b_min) == [5, 7]
+    @test sort(d, :b_min) == res_sorted
 
     d = @by df :a @astable begin
         ex = extrema(:b)
@@ -155,7 +157,7 @@ end
         $"b_max" = ex[2]
     end
 
-    @test sort(d.b_min) == [5, 7]
+    @test sort(d, :b_min) == res_sorted
 end
 
 @testset "errors with passmissing" begin
