@@ -109,7 +109,6 @@ function extract_macro_flags(ex::Expr, exprflags = deepcopy(DEFAULT_FLAGS))
             return (ex, exprflags)
         end
     end
-
     return (ex, exprflags)
 end
 
