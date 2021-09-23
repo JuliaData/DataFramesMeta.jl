@@ -282,11 +282,10 @@ macro byrow(args...)
     throw(ArgumentError("@byrow is deprecated outside of DataFramesMeta macros."))
 end
 
-
 """
     @passmissing(args...)
 
-Propograte missing values inside DataFramesMeta.jl macros.
+Propagrate missing values inside DataFramesMeta.jl macros.
 
 
 `@passmissing` is not a "real" Julia macro but rather serves as a "flag"
@@ -357,7 +356,7 @@ Return a `NamedTuple` from a single transformation inside the DataFramesMeta.jl
 macros, `@select`, `@transform`, and their mutating and row-wise equivalents.
 
 `@astable` acts on a single block. It works through all top-level expressions
-and collects all such expressions of the form `:y = ...` or `$y = ...`, i.e. assignments to a
+and collects all such expressions of the form `:y = ...` or `$(DOLLAR)y = ...`, i.e. assignments to a
 `Symbol` or an escaped column identifier, which is a syntax error outside of
 DataFramesMeta.jl macros. At the end of the expression, all assignments are collected
 into a `NamedTuple` to be used with the `AsTable` destination in the DataFrames.jl
@@ -427,7 +426,7 @@ Column assignment in `@astable` follows similar rules as
 column assignment in other DataFramesMeta.jl macros. The left-
 -hand-side of a column assignment can be either a `Symbol` or any
 expression which evaluates to a `Symbol` or `AbstractString`. For example
-`:y = ...`, and `$y = ...` are both valid ways of assigning a new column.
+`:y = ...`, and `$(DOLLAR)y = ...` are both valid ways of assigning a new column.
 However unlike other DataFramesMeta.jl macros, multi-column assignments via
 `AsTable` are disallowed. The following will fail.
 

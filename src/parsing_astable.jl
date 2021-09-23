@@ -88,6 +88,7 @@ function get_source_fun_astable(ex; exprflags = deepcopy(DEFAULT_FLAGS))
     inputargs = Expr(:tuple, values(inputs_to_function)...)
     nt_iterator = (:(DataFramesMeta.sym_or_str_to_sym($k) => $v) for (k, v) in lhs_assignments)
     nt_expr = Expr(:tuple, Expr(:parameters, nt_iterator...))
+
     body = Expr(:block, Expr(:block, exprs...), nt_expr)
 
     fun = quote
