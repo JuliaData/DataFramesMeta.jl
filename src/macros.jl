@@ -349,6 +349,12 @@ macro passmissing(args...)
     throw(ArgumentError("@passmissing only works inside DataFramesMeta macros."))
 end
 
+global astable_docstring_snippet = """
+    Transformations can also use the macro-flag `@astable` for creating multiple
+    new columns at once and letting transformations share the same name-space.
+    See `? @astable` for more details.
+    """
+
 """
     @astable(args...)
 
@@ -1240,6 +1246,8 @@ transformations by row, `@transform` allows `@byrow` at the
 beginning of a block of transformations (i.e. `@byrow begin... end`).
 All transformations in the block will operate by row.
 
+$astable_docstring_snippet
+
 ### Examples
 
 ```jldoctest
@@ -1376,6 +1384,8 @@ transform!ations by row, `@transform!` allows `@byrow` at the
 beginning of a block of transform!ations (i.e. `@byrow begin... end`).
 All transform!ations in the block will operate by row.
 
+$astable_docstring_snippet
+
 ### Examples
 
 ```jldoctest
@@ -1487,6 +1497,8 @@ To avoid writing `@byrow` multiple times when performing multiple
 transformations by row, `@select` allows `@byrow` at the
 beginning of a block of selectations (i.e. `@byrow begin... end`).
 All transformations in the block will operate by row.
+
+$astable_docstring_snippet
 
 ### Examples
 
@@ -1608,6 +1620,8 @@ transformations by row, `@select!` allows `@byrow` at the
 beginning of a block of select!ations (i.e. `@byrow begin... end`).
 All transformations in the block will operate by row.
 
+$astable_docstring_snippet
+
 ### Examples
 
 ```jldoctest
@@ -1724,6 +1738,8 @@ and
 @combine(df, :mx = mean(:x), :sx = std(:x))
 ```
 
+$astable_docstring_snippet
+
 ### Examples
 
 ```julia
@@ -1839,6 +1855,8 @@ and
 ```
 @by(df, :g, mx = mean(:x), sx = std(:x))
 ```
+
+$astable_docstring_snippet
 
 ### Examples
 
