@@ -11,7 +11,6 @@ const ≅ = isequal
 
     d = @rtransform df @astable begin
         :x = 1
-
         nothing
     end
 
@@ -40,10 +39,6 @@ const ≅ = isequal
     end
 
     @test d == DataFrame(x = 5)
-end
-
-@testset "@astable with just assignments, mutating" begin
-    # After finalizing above testset
 end
 
 @testset "@astable with strings" begin
@@ -118,6 +113,49 @@ end
     end
 
     @test d == DataFrame(x = 1, z = 6)
+end
+
+@testset "@astable with mutation" begin
+    df = DataFrame(a = 1, b = 2)
+
+    df2 = copy(df)
+    d = @rtransform! df2 @astable begin
+        :x = 1
+        nothing
+    end
+
+    @test d == DataFrame(a = 1, b = 2, x = 1)
+    @test d === df2
+
+    df2 = copy(df)
+    d = @rselect! df2 @astable begin
+        :x = 1
+        y = 100
+        nothing
+    end
+
+    @test d == DataFrame(x = 1)
+    @test d === df2
+
+    df2 = copy(df)
+    d = @transform! df2 @astable begin
+        :x = [5]
+        y = 100
+        nothing
+    end
+
+    @test d == DataFrame(a = 1, b = 2, x = 5)
+    @test d === df2
+
+    df2 = copy(df)
+    d = @select! df2 @astable begin
+        :x = [5]
+        y = 100
+        nothing
+    end
+
+    @test d == DataFrame(x = 5)
+    @test d === df2
 end
 
 @testset "grouping astable flag" begin
