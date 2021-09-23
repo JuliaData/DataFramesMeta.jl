@@ -357,11 +357,11 @@ Return a `NamedTuple` from a single transformation inside the DataFramesMeta.jl
 macros, `@select`, `@transform`, and their mutating and row-wise equivalents.
 
 `@astable` acts on a single block. It works through all top-level expressions
-and collects all such expressions of the form `:y = ...`, i.e. assignments to a
-`Symbol`, which is a syntax error outside of DataFramesMeta.jl macros. At the end of the
-expression, all assignments are collected into a `NamedTuple` to be used
-with the `AsTable` destination in the DataFrames.jl transformation
-mini-language.
+and collects all such expressions of the form `:y = ...` or `$y = ...`, i.e. assignments to a
+`Symbol` or an escaped column identifier, which is a syntax error outside of
+DataFramesMeta.jl macros. At the end of the expression, all assignments are collected
+into a `NamedTuple` to be used with the `AsTable` destination in the DataFrames.jl
+transformation mini-language.
 
 Concretely, the expressions
 
@@ -423,12 +423,22 @@ transformations. `@astable` solves this problem
     :new_col_2 = :new_col_1 + :z
 end
 
-Column assignment in `@astable` follows the same rules as
-column assignment more generally. Construct a new column
-from a string by escaping it with `$DOLLAR`, which can be a
-`Symbol` or an `AbstractString`. References to existing
-columns may be a `Symbol`, `AbstractString`, or an
-integer.
+Column assignment in `@astable` follows similar rules as
+column assignment in other DataFramesMeta.jl macros. The left-
+-hand-side of a column assignment can be either a `Symbol` or any
+expression which evaluates to a `Symbol` or `AbstractString`. For example
+`:y = ...`, and `$y = ...` are both valid ways of assigning a new column.
+However unlike other DataFramesMeta.jl macros, multi-column assignments via
+`AsTable` are disallowed. The following will fail.
+
+```
+@transform df @astable begin
+    $AsTable = :x
+end
+```
+
+References to existing columns also follow the same
+rules as other DataFramesMeta.jl macros.
 
 ### Examples
 
@@ -461,6 +471,8 @@ julia> @by df :a @astable begin
 ─────┼─────────────────────
    1 │     1      5      6
    2 │     2     70     80
+
+julia> new_col = "New Column";
 
 julia> @rtransform df @astable begin
            f_a = first(:a)
