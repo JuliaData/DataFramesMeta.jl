@@ -127,6 +127,9 @@ function check_macro_flags_consistency(exprflags)
         if !exprflags[BYROW_SYM][]
             s = "The `@passmissing` flag is currently only allowed with the `@byrow` flag"
             throw(ArgumentError(s))
+        elseif exprflags[ASTABLE_SYM][]
+            s = "The `@passmissing` flag is currently not allowed with the `@astable` flag"
+            throw(ArgumentError(s))
         end
     end
 end
