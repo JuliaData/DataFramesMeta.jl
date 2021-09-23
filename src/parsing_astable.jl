@@ -54,10 +54,8 @@ end
 block(ex) = isexpr(ex, :block) ? ex : :($ex;)
 
 sym_or_str_to_sym(x::Union{AbstractString, Symbol}) = Symbol(x)
-function sym_or_str_to_sym(x)
-    e = "New columns created inside @astable must be Symbols or AbstractStrings"
-    throw(ArgumentError(e))
-end
+sym_or_str_to_sym(x) =
+    throw(ArgumentError("New columns created inside @astable must be Symbols or AbstractStrings"))
 
 function get_source_fun_astable(ex; exprflags = deepcopy(DEFAULT_FLAGS))
     inputs_to_function = Dict{Any, Symbol}()
