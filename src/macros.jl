@@ -392,7 +392,7 @@ transform(df, [:a] => ByRow(f) => AsTable)
 `@astable` has two major advantages at the cost of increasing complexity.
 First, `@astable` makes it easy to create multiple columns from a single
 transformation, which share a scope. For example, `@astable` allows
-for the following (where `:x` and `:x_2` exist in the `DataFrame` already).
+for the following (where `:x` and `:x_2` exist in the data frame already).
 
 ```
 @transform df @astable begin
