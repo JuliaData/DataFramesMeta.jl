@@ -22,6 +22,7 @@ In addition, DataFramesMeta provides
   convenient syntax. 
 * `@byrow` for applying functions to each row of a data frame (only supported inside other macros).
 * `@passmissing` for propagating missing values inside row-wise DataFramesMeta.jl transformations.
+* `@astable` to create multiple columns within a single transformation.
 * `@chain`, from [Chain.jl](https://github.com/jkrumbiegel/Chain.jl) for piping the above macros together, similar to [magrittr](https://cran.r-project.org/web/packages/magrittr/vignettes/magrittr.html)'s
   `%>%` in R. 
 
@@ -396,11 +397,38 @@ julia> @rtransform df @passmissing x = parse(Int, :x_str)
    3 │ missing  missing
 ```
 
+## Creating multiple columns at once with `@astable`
+
+Often new variables may depend on the same intermediate calculations. `@astable` makes it easy to create multiple
+new variables in the same operation, yet have them share
+information. 
+
+In a single block, all assignments of the form `:y = f(:x)` 
+or `$y = f(:x)` at the top-level generate new columns. In the second example, `y`
+must be a string or `Symbol`. 
+
+```
+julia> df = DataFrame(a = [1, 2, 3], b = [400, 500, 600]);
+
+julia> @transform df @astable begin 
+           ex = extrema(:b)
+           :b_first = :b .- first(ex)
+           :b_last = :b .- last(ex)
+       end
+3×4 DataFrame
+ Row │ a      b      b_first  b_last 
+     │ Int64  Int64  Int64    Int64  
+─────┼───────────────────────────────
+   1 │     1    400        0    -200
+   2 │     2    500      100    -100
+   3 │     3    600      200       0
+```
+
+
 ## [Working with column names programmatically with `$`](@id dollar)
 
 DataFramesMeta provides the special syntax `$` for referring to 
-columns in a data frame via a `Symbol`, string, or column position as either
-a literal or a variable. 
+columns in a data frame via a `Symbol`, string, or column position as either a literal or a variable. 
 
 ```julia
 df = DataFrame(A = 1:3, B = [2, 1, 2])

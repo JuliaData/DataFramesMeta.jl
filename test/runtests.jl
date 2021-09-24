@@ -12,6 +12,7 @@ my_tests = ["dataframes.jl",
             "deprecated.jl",
             "byrow.jl",
             "astable.jl",
+            "astable_flag.jl",
             "passmissing.jl"]
 
 println("Running tests:")

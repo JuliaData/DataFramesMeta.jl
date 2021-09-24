@@ -154,9 +154,9 @@ using DataFramesMeta
 
             gd = groupby(df, :a)
 
-            @test @combine(gd, testnt(:b)) == DataFrame(a = [1], c =  [2])
+            @test @combine(gd, cols(AsTable) = testnt(:b)) == DataFrame(a = [1], c =  [2])
 
-            fasttime = @timed @combine(gd, testnt(:b))
+            fasttime = @timed @combine(gd, cols(AsTable) = testnt(:b))
             slowtime = @timed combine(gd, :b => (b -> testnt(b)) => AsTable)
             (slowtime[2] > fasttime[2]) || @warn("Slow compilation")
 

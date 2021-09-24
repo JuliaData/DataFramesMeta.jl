@@ -49,7 +49,6 @@ g = groupby(d, :x, sort=true)
     @test @combine(gd, :n = first(Symbol.(:y, ^(:body)))).n == [:vbody, :ybody]
     @test @combine(gd, :body =  :i).body == df.i
     @test @combine(gd, :transform = :i).transform == df.i
-    @test @combine(gd, (n1 = [first(:i)], n2 = [first(:y)])).n1 == [1, 4]
 
     @test @combine(gd, :n = mean($iq)).n == [2.0, 4.5]
     @test @combine(gd, :n = mean($iq) + mean($gq)).n == [3.0, 6.5]
@@ -59,7 +58,6 @@ g = groupby(d, :x, sort=true)
     @test @combine(gd, $:n = mean($:i)).n == [2.0, 4.5]
     @test @combine(gd, :body =  $iq).body == df.i
     @test @combine(gd, :transform = $iq).transform == df.i
-    @test @combine(gd, (n1 = [first($iq)], n2 = [first($yq)])).n1 == [1, 4]
 
     @test @combine(gd, :n = mean($ir)).n == [2.0, 4.5]
     @test @combine(gd, :n = mean($ir) + mean($gr)).n == [3.0, 6.5]
@@ -68,7 +66,6 @@ g = groupby(d, :x, sort=true)
     @test @combine(gd, :n = first(Symbol.($yr, ^(:body)))).n == [:vbody, :ybody]
     @test @combine(gd, :body =  $ir).body == df.i
     @test @combine(gd, :transform = $ir).transform == df.i
-    @test @combine(gd, (n1 = [first($ir)], n2 = [first($yr)])).n1 == [1, 4]
     @test @combine(gd, :n = mean($"i") + 0 * first($:g)).n == [2.0, 4.5]
     @test @combine(gd, :n = mean($2) + first($1)).n == [3.0, 6.5]
 
@@ -192,7 +189,6 @@ end
     @test @by(df, :g, :n = first(Symbol.(:y, ^(:body)))).n == [:vbody, :ybody]
     @test @by(df, :g, :body =  :i).body == df.i
     @test @by(df, :g, :transform = :i).transform == df.i
-    @test @by(df, :g, (n1 = [first(:i)], n2 = [first(:y)])).n1 == [1, 4]
 
     @test @by(df, :g, :n = mean($iq)).n == [2.0, 4.5]
     @test @by(df, :g, :n = mean($iq) + mean($gq)).n == [3.0, 6.5]
@@ -202,7 +198,6 @@ end
     @test @by(df, :g, $:n = mean($:i)).n == [2.0, 4.5]
     @test @by(df, :g, :body =  $iq).body == df.i
     @test @by(df, :g, :transform = $iq).transform == df.i
-    @test @by(df, :g, (n1 = [first($iq)], n2 = [first($yq)])).n1 == [1, 4]
 
     @test @by(df, "g", :n = mean($ir)).n == [2.0, 4.5]
     @test @by(df, "g", :n = mean($ir) + mean($gr)).n == [3.0, 6.5]
@@ -211,7 +206,6 @@ end
     @test @by(df, "g", :n = first(Symbol.($yr, ^(:body)))).n == [:vbody, :ybody]
     @test @by(df, "g", :body =  $ir).body == df.i
     @test @by(df, "g", :transform = $ir).transform == df.i
-    @test @by(df, "g", (n1 = [first($ir)], n2 = [first($yr)])).n1 == [1, 4]
     @test @by(df, "g", :n = mean($"i") + 0 * first($:g)).n == [2.0, 4.5]
     @test @by(df, "g", :n = mean($2) + first($1)).n == [3.0, 6.5]
 
