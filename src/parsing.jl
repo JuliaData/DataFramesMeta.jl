@@ -226,8 +226,6 @@ function get_source_fun(function_expr; exprflags = deepcopy(DEFAULT_FLAGS))
         end
     end
 
-    println(MacroTools.prettify(fun))
-
     return source, fun
 end
 
