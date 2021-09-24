@@ -285,7 +285,7 @@ end
 """
     @passmissing(args...)
 
-Propagrate missing values inside DataFramesMeta.jl macros.
+Propagate missing values inside DataFramesMeta.jl macros.
 
 
 `@passmissing` is not a "real" Julia macro but rather serves as a "flag"
@@ -349,8 +349,8 @@ macro passmissing(args...)
     throw(ArgumentError("@passmissing only works inside DataFramesMeta macros."))
 end
 
-global astable_docstring_snippet = """
-    Transformations can also use the macro-flag `@astable` for creating multiple
+const astable_docstring_snippet = """
+    Transformations can also use the macro-flag [`@astable`](@ref) for creating multiple
     new columns at once and letting transformations share the same name-space.
     See `? @astable` for more details.
     """

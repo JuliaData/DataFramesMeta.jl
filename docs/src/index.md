@@ -404,7 +404,7 @@ new variables in the same operation, yet have them share
 information. 
 
 In a single block, all assignments of the form `:y = f(:x)` 
-or `$y = f(:x)` at the top-level generate new columns. In the 2nd example, `y`
+or `$y = f(:x)` at the top-level generate new columns. In the second example, `y`
 must be a string or `Symbol`. 
 
 ```
