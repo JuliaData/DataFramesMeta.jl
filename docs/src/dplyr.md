@@ -42,7 +42,7 @@ using DataFramesMeta
 
 For this tutorial, we will install some additional packages as well. 
 
-```@repl 1
+```julia
 Pkg.add(["CSV", "HTTP"])
 ```
 
