@@ -43,7 +43,6 @@ using DataFramesMeta
 For this tutorial, we will install some additional packages as well. 
 
 ```julia
-import Pkg
 Pkg.add(["CSV", "HTTP"])
 ```
 
