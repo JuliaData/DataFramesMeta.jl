@@ -1,7 +1,7 @@
 # DataFramesMeta v0.10.0 Release notes
 
 * Add the `@astable` macro-flag to construct multiple inter-dependent columns at once. ([#298](https://github.com/JuliaData/DataFramesMeta.jl/pull/298)). 
-* As a result of #298, automatic `AsTable` expansion in non-keyword transformations in the first (and only) transformations in `@by` and `@combine` are no longer supported. Previously, such operations worked with a visible deprecation warning.
+* As a result of #298, automatic `AsTable` expansion in non-keyword transformations in the first (and only) transformations in `@by` and `@combine` are no longer supported. Previously, such operations were allowed, but with a visible deprecation warning.
 
 # DataFramesMeta v0.9.1 Release notes
 
