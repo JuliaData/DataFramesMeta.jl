@@ -1,3 +1,8 @@
+# DataFramesMeta v0.10.0 Release notes
+
+* Add the `@astable` macro-flag to construct multiple inter-dependent columns at once. ([#298](https://github.com/JuliaData/DataFramesMeta.jl/pull/298)). 
+* As a result of #298, automatic `AsTable` expansion in non-keyword transformations in the first (and only) transformations in `@by` and `@combine` are no longer supported. Previously, such operations worked with a visible deprecation warning.
+
 # DataFramesMeta v0.9.1 Release notes
 
 * Fix a bug with `@rtransform!` and `@rselect!`, where the macros were not actually mutating the data frame. ([#294](https://github.com/JuliaData/DataFramesMeta.jl/pull/294))
