@@ -142,8 +142,9 @@ that the output should be a "Table" in the [Tables.jl](https://tables.juliadata.
 sense. For more information, see the documentation for `DataFrames.combine` and 
 the [section below](@ref dollar) on escaping column identifiers with `$`. 
 
-Unlike `combine` from DataFrames.jl, which can take a function as the first argument,
-`@combine` requires a `DataFrame` or `GroupedDataFrame` as the first argument.
+`@combine` requires a `DataFrame` or `GroupedDataFrame` as the first argument. This is
+unlike `combine` from DataFrames.jl, which can take a function as the first argument
+and a `GroupedDataFrame` as the second argument.
 For instance, `@combine((a = sum(:x), b = sum(:y)), gd)` will fail. 
 The following, however, will work.
 
