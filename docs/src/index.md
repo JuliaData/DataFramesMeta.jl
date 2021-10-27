@@ -331,8 +331,8 @@ julia> @subset df @byrow begin
 `@byrow` can be used inside macros which accept `GroupedDataFrame`s,
 however, like with `ByRow` in DataFrames.jl, when `@byrow` is
 used, functions do not take into account the grouping, so for
-example the result of `@transform(df, @byrow y = f(:x))` and 
-`@transform(groupby(df, :g), @byrow y = f(:x))` is the same.
+example the result of `@transform(df, @byrow :y = f(:x))` and 
+`@transform(groupby(df, :g), @byrow :y = f(:x))` is the same.
 
 ## Propagating missing values with `@passmissing`
 
@@ -371,7 +371,7 @@ julia> df = DataFrame(a = [1, 2, missing], b = [4, 5, 6])
    2 │       2      5
    3 │ missing      6
 
-julia> @transform df @passmissing @byrow c = no_missing(:a, :b)
+julia> @transform df @passmissing @byrow :c = no_missing(:a, :b)
 3×3 DataFrame
  Row │ a        b      c
      │ Int64?   Int64  Int64?
@@ -389,7 +389,7 @@ julia> df = DataFrame(x_str = ["1", "2", missing])
    2 │ 2
    3 │ missing
 
-julia> @rtransform df @passmissing x = parse(Int, :x_str)
+julia> @rtransform df @passmissing :x = parse(Int, :x_str)
 3×2 DataFrame
  Row │ x_str    x
      │ String?  Int64?
@@ -433,13 +433,13 @@ DataFramesMeta provides the special syntax `$` for referring to
 columns in a data frame via a `Symbol`, string, or column position as either a literal or a variable. 
 
 ```julia
-df = DataFrame(A = 1:3, B = [2, 1, 2])
+df = DataFrame(A = 1:3, :B = [2, 1, 2])
 
 nameA = :A
-df2 = @transform(df, C = :B - $nameA)
+df2 = @transform(df, :C = :B - $nameA)
 
 nameA_string = "A"
-df3 = @transform(df, C = :B - $nameA_string)
+df3 = @transform(df, :C = :B - $nameA_string)
 
 nameB = "B"
 df4 = @eachrow df begin 
@@ -465,7 +465,7 @@ end
 ```
 
 DataFramesMeta macros do not allow mixing of integer column references with references 
-of other types. This means `@transform(df, y = :A + $2)`, attempting to add the columns 
+of other types. This means `@transform(df, :y = :A + $2)`, attempting to add the columns 
 `df[!, :A]` and `df[!, 2]`, will fail. This is because in DataFrames, the command 
 
 ```julia
@@ -478,7 +478,7 @@ to this rule. `Symbol`s and strings are allowed to be mixed inside DataFramesMet
 Consequently, 
 
 ```
-@transform(df, y = :A + $"B")
+@transform(df, :y = :A + $"B")
 ```
 
 will not error even though 
@@ -567,7 +567,7 @@ subset(df, [:a, :b])
 will fail in DataFrames.jl, bcause `DataFrames.subset` does not support vectors of column names. Likewise, `@subset df $[:a, :b]` will fail. The macros which support multi-column selectors are 
 
 * `@select`
-* `@transform` (multi-argument selectors have no effect.)
+* `@transform` (multi-argument selectors have no effect)
 * `@combine`
 * `@by`
 
