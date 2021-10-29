@@ -142,10 +142,11 @@ that the output should be a "Table" in the [Tables.jl](https://tables.juliadata.
 sense. For more information, see the documentation for `DataFrames.combine` and 
 the [section below](@ref dollar) on escaping column identifiers with `$`. 
 
-Requires a `DataFrame` or `GroupedDataFrame` as the first argument, unlike 
-`combine` from DataFrames.jl. For instance, `@combine((a = sum(:x), b = sum(:y)), gd)` 
-will fail because `@combine` requires a `GroupedDataFrame` or a `DataFrame` 
-as the first argument. The following, however, will work.
+`@combine` requires a `DataFrame` or `GroupedDataFrame` as the first argument. This is
+unlike `combine` from DataFrames.jl, which can take a function as the first argument
+and a `GroupedDataFrame` as the second argument.
+For instance, `@combine((a = sum(:x), b = sum(:y)), gd)` will fail. 
+The following, however, will work.
 
 ```
 df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
@@ -200,7 +201,7 @@ end
     Because `@with` creates a function, be careful with the use of `return`. 
 
     ```
-    function data_transform(df; returnearly = false)
+    function data_transform(df; returnearly = true)
         if returnearly
             @with df begin 
                 z = :x + :y
@@ -243,11 +244,11 @@ end
 a scope to allow assignment of variables within `@eachrow`. 
 
 ```julia
-df = DataFrame(A = 1:3, B = [2, 1, 2])
+df = DataFrame(A = 1:3, B = [2, 1, 2], C = [-4,2,1])
 let x = 0.0
     @eachrow df begin
         if :A < :B
-            x += :B * :C
+            x += :A * :C
         end
     end
     x
@@ -298,7 +299,7 @@ creates an anonymous function wrapped in `ByRow`.  For example,
 is equivalent to
 
 ```julia
-transform(df, :x => ByRow(x -> x == 1 ? true, false) => :y)
+transform(df, :x => ByRow(x -> x == 1 ? true : false) => :y)
 ```
 
 The following macros accept `@byrow`:
@@ -311,10 +312,12 @@ The following macros accept `@byrow`:
   `ByRow`, as in `@with(df, @byrow :x * :y)`.
 
 To avoid writing `@byrow` multiple times when performing multiple
-operations, it is allowed to use`@byrow` at the beginning of a block of 
+operations, it is allowed to use `@byrow` at the beginning of a block of 
 operations. All transformations in the block will operate by row.
 
 ```julia
+julia> df = DataFrame(a = [1, 2], b = [3, 4]);
+
 julia> @subset df @byrow begin
            :a > 1
            :b < 5
@@ -329,7 +332,7 @@ julia> @subset df @byrow begin
 `@byrow` can be used inside macros which accept `GroupedDataFrame`s,
 however, like with `ByRow` in DataFrames.jl, when `@byrow` is
 used, functions do not take into account the grouping, so for
-example the result of `@transform(df, @byrow y = f(:x))` and 
+example the result of `@transform(df, @byrow :y = f(:x))` and 
 `@transform(groupby(df, :g), @byrow :y = f(:x))` is the same.
 
 ## Propagating missing values with `@passmissing`
@@ -369,7 +372,7 @@ julia> df = DataFrame(a = [1, 2, missing], b = [4, 5, 6])
    2 │       2      5
    3 │ missing      6
 
-julia> @transform df @passmissing @byrow c = no_missing(:a, :b)
+julia> @transform df @passmissing @byrow :c = no_missing(:a, :b)
 3×3 DataFrame
  Row │ a        b      c
      │ Int64?   Int64  Int64?
@@ -387,7 +390,7 @@ julia> df = DataFrame(x_str = ["1", "2", missing])
    2 │ 2
    3 │ missing
 
-julia> @rtransform df @passmissing x = parse(Int, :x_str)
+julia> @rtransform df @passmissing :x = parse(Int, :x_str)
 3×2 DataFrame
  Row │ x_str    x
      │ String?  Int64?
@@ -404,7 +407,7 @@ new variables in the same operation, yet have them share
 information. 
 
 In a single block, all assignments of the form `:y = f(:x)` 
-or `$y = f(:x)` at the top-level generate new columns. In the second example, `y`
+or `$y = f(:x)` at the top-level generate new columns. In the second form, `y`
 must be a string or `Symbol`. 
 
 ```
@@ -431,13 +434,13 @@ DataFramesMeta provides the special syntax `$` for referring to
 columns in a data frame via a `Symbol`, string, or column position as either a literal or a variable. 
 
 ```julia
-df = DataFrame(A = 1:3, B = [2, 1, 2])
+df = DataFrame(A = 1:3, :B = [2, 1, 2])
 
 nameA = :A
-df2 = @transform(df, C = :B - $nameA)
+df2 = @transform(df, :C = :B - $nameA)
 
 nameA_string = "A"
-df3 = @transform(df, C = :B - $nameA_string)
+df3 = @transform(df, :C = :B - $nameA_string)
 
 nameB = "B"
 df4 = @eachrow df begin 
@@ -463,7 +466,7 @@ end
 ```
 
 DataFramesMeta macros do not allow mixing of integer column references with references 
-of other types. This means `@transform(df, y = :A + $2)`, attempting to add the columns 
+of other types. This means `@transform(df, :y = :A + $2)`, attempting to add the columns 
 `df[!, :A]` and `df[!, 2]`, will fail. This is because in DataFrames, the command 
 
 ```julia
@@ -476,7 +479,7 @@ to this rule. `Symbol`s and strings are allowed to be mixed inside DataFramesMet
 Consequently, 
 
 ```
-@transform(df, y = :A + $"B")
+@transform(df, :y = :A + $"B")
 ```
 
 will not error even though 
@@ -540,13 +543,13 @@ which selects the columns `:a` and `:b` in the data frame. We can generate this 
 @select df $[:a, :b]
 ```
 
-Similarly, to selct all columns beginning with the letter `"a"`, wrap a regular expression in `$()`. As mentioned above, because the regex is a complicated syntax, we need to wrap it in parentheses. 
+Similarly, to select all columns beginning with the letter `"a"`, wrap a regular expression in `$()`. As mentioned above, because the regex is a complicated syntax, we need to wrap it in parentheses, so that
 
 ```julia
 @select df $(r"^a")
 ```
 
-which will construct the command `select(df, r"^a")`. 
+will construct the command `select(df, r"^a")`. 
 
 Multi-argument selectors *may only* be used when an entire argument is wrapped in `$()`. For example
 
@@ -556,7 +559,7 @@ Multi-argument selectors *may only* be used when an entire argument is wrapped i
 
 will fail. 
 
-Not all functions in DataFrames.jl allow for multi-column selectors, so detailed knowledge of the underlying functions DataFrames.jl may be required. For example, the call 
+Not all functions in DataFrames.jl allow for multi-column selectors, so detailed knowledge of the underlying functions in DataFrames.jl may be required. For example, the call 
 
 ```julia
 subset(df, [:a, :b])
@@ -565,12 +568,12 @@ subset(df, [:a, :b])
 will fail in DataFrames.jl, bcause `DataFrames.subset` does not support vectors of column names. Likewise, `@subset df $[:a, :b]` will fail. The macros which support multi-column selectors are 
 
 * `@select`
-* `@transform` multi-argument selectors have no effect.
+* `@transform` (multi-argument selectors have no effect)
 * `@combine`
 * `@by`
 
 
-Because arguments wrapped entirely in `$()` get passed directly to underlying DataFrames.jl functions. This allows the use of the DataFrames.jl "mini-language" consisting of `src => fun => dest` pairs inside DataFramesMeta.jl macros. For example, you can do the following:
+Since arguments wrapped entirely in `$()` get passed directly to underlying DataFrames.jl functions, this allows the use of the DataFrames.jl "mini-language" consisting of `src => fun => dest` pairs inside DataFramesMeta.jl macros. For example, you can do the following:
 
 ```julia
 julia> df = DataFrame(a = [1, 2], b = [3, 4]);
