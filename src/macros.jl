@@ -349,7 +349,7 @@ macro passmissing(args...)
     throw(ArgumentError("@passmissing only works inside DataFramesMeta macros."))
 end
 
-const astable_docstring_snippet = """
+const astable_macro_flag_docs = """
     Transformations can also use the macro-flag [`@astable`](@ref) for creating multiple
     new columns at once and letting transformations share the same name-space.
     See `? @astable` for more details.
@@ -630,7 +630,8 @@ macro with(d, body)
     esc(with_helper(d, body))
 end
 
-AsTable_RHS_DOCSTRING = """
+# TODO: New docstring for @subset
+astable_rhs_docs = """
 In transformations, it is also allowed to use `AsTable(cols)` to work with
 multiple columns at once, where the columns are grouped together in a
 `NamedTuple`. When `AsTable(cols)` appears in a transformation, no
@@ -1278,7 +1279,9 @@ transformations by row, `@transform` allows `@byrow` at the
 beginning of a block of transformations (i.e. `@byrow begin... end`).
 All transformations in the block will operate by row.
 
-$astable_docstring_snippet
+$astable_macro_flag_docs
+
+$astable_rhs_docs
 
 ### Examples
 
@@ -1416,7 +1419,9 @@ transform!ations by row, `@transform!` allows `@byrow` at the
 beginning of a block of transform!ations (i.e. `@byrow begin... end`).
 All transform!ations in the block will operate by row.
 
-$astable_docstring_snippet
+$astable_macro_flag_docs
+
+$astable_rhs_docs
 
 ### Examples
 
@@ -1530,7 +1535,9 @@ transformations by row, `@select` allows `@byrow` at the
 beginning of a block of selectations (i.e. `@byrow begin... end`).
 All transformations in the block will operate by row.
 
-$astable_docstring_snippet
+$astable_macro_flag_docs
+
+$astable_rhs_docs
 
 ### Examples
 
@@ -1652,7 +1659,9 @@ transformations by row, `@select!` allows `@byrow` at the
 beginning of a block of select!ations (i.e. `@byrow begin... end`).
 All transformations in the block will operate by row.
 
-$astable_docstring_snippet
+$astable_macro_flag_docs
+
+$astable_rhs_docs
 
 ### Examples
 
@@ -1770,7 +1779,9 @@ and
 @combine(df, :mx = mean(:x), :sx = std(:x))
 ```
 
-$astable_docstring_snippet
+$astable_macro_flag_docs
+
+$astable_rhs_docs
 
 ### Examples
 
@@ -1888,7 +1899,9 @@ and
 @by(df, :g, mx = mean(:x), sx = std(:x))
 ```
 
-$astable_docstring_snippet
+$astable_macro_flag_docs
+
+$astable_rhs_docs
 
 ### Examples
 
