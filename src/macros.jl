@@ -638,15 +638,14 @@ multiple columns at once, where the columns are grouped together in a
 other columns may be referenced in the block.
 
 Using `AsTable` in this way is useful for working with many columns
-at once programatically. For example, to take a row-wise sum of the
+at once programmatically. For example, to compute the row-wise sum of the
 columns `[:a, :b, :c, :d]`, write
 
 ```
-nms = [:a, :b, :c, :d]
-@byrow :c = sum(AsTable(nms))
+@byrow :c = sum(AsTable([:a, :b, :c, :d]))
 ```
 
-The constructs the pair
+This constructs the pairs
 
 ```
 AsTable(nms) => ByRow(sum) => :c
