@@ -632,9 +632,9 @@ end
 
 # TODO: New docstring for @subset
 astable_rhs_docs = """
-In transformations, it is also allowed to use `AsTable(cols)` to work with
+In operations, it is also allowed to use `AsTable(cols)` to work with
 multiple columns at once, where the columns are grouped together in a
-`NamedTuple`. When `AsTable(cols)` appears in a transformation, no
+`NamedTuple`. When `AsTable(cols)` appears in a operation, no
 other columns may be referenced in the block.
 
 Using `AsTable` in this way is useful for working with many columns
@@ -661,7 +661,13 @@ write
 @byrow :d = prod(AsTable(r"^a"))
 ```
 
+`AsTable` inside operations can also be used in operations that do not
+create new columns, such as `@subset` and `@orderby`. For example, to
+order rows by the sum of all the columns beginning with `a`, write
 
+```
+@rorderby sum(AsTable(r"^a))
+```
 """
 
 ##############################################################################
