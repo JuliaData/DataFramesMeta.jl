@@ -625,13 +625,74 @@ julia> @with df @byrow :x * :y
     global scope, then a variable cannot be assigned without using the `global` keyword.
     If the parent scope is a local scope (inside a function or let block for example),
     the `global` keyword is not needed to assign to that parent scope.
+
+!!! note
+    Using `AsTable` inside `@with` block is currently not supported.
 """
 macro with(d, body)
     esc(with_helper(d, body))
 end
 
-# TODO: New docstring for @subset
-astable_rhs_docs = """
+astable_rhs_orderby_docs = """
+In operations, it is also allowed to use `AsTable(cols)` to work with
+multiple columns at once, where the columns are grouped together in a
+`NamedTuple`. When `AsTable(cols)` appears in a operation, no
+other columns may be referenced in the block.
+
+Using `AsTable` in this way is useful for working with many columns
+at once programmatically. For example, to order rows by the
+sum of the columns `:a`, `:b`, and `:c`, write
+
+```
+@byrow sum(AsTable([:a, :b, :c]))
+```
+
+This constructs the pair
+
+```
+AsTable(nms) => ByRow(sum)
+```
+
+`AsTable` on the right-hand-side also allows the use of the special
+column selectors `Not`, `Between`, and regular expressions. For example,
+order all rows by the product of all columns starting with `"a"`, write
+
+```
+@byrow prod(AsTable(r"^a"))
+```
+"""
+
+astable_rhs_subset_docs = """
+In operations, it is also allowed to use `AsTable(cols)` to work with
+multiple columns at once, where the columns are grouped together in a
+`NamedTuple`. When `AsTable(cols)` appears in a operation, no
+other columns may be referenced in the block.
+
+Using `AsTable` in this way is useful for working with many columns
+at once programmatically. For example, to select rows where the
+sum of the columns `:a`, `:b`, and `:c` is greater than `5`, write
+
+```
+@byrow sum(AsTable([:a, :b, :c])) > 5
+```
+
+This constructs the pair
+
+```
+AsTable(nms) => ByRow(t -> sum(t) > 5)
+```
+
+`AsTable` on the right-hand-side also allows the use of the special
+column selectors `Not`, `Between`, and regular expressions. For example,
+subset all rows where the product of all columns starting with `"a"`,
+is greater than `5`, write
+
+```
+@byrow prod(AsTable(r"^a")) > 5
+```
+"""
+
+astable_rhs_select_transform_docs = """
 In operations, it is also allowed to use `AsTable(cols)` to work with
 multiple columns at once, where the columns are grouped together in a
 `NamedTuple`. When `AsTable(cols)` appears in a operation, no
@@ -652,23 +713,14 @@ AsTable(nms) => ByRow(sum) => :c
 ```
 
 `AsTable` on the right-hand-side also allows the use of the special
-column selectors `Not`, `Between`, and regular expressions. For exampe,
+column selectors `Not`, `Between`, and regular expressions. For example,
 to calculate the product of all the columns beginning with the letter `"a"`,
 write
 
 ```
 @byrow :d = prod(AsTable(r"^a"))
 ```
-
-`AsTable` inside operations can also be used in operations that do not
-create new columns, such as `@subset` and `@orderby`. For example, to
-order rows by the sum of all the columns beginning with `a`, write
-
-```
-@rorderby sum(AsTable(r"^a))
-```
 """
-
 ##############################################################################
 ##
 ## @subset and subset! - select row subsets
@@ -750,6 +802,8 @@ and
     @byrow :y < 2
 end
 ```
+
+$astable_rhs_subset_docs
 
 ### Examples
 
@@ -939,6 +993,8 @@ and
 end
 ```
 
+$astable_rhs_subset_docs
+
 ### Examples
 
 ```jldoctest
@@ -1115,6 +1171,8 @@ and
 end
 ```
 
+$astable_rhs_orderby_docs
+
 ### Examples
 
 ```jldoctest
@@ -1286,7 +1344,7 @@ All transformations in the block will operate by row.
 
 $astable_macro_flag_docs
 
-$astable_rhs_docs
+$astable_rhs_select_transform_docs
 
 ### Examples
 
@@ -1426,7 +1484,7 @@ All transform!ations in the block will operate by row.
 
 $astable_macro_flag_docs
 
-$astable_rhs_docs
+$astable_rhs_select_transform_docs
 
 ### Examples
 
@@ -1542,7 +1600,7 @@ All transformations in the block will operate by row.
 
 $astable_macro_flag_docs
 
-$astable_rhs_docs
+$astable_rhs_select_transform_docs
 
 ### Examples
 
@@ -1666,7 +1724,7 @@ All transformations in the block will operate by row.
 
 $astable_macro_flag_docs
 
-$astable_rhs_docs
+$astable_rhs_select_transform_docs
 
 ### Examples
 
@@ -1786,8 +1844,6 @@ and
 
 $astable_macro_flag_docs
 
-$astable_rhs_docs
-
 ### Examples
 
 ```julia
@@ -1905,8 +1961,6 @@ and
 ```
 
 $astable_macro_flag_docs
-
-$astable_rhs_docs
 
 ### Examples
 
