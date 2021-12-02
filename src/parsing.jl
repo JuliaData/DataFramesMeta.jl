@@ -300,7 +300,7 @@ function fun_to_vec(ex::Expr;
 
         s = get_column_expr(t)
         if s === nothing
-            throw(ArgumentError("Malformed expression oh LHS in DataFramesMeta.jl macro"))
+            throw(ArgumentError("Malformed expression on LHS in DataFramesMeta.jl macro"))
         end
 
         s
