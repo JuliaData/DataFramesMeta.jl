@@ -594,7 +594,33 @@ inside the expression. The command
 :y = sum(AsTable(cols)) + :d
 ```
 
-will fail.
+will fail. 
+
+Finally, note that everyting inside `AsTable` is escaped by default. There is no ned to use `$` inside `AsTable` on the right-hand-side. For example
+
+```
+:y = first(AsTable("a"))
+```
+
+will work as expected.  
+
+
+### AsTable and `@astable`, explained
+
+At this point we have seen `AsTable` appear in three places:
+
+1. `AsTable` on the left-hand-side of transformations: `$AsTable = f(:a, :b)`
+2. The macro-flag `@astable` within the transformation. 
+3. `AsTable(cols)` on the right hand side for multi-column transformations. 
+
+The differences between the three is summarized below
+
+| Operation         | Purpose                                                                             | Example           | Notes |
+|-------------------|-------------------------------------------------------------------------------------|-------------------|-------|
+| `$AsTable` on LHS | Create multiple columns at once, whose column names are only known programmatically | <pre lang=julia>$AsTable = f(:y)</pre> | Requires escaping with `$` until deprecation period ends for unquoted column names on LHS.      |
+| `@astable`        | Create multiple columns at once where number of columns is known in advance         | <pre lang="julia">@astable begin<br>    :y = :x - 1<br>    :z =  :y - 1<br>end</pre>
+| `AsTable` on RHS  | Work with multiple columns at once                                                  |<pre lang="julia">:y = sum(AsTable(Between("a", "z")))</pre> | Requires input columns, unlike on LHS |
+
 
 ### Using `src => fun => dest` calls using `$`
 
