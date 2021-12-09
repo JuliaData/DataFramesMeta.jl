@@ -694,7 +694,7 @@ and
 
 If an expression provided to `@subset` begins with `@byrow`, operations
 are applied "by row" along the data frame. To avoid writing `@byrow` multiple
-times, `@orderby` also allows `@byrow`to be placed at the beginning of a block of
+times, `@orderby` also allows `@byrow` to be placed at the beginning of a block of
 operations. For example, the following two statements are equivalent.
 
 ```
