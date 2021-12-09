@@ -555,6 +555,37 @@ julia> @rtransform df :y = sum(AsTable(vars))
    2 │    14     10      5     24
 ```
 
+Of course, you can also use `AsTable` on the right-hand side using `Symbol`s as column selectors
+
+```
+julia> @rtransform df :y = sum(AsTable([:a, :b]))
+2×4 DataFrame
+ Row │ a      b      c      y     
+     │ Int64  Int64  Int64  Int64 
+─────┼────────────────────────────
+   1 │    11     17     12     28
+   2 │    14     10      5     24
+```
+
+`AsTable` on the right-hand side also allows operations which can use the names of the variables. 
+
+```
+julia> function fun_with_new_name(x::NamedTuple)
+           nms = string.(propertynames(x))
+           new_name = join(nms, "_") * "_sum"
+           s = sum(x)
+           (; Symbol(new_name) => s)
+       end
+
+julia> @rtransform df $AsTable = fun_with_new_name(AsTable([:a, :b]))
+2×4 DataFrame
+ Row │ a      b      c      a_b_sum 
+     │ Int64  Int64  Int64  Int64   
+─────┼──────────────────────────────
+   1 │    11     17     12       28
+   2 │    14     10      5       24
+```
+
 To subset all rows where the sum is greater than `25`, write
 
 ```
@@ -629,7 +660,28 @@ The differences between the three is summarized below
 If an argument is entirely wrapped in `$()`, the result bypasses the anonymous function 
 creation of DataFramesMeta.jl and is passed to the underling DataFrames.jl function 
 directly. Importantly, this allows for `src => fun => dest` calls from the DataFrames.jl 
-"mini-language" directly.
+"mini-language" directly. One example where this is useful is calling multiple functions across multiple input parameters. For insteance, the `Pair`
+
+```
+[:a, :b] .=> [sum mean]
+```
+
+takes the `sum` and `mean` of both columns `:a` and `:b` separately. It is not possible to express this with DataFrames.jl. But the operation can easily be performed with `$`
+
+```
+julia> using Statistics
+
+julia> df = DataFrame(a = [1, 2], b = [30, 40]);
+
+julia> @transform df $([:a, :b] .=> [sum mean])
+2×6 DataFrame
+ Row │ a      b      a_sum  b_sum  a_mean   b_mean  
+     │ Int64  Int64  Int64  Int64  Float64  Float64 
+─────┼──────────────────────────────────────────────
+   1 │     1     30      3     70      1.5     35.0
+   2 │     2     40      3     70      1.5     35.0
+
+```
 
 ### Multi-argument column selection 
 
