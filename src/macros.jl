@@ -650,12 +650,12 @@ sum of the columns `:a`, `:b`, and `:c`, write
 This constructs the pair
 
 ```
-AsTable(nms) => ByRow(sum)
+AsTable(AsTable([:a, :b, :c])) => ByRow(sum)
 ```
 
-`AsTable` on the right-hand-side also allows the use of the special
+`AsTable` on the right-hand side also allows the use of the special
 column selectors `Not`, `Between`, and regular expressions. For example,
-order all rows by the product of all columns starting with `"a"`, write
+to order all rows by the product of all columns starting with `"a"`, write
 
 ```
 @byrow prod(AsTable(r"^a"))
@@ -679,12 +679,12 @@ sum of the columns `:a`, `:b`, and `:c` is greater than `5`, write
 This constructs the pair
 
 ```
-AsTable(nms) => ByRow(t -> sum(t) > 5)
+AsTable([:a, :b, :c]) => ByRow(t -> sum(t) > 5)
 ```
 
-`AsTable` on the right-hand-side also allows the use of the special
+`AsTable` on the right-hand side also allows the use of the special
 column selectors `Not`, `Between`, and regular expressions. For example,
-subset all rows where the product of all columns starting with `"a"`,
+to subset all rows where the product of all columns starting with `"a"`,
 is greater than `5`, write
 
 ```
@@ -712,7 +712,7 @@ This constructs the pairs
 AsTable(nms) => ByRow(sum) => :c
 ```
 
-`AsTable` on the right-hand-side also allows the use of the special
+`AsTable` on the right-hand side also allows the use of the special
 column selectors `Not`, `Between`, and regular expressions. For example,
 to calculate the product of all the columns beginning with the letter `"a"`,
 write
