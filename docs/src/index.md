@@ -638,7 +638,7 @@ For example
 will work as expected.  
 
 
-### AsTable and `@astable`, explained
+## AsTable and `@astable`, explained
 
 At this point we have seen `AsTable` appear in three places:
 
@@ -648,14 +648,13 @@ At this point we have seen `AsTable` appear in three places:
 
 The differences between the three is summarized below
 
-| Operation         | Purpose                                                                             | Example           | Notes |
-|-------------------|-------------------------------------------------------------------------------------|-------------------|-------|
-| `$AsTable` on LHS | Create multiple columns at once, whose column names are only known programmatically | <pre lang="julia">$AsTable = f(:y)</pre> | Requires escaping with `$` until deprecation period ends for unquoted column names on LHS.      |
-| `@astable`        | Create multiple columns at once where number of columns is known in advance         | <pre lang="julia">@astable begin<br>    :y = :x - 1<br>    :z =  :y - 1<br>end</pre>
-| `AsTable` on RHS  | Work with multiple columns at once                                                  |<pre lang="julia">:y = sum(AsTable(Between("a", "z")))</pre> | Requires input columns, unlike on LHS |
+| Operation         | Purpose                                                                             | Notes |
+|-------------------|-------------------------------------------------------------------------------------|-------|
+| `$AsTable` on LHS | Create multiple columns at once, whose column names are only known programmatically |  Requires escaping with `$` until deprecation period ends for unquoted column names on LHS. |
+| `@astable`        | Create multiple columns at once where number of columns is known in advance         | |
+| `AsTable` on RHS  | Work with multiple columns at once                                                  | Requires input columns, unlike on LHS |
 
-
-### Using `src => fun => dest` calls using `$`
+## Using `src => fun => dest` calls using `$`
 
 If an argument is entirely wrapped in `$()`, the result bypasses the anonymous function 
 creation of DataFramesMeta.jl and is passed to the underling DataFrames.jl function 
@@ -680,10 +679,9 @@ julia> @transform df $([:a, :b] .=> [sum mean])
 ─────┼──────────────────────────────────────────────
    1 │     1     30      3     70      1.5     35.0
    2 │     2     40      3     70      1.5     35.0
-
 ```
 
-### Multi-argument column selection 
+## Multi-argument column selection 
 
 To refer to multiple columns in DataFrames.jl, one can write
 

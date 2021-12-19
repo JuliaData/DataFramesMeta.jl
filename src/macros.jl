@@ -349,7 +349,7 @@ macro passmissing(args...)
     throw(ArgumentError("@passmissing only works inside DataFramesMeta macros."))
 end
 
-const astable_macro_flag_docs = """
+const ASTABLE_MACRO_FLAG_DOCS = """
     Transformations can also use the macro-flag [`@astable`](@ref) for creating multiple
     new columns at once and letting transformations share the same name-space.
     See `? @astable` for more details.
@@ -633,7 +633,7 @@ macro with(d, body)
     esc(with_helper(d, body))
 end
 
-astable_rhs_orderby_docs = """
+ASTABLE_RHS_ORDERBY_DOCS = """
 In operations, it is also allowed to use `AsTable(cols)` to work with
 multiple columns at once, where the columns are grouped together in a
 `NamedTuple`. When `AsTable(cols)` appears in a operation, no
@@ -650,7 +650,7 @@ sum of the columns `:a`, `:b`, and `:c`, write
 This constructs the pair
 
 ```
-AsTable(AsTable([:a, :b, :c])) => ByRow(sum)
+AsTable([:a, :b, :c]) => ByRow(sum)
 ```
 
 `AsTable` on the right-hand side also allows the use of the special
@@ -662,7 +662,7 @@ to order all rows by the product of all columns starting with `"a"`, write
 ```
 """
 
-astable_rhs_subset_docs = """
+ASTABLE_RHS_SUBSET_DOCS = """
 In operations, it is also allowed to use `AsTable(cols)` to work with
 multiple columns at once, where the columns are grouped together in a
 `NamedTuple`. When `AsTable(cols)` appears in a operation, no
@@ -692,7 +692,7 @@ is greater than `5`, write
 ```
 """
 
-astable_rhs_select_transform_docs = """
+ASTABLE_RHS_SELECT_TRANSFORM_DOCS = """
 In operations, it is also allowed to use `AsTable(cols)` to work with
 multiple columns at once, where the columns are grouped together in a
 `NamedTuple`. When `AsTable(cols)` appears in a operation, no
@@ -803,7 +803,7 @@ and
 end
 ```
 
-$astable_rhs_subset_docs
+$ASTABLE_RHS_SUBSET_DOCS
 
 ### Examples
 
@@ -993,7 +993,7 @@ and
 end
 ```
 
-$astable_rhs_subset_docs
+$ASTABLE_RHS_SUBSET_DOCS
 
 ### Examples
 
@@ -1171,7 +1171,7 @@ and
 end
 ```
 
-$astable_rhs_orderby_docs
+$ASTABLE_RHS_ORDERBY_DOCS
 
 ### Examples
 
@@ -1342,9 +1342,9 @@ transformations by row, `@transform` allows `@byrow` at the
 beginning of a block of transformations (i.e. `@byrow begin... end`).
 All transformations in the block will operate by row.
 
-$astable_macro_flag_docs
+$ASTABLE_MACRO_FLAG_DOCS
 
-$astable_rhs_select_transform_docs
+$ASTABLE_RHS_SELECT_TRANSFORM_DOCS
 
 ### Examples
 
@@ -1482,9 +1482,9 @@ transform!ations by row, `@transform!` allows `@byrow` at the
 beginning of a block of transform!ations (i.e. `@byrow begin... end`).
 All transform!ations in the block will operate by row.
 
-$astable_macro_flag_docs
+$ASTABLE_MACRO_FLAG_DOCS
 
-$astable_rhs_select_transform_docs
+$ASTABLE_RHS_SELECT_TRANSFORM_DOCS
 
 ### Examples
 
@@ -1598,9 +1598,9 @@ transformations by row, `@select` allows `@byrow` at the
 beginning of a block of selectations (i.e. `@byrow begin... end`).
 All transformations in the block will operate by row.
 
-$astable_macro_flag_docs
+$ASTABLE_MACRO_FLAG_DOCS
 
-$astable_rhs_select_transform_docs
+$ASTABLE_RHS_SELECT_TRANSFORM_DOCS
 
 ### Examples
 
@@ -1722,9 +1722,9 @@ transformations by row, `@select!` allows `@byrow` at the
 beginning of a block of select!ations (i.e. `@byrow begin... end`).
 All transformations in the block will operate by row.
 
-$astable_macro_flag_docs
+$ASTABLE_MACRO_FLAG_DOCS
 
-$astable_rhs_select_transform_docs
+$ASTABLE_RHS_SELECT_TRANSFORM_DOCS
 
 ### Examples
 
@@ -1842,7 +1842,7 @@ and
 @combine(df, :mx = mean(:x), :sx = std(:x))
 ```
 
-$astable_macro_flag_docs
+$ASTABLE_MACRO_FLAG_DOCS
 
 ### Examples
 
@@ -1960,7 +1960,7 @@ and
 @by(df, :g, mx = mean(:x), sx = std(:x))
 ```
 
-$astable_macro_flag_docs
+$ASTABLE_MACRO_FLAG_DOCS
 
 ### Examples
 
