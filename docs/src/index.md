@@ -572,9 +572,9 @@ julia> @rtransform df :y = sum(AsTable([:a, :b]))
 ```
 julia> function fun_with_new_name(x::NamedTuple)
            nms = string.(propertynames(x))
-           new_name = join(nms, "_") * "_sum"
+           new_name = Symbol(join(nms, "_"), "_sum")
            s = sum(x)
-           (; Symbol(new_name) => s)
+           (; new_name => s)
        end
 
 julia> @rtransform df $AsTable = fun_with_new_name(AsTable([:a, :b]))
@@ -659,13 +659,13 @@ The differences between the three is summarized below
 If an argument is entirely wrapped in `$()`, the result bypasses the anonymous function 
 creation of DataFramesMeta.jl and is passed to the underling DataFrames.jl function 
 directly. Importantly, this allows for `src => fun => dest` calls from the DataFrames.jl 
-"mini-language" directly. One example where this is useful is calling multiple functions across multiple input parameters. For insteance, the `Pair`
+"mini-language" directly. One example where this is useful is calling multiple functions across multiple input parameters. For instance, the `Pair`
 
 ```
 [:a, :b] .=> [sum mean]
 ```
 
-takes the `sum` and `mean` of both columns `:a` and `:b` separately. It is not possible to express this with DataFrames.jl. But the operation can easily be performed with `$`
+takes the `sum` and `mean` of both columns `:a` and `:b` separately. It is not possible to express this with DataFramesMeta.jl. But the operation can easily be performed with `$`
 
 ```
 julia> using Statistics
