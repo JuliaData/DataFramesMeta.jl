@@ -427,104 +427,6 @@ julia> @transform df @astable begin
    3 │     3    600      200       0
 ```
 
-
-## [Working with column names programmatically with `$`](@id dollar)
-
-DataFramesMeta provides the special syntax `$` for referring to 
-columns in a data frame via a `Symbol`, string, or column position as either a literal or a variable. 
-
-```julia
-df = DataFrame(A = 1:3, :B = [2, 1, 2])
-
-nameA = :A
-df2 = @transform(df, :C = :B - $nameA)
-
-nameA_string = "A"
-df3 = @transform(df, :C = :B - $nameA_string)
-
-nameB = "B"
-df4 = @eachrow df begin 
-    :A = $nameB
-end
-```
-
-`$` can also be used to create new columns in a data frame. 
-
-```julia
-df = DataFrame(A = 1:3, B = [2, 1, 2])
-
-newcol = "C"
-@select(df, $newcol = :A + :B)
-
-@by(df, :B, $("A complicated" * " new name") = first(:A))
-
-nameC = "C"
-df3 = @eachrow df begin 
-    @newcol $nameC::Vector{Int}
-    $nameC = :A
-end
-```
-
-DataFramesMeta macros do not allow mixing of integer column references with references 
-of other types. This means `@transform(df, :y = :A + $2)`, attempting to add the columns 
-`df[!, :A]` and `df[!, 2]`, will fail. This is because in DataFrames, the command 
-
-```julia
-transform(df, [:A, 2] => (+) => :y)
-``` 
-
-will fail, as DataFrames requires the "source" column identifiers in a 
-`source => fun => dest` pair to all have the same type. DataFramesMeta adds one exception
-to this rule. `Symbol`s and strings are allowed to be mixed inside DataFramesMeta macros. 
-Consequently, 
-
-```
-@transform(df, :y = :A + $"B")
-```
-
-will not error even though 
-
-```
-transform(df, [:A, "B"] => (+) => :y)
-```
-
-will error in DataFrames. 
-
-For consistency, this restriction in the input column types also applies to `@with`
-and `@eachrow`. You cannot mix integer column references with `Symbol` or string column 
-references in `@with` and `@eachrow` in any part of the expression, but you can mix 
-`Symbol`s and strings. The following will fail:
-
-```julia
-df = DataFrame(A = 1:3, B = [2, 1, 2])
-@eachrow df begin 
-    :A = $2
-end
-
-@with df begin 
-    $1 + $"A"
-end
-```
-
-while the following will work without error
-
-```julia
-@eachrow df begin 
-    $1 + $2
-end
-
-@with df begin 
-    $1 + $2
-end
-```
-
-To reference columns with more complicated expressions, you must wrap column references in parentheses. 
-
-```
-@transform df :a + $("a column name" * " in two parts")
-@transform df :a + $(get_column_name(x))
-```
-
 ## Operations with multiple columns at once using `AsTable` inside operations
 
 In operations, it is also allowed to use `AsTable(cols)` to work with
@@ -653,6 +555,103 @@ The differences between the three is summarized below
 | `$AsTable` on LHS | Create multiple columns at once, whose column names are only known programmatically |  Requires escaping with `$` until deprecation period ends for unquoted column names on LHS. |
 | `@astable`        | Create multiple columns at once where number of columns is known in advance         | |
 | `AsTable` on RHS  | Work with multiple columns at once                                                  | Requires input columns, unlike on LHS |
+
+## [Working with column names programmatically with `$`](@id dollar)
+
+DataFramesMeta provides the special syntax `$` for referring to 
+columns in a data frame via a `Symbol`, string, or column position as either a literal or a variable. 
+
+```julia
+df = DataFrame(A = 1:3, :B = [2, 1, 2])
+
+nameA = :A
+df2 = @transform(df, :C = :B - $nameA)
+
+nameA_string = "A"
+df3 = @transform(df, :C = :B - $nameA_string)
+
+nameB = "B"
+df4 = @eachrow df begin 
+    :A = $nameB
+end
+```
+
+`$` can also be used to create new columns in a data frame. 
+
+```julia
+df = DataFrame(A = 1:3, B = [2, 1, 2])
+
+newcol = "C"
+@select(df, $newcol = :A + :B)
+
+@by(df, :B, $("A complicated" * " new name") = first(:A))
+
+nameC = "C"
+df3 = @eachrow df begin 
+    @newcol $nameC::Vector{Int}
+    $nameC = :A
+end
+```
+
+DataFramesMeta macros do not allow mixing of integer column references with references 
+of other types. This means `@transform(df, :y = :A + $2)`, attempting to add the columns 
+`df[!, :A]` and `df[!, 2]`, will fail. This is because in DataFrames, the command 
+
+```julia
+transform(df, [:A, 2] => (+) => :y)
+``` 
+
+will fail, as DataFrames requires the "source" column identifiers in a 
+`source => fun => dest` pair to all have the same type. DataFramesMeta adds one exception
+to this rule. `Symbol`s and strings are allowed to be mixed inside DataFramesMeta macros. 
+Consequently, 
+
+```
+@transform(df, :y = :A + $"B")
+```
+
+will not error even though 
+
+```
+transform(df, [:A, "B"] => (+) => :y)
+```
+
+will error in DataFrames. 
+
+For consistency, this restriction in the input column types also applies to `@with`
+and `@eachrow`. You cannot mix integer column references with `Symbol` or string column 
+references in `@with` and `@eachrow` in any part of the expression, but you can mix 
+`Symbol`s and strings. The following will fail:
+
+```julia
+df = DataFrame(A = 1:3, B = [2, 1, 2])
+@eachrow df begin 
+    :A = $2
+end
+
+@with df begin 
+    $1 + $"A"
+end
+```
+
+while the following will work without error
+
+```julia
+@eachrow df begin 
+    $1 + $2
+end
+
+@with df begin 
+    $1 + $2
+end
+```
+
+To reference columns with more complicated expressions, you must wrap column references in parentheses. 
+
+```
+@transform df :a + $("a column name" * " in two parts")
+@transform df :a + $(get_column_name(x))
+```
 
 ## Using `src => fun => dest` calls using `$`
 
