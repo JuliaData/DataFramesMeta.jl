@@ -349,7 +349,7 @@ macro passmissing(args...)
     throw(ArgumentError("@passmissing only works inside DataFramesMeta macros."))
 end
 
-const astable_docstring_snippet = """
+const ASTABLE_MACRO_FLAG_DOCS = """
     Transformations can also use the macro-flag [`@astable`](@ref) for creating multiple
     new columns at once and letting transformations share the same name-space.
     See `? @astable` for more details.
@@ -625,12 +625,102 @@ julia> @with df @byrow :x * :y
     global scope, then a variable cannot be assigned without using the `global` keyword.
     If the parent scope is a local scope (inside a function or let block for example),
     the `global` keyword is not needed to assign to that parent scope.
+
+!!! note
+    Using `AsTable` inside `@with` block is currently not supported.
 """
 macro with(d, body)
     esc(with_helper(d, body))
 end
 
+ASTABLE_RHS_ORDERBY_DOCS = """
+In operations, it is also allowed to use `AsTable(cols)` to work with
+multiple columns at once, where the columns are grouped together in a
+`NamedTuple`. When `AsTable(cols)` appears in a operation, no
+other columns may be referenced in the block.
 
+Using `AsTable` in this way is useful for working with many columns
+at once programmatically. For example, to order rows by the
+sum of the columns `:a`, `:b`, and `:c`, write
+
+```
+@byrow sum(AsTable([:a, :b, :c]))
+```
+
+This constructs the pair
+
+```
+AsTable([:a, :b, :c]) => ByRow(sum)
+```
+
+`AsTable` on the right-hand side also allows the use of the special
+column selectors `Not`, `Between`, and regular expressions. For example,
+to order all rows by the product of all columns starting with `"a"`, write
+
+```
+@byrow prod(AsTable(r"^a"))
+```
+"""
+
+ASTABLE_RHS_SUBSET_DOCS = """
+In operations, it is also allowed to use `AsTable(cols)` to work with
+multiple columns at once, where the columns are grouped together in a
+`NamedTuple`. When `AsTable(cols)` appears in a operation, no
+other columns may be referenced in the block.
+
+Using `AsTable` in this way is useful for working with many columns
+at once programmatically. For example, to select rows where the
+sum of the columns `:a`, `:b`, and `:c` is greater than `5`, write
+
+```
+@byrow sum(AsTable([:a, :b, :c])) > 5
+```
+
+This constructs the pair
+
+```
+AsTable([:a, :b, :c]) => ByRow(t -> sum(t) > 5)
+```
+
+`AsTable` on the right-hand side also allows the use of the special
+column selectors `Not`, `Between`, and regular expressions. For example,
+to subset all rows where the product of all columns starting with `"a"`,
+is greater than `5`, write
+
+```
+@byrow prod(AsTable(r"^a")) > 5
+```
+"""
+
+ASTABLE_RHS_SELECT_TRANSFORM_DOCS = """
+In operations, it is also allowed to use `AsTable(cols)` to work with
+multiple columns at once, where the columns are grouped together in a
+`NamedTuple`. When `AsTable(cols)` appears in a operation, no
+other columns may be referenced in the block.
+
+Using `AsTable` in this way is useful for working with many columns
+at once programmatically. For example, to compute the row-wise sum of the
+columns `[:a, :b, :c, :d]`, write
+
+```
+@byrow :c = sum(AsTable([:a, :b, :c, :d]))
+```
+
+This constructs the pairs
+
+```
+AsTable(nms) => ByRow(sum) => :c
+```
+
+`AsTable` on the right-hand side also allows the use of the special
+column selectors `Not`, `Between`, and regular expressions. For example,
+to calculate the product of all the columns beginning with the letter `"a"`,
+write
+
+```
+@byrow :d = prod(AsTable(r"^a"))
+```
+"""
 ##############################################################################
 ##
 ## @subset and subset! - select row subsets
@@ -712,6 +802,8 @@ and
     @byrow :y < 2
 end
 ```
+
+$ASTABLE_RHS_SUBSET_DOCS
 
 ### Examples
 
@@ -901,6 +993,8 @@ and
 end
 ```
 
+$ASTABLE_RHS_SUBSET_DOCS
+
 ### Examples
 
 ```jldoctest
@@ -1077,6 +1171,8 @@ and
 end
 ```
 
+$ASTABLE_RHS_ORDERBY_DOCS
+
 ### Examples
 
 ```jldoctest
@@ -1246,7 +1342,9 @@ transformations by row, `@transform` allows `@byrow` at the
 beginning of a block of transformations (i.e. `@byrow begin... end`).
 All transformations in the block will operate by row.
 
-$astable_docstring_snippet
+$ASTABLE_MACRO_FLAG_DOCS
+
+$ASTABLE_RHS_SELECT_TRANSFORM_DOCS
 
 ### Examples
 
@@ -1384,7 +1482,9 @@ transform!ations by row, `@transform!` allows `@byrow` at the
 beginning of a block of transform!ations (i.e. `@byrow begin... end`).
 All transform!ations in the block will operate by row.
 
-$astable_docstring_snippet
+$ASTABLE_MACRO_FLAG_DOCS
+
+$ASTABLE_RHS_SELECT_TRANSFORM_DOCS
 
 ### Examples
 
@@ -1498,7 +1598,9 @@ transformations by row, `@select` allows `@byrow` at the
 beginning of a block of selectations (i.e. `@byrow begin... end`).
 All transformations in the block will operate by row.
 
-$astable_docstring_snippet
+$ASTABLE_MACRO_FLAG_DOCS
+
+$ASTABLE_RHS_SELECT_TRANSFORM_DOCS
 
 ### Examples
 
@@ -1620,7 +1722,9 @@ transformations by row, `@select!` allows `@byrow` at the
 beginning of a block of select!ations (i.e. `@byrow begin... end`).
 All transformations in the block will operate by row.
 
-$astable_docstring_snippet
+$ASTABLE_MACRO_FLAG_DOCS
+
+$ASTABLE_RHS_SELECT_TRANSFORM_DOCS
 
 ### Examples
 
@@ -1738,7 +1842,7 @@ and
 @combine(df, :mx = mean(:x), :sx = std(:x))
 ```
 
-$astable_docstring_snippet
+$ASTABLE_MACRO_FLAG_DOCS
 
 ### Examples
 
@@ -1856,7 +1960,7 @@ and
 @by(df, :g, mx = mean(:x), sx = std(:x))
 ```
 
-$astable_docstring_snippet
+$ASTABLE_MACRO_FLAG_DOCS
 
 ### Examples
 

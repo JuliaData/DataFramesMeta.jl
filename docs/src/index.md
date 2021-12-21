@@ -427,6 +427,134 @@ julia> @transform df @astable begin
    3 │     3    600      200       0
 ```
 
+## Operations with multiple columns at once using `AsTable` inside operations
+
+In operations, it is also allowed to use `AsTable(cols)` to work with
+multiple columns at once, where the columns are grouped together in a
+`NamedTuple`. When `AsTable(cols)` appears in a operation, no
+other columns may be referenced in the block.
+
+`AsTable` on the right-hand side also allows the use of the special
+column selectors `Not`, `Between`, and regular expressions, as well
+as working with lists of variables programmatically. 
+
+For example, consider a collection of column names `vars`, such that
+
+```
+df = DataFrame(a = [11, 14], b = [17, 10], c = [12, 5]);
+vars = ["a", "b"];
+```
+
+To make a new column which is the sum of `vars`, write
+
+```
+julia> @rtransform df :y = sum(AsTable(vars))
+2×4 DataFrame
+ Row │ a      b      c      y     
+     │ Int64  Int64  Int64  Int64 
+─────┼────────────────────────────
+   1 │    11     17     12     28
+   2 │    14     10      5     24
+```
+
+Of course, you can also use `AsTable` on the right-hand side using `Symbol`s as column selectors
+
+```
+julia> @rtransform df :y = sum(AsTable([:a, :b]))
+2×4 DataFrame
+ Row │ a      b      c      y     
+     │ Int64  Int64  Int64  Int64 
+─────┼────────────────────────────
+   1 │    11     17     12     28
+   2 │    14     10      5     24
+```
+
+`AsTable` on the right-hand side also allows operations which can use the names of the variables. 
+
+```
+julia> function fun_with_new_name(x::NamedTuple)
+           nms = string.(propertynames(x))
+           new_name = Symbol(join(nms, "_"), "_sum")
+           s = sum(x)
+           (; new_name => s)
+       end
+
+julia> @rtransform df $AsTable = fun_with_new_name(AsTable([:a, :b]))
+2×4 DataFrame
+ Row │ a      b      c      a_b_sum 
+     │ Int64  Int64  Int64  Int64   
+─────┼──────────────────────────────
+   1 │    11     17     12       28
+   2 │    14     10      5       24
+```
+
+To subset all rows where the sum is greater than `25`, write
+
+```
+julia> @rsubset df sum(AsTable(vars)) > 25
+1×3 DataFrame
+ Row │ a      b      c     
+     │ Int64  Int64  Int64 
+─────┼─────────────────────
+   1 │    11     17     12
+```
+
+To understand the how this works, recall that DataFrames.jl allows for
+`AsTable(cols)` to be a `source` in a `source => fun => dest` mini-language
+expression. As a consequence, the transformation call
+
+```
+:y = f(AsTable(cols)) 
+```
+
+becomes
+
+```
+AsTable(cols) => f => :y
+```
+
+Note that DataFrames does *not* allow `source => fun => dest` commands 
+to be of the form 
+
+```
+[AsTable(cols), :x] => f => :y
+```
+
+As a consequence, DataFramesMeta.jl does not allow any other column selectors to appear 
+inside the expression. The command
+
+```
+:y = sum(AsTable(cols)) + :d
+```
+
+will fail. 
+
+Finally, note that everyting inside `AsTable` is escaped by default.
+There is no ned to use `$` inside `AsTable` on the right-hand side.
+For example
+
+```
+:y = first(AsTable("a"))
+```
+
+will work as expected.  
+
+
+## AsTable and `@astable`, explained
+
+At this point we have seen `AsTable` appear in three places:
+
+1. `AsTable` on the left-hand side of transformations: `$AsTable = f(:a, :b)`
+2. The macro-flag `@astable` within the transformation. 
+3. `AsTable(cols)` on the right-hand side for multi-column transformations. 
+
+The differences between the three is summarized below
+
+| Operation         | Purpose                                                                             | Notes |
+|-------------------|-------------------------------------------------------------------------------------|-------|
+| `$AsTable` on LHS | Create multiple columns at once, whose column names are only known programmatically |  Requires escaping with `$` until deprecation period ends for unquoted column names on LHS. |
+| `@astable`        | Create multiple columns at once where number of columns is known in advance         | |
+| `AsTable` on RHS  | Work with multiple columns at once                                                  | Requires input columns, unlike on LHS |
 
 ## [Working with column names programmatically with `$`](@id dollar)
 
@@ -525,11 +653,34 @@ To reference columns with more complicated expressions, you must wrap column ref
 @transform df :a + $(get_column_name(x))
 ```
 
-## Constructing multi-column arguments and `src => fun => dest` calls using `$`
+## Using `src => fun => dest` calls using `$`
 
-If an argument is entirely wrapped in `$()`, the result bypasses the anonymous function creation of DataFramesMeta.jl and is passed to the underling DataFrames.jl function directly. Importantly, this allows for multi-column selection and passing `src => fun => dest` calls from the DataFrames.jl "mini-language" directly.
+If an argument is entirely wrapped in `$()`, the result bypasses the anonymous function 
+creation of DataFramesMeta.jl and is passed to the underling DataFrames.jl function 
+directly. Importantly, this allows for `src => fun => dest` calls from the DataFrames.jl 
+"mini-language" directly. One example where this is useful is calling multiple functions across multiple input parameters. For instance, the `Pair`
 
-### Multi-argument selectors 
+```
+[:a, :b] .=> [sum mean]
+```
+
+takes the `sum` and `mean` of both columns `:a` and `:b` separately. It is not possible to express this with DataFramesMeta.jl. But the operation can easily be performed with `$`
+
+```
+julia> using Statistics
+
+julia> df = DataFrame(a = [1, 2], b = [30, 40]);
+
+julia> @transform df $([:a, :b] .=> [sum mean])
+2×6 DataFrame
+ Row │ a      b      a_sum  b_sum  a_mean   b_mean  
+     │ Int64  Int64  Int64  Int64  Float64  Float64 
+─────┼──────────────────────────────────────────────
+   1 │     1     30      3     70      1.5     35.0
+   2 │     2     40      3     70      1.5     35.0
+```
+
+## Multi-argument column selection 
 
 To refer to multiple columns in DataFrames.jl, one can write
 
