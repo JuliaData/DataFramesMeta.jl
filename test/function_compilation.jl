@@ -215,7 +215,7 @@ end
             (slowtime[2] > fasttime[2]) || @warn("Slow compilation")
 
             fasttime = @timed @rselect df_wide :y = (sum ∘ skipmissing)(AsTable(:))
-            slowtime = @timed select(df_wide, AsTable(:) => ByRow(t -> sum(t)) => :y)
+            slowtime = @timed select(df_wide, AsTable(:) => ByRow(t -> (sum ∘ skipmissing)(t)) => :y)
 
             (slowtime[2] > fasttime[2]) || @warn("Slow compilation")
         end
