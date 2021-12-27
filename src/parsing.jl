@@ -59,11 +59,19 @@ function replace_dotted!(membernames, e)
     Expr(:., x_new, y_new)
 end
 
+composed_or_symbol(x) = false
+composed_or_symbol(x::Symbol) = true
+function composed_or_symbol(x::Expr)
+    x.head == :call &&
+        x.args[1] == :∘ &&
+        all(composed_or_symbol, x.args[2:end])
+end
+
 is_simple_non_broadcast_call(x) = false
 function is_simple_non_broadcast_call(expr::Expr)
     expr.head == :call &&
         length(expr.args) >= 2 &&
-        expr.args[1] isa Symbol &&
+        composed_or_symbol(expr.args[1]) &&
         all(a -> get_column_expr(a) !== nothing, expr.args[2:end])
 end
 
@@ -71,7 +79,7 @@ is_simple_broadcast_call(x) = false
 function is_simple_broadcast_call(expr::Expr)
     expr.head == :. &&
         length(expr.args) == 2 &&
-        expr.args[1] isa Symbol &&
+        composed_or_symbol(expr.args[1]) &&
         expr.args[2] isa Expr &&
         expr.args[2].head == :tuple &&
         all(a -> get_column_expr(a) !== nothing, expr.args[2].args)
