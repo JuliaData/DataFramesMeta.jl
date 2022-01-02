@@ -67,6 +67,39 @@ function composed_or_symbol(x::Expr)
         all(composed_or_symbol, x.args[2:end])
 end
 
+is_call(x) = false
+is_call(x::Expr) = x.head == :call
+
+is_nested_fun(x) = false
+function is_nested_fun(x::Expr)
+    x.head == :call &&
+    length(x.args) == 2 &&
+    is_call(x.args[2]) &&
+    get_column_expr(x.args[2]) == nothing
+end
+
+make_composed(x) = x
+function make_composed(x::Expr)
+    funs = Any[]
+    x_orig = x
+    while true
+        if is_nested_fun(x)
+            push!(funs, x.args[1])
+            x = x.args[2]
+        elseif is_simple_non_broadcast_call(x)
+            if !isempty(funs)
+                push!(funs, x.args[1])
+                # ∘(f, g, h)(:x, :y, :z)
+                return Expr(:call, Expr(:call, :∘, funs...), x.args[2:end]...)
+            else
+                return x
+            end
+        else
+            return x_orig
+        end
+    end
+end
+
 is_simple_non_broadcast_call(x) = false
 function is_simple_non_broadcast_call(expr::Expr)
     expr.head == :call &&
@@ -196,7 +229,7 @@ julia> MacroTools.prettify(fun)
 
 """
 function get_source_fun(function_expr; exprflags = deepcopy(DEFAULT_FLAGS))
-    function_expr = MacroTools.unblock(function_expr)
+    function_expr = make_composed(MacroTools.unblock(function_expr))
 
     if is_simple_non_broadcast_call(function_expr)
         source = args_to_selectors(function_expr.args[2:end])
