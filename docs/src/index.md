@@ -338,7 +338,7 @@ example the result of `@transform(df, @byrow :y = f(:x))` and
 ## Propagating missing values with `@passmissing`
 
 Many Julia functions do not automatically propagate missing values. For instance, 
-`parse(Int, missing)` will throw an error. 
+`parse(Int, missing)` will error. 
 
 Missings.jl provides the `passmissing` function-wrapper to help get around these
 roadblocks: `passmissing(f)(args...)` will return `missing` if any of `args` is
@@ -616,7 +616,7 @@ will not throw an error even though
 transform(df, [:A, "B"] => (+) => :y)
 ```
 
-will throw an error in DataFrames. 
+will in DataFrames. 
 
 For consistency, this restriction in the input column types also applies to `@with`
 and `@eachrow`. You cannot mix integer column references with `Symbol` or string column 
