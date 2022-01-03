@@ -610,13 +610,13 @@ Consequently,
 @transform(df, :y = :A + $"B")
 ```
 
-will not throw an error even though 
+will not error even though 
 
 ```
 transform(df, [:A, "B"] => (+) => :y)
 ```
 
-will in DataFrames. 
+will error in DataFrames. 
 
 For consistency, this restriction in the input column types also applies to `@with`
 and `@eachrow`. You cannot mix integer column references with `Symbol` or string column 
