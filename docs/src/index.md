@@ -337,7 +337,7 @@ example the result of `@transform(df, @byrow :y = f(:x))` and
 
 ## Propagating missing values with `@passmissing`
 
-Many Julia functions to not automatically propagate missing values. For instance, 
+Many Julia functions do not automatically propagate missing values. For instance, 
 `parse(Int, missing)` will error. 
 
 Missings.jl provides the `passmissing` function-wrapper to help get around these
