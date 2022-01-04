@@ -4,16 +4,18 @@ using Test
 using DataFramesMeta
 
 @testset "function_compilation" begin
+    @eval begin
+        df = DataFrame(a = [1], b = [2])
+
+        testfun(x, y) = x .* y
+        testdotfun(x, y) = x * y
+        testnt(x) = (c = x,)
+    end
+
     # Lazy way of making sure all functions are pre-compiled.
     # @eval prevents julia from caching the intermediate anonymous functions.
     for _ in 1:2
         @eval begin
-            df = DataFrame(a = [1], b = [2])
-
-            testfun(x, y) = x .* y
-            testdotfun(x, y) = x * y
-            testnt(x) = (c = x,)
-
             @test @select(df, :c =  :a + :b) == DataFrame(c = [3])
 
             fasttime = @timed @select(df, :c =  :a + :b)
@@ -187,4 +189,40 @@ using DataFramesMeta
         end
     end
 end
+
+@testset "composed compilation" begin
+    @eval begin
+        df = DataFrame(a = [1], b = [2])
+
+        f(x) = identity(x)
+        g(x, y) = x + y
+
+        df_wide = DataFrame(rand(10, 1000), :auto)
+    end
+
+    for _ in 1:2
+        @eval begin
+            @test @select(df, :y = (f ∘ g)(:a, :b)).y == [3]
+
+            fasttime = @timed @select(df, :y = (f ∘ g)(:a, :b))
+            slowtime = @timed select(df, [:a, :b] => ((a, b) -> (f ∘ g)(a, b)) => :y )
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation")
+
+            @test @select(df, :y = (f ∘ g).(:a, :b)).y == [3]
+
+            fasttime = @timed @select(df, :y = (f ∘ g).(:a, :b))
+            slowtime = @timed select(df, [:a, :b] => ((a, b) -> (f ∘ g).(a, b)) => :y )
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation")
+
+            fasttime = @timed @rselect df_wide :y = (sum ∘ skipmissing)(AsTable(:))
+            slowtime = @timed select(df_wide, AsTable(:) => ByRow(t -> (sum ∘ skipmissing)(t)) => :y)
+
+            (slowtime[2] > fasttime[2]) || @warn("Slow compilation")
+        end
+    end
+
+    t = DataFramesMeta.@col :y = (identity ∘ first)(:x)
+    @test t == ([:x] => (identity ∘ first => :y))
+end
+
 end # module
