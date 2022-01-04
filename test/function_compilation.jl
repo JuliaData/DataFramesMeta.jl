@@ -221,6 +221,8 @@ end
         end
     end
 
+    t = DataFramesMeta.@col :y = (identity ∘ first)(:x)
+    @test t == ([:x] => (identity ∘ first => :y))
 end
 
 end # module
