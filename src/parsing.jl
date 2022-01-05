@@ -93,7 +93,6 @@ function is_nested_fun_recursive(x::Expr, nested_once)
         return false
     end
 end
-
 make_composed(x) = x
 function make_composed(x::Expr)
     funs = Any[]
@@ -106,7 +105,7 @@ function make_composed(x::Expr)
             if !isempty(funs)
                 push!(funs, x.args[1])
                 # ∘(f, g, h)(:x, :y, :z)
-                return Expr(:call, Expr(:call, :∘, funs...), x.args[2:end]...)
+                return Expr(:call, Expr(:call, ∘, funs...), x.args[2:end]...)
             else
                 throw(Argumenterror("Not eligible for function composition"))
             end
