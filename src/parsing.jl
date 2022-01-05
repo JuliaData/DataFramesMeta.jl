@@ -97,18 +97,16 @@ make_composed(x) = x
 function make_composed(x::Expr)
     funs = Any[]
     x_orig = x
+    nested_once = false
     while true
         if is_nested_fun(x)
             push!(funs, x.args[1])
             x = x.args[2]
-        elseif is_simple_non_broadcast_call(x)
-            if !isempty(funs)
+            nested_once = true
+        elseif is_simple_non_broadcast_call(x) && nested_once
                 push!(funs, x.args[1])
                 # ∘(f, g, h)(:x, :y, :z)
                 return Expr(:call, Expr(:call, ∘, funs...), x.args[2:end]...)
-            else
-                throw(Argumenterror("Not eligible for function composition"))
-            end
         else
             throw(Argumenterror("Not eligible for function composition"))
         end
