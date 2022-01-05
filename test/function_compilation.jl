@@ -229,15 +229,40 @@ end
             slowtime = @timed select(df_wide, AsTable(:) => ByRow(t -> sum(skipmissing(t))) => :y)
 
             (slowtime[2] > fasttime[2]) || @warn("Slow compilation")
-
         end
     end
+
+    # Tests for correctness
+    t = @select df :y = sum(skipmissing(AsTable([:a, :b])))
+    @test t == DataFrame(y = [3])
+
+    t = @select df :y = f(g(:a, :b))
+    @test t == DataFrame(y = [3])
+
+    a_str = "a"
+    b_str = "b"
+
+    t = @select df :y = f(g($a_str, $(b_str)))
+    @test t == DataFrame(y = [3])
+
+    t = @select df :y = f(g(:a, $b_str))
+    @test t == DataFrame(y = [3])
+
+    t = @select df :y = sum(skipmissing(AsTable(Cols(:))))
+    @test t == DataFrame(y = [3])
+
+    t = @select df :y = sum(skipmissing(AsTable(Cols(:))))
+    @test t == DataFrame(y = [3])
 
     t = DataFramesMeta.@col :y = (identity ∘ first)(:x)
     @test t == ([:x] => (identity ∘ first => :y))
 
     t = DataFramesMeta.@col :y = identity(first(:x))
     @test t == ([:x] => (identity ∘ first => :y))
+
+    t = DataFramesMeta.@col :y = identity(first(AsTable(Cols(:))))
+
+    @test t == (AsTable(Cols(:)) => ((identity ∘ first) => :y))
 end
 
 end # module
