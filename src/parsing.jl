@@ -68,15 +68,15 @@ function composed_or_symbol(x::Expr)
 end
 
 is_call(x) = false
-is_call(x::Expr) = x.head == :call
+is_call(x::Expr) = x.head === :call
 
 is_nested_fun(x) = false
 function is_nested_fun(x::Expr)
-    x.head == :call &&
+    x.head === :call &&
     length(x.args) == 2 &&
     is_call(x.args[2]) &&
     # AsTable(:x) or `$(:x)`
-    get_column_expr(x.args[2]) == nothing
+    return get_column_expr(x.args[2]) === nothing
 end
 
 is_nested_fun_recursive(x, nested_once) = false
@@ -84,11 +84,7 @@ function is_nested_fun_recursive(x::Expr, nested_once)
     if is_nested_fun(x)
         return is_nested_fun_recursive(x.args[2], true)
     elseif is_simple_non_broadcast_call(x)
-        if nested_once
-            return true
-        else
-            return false
-        end
+        return nested_once
     else
         return false
     end
@@ -104,11 +100,11 @@ function make_composed(x::Expr)
             x = x.args[2]
             nested_once = true
         elseif is_simple_non_broadcast_call(x) && nested_once
-                push!(funs, x.args[1])
-                # ∘(f, g, h)(:x, :y, :z)
-                return Expr(:call, Expr(:call, ∘, funs...), x.args[2:end]...)
+            push!(funs, x.args[1])
+            # ∘(f, g, h)(:x, :y, :z)
+            return Expr(:call, Expr(:call, ∘, funs...), x.args[2:end]...)
         else
-            throw(Argumenterror("Not eligible for function composition"))
+            throw(ArgumentError("Not eligible for function composition"))
         end
     end
 end
