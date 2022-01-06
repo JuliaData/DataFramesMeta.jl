@@ -67,6 +67,48 @@ function composed_or_symbol(x::Expr)
         all(composed_or_symbol, x.args[2:end])
 end
 
+is_call(x) = false
+is_call(x::Expr) = x.head === :call
+
+is_nested_fun(x) = false
+function is_nested_fun(x::Expr)
+    x.head === :call &&
+    length(x.args) == 2 &&
+    is_call(x.args[2]) &&
+    # AsTable(:x) or `$(:x)`
+    return get_column_expr(x.args[2]) === nothing
+end
+
+is_nested_fun_recursive(x, nested_once) = false
+function is_nested_fun_recursive(x::Expr, nested_once)
+    if is_nested_fun(x)
+        return is_nested_fun_recursive(x.args[2], true)
+    elseif is_simple_non_broadcast_call(x)
+        return nested_once
+    else
+        return false
+    end
+end
+make_composed(x) = x
+function make_composed(x::Expr)
+    funs = Any[]
+    x_orig = x
+    nested_once = false
+    while true
+        if is_nested_fun(x)
+            push!(funs, x.args[1])
+            x = x.args[2]
+            nested_once = true
+        elseif is_simple_non_broadcast_call(x) && nested_once
+            push!(funs, x.args[1])
+            # ∘(f, g, h)(:x, :y, :z)
+            return Expr(:call, Expr(:call, ∘, funs...), x.args[2:end]...)
+        else
+            throw(ArgumentError("Not eligible for function composition"))
+        end
+    end
+end
+
 is_simple_non_broadcast_call(x) = false
 function is_simple_non_broadcast_call(expr::Expr)
     expr.head == :call &&
@@ -214,6 +256,11 @@ function get_source_fun(function_expr; exprflags = deepcopy(DEFAULT_FLAGS))
         source = args_to_selectors(function_expr.args[2].args)
         fun_t = function_expr.args[1]
         fun = :(DataFrames.ByRow($fun_t))
+    elseif is_nested_fun_recursive(function_expr, false)
+        composed_expr = make_composed(function_expr)
+        # Repeat clean up from simple non-broadcast above
+        source = args_to_selectors(composed_expr.args[2:end])
+        fun = composed_expr.args[1]
     else
         membernames = Dict{Any, Symbol}()
 
