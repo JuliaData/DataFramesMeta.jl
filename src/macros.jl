@@ -1408,6 +1408,8 @@ See [`@transform`](@ref) for details.
 
 ### Examples
 ```jldoctest
+julia> using DataFramesMeta
+
 julia> df = DataFrame(x = 1:5, y = 11:15)
 5×2 DataFrame
  Row │ x      y
@@ -1687,6 +1689,8 @@ default. See [`@select`](@ref) for details.
 
 ### Examples
 ```jldoctest
+julia> using DataFramesMeta
+
 julia> df = DataFrame(x = 1:5, y = 10:14)
 5×2 DataFrame
  Row │ x      y
