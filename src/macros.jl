@@ -732,7 +732,7 @@ function subset_helper(x, args...)
     exprs, outer_flags = create_args_vector(args...)
     t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
     quote
-        $subset($x, $(t...); skipmissing=true, $(kw...))
+        $subset($x, $(t...); (skipmissing = true,)..., $(kw...))
     end
 end
 
