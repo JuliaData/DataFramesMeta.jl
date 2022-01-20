@@ -1,3 +1,15 @@
+function get_df_args_kwargs(x, args...)
+    if x isa Expr && x.head === :parameters
+        kw = x.args
+        x = first(args)
+        args = args[2:end]
+    else
+        kw = []
+    end
+
+    return (x, args, kw)
+end
+
 function addkey!(membernames, nam)
     if !haskey(membernames, nam)
         membernames[nam] = gensym()
