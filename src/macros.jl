@@ -887,10 +887,11 @@ macro subset(x, args...)
 end
 
 function rsubset_helper(x, args...)
+    x, args, kw = get_df_args_kwargs(x, args...)
     exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
     t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
     quote
-        $subset($x, $(t...); skipmissing=true)
+        $subset($x, $(t...); (skipmissing = true,)..., $(kw...))
     end
 end
 
@@ -917,18 +918,20 @@ macro where(x, args...)
 end
 
 function subset!_helper(x, args...)
+    x, args, kw = get_df_args_kwargs(x, args...)
     exprs, outer_flags = create_args_vector(args...)
     t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
     quote
-        $subset!($x, $(t...); skipmissing=true)
+        $subset!($x, $(t...); (;skipmissing = true,)..., $(kw...))
     end
 end
 
 function rsubset!_helper(x, args...)
+    x, args, kw = get_df_args_kwargs(x, args...)
     exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
     t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
     quote
-        $subset!($x, $(t...); skipmissing=true)
+        $subset!($x, $(t...); (skipmissing = true,)..., $(kw...))
     end
 end
 
@@ -1095,7 +1098,7 @@ end
 ## @orderby
 ##
 ##############################################################################
-
+# TODO: Determine which keyword arguments to expose to user
 function orderby_helper(x, args...)
     exprs, outer_flags = create_args_vector(args...)
     t = (fun_to_vec(ex; gensym_names = true, outer_flags = outer_flags) for ex in exprs)
@@ -1258,7 +1261,7 @@ function rorderby_helper(x, args...)
     exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
     t = (fun_to_vec(ex; gensym_names=true, outer_flags=outer_flags) for ex in exprs)
     quote
-        $DataFramesMeta.orderby($x, $(t...))
+        $orderby($x, $(t...))
     end
 end
 
@@ -1281,10 +1284,11 @@ end
 
 
 function transform_helper(x, args...)
+    x, args, kw = get_df_args_kwargs(x, args...)
     exprs, outer_flags = create_args_vector(args...)
     t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
     quote
-        $DataFrames.transform($x, $(t...))
+        $transform($x, $(t...);  $(kw...))
     end
 end
 
@@ -1393,11 +1397,12 @@ macro transform(x, args...)
 end
 
 function rtransform_helper(x, args...)
+    x, args, kw = get_df_args_kwargs(x, args...)
     exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
 
     t = (fun_to_vec(ex; gensym_names=false, outer_flags=outer_flags) for ex in exprs)
     quote
-        $DataFrames.transform($x, $(t...))
+        $transform($x, $(t...); $(kw...))
     end
 end
 
@@ -1419,10 +1424,11 @@ end
 
 
 function transform!_helper(x, args...)
+    x, args, kw = get_df_args_kwargs(x, args...)
     exprs, outer_flags = create_args_vector(args...)
     t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
     quote
-        $DataFrames.transform!($x, $(t...))
+        $transform!($x, $(t...); $(kw...))
     end
 end
 
@@ -1512,11 +1518,12 @@ macro transform!(x, args...)
 end
 
 function rtransform!_helper(x, args...)
+    x, args, kw = get_df_args_kwargs(x, args...)
     exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
 
     t = (fun_to_vec(ex; gensym_names=false, outer_flags=outer_flags) for ex in exprs)
     quote
-        $DataFrames.transform!($x, $(t...))
+        $transform!($x, $(t...); $(kw...))
     end
 end
 
@@ -1536,10 +1543,11 @@ end
 ##############################################################################
 
 function select_helper(x, args...)
+    x, args, kw = get_df_args_kwargs(x, args...)
     exprs, outer_flags = create_args_vector(args...)
     t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
     quote
-        $DataFrames.select($x, $(t...))
+        $select($x, $(t...); $(kw...))
     end
 end
 
@@ -1647,11 +1655,12 @@ macro select(x, args...)
 end
 
 function rselect_helper(x, args...)
+    x, args, kw = get_df_args_kwargs(x, args...)
     exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
 
     t = (fun_to_vec(ex; gensym_names=false, outer_flags=outer_flags) for ex in exprs)
     quote
-        $DataFrames.select($x, $(t...))
+        $select($x, $(t...); $(kw...))
     end
 end
 
@@ -1673,10 +1682,11 @@ end
 ##############################################################################
 
 function select!_helper(x, args...)
+    x, args, kw = get_df_args_kwargs(x, args...)
     exprs, outer_flags = create_args_vector(args...)
     t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
     quote
-        $DataFrames.select!($x, $(t...))
+        $select!($x, $(t...); $(kw...))
     end
 end
 
@@ -1779,11 +1789,12 @@ macro select!(x, args...)
 end
 
 function rselect!_helper(x, args...)
+    x, args, kw = get_df_args_kwargs(x, args...)
     exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
 
     t = (fun_to_vec(ex; gensym_names=false, outer_flags=outer_flags) for ex in exprs)
     quote
-        $DataFrames.select!($x, $(t...))
+        $select!($x, $(t...); $(kw...))
     end
 end
 
@@ -1804,6 +1815,7 @@ end
 ##############################################################################
 
 function combine_helper(x, args...; deprecation_warning = false)
+    x, args, kw = get_df_args_kwargs(x, args...)
     deprecation_warning && @warn "`@based_on` is deprecated. Use `@combine` instead."
 
     exprs, outer_flags = create_args_vector(args...)
@@ -1811,7 +1823,7 @@ function combine_helper(x, args...; deprecation_warning = false)
     t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
 
     quote
-        $DataFrames.combine($x, $(t...))
+        $combine($x, $(t...); $(kw...))
     end
 end
 
@@ -1917,13 +1929,14 @@ end
 ##############################################################################
 
 function by_helper(x, what, args...)
-    # Only allow one argument when returning a Table object
+    # TODO: Determine keyword arguments sent to gropby
+    x, args, kw = get_df_args_kwargs(x, args...)
     exprs, outer_flags = create_args_vector(args...)
 
     t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
 
     quote
-        $DataFrames.combine($groupby($x, $what), $(t...))
+        $combine($groupby($x, $what), $(t...); $(kw...))
     end
 end
 
