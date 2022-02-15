@@ -899,6 +899,41 @@ end
 
 Row-wise version of `@subset`, i.e. all operations use `@byrow` by
 default. See [`@subset`](@ref) for details.
+
+Use this function as an alternative to placing the `.` to broadcast row-wise operations.
+
+### Examples
+```jldoctest
+julia> using DataFramesMeta
+
+julia> df = DataFrame(A=1:5, B=["apple", "pear", "apple", "orange", "pear"])
+5×2 DataFrame
+ Row │ A      B
+     │ Int64  String
+─────┼───────────────
+   1 │     1  apple
+   2 │     2  pear
+   3 │     3  apple
+   4 │     4  orange
+   5 │     5  pear
+
+julia> @rsubset df :A > 3
+2×2 DataFrame
+ Row │ A      B
+     │ Int64  String
+─────┼───────────────
+   1 │     4  orange
+   2 │     5  pear
+
+julia> @rsubset df :A > 3 || :B == "pear"
+3×2 DataFrame
+Row │ A      B
+    │ Int64  String
+─────┼───────────────
+    1 │     2  pear
+    2 │     4  orange
+    3 │     5  pear
+```
 """
 macro rsubset(x, args...)
     esc(rsubset_helper(x, args...))
@@ -1262,10 +1297,52 @@ function rorderby_helper(x, args...)
 end
 
 """
-    rorderby(d, args...)
+    @rorderby(d, args...)
 
 Row-wise version of `@orderby`, i.e. all operations use `@byrow` by
 default. See [`@orderby`](@ref) for details.
+
+Use this function as an alternative to placing the `.` to broadcast row-wise operations.
+
+### Examples
+```jldoctest
+julia> using DataFramesMeta
+
+julia> df = DataFrame(x = [8,8,-8,7,7,-7], y = [-1, 1, -2, 2, -3, 3])
+6×2 DataFrame
+ Row │ x      y
+     │ Int64  Int64
+─────┼──────────────
+   1 │     8     -1
+   2 │     8      1
+   3 │    -8     -2
+   4 │     7      2
+   5 │     7     -3
+   6 │    -7      3
+
+julia> @rorderby df abs(:x) (:x * :y^3)
+ Row │ x      y
+     │ Int64  Int64
+─────┼──────────────
+   1 │     7     -3
+   2 │    -7      3
+   3 │     7      2
+   4 │     8     -1
+   5 │     8      1
+   6 │    -8     -2
+
+julia>  @rorderby df :y == 2 ? -:x : :y
+6×2 DataFrame
+ Row │ x      y
+     │ Int64  Int64
+─────┼──────────────
+   1 │     7      2
+   2 │     7     -3
+   3 │    -8     -2
+   4 │     8     -1
+   5 │     8      1
+   6 │    -7      3
+```
 """
 macro rorderby(d, args...)
     esc(rorderby_helper(d, args...))
