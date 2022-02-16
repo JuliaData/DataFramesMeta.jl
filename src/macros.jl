@@ -927,9 +927,9 @@ julia> @rsubset df :A > 3
 
 julia> @rsubset df :A > 3 || :B == "pear"
 3×2 DataFrame
-Row │ A      B
-    │ Int64  String
-─────┼───────────────
+  Row │ A      B
+      │ Int64  String
+ ─────┼───────────────
     1 │     2  pear
     2 │     4  orange
     3 │     5  pear
