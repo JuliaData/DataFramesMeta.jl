@@ -277,7 +277,7 @@ The `@transform` macro will add new columns to the data frame. Like with other m
 @rtransform msleep :rem_proportion = :sleep_rem / :sleep_total
 ```
 
-You can many new columns using `@transform` by placing multiple operations in a block.
+You can add multiple columns at a time by placing the operations in a block.
 
 ```@repl 1
 @rtransform msleep begin 
