@@ -1,3 +1,10 @@
+# DataFramesMeta v0.11.0 Release notes
+
+* Allow `AsTable` on the RHS of transformations. This allows one to work with collections of columns programtically, such as taking the row-wise `mean` of many columns. ([#307](https://github.com/JuliaData/DataFramesMeta.jl/pull/307))
+* Expressions on the RHS of the form `f ∘ g` will now be passed directly to the underlying `transform` call without modification, reducing compilation latency. ([#317](https://github.com/JuliaData/DataFramesMeta.jl/pull/317))
+* Nested functions, of the form `f(g(:x))` will be transformed to `f ∘ g(:x)`, further reducing latency. ([#319](https://github.com/JuliaData/DataFramesMeta.jl/pull/319))
+* Improvements to documentation ([#305](https://github.com/JuliaData/DataFramesMeta.jl/pull/305), [#314](https://github.com/JuliaData/DataFramesMeta.jl/pull/314), [#315](https://github.com/JuliaData/DataFramesMeta.jl/pull/315), [#318](https://github.com/JuliaData/DataFramesMeta.jl/pull/318), [#322](https://github.com/JuliaData/DataFramesMeta.jl/pull/322), [#326](https://github.com/JuliaData/DataFramesMeta.jl/pull/326))
+
 # DataFramesMeta v0.10.0 Release notes
 
 * Add the `@astable` macro-flag to construct multiple inter-dependent columns at once. ([#298](https://github.com/JuliaData/DataFramesMeta.jl/pull/298)). 
