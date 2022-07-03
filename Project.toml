@@ -10,7 +10,7 @@ OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 
 [compat]
-Chain = "0.4"
+Chain = "0.4, 0.5"
 DataFrames = "1"
 MacroTools = "0.5"
 Reexport = "0.2, 1"
