@@ -46,9 +46,6 @@ function eachrow_find_newcols(e::Expr, newcol_decl)
         # expression to assign a new column to df
         return (nothing, Any[Expr(:(=), ea.args[1], Expr(:call, ea.args[2], :undef, :_N))])
     else
-        if isempty(e.args)
-            return (e.args, Any[])
-        end
         newargs = Any[]
         for ea in e.args
             (nea, newcol) = eachrow_find_newcols(ea, newcol_decl)
