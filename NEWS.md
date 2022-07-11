@@ -8,7 +8,7 @@
   end
   ```
   
-  creates a `let` scope and thus `x` is not visible outside the `@chain` block. In version 0.5, the above macro does *not* create a `let` scope, making `x` accessible outside the block. To restore 0.4 behavior, write `@chain let ...`. Because this a breaking change of a dependency, we also release a version bump of DataFramesMeta.jl
+  creates a `let` scope and thus `x` is not visible outside the `@chain` block. In version 0.5, the above macro does *not* create a `let` scope, making `x` accessible outside the block. To restore 0.4 behavior, write `@chain let ...`. Because this a breaking change of a dependency, we also release a version bump of DataFramesMeta.jl. [#332](https://github.com/JuliaData/DataFramesMeta.jl/pull/332)
 
 # DataFramesMeta v0.11.0 Release notes
 
