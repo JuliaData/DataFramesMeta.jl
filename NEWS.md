@@ -1,3 +1,15 @@
+# DataFramesMeta v0.12.0 Release notes
+* Add support for Chain.jl version 0.5, and remove support for Chain.jl 0.4. In Chain.jl 0.4, the command
+
+  ```
+  chain df begin 
+      f(df)
+      @aside x = 1
+  end
+  ```
+  
+  creates a `let` scope and thus `x` is not visible outside the `@chain` block. In version 0.5, the above macro does *not* create a `let` scope, making `x` accessible outside the block. To restore 0.4 behavior, write `@chain let ...`. Because this a breaking change of a dependency, we also release a version bump of DataFramesMeta.jl. ([#332](https://github.com/JuliaData/DataFramesMeta.jl/pull/332))
+
 # DataFramesMeta v0.11.0 Release notes
 
 * Allow `AsTable` on the RHS of transformations. This allows one to work with collections of columns programtically, such as taking the row-wise `mean` of many columns. ([#307](https://github.com/JuliaData/DataFramesMeta.jl/pull/307))
