@@ -109,6 +109,12 @@ Like with `@transform`, `@eachrow` supports the use of `$DOLLAR` to work with co
 stored as variables. Using `$DOLLAR` with a multi-column selector, such as a `Vector` of
 `Symbol`s, is currently unsupported.
 
+`@eachrow` is a thin wrapper around a `for`-loop. As a consequence, inside an `@eachrow`
+block, the reserved-word arguments `break` and `continue` function the same as if written
+in a `for` loop. Rows unaffected by `break` and `continue` are unmodified, but are still
+present in the returned data frame. Also because `@eachrow` is a `for`-loop, re-assigning
+global variables inside an `@eachrow` block is discouraged.
+
 ### Arguments
 
 * `df` : an `AbstractDataFrame`
@@ -198,6 +204,13 @@ julia> @eachrow df begin
    2 │     2      1  1.66667
    3 │     3      2  1.22222
 
+julia> @eachrow df begin
+           :A == 2 && continue
+           println(:A)
+       end;
+1
+3
+
 ```
 """
 macro eachrow(df, body)
@@ -249,6 +262,12 @@ a fresh data frame.
 Like with `@transform!`, `@eachrow!` supports the use of `$DOLLAR` to work with column names
 stored as variables. Using `$DOLLAR` with a multi-column selector, such as a `Vector` of
 `Symbol`s, is currently unsupported.
+
+`@eachrow!` is a thin wrapper around a `for`-loop. As a consequence, inside an `@eachrow!`
+block, the reserved-word arguments `break` and `continue` function the same as if written
+in a `for` loop. Rows unaffected by `break` and `continue` are unmodified, but are still
+present in modified. Also because `@eachrow!` is a `for`-loop, re-assigning
+global variables inside an `@eachrow` block is discouraged.
 
 ### Arguments
 
@@ -346,6 +365,13 @@ julia> @eachrow! df begin
    1 │     1      2  2.0
    2 │     2      1  1.66667
    3 │     3      2  1.22222
+
+julia> @eachrow! df begin
+           :A == 2 && continue
+           println(:A)
+       end;
+1
+3
 ```
 """
 macro eachrow!(df, body)
