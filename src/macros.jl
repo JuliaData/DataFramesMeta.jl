@@ -499,6 +499,10 @@ macro astable(args...)
     throw(ArgumentError("@astable only works inside DataFramesMeta macros."))
 end
 
+macro kwarg(args...)
+    throw(ArgumentError("@kwarg only works inside DataFramesMeta macros."))
+end
+
 ##############################################################################
 ##
 ## @with

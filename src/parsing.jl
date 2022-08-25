@@ -1,15 +1,3 @@
-function get_df_args_kwargs(x, args...)
-    if x isa Expr && x.head === :parameters
-        kw = x.args
-        x = first(args)
-        args = args[2:end]
-    else
-        kw = []
-    end
-
-    return (x, args, kw)
-end
-
 function addkey!(membernames, nam)
     if !haskey(membernames, nam)
         membernames[nam] = gensym()
@@ -412,6 +400,28 @@ function make_source_concrete(x::AbstractVector)
     end
 end
 
+
+function get_df_args_kwargs(x, args...; wrap_byrow = false)
+    kw = []
+    if x isa Expr && x.head === :parameters
+        append!(kw, x.args)
+        x = first(args)
+        args = args[2:end]
+    end
+
+    @show kw
+    @show args
+
+    for x in args
+        @show x
+        if is_macro_head(x, "@kwarg")
+            dump(x)
+        end
+    end
+
+    return (x, args, kw)
+end
+
 function create_args_vector(args...; wrap_byrow::Bool=false)
     create_args_vector(Expr(:block, args...); wrap_byrow = wrap_byrow)
 end
@@ -428,6 +438,8 @@ the block as an array. If a simple expression,
 wrap the expression in a one-element vector.
 """
 function create_args_vector(arg; wrap_byrow::Bool=false)
+    # TODO: Pass vector of keyword arguments to this function
+    # and modify by detecting presence of `@kwarg`.
     arg, outer_flags = extract_macro_flags(MacroTools.unblock(arg))
 
     if wrap_byrow
@@ -438,8 +450,10 @@ function create_args_vector(arg; wrap_byrow::Bool=false)
         outer_flags[BYROW_SYM][] = true
     end
 
+    # @astable means the whole block is one transformation
     if arg isa Expr && arg.head == :block && !outer_flags[ASTABLE_SYM][]
         x = MacroTools.rmlines(arg).args
+        # TODO: Detect for keyword arguments at this stage
     else
         x = Any[arg]
     end
