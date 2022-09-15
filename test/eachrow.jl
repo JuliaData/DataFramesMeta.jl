@@ -195,4 +195,31 @@ end
     @test res.b == [2, 5]
 end
 
+@testset "#334" begin
+    df = DataFrame(x = [1, 2, 3])
+    s = Ref(0)
+    @eachrow df begin
+        continue
+        s[] = 100
+    end
+    @test s[] == 0
+
+    s = Ref(0)
+    @eachrow df begin
+        for i in 1:10
+            continue
+            s[] = 100
+        end
+        s[] = s[] + 1
+    end
+    @test s[] == 3
+
+    s = Ref(0)
+    @eachrow df begin
+        break
+        s[] = 100
+    end
+    @test s[] == 0
+end
+
 end # module
