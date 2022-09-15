@@ -409,21 +409,22 @@ function get_df_args_kwargs(x, args...; wrap_byrow = false)
         args = args[2:end]
     end
 
-    @show kw
-    @show args
+    transforms, outer_flags, kw = create_args_vector!(kw, args...; wrap_byrow = wrap_byrow)
 
-    for x in args
-        @show x
-        if is_macro_head(x, "@kwarg")
-            dump(x)
-        end
-    end
 
-    return (x, args, kw)
+    return (x, transforms, outer_flags, kw)
 end
 
-function create_args_vector(args...; wrap_byrow::Bool=false)
-    create_args_vector(Expr(:block, args...); wrap_byrow = wrap_byrow)
+function create_args_vector!(kw, args...; wrap_byrow::Bool=false)
+    create_args_vector!(kw, Expr(:block, args...); wrap_byrow = wrap_byrow)
+end
+
+function get_kw_from_macro_call(e::Expr)
+    nv = e.args[3]
+    nme = nv.args[1]
+    val = nv.args[2]
+
+    Expr(:kw, nme, val)
 end
 
 """
@@ -437,7 +438,7 @@ If a `:block` expression, return the `args` of
 the block as an array. If a simple expression,
 wrap the expression in a one-element vector.
 """
-function create_args_vector(arg; wrap_byrow::Bool=false)
+function create_args_vector!(kw, arg; wrap_byrow::Bool=false)
     # TODO: Pass vector of keyword arguments to this function
     # and modify by detecting presence of `@kwarg`.
     arg, outer_flags = extract_macro_flags(MacroTools.unblock(arg))
@@ -453,10 +454,24 @@ function create_args_vector(arg; wrap_byrow::Bool=false)
     # @astable means the whole block is one transformation
     if arg isa Expr && arg.head == :block && !outer_flags[ASTABLE_SYM][]
         x = MacroTools.rmlines(arg).args
-        # TODO: Detect for keyword arguments at this stage
+        kw = []
+        transforms = []
+        seen_kw = false
+        for xi in x
+            if is_macro_head(xi, "@kwarg")
+                kw_item = get_kw_from_macro_call(xi)
+                push!(kw, kw_item)
+                seen_kw = true
+            else
+                if seen_kw
+                    throw(ArgumentError("@kwarg calls must be at end of block"))
+                end
+                push!(transforms, xi)
+            end
+        end
     else
-        x = Any[arg]
+        transforms = Any[arg]
     end
 
-    return x, outer_flags
+    return transforms, outer_flags, kw
 end

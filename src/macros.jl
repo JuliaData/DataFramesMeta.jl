@@ -1401,8 +1401,7 @@ macro transform(x, args...)
 end
 
 function rtransform_helper(x, args...)
-    x, args, kw = get_df_args_kwargs(x, args...)
-    exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = true)
 
     t = (fun_to_vec(ex; gensym_names=false, outer_flags=outer_flags) for ex in exprs)
     quote
