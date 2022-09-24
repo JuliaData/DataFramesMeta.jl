@@ -741,10 +741,10 @@ function subset_helper(x, args...)
 end
 
 function where_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...)
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)
     t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
     quote
-        $subset($x, $(t...); skipmissing=true)
+        $subset($x, $(t...); skipmissing=true, $(kw...))
     end
 end
 
@@ -1104,10 +1104,10 @@ end
 ##############################################################################
 # TODO: Determine which keyword arguments to expose to user
 function orderby_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...)
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)
     t = (fun_to_vec(ex; gensym_names = true, outer_flags = outer_flags) for ex in exprs)
     quote
-        $DataFramesMeta.orderby($x, $(t...))
+        $orderby($x, $(t...); $(kw...))
     end
 end
 
@@ -1262,10 +1262,10 @@ macro orderby(d, args...)
 end
 
 function rorderby_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = true)
     t = (fun_to_vec(ex; gensym_names=true, outer_flags=outer_flags) for ex in exprs)
     quote
-        $orderby($x, $(t...))
+        $orderby($x, $(t...); $(kw...))
     end
 end
 
