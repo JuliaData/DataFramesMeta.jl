@@ -411,7 +411,6 @@ function get_df_args_kwargs(x, args...; wrap_byrow = false)
 
     transforms, outer_flags, kw = create_args_vector!(kw, args...; wrap_byrow = wrap_byrow)
 
-
     return (x, transforms, outer_flags, kw)
 end
 

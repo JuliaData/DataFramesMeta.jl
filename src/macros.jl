@@ -1928,7 +1928,15 @@ end
 ##############################################################################
 
 function by_helper(x, what, args...)
-    # TODO: Determine keyword arguments sent to gropby
+    # Handle keyword arguments initially due the gouping instruction, what
+    if x isa Expr && x.head === :parameters
+        # with keyword arguments, everything is shifted to
+        # the right
+        new_what = args[1]
+        args = (what, args...)
+        what = new_what
+    end
+
     x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)
 
     t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
