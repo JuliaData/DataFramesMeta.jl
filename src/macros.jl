@@ -1933,7 +1933,7 @@ function by_helper(x, what, args...)
         # with keyword arguments, everything is shifted to
         # the right
         new_what = args[1]
-        args = (what, args...)
+        args = (what, args[2:end]...)
         what = new_what
     end
 
