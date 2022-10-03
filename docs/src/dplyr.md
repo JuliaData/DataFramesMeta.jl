@@ -270,7 +270,7 @@ end
 ```
 
 Alternatively, using the StatsBase.jl package you could have written `ordinalrank(:sleep_total, rev=true)`.
-Finally, if you wanted to avoid using an additional package you could use the following expression `invperm([sortperm(:sleep_total, rev=true))`.
+Finally, if you wanted to avoid using an additional package you could use the following expression `invperm(sortperm(:sleep_total, rev=true))`.
 
 ## Create New Columns Using `@transform` and `@rtransform`
 
