@@ -272,6 +272,17 @@ end
 Alternatively, using the StatsBase.jl package you could have written `ordinalrank(:sleep_total, rev=true)`.
 Finally, if you wanted to avoid using an additional package you could use the following expression `invperm(sortperm(:sleep_total, rev=true))`.
 
+Here is a minimal example of sorting string column in reverse:
+
+```@repl 1
+using StatsBase
+df = DataFrame(group=[1, 2, 1, 2, 1], name = ["Bob", "Dexter", "Alice", "Eve", "Cedric"])
+@orderby df begin
+    :group
+    ordinalrank(:name, rev=true)
+end
+```
+
 ## Create New Columns Using `@transform` and `@rtransform`
 
 The `@transform` macro will add new columns to the data frame. Like with other macros, use `@rtransform` to operate row-wise. Create a new column called `:rem_proportion`, which is the ratio of rem sleep to total amount of sleep. 
