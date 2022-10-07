@@ -2408,3 +2408,277 @@ julia> @by df :a begin
 macro by(x, what, args...)
     esc(by_helper(x, what, args...))
 end
+
+##############################################################################
+##
+## @unique - distinct row selection
+##
+##############################################################################
+
+function unique_helper(x, args...)
+    exprs, outer_flags = create_args_vector(args...)
+    t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
+    quote
+        $DataFrames.unique($x, $(t...))
+    end
+end
+
+"""
+    @unique(x, args)
+
+Select unique rows in `AbstractDataFrame`s.
+
+### Arguments
+
+* `d` : an AbstractDataFrame
+* `args` :  keyword-like arguments, of the form `f(:x)` specifying
+symbols to specify identify columns
+
+### Returns
+
+* `::AbstractDataFrame`
+
+Inputs to `@unique` can come in two formats: a `begin ... end` block, or as a series of
+arguments and keyword-like arguments. For example, the following are
+equivalent:
+
+```julia
+@unique df begin 
+    :x + :y
+end
+```
+
+and 
+
+```
+@unique df :x + :y
+```
+
+`@unique` uses the syntax `@byrow` to wrap transformations in
+the `ByRow` function wrapper from DataFrames, apply a function row-wise,
+similar to broadcasting. For example, the call
+
+```
+@unique(df, @byrow :x + :y)
+```
+
+becomes
+
+```
+unique(df, :x => ByRow((x,y) -> x + y))
+```
+
+a transformation which cannot be conveniently expressed
+using broadcasting.
+
+`@unique` allows `@byrow` at the beginning of a block of selections 
+(i.e. `@byrow begin... end`). The transformation in the block will operate by row.
+
+### Examples
+
+```jldoctest
+julia> using DataFramesMeta;
+
+julia> df = DataFrame(x = 1:10, y = 10:-1:1);
+
+julia> @unique(df, :x + :y)
+1×2 DataFrame
+ Row │ x      y      
+     │ Int64  Int64  
+─────┼───────────────
+   1 │     1      10   
+
+julia> @unique df begin
+            :x + :y
+        end
+1×2 DataFrame
+ Row │ x      y      
+     │ Int64  Int64  
+─────┼───────────────
+   1 │     1      10   
+```
+"""
+macro unique(x, args...)
+    esc(unique_helper(x, args...))
+end
+
+function runique_helper(x, args...)
+    exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
+    t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
+    quote
+        $DataFrames.unique($x, $(t...))
+    end
+end
+
+"""
+    runique(d, args...)
+
+Row-wise version of `@unique`, i.e. all operations use `@byrow` by
+default. See [`@unique`](@ref) for details.
+
+### Examples
+```julia
+julia> using DataFramesMeta
+
+julia> df = DataFrame(x = 1:5, y = 5:-1:1)
+5×2 DataFrame
+ Row │ x      y
+     │ Int64  Int64
+─────┼──────────────
+   1 │     1     5
+   2 │     2     4
+   3 │     3     3
+   4 │     4     2
+   5 │     5     1
+   
+julia> @runique(df, :x + :y)
+5×2 DataFrame
+ Row │ x      y
+     │ Int64  Int64
+─────┼──────────────
+   1 │     1     5
+````
+"""
+macro runique(x, args...)
+    esc(runique_helper(x, args...))
+end
+
+##############################################################################
+##
+## @unique! - in-place distinct row selection
+##
+##############################################################################
+
+function unique!_helper(x, args...)
+    exprs, outer_flags = create_args_vector(args...)
+    t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
+    quote
+        $DataFrames.unique!($x, $(t...))
+    end
+end
+
+"""
+    @unique!(x, args)
+
+In-place selection of unique rows in `AbstractDataFrame`s.
+
+### Arguments
+
+* `d` : an AbstractDataFrame
+* `args` :  keyword-like arguments, of the form `f(:x)` specifying
+symbols to specify identify columns
+
+### Returns
+
+* `::AbstractDataFrame`
+
+Inputs to `@unique!` can come in two formats: a `begin ... end` block, or as a series of
+arguments and keyword-like arguments. For example, the following are
+equivalent:
+
+```julia
+@unique! df begin 
+    :x + :y
+end
+```
+
+and 
+
+```
+@unique! df :x + :y
+```
+
+`@unique!` uses the syntax `@byrow` to wrap transformations in
+the `ByRow` function wrapper from DataFrames, apply a function row-wise,
+similar to broadcasting. For example, the call
+
+```
+@unique!(df, @byrow :x + :y)
+```
+
+becomes
+
+```
+unique!(df, :x => ByRow((x,y) -> x + y))
+```
+
+a transformation which cannot be conveniently expressed
+using broadcasting.
+
+`@unique!` allows `@byrow` at the beginning of a block of selections 
+(i.e. `@byrow begin... end`). The transformation in the block will operate by row.
+
+### Examples
+
+```julia
+julia> using DataFramesMeta;
+
+julia> df = DataFrame(x = 1:10, y = 10:-1:1);
+
+julia> @unique!(df, :x + :y)
+1×2 DataFrame
+ Row │ x      y      
+     │ Int64  Int64  
+─────┼───────────────
+   1 │     1      10   
+
+julia> @unique! df begin
+            :x + :y
+        end
+1×2 DataFrame
+ Row │ x      y      
+     │ Int64  Int64  
+─────┼───────────────
+   1 │     1      10   
+```
+"""
+macro unique!(x, args...)
+    esc(unique!_helper(x, args...))
+end
+
+##############################################################################
+##
+## @runique - select distinct rows
+##
+##############################################################################
+
+function runique!_helper(x, args...)
+    exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
+    t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
+    quote
+        $DataFrames.unique!($x, $(t...))
+    end
+end
+
+"""
+    runique(d, args...)
+
+Row-wise version of `@unique!`, i.e. all operations use `@byrow` by
+default. See [`@unique!`](@ref) for details.
+
+### Examples
+```julia
+julia> using DataFramesMeta
+
+julia> df = DataFrame(x = 1:5, y = 5:-1:1)
+5×2 DataFrame
+ Row │ x      y
+     │ Int64  Int64
+─────┼──────────────
+   1 │     1     5
+   2 │     2     4
+   3 │     3     3
+   4 │     4     2
+   5 │     5     1
+   
+julia> @runique!(df, :x + :y)
+5×2 DataFrame
+ Row │ x      y
+     │ Int64  Int64
+─────┼──────────────
+   1 │     1     5
+````
+"""
+macro runique!(x, args...)
+    esc(runique!_helper(x, args...))
+end

@@ -17,6 +17,7 @@ export @with,
        @by, @combine,
        @transform, @select, @transform!, @select!,
        @rtransform, @rselect, @rtransform!, @rselect!,
+       @unique, @runique, @unique!, @runique!,
        @eachrow, @eachrow!,
        @byrow, @passmissing, @astable, @kwarg,
        @based_on, @where # deprecated

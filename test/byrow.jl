@@ -659,4 +659,55 @@ end
     @test names(df) == ["x"]
 end
 
+@testset "@unique with @byrow" begin
+    df = DataFrame(A=[1, 2, 3, missing], B=[2, 1, 2, 1])
+
+    d = @unique df begin
+        @byrow :A * 0 + 1
+    end
+    @test d ≅ @unique(df, :A .* 0 .+ 1)
+
+    d = @unique df @byrow begin
+        :A * 0 + 1
+    end
+    @test d ≅ @unique(df, :A .* 0 .+ 1)
+end
+
+
+@testset "@runique" begin
+    df = DataFrame(A=[1, 2, 3, missing], B=[2, 1, 2, 1])
+
+    d = @runique df begin
+        :A * 0 + 1
+    end
+    @test d ≅ @unique(df, :A .* 0 .+ 1)
+
+end
+
+@testset "@unique! with @byrow" begin
+    df = DataFrame(A=[1, 2, 3, missing], B=[2, 1, 2, 1])
+
+    d = @unique! copy(df) begin
+        @byrow :A * 0 + 1
+    end
+    @test d ≅ @unique!(df, :A .* 0 .+ 1)
+
+    d = @unique! copy(df) @byrow begin
+        :A * 0 + 1
+    end
+    @test d ≅ @unique!(df, :A .* 0 .+ 1)
+end
+
+
+@testset "@runique!" begin
+    df = DataFrame(A=[1, 2, 3, missing], B=[2, 1, 2, 1])
+
+    d = @runique! copy(df) begin
+        :A * 0 + 1
+    end
+    @test d ≅ @unique!(df, :A .* 0 .+ 1)
+
+end
+
+
 end
