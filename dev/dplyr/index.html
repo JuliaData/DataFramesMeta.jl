@@ -313,11 +313,11 @@ msleep_2 = @rsubset msleep_1 :sleep_total &gt; 16</code></pre><p>Now in this cas
    5 │ North American Opossum  Didelphimorphia         18.0
    6 │ Thick-tailed opposum    Didelphimorphia         19.4
    7 │ Owl monkey              Primates                17.0
-   8 │ Arctic ground squirrel  Rodentia                16.6</code></pre><p>Something slightly more complicated: same as above, except arrange the rows in the <code>:sleep_total</code> column in a descending order. For this, use the function <code>sortperm</code> with the keyword argument <code>rev=true</code>.</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @chain msleep begin
+   8 │ Arctic ground squirrel  Rodentia                16.6</code></pre><p>Something slightly more complicated: same as above, except arrange the rows in the <code>:sleep_total</code> column in a descending order. Since this column is numeric we can do it by negating it:</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @chain msleep begin
            @select :name :order :sleep_total
            @orderby begin
                :order
-               sortperm(:sleep_total, rev=true)
+               -:sleep_total
            end
            @rsubset :sleep_total &gt;= 16
        end</code><code class="nohighlight hljs ansi" style="display:block;">8×3 DataFrame
@@ -326,12 +326,31 @@ msleep_2 = @rsubset msleep_1 :sleep_total &gt; 16</code></pre><p>Now in this cas
 ─────┼──────────────────────────────────────────────────────
    1 │ Little brown bat        Chiroptera              19.9
    2 │ Big brown bat           Chiroptera              19.7
-   3 │ Long-nosed armadillo    Cingulata               17.4
-   4 │ Giant armadillo         Cingulata               18.1
+   3 │ Giant armadillo         Cingulata               18.1
+   4 │ Long-nosed armadillo    Cingulata               17.4
    5 │ Thick-tailed opposum    Didelphimorphia         19.4
    6 │ North American Opossum  Didelphimorphia         18.0
    7 │ Owl monkey              Primates                17.0
-   8 │ Arctic ground squirrel  Rodentia                16.6</code></pre><h2 id="Create-New-Columns-Using-@transform-and-@rtransform"><a class="docs-heading-anchor" href="#Create-New-Columns-Using-@transform-and-@rtransform">Create New Columns Using <code>@transform</code> and <code>@rtransform</code></a><a id="Create-New-Columns-Using-@transform-and-@rtransform-1"></a><a class="docs-heading-anchor-permalink" href="#Create-New-Columns-Using-@transform-and-@rtransform" title="Permalink"></a></h2><p>The <code>@transform</code> macro will add new columns to the data frame. Like with other macros, use <code>@rtransform</code> to operate row-wise. Create a new column called <code>:rem_proportion</code>, which is the ratio of rem sleep to total amount of sleep. </p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @rtransform msleep :rem_proportion = :sleep_rem / :sleep_total</code><code class="nohighlight hljs ansi" style="display:block;">83×12 DataFrame
+   8 │ Arctic ground squirrel  Rodentia                16.6</code></pre><p>Alternatively, using the StatsBase.jl package you could have written <code>ordinalrank(:sleep_total, rev=true)</code>. Finally, if you wanted to avoid using an additional package you could use the following expression <code>invperm(sortperm(:sleep_total, rev=true))</code>.</p><p>Here is a minimal example of sorting string column in reverse:</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; using StatsBase</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; df = DataFrame(group=[1, 2, 1, 2, 1], name = [&quot;Bob&quot;, &quot;Dexter&quot;, &quot;Alice&quot;, &quot;Eve&quot;, &quot;Cedric&quot;])</code><code class="nohighlight hljs ansi" style="display:block;">5×2 DataFrame
+ Row │ group  name
+     │ Int64  String
+─────┼───────────────
+   1 │     1  Bob
+   2 │     2  Dexter
+   3 │     1  Alice
+   4 │     2  Eve
+   5 │     1  Cedric</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; @orderby df begin
+           :group
+           ordinalrank(:name, rev=true)
+       end</code><code class="nohighlight hljs ansi" style="display:block;">5×2 DataFrame
+ Row │ group  name
+     │ Int64  String
+─────┼───────────────
+   1 │     1  Cedric
+   2 │     1  Bob
+   3 │     1  Alice
+   4 │     2  Eve
+   5 │     2  Dexter</code></pre><h2 id="Create-New-Columns-Using-@transform-and-@rtransform"><a class="docs-heading-anchor" href="#Create-New-Columns-Using-@transform-and-@rtransform">Create New Columns Using <code>@transform</code> and <code>@rtransform</code></a><a id="Create-New-Columns-Using-@transform-and-@rtransform-1"></a><a class="docs-heading-anchor-permalink" href="#Create-New-Columns-Using-@transform-and-@rtransform" title="Permalink"></a></h2><p>The <code>@transform</code> macro will add new columns to the data frame. Like with other macros, use <code>@rtransform</code> to operate row-wise. Create a new column called <code>:rem_proportion</code>, which is the ratio of rem sleep to total amount of sleep. </p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @rtransform msleep :rem_proportion = :sleep_rem / :sleep_total</code><code class="nohighlight hljs ansi" style="display:block;">83×12 DataFrame
  Row │ name                        genus         vore     order           cons ⋯
      │ String31                    String15      String7  String15        Stri ⋯
 ─────┼──────────────────────────────────────────────────────────────────────────
@@ -496,4 +515,4 @@ msleep_2 = @rsubset msleep_1 :sleep_total &gt; 16</code></pre><p>Now in this cas
   81 │ Genet                       Genetta       carni    Carnivora       miss ⋯
   82 │ Arctic fox                  Vulpes        carni    Carnivora       miss
   83 │ Red fox                     Vulpes        carni    Carnivora       miss
-                                                   8 columns and 68 rows omitted</code></pre><p>This short tutorial only touches on the wide array of features in Julia, DataFrames.jl, and DataFramesMeta.jl. Read the <a href="https://github.com/JuliaData/DataFramesMeta.jl">full documentation</a> for more information.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Introduction</a><a class="docs-footer-nextpage" href="../api/api/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.23 on <span class="colophon-date" title="Thursday 15 September 2022 13:28">Thursday 15 September 2022</span>. Using Julia version 1.8.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+                                                   8 columns and 68 rows omitted</code></pre><p>This short tutorial only touches on the wide array of features in Julia, DataFrames.jl, and DataFramesMeta.jl. Read the <a href="https://github.com/JuliaData/DataFramesMeta.jl">full documentation</a> for more information.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Introduction</a><a class="docs-footer-nextpage" href="../api/api/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.23 on <span class="colophon-date" title="Monday 10 October 2022 14:13">Monday 10 October 2022</span>. Using Julia version 1.8.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
