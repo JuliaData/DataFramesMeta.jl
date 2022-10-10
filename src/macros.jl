@@ -1214,38 +1214,38 @@ $ASTABLE_RHS_ORDERBY_DOCS
 julia> using DataFramesMeta, Statistics
 
 julia> d = DataFrame(x = [3, 3, 3, 2, 1, 1, 1, 2, 1, 1], n = 1:10,
-                     c = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"]);
+                     c = ["a", "c", "b", "e", "d", "g", "f", "i", "j", "h"]);
 
-julia> @orderby(d, -1 .* :n)
+julia> @orderby(d, -:n)
 10×3 DataFrame
  Row │ x      n      c
      │ Int64  Int64  String
 ─────┼──────────────────────
-   1 │     1     10  j
-   2 │     1      9  i
-   3 │     2      8  h
-   4 │     1      7  g
-   5 │     1      6  f
-   6 │     1      5  e
-   7 │     2      4  d
-   8 │     3      3  c
-   9 │     3      2  b
+   1 │     1     10  h
+   2 │     1      9  j
+   3 │     2      8  i
+   4 │     1      7  f
+   5 │     1      6  g
+   6 │     1      5  d
+   7 │     2      4  e
+   8 │     3      3  b
+   9 │     3      2  c
   10 │     3      1  a
 
-julia> @orderby(d, sortperm(:c, rev = true))
+julia> @orderby(d, invperm(sortperm(:c, rev = true)))
 10×3 DataFrame
  Row │ x      n      c
      │ Int64  Int64  String
 ─────┼──────────────────────
-   1 │     1     10  j
-   2 │     1      9  i
-   3 │     2      8  h
-   4 │     1      7  g
-   5 │     1      6  f
-   6 │     1      5  e
-   7 │     2      4  d
-   8 │     3      3  c
-   9 │     3      2  b
+   1 │     1      9  j
+   2 │     2      8  i
+   3 │     1     10  h
+   4 │     1      6  g
+   5 │     1      7  f
+   6 │     2      4  e
+   7 │     1      5  d
+   8 │     3      2  c
+   9 │     3      3  b
   10 │     3      1  a
 
 julia> @orderby d begin

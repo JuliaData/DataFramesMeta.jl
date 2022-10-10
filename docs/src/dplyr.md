@@ -256,16 +256,30 @@ Same as above, except here we filter the rows for mammals that sleep for 16 or m
 end
 ```
 
-Something slightly more complicated: same as above, except arrange the rows in the `:sleep_total` column in a descending order. For this, use the function `sortperm` with the keyword argument `rev=true`.
+Something slightly more complicated: same as above, except arrange the rows in the `:sleep_total` column in a descending order. Since this column is numeric we can do it by negating it:
 
 ```@repl 1
 @chain msleep begin 
     @select :name :order :sleep_total
     @orderby begin 
-        :order 
-        sortperm(:sleep_total, rev=true)
+        :order
+        -:sleep_total
     end 
     @rsubset :sleep_total >= 16
+end
+```
+
+Alternatively, using the StatsBase.jl package you could have written `ordinalrank(:sleep_total, rev=true)`.
+Finally, if you wanted to avoid using an additional package you could use the following expression `invperm(sortperm(:sleep_total, rev=true))`.
+
+Here is a minimal example of sorting string column in reverse:
+
+```@repl 1
+using StatsBase
+df = DataFrame(group=[1, 2, 1, 2, 1], name = ["Bob", "Dexter", "Alice", "Eve", "Cedric"])
+@orderby df begin
+    :group
+    ordinalrank(:name, rev=true)
 end
 ```
 
