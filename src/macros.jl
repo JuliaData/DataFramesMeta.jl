@@ -810,6 +810,26 @@ end
 
 $ASTABLE_RHS_SUBSET_DOCS
 
+`@subset` accepts the same keyword arguments as `DataFrames.subset` and can be added in
+two ways. When inputs are given as multiple arguments, they are added at the end after
+a semi-colon `;`, as in
+
+```
+@subset(df, :a; skipmissing = false, view = true)
+```
+
+
+When inputs are given in "block" format, the last lines may be written
+`@kwarg key = value`, which indicates keyword arguments to be passed to `subset` function.
+
+```
+@subset df begin
+    :a
+    @kwarg skipmissing = false
+    @kwarg view = true
+end
+```
+
 ### Examples
 
 ```jldoctest
