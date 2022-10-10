@@ -13,7 +13,7 @@ gd = groupby(df, :a)
 # @subset
 # skipmissing, view, ungroup
 @testset "@subset keyword" begin
-    correcty = view(df, df.a .== 1, :)
+    correct = view(df, df.a .== 1, :)
     df2 = @subset(df, :a .== 1; view = true)
     @test df2 ≅ correct
 
@@ -34,8 +34,8 @@ gd = groupby(df, :a)
         @kwarg ungroup = false
     end
     @test gd2 ≅ correct
-
 end
+
 # @rsubset
 # skipmissing, view, ungroup
 @testset "@rsubset keyword" begin
@@ -209,16 +209,19 @@ end
 # copycols, renamecols (not relevant)
 # ungroup
 @testset "@transform keyword" begin
-    correct = df.a
+    correct = df.b
 
     df2 = @transform(df, :a; copycols = false)
-    @test df2.a === correct
+    @test df2 ≅ df
+    # The :a above counts as a transformation, and
+    # is thus copied
+    @test df2.b === correct
 
     df2 = @transform df begin
         :a
         @kwarg copycols = false
     end
-    @test df2.a === correct
+    @test df2.b === correct
 
     correct = gd
 
@@ -236,16 +239,16 @@ end
 # copycols, renamecols (not relevant)
 # ungroup
 @testset "@rtransform keyword" begin
-    correct = df.a
+    correct = df.b
 
     df2 = @rtransform(df, :a; copycols = false)
-    @test df2.a === correct
+    @test df2.b === correct
 
     df2 = @rtransform df begin
         :a
         @kwarg copycols = false
     end
-    @test df2.a === correct
+    @test df2.b === correct
 
     correct = gd
 
@@ -261,32 +264,93 @@ end
 
 # @transform!
 # renamecols (not relevant), ungroup
-gd2 = @transform!(deepcopy(gd), :b; ungroup = false)
-@test gd2 ≅ gd
+@testset "@transform! keyword" begin
+    correct = df.a
+
+    correct = gd
+
+    gd2 = @transform(deepcopy(gd), :b; ungroup = false)
+    @test gd2 ≅ correct
+
+    gd2 = @transform deepcopy(gd) begin
+        :b
+        @kwarg ungroup = false
+    end
+    @test gd2 ≅ correct
+end
+
 
 # @rtransform!
 # renamecols (not relevant), ungroup
-gd2 = @transform!(deepcopy(gd), :b; ungroup = false)
-@test gd2 ≅ gd
+@testset "@rtransform! keyword" begin
+    correct = df.a
+
+    correct = gd
+
+    gd2 = @rtransform(deepcopy(gd), :b; ungroup = false)
+    @test gd2 ≅ correct
+
+    gd2 = @rtransform deepcopy(gd) begin
+        :b
+        @kwarg ungroup = false
+    end
+    @test gd2 ≅ correct
+end
 
 # @combine
 # renamecols (not relevant), keepkeys,
 # ungroup
-df2 = @combine(gd, :b_f = first(:b); keepkeys = true)
+@testset "@combine keyword" begin
+    correct = DataFrame(a = [1, 2], b_f = [3, 5])
 
-@test sort(df2, :a) ≅ DataFrame(a = [1, 2], b_f = [3, 5])
+    df2 = @combine(gd, :b_f = first(:b); keepkeys = true)
+    @test sort(df2, :a) ≅ correct
 
-gd2 = @combine(gd, :b = :b; ungroup = false)
-@test gd2 ≅ gd
+    df2 = @combine gd begin
+        :b_f = first(:b)
+        @kwarg keepkeys = true
+    end
+    @test sort(df2, :a) ≅ correct
+
+    correct = gd
+
+    gd2 = @combine(gd, :b = :b; ungroup = false)
+    @test gd2 ≅ correct
+
+    gd2 = @combine gd begin
+        :b = :b
+        @kwarg ungroup = false
+    end
+    @test gd2 ≅ correct
+end
+
 
 # @by
 # renamecols (not relevant), keepkeys,
 # ungroup
-df2 = @by(df, :a, :b_f = first(:b); keepkeys = true)
+@testset "@combine keyword" begin
+    correct = DataFrame(a = [1, 2], b_f = [3, 5])
 
-@test sort(df2, :a) ≅ DataFrame(a = [1, 2], b_f = [3, 5])
+    df2 = @by(df, :a, :b_f = first(:b); keepkeys = true)
+    @test sort(df2, :a) ≅ correct
 
-gd2 = @by(df, :a, :b = :b; ungroup = false)
-@test gd2 ≅ gd
+    df2 = @by df :a begin
+        :b_f = first(:b)
+        @kwarg keepkeys = true
+    end
+    @test sort(df2, :a) ≅ correct
+
+    correct = gd
+
+    gd2 = @by(df, :a, :b = :b; ungroup = false)
+    @test gd2 ≅ correct
+
+    gd2 = @by df :a begin
+        :b = :b
+        @kwarg ungroup = false
+    end
+    @test gd2 ≅ correct
+end
+
 
 end # module
