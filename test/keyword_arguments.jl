@@ -352,5 +352,54 @@ end
     @test gd2 ≅ correct
 end
 
+@testset "Pairs and keyword arguments" begin
+    correct = @view df[df.a .== 1, :]
+
+    t = [:view => true]
+    ts = [:skipmissing => true, :view => true]
+
+    df2 = @rsubset(df, :a == 1; :view => true)
+    @test df2 == correct
+
+    df2 = @rsubset(df, :a == 1; :view => true, :skipmissing => false)
+    @test df2 == correct
+
+    df2 = @rsubset(df, :a == 1; t...)
+    @test df2 == correct
+
+    df2 = @rsubset(df, :a == 1; ts...)
+    @test df2 == correct
+
+    df2 = @rsubset df begin
+        :a == 1
+        @kwarg :view => true
+    end
+    @test df2 == correct
+
+    df2 = @rsubset df begin
+        :a == 1
+        @kwarg [:view => true]...
+    end
+    @test df2 == correct
+
+    df2 = @rsubset df begin
+        :a == 1
+        @kwarg [:view => true, :skipmissing => false]...
+    end
+    @test df2 == correct
+
+    df2 = @rsubset df begin
+        :a == 1
+        @kwarg t...
+    end
+    @test df2 == correct
+
+    df2 = @rsubset df begin
+        :a == 1
+        @kwarg ts...
+    end
+    @test df2 == correct
+end
+
 
 end # module
