@@ -420,10 +420,8 @@ end
 
 function get_kw_from_macro_call(e::Expr)
     nv = e.args[3]
-    nme = nv.args[1]
-    val = nv.args[2]
 
-    Expr(:kw, nme, val)
+    return nv
 end
 
 """
