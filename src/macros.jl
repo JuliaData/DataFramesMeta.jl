@@ -520,7 +520,7 @@ julia> @rsubset df begin
    2 │     1      6
 ```
 
-!!!
+!!! note
     This only has meaning inside DataFramesMeta.jl macros. It does not work outside
     of DataFrames.jl macros.
 
