@@ -401,5 +401,4 @@ end
     @test df2 == correct
 end
 
-
 end # module

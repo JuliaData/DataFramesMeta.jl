@@ -818,13 +818,12 @@ a semi-colon `;`, as in
 @subset(df, :a; skipmissing = false, view = true)
 ```
 
-
 When inputs are given in "block" format, the last lines may be written
 `@kwarg key = value`, which indicates keyword arguments to be passed to `subset` function.
 
 ```
 @subset df begin
-    :a
+    :a .== 1
     @kwarg skipmissing = false
     @kwarg view = true
 end
@@ -904,6 +903,25 @@ julia> @subset(df, :a .== 1)
      │ Int64?  String?
 ─────┼─────────────────
    1 │      1  x
+
+julia> @subset(df, :a .< 3; view = true)
+2×2 SubDataFrame
+ Row │ a       b
+     │ Int64?  String?
+─────┼─────────────────
+   1 │      1  x
+   2 │      2  y
+
+julia> @subset df begin
+           :a .< 3
+           @kwarg view = true
+       end
+2×2 SubDataFrame
+ Row │ a       b
+     │ Int64?  String?
+─────┼─────────────────
+   1 │      1  x
+   2 │      2  y
 ```
 """
 macro subset(x, args...)
@@ -932,7 +950,7 @@ end
 
 
 """
-    @subset(x, args...)
+    @where(x, args...)
 
 Deprecated version of `@subset`, see `?@subset` for details.
 """
@@ -1022,6 +1040,24 @@ end
 ```
 
 $ASTABLE_RHS_SUBSET_DOCS
+
+`@subset!` accepts the same keyword arguments as `DataFrames.subset!` and can be added in
+two ways. When inputs are given as multiple arguments, they are added at the end after
+a semi-colon `;`, as in
+
+```
+@subset!(df, :a; skipmissing = false)
+```
+
+When inputs are given in "block" format, the last lines may be written
+`@kwarg key = value`, which indicates keyword arguments to be passed to `subset!` function.
+
+```
+@subset! df begin
+    :a .== 1
+    @kwarg skipmissing = false
+end
+```
 
 ### Examples
 
@@ -1375,6 +1411,24 @@ $ASTABLE_MACRO_FLAG_DOCS
 
 $ASTABLE_RHS_SELECT_TRANSFORM_DOCS
 
+`@transform` accepts the same keyword arguments as `DataFrames.transform!` and can be added in
+two ways. When inputs are given as multiple arguments, they are added at the end after
+a semi-colon `;`, as in
+
+```
+@transform(gd, :x = :a .- 1; ungroup = false)
+```
+
+When inputs are given in "block" format, the last lines may be written
+`@kwarg key = value`, which indicates keyword arguments to be passed to `transform!` function.
+
+```
+@transform gd begin
+    :x = :a .- 1
+    @kwarg ungroup = false
+end
+```
+
 ### Examples
 
 ```jldoctest
@@ -1516,6 +1570,24 @@ $ASTABLE_MACRO_FLAG_DOCS
 
 $ASTABLE_RHS_SELECT_TRANSFORM_DOCS
 
+`@transform!` accepts the same keyword arguments as `DataFrames.transform!` and can be added in
+two ways. When inputs are given as multiple arguments, they are added at the end after
+a semi-colon `;`, as in
+
+```
+@transform!(gd, :x = :a .- 1; ungroup = false)
+```
+
+When inputs are given in "block" format, the last lines may be written
+`@kwarg key = value`, which indicates keyword arguments to be passed to `transform!` function.
+
+```
+@transform! gd begin
+    :x = :a .- 1
+    @kwarg ungroup = false
+end
+```
+
 ### Examples
 
 ```jldoctest
@@ -1632,6 +1704,24 @@ All transformations in the block will operate by row.
 $ASTABLE_MACRO_FLAG_DOCS
 
 $ASTABLE_RHS_SELECT_TRANSFORM_DOCS
+
+`@select` accepts the same keyword arguments as `DataFrames.select` and can be added in
+two ways. When inputs are given as multiple arguments, they are added at the end after
+a semi-colon `;`, as in
+
+```
+@select(df, :a; copycols = false)
+```
+
+When inputs are given in "block" format, the last lines may be written
+`@kwarg key = value`, which indicates keyword arguments to be passed to `select` function.
+
+```
+@select gd begin
+    :a
+    @select copycols = false
+end
+```
 
 ### Examples
 
@@ -1758,6 +1848,24 @@ $ASTABLE_MACRO_FLAG_DOCS
 
 $ASTABLE_RHS_SELECT_TRANSFORM_DOCS
 
+`@select!` accepts the same keyword arguments as `DataFrames.select!` and can be added in
+two ways. When inputs are given as multiple arguments, they are added at the end after
+a semi-colon `;`, as in
+
+```
+@select!(gd, :a; ungroup = false)
+```
+
+When inputs are given in "block" format, the last lines may be written
+`@kwarg key = value`, which indicates keyword arguments to be passed to `select!` function.
+
+```
+@select! gd begin
+    :a
+    @kwarg ungroup = false
+end
+```
+
 ### Examples
 
 ```jldoctest
@@ -1875,6 +1983,24 @@ and
 ```
 
 $ASTABLE_MACRO_FLAG_DOCS
+
+`@combine` accepts the same keyword arguments as `DataFrames.combine` and can be added in
+two ways. When inputs are given as multiple arguments, they are added at the end after
+a semi-colon `;`, as in
+
+```
+@combine(gd, :x = first(:a); ungroup = false)
+```
+
+When inputs are given in "block" format, the last lines may be written
+`@kwarg key = value`, which indicates keyword arguments to be passed to `combine` function.
+
+```
+@combine gd begin
+    :x = first(:a)
+    @kwarg ungroup = false
+end
+```
 
 ### Examples
 
@@ -2001,6 +2127,24 @@ and
 ```
 
 $ASTABLE_MACRO_FLAG_DOCS
+
+`@by` accepts the same keyword arguments as `DataFrames.combine` and can be added in
+two ways. When inputs are given as multiple arguments, they are added at the end after
+a semi-colon `;`, as in
+
+```
+@by(ds, :g, :x = first(:a); ungroup = false)
+```
+
+When inputs are given in "block" format, the last lines may be written
+`@kwarg key = value`, which indicates keyword arguments to be passed to `combine` function.
+
+```
+@by df :a begin
+    :x = first(:a)
+    @kwarg ungroup = false
+end
+```
 
 ### Examples
 
