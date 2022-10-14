@@ -400,6 +400,71 @@ julia> @rtransform df @passmissing :x = parse(Int, :x_str)
    3 │ missing  missing
 ```
 
+## Passing keyword arguments to underlying DataFrames.jl functions
+
+All DataFramesMeta.jl macros allow passing of keyword arguments to their DataFrames.jl
+function equivelents. This can be done in two ways. When inputs are given as multiple 
+arguments, they are added at the end after a semi-colon `;`, as in
+
+```julia
+julia> df = DataFrame(x = [1, 1, 2, 2], b = [5, 6, 7, 8]);
+
+julia> @rsubset(df, :x .== 1 ; view = true)
+2×2 SubDataFrame
+ Row │ x      b     
+     │ Int64  Int64 
+─────┼──────────────
+   1 │     1      5
+   2 │     1      6```
+
+```
+
+When inputs are given in "block" format, the last lines may be written
+`@kwarg key = value`, which indicates keyword arguments to be passed to `subset` function.
+
+```
+julia> df = DataFrame(x = [1, 1, 2, 2], b = [5, 6, 7, 8]);
+
+julia> @rsubset df begin
+           :x == 1
+           @kwarg view = true
+       end
+2×2 SubDataFrame
+ Row │ x      b     
+     │ Int64  Int64 
+─────┼──────────────
+   1 │     1      5
+   2 │     1      6
+```
+
+Just as with Julia functions, it is possible to pass keyword arguments as `Pair`s 
+programatically to DataFramesMeta.jl macros. 
+
+```
+julia> df = DataFrame(x = [1, 1, 2, 2], b = [5, 6, 7, 8]);
+
+julia> my_kwargs = [:view => true, :skipmissing => false];
+
+julia> @rsubset(df, :x .== 1; my_kwargs...)
+2×2 SubDataFrame
+ Row │ x      b     
+     │ Int64  Int64 
+─────┼──────────────
+   1 │     1      5
+   2 │     1      6
+
+julia> @rsubset df begin 
+           :x .== 1
+           @kwarg my_kwargs...
+       end
+2×2 SubDataFrame
+ Row │ x      b     
+     │ Int64  Int64 
+─────┼──────────────
+   1 │     1      5
+   2 │     1      6
+```
+
 ## Creating multiple columns at once with `@astable`
 
 Often new variables may depend on the same intermediate calculations. `@astable` makes it easy to create multiple
