@@ -403,7 +403,28 @@ julia> @rtransform df @passmissing :x = parse(Int, :x_str)
 ## Passing keyword arguments to underlying DataFrames.jl functions
 
 All DataFramesMeta.jl macros allow passing of keyword arguments to their DataFrames.jl
-function equivelents. This can be done in two ways. When inputs are given as multiple 
+function equivelents. 
+
+| Macro | Base DataFrames.jl called |
+|-------|---------------------------|
+| @subset | `subset` |
+| @subset! | `subset!` |
+| @rsubset | `subset` |
+| @rsubset! | `subset!` |
+| @orderby | None (no keyword arguments supported) |
+| @rorderby | None (no keyword arguments supported) |
+| @by | `combine` |
+| @combine | `combine` |
+| @transform | `transform` |
+| @transform! | `transform!` |
+| @rtransform | `transform` |
+| @rtransform! | `transform!` |
+| @select | `select` |
+| @select! | `select!` |
+| @rselect | `select` |
+| @rselect! | `select!` |
+
+This can be done in two ways. When inputs are given as multiple 
 arguments, they are added at the end after a semi-colon `;`, as in
 
 ```julia

@@ -1184,7 +1184,6 @@ end
 ## @orderby
 ##
 ##############################################################################
-# TODO: Determine which keyword arguments to expose to user
 function orderby_helper(x, args...)
     x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)
     t = (fun_to_vec(ex; gensym_names = true, outer_flags = outer_flags) for ex in exprs)
@@ -2171,6 +2170,10 @@ When inputs are given in "block" format, the last lines may be written
     @kwarg ungroup = false
 end
 ```
+
+Though `@by` performs both `groupby` and `combine`, `@by` only forwards keyword arguments
+to `combine`, and not `groupby`. To pass keyword arguments to `groupby`, perform the
+`groupby` and `@combine` steps separately.
 
 ### Examples
 
