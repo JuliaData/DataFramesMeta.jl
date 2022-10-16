@@ -659,53 +659,53 @@ end
     @test names(df) == ["x"]
 end
 
-@testset "@unique with @byrow" begin
+@testset "@distinct with @byrow" begin
     df = DataFrame(A=[1, 2, 3, missing], B=[2, 1, 2, 1])
 
-    d = @unique df begin
+    d = @distinct df begin
         @byrow :A * 0 + 1
     end
-    @test d ≅ @unique(df, :A .* 0 .+ 1)
+    @test d ≅ @distinct(df, :A .* 0 .+ 1)
 
-    d = @unique df @byrow begin
+    d = @distinct df @byrow begin
         :A * 0 + 1
     end
-    @test d ≅ @unique(df, :A .* 0 .+ 1)
+    @test d ≅ @distinct(df, :A .* 0 .+ 1)
 end
 
 
-@testset "@runique" begin
+@testset "@rdistinct" begin
     df = DataFrame(A=[1, 2, 3, missing], B=[2, 1, 2, 1])
 
-    d = @runique df begin
+    d = @rdistinct df begin
         :A * 0 + 1
     end
-    @test d ≅ @unique(df, :A .* 0 .+ 1)
+    @test d ≅ @distinct(df, :A .* 0 .+ 1)
 
 end
 
-@testset "@unique! with @byrow" begin
+@testset "@distinct! with @byrow" begin
     df = DataFrame(A=[1, 2, 3, missing], B=[2, 1, 2, 1])
 
-    d = @unique! copy(df) begin
+    d = @distinct! copy(df) begin
         @byrow :A * 0 + 1
     end
-    @test d ≅ @unique!(df, :A .* 0 .+ 1)
+    @test d ≅ @distinct!(df, :A .* 0 .+ 1)
 
-    d = @unique! copy(df) @byrow begin
+    d = @distinct! copy(df) @byrow begin
         :A * 0 + 1
     end
-    @test d ≅ @unique!(df, :A .* 0 .+ 1)
+    @test d ≅ @distinct!(df, :A .* 0 .+ 1)
 end
 
 
-@testset "@runique!" begin
+@testset "@rdistinct!" begin
     df = DataFrame(A=[1, 2, 3, missing], B=[2, 1, 2, 1])
 
-    d = @runique! copy(df) begin
+    d = @rdistinct! copy(df) begin
         :A * 0 + 1
     end
-    @test d ≅ @unique!(df, :A .* 0 .+ 1)
+    @test d ≅ @distinct!(df, :A .* 0 .+ 1)
 
 end
 

@@ -2411,39 +2411,58 @@ end
 
 ##############################################################################
 ##
-## @unique - distinct row selection
+## @distinct - distinct row selection
 ##
 ##############################################################################
 
-function unique_helper(x, args...)
+function make_distinct(x::AbstractDataFrame, @nospecialize(t...))    
+    if isempty(t)
+        DataFrames.unique(x)
+    else
+        tmp = DataFrames.select(x, (t...); copycols = false)
+        rowidxs = (!).(DataFrames.nonunique(tmp))
+        (x)[rowidxs, :]                
+    end
+end
+
+function make_distinct(x::GroupedDataFrame, @nospecialize(t...))
+    throw(ArgumentError("@distinct with a GroupedDataFrame is reserved"))
+end
+
+function distinct_helper(x, args...)
     exprs, outer_flags = create_args_vector(args...)
-    t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
-    quote
-        $DataFrames.unique($x, $(t...))
+    t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)     
+    quote            
+        $DataFramesMeta.make_distinct($x, $(t...))
     end
 end
 
 """
-    @unique(x, args)
+    @distinct(d, args...)
 
-Select unique rows in `AbstractDataFrame`s.
+Return the first occurence of unique rows in an `AbstractDataFrame` according 
+to given combinations of values in selected columns or their transformation. 
+`args` can be most column selectors or transformation accepted by `select`. 
+Users should note that `@distinct` differs from `unique` in DataFrames.jl,
+such that `@distinct(df, :x,:y)` is not the same as `unique(df, [:x,:y])`. 
+See  **Details** for a discussion of these differences.
+
 
 ### Arguments
 
 * `d` : an AbstractDataFrame
-* `args` :  keyword-like arguments, of the form `f(:x)` specifying
-symbols to specify identify columns
+* `args...` :  transformations of the form `:x` designating
+symbols to specify columns or `f(:x)` specifying their transformations 
 
 ### Returns
 
 * `::AbstractDataFrame`
 
-Inputs to `@unique` can come in two formats: a `begin ... end` block, or as a series of
-arguments and keyword-like arguments. For example, the following are
-equivalent:
+Inputs to `@distinct` can come in two formats: a `begin ... end` block, or as a series of
+arguments and keyword-like arguments. For example, the following are equivalent:
 
 ```julia
-@unique df begin 
+@distinct df begin 
     :x + :y
 end
 ```
@@ -2451,28 +2470,43 @@ end
 and 
 
 ```
-@unique df :x + :y
+@distinct(df, :x + :y)
 ```
 
-`@unique` uses the syntax `@byrow` to wrap transformations in
-the `ByRow` function wrapper from DataFrames, apply a function row-wise,
-similar to broadcasting. For example, the call
+`@distinct` uses the syntax `@byrow` to wrap transformations in the `ByRow` 
+function wrapper from DataFrames, apply a function row-wise, similar to 
+broadcasting. `@distinct` allows `@byrow` at the beginning of a block of 
+selections (i.e. `@byrow begin... end`). The transformation in the block 
+will operate by row. For example, the following two statements are equivalent.
+
 
 ```
-@unique(df, @byrow :x + :y)
+@distinct df @byrow begin 
+    :x + :y
+    :z + :t
+end
 ```
 
-becomes
+and
 
 ```
-unique(df, :x => ByRow((x,y) -> x + y))
+@distinct df begin 
+    @byrow :x + :y
+    @byrow :z + :t
+end
 ```
 
-a transformation which cannot be conveniently expressed
-using broadcasting.
 
-`@unique` allows `@byrow` at the beginning of a block of selections 
-(i.e. `@byrow begin... end`). The transformation in the block will operate by row.
+### Details
+
+The implementation of `@distinct` differs from the `unique` function in DataFrames.jl. 
+When `args` are present, `@distinct` relies upon an internal `select` call which produces 
+an intermediate data frame containing columns of `df` specified by `args`. The unique rows
+of `df` are thus determined by this intermediate data frame. This focus on `select` allows 
+for multiple arguments to be passed conveniently in the form of column names or transformations.
+
+Users should be cautious when passing function arguments as vectors. E.g., `@distinct(df, $DOLLAR[:x,:y])`
+should be used instead of `@distinct(df, [:x,:y])` to avoid unexpected behaviors.
 
 ### Examples
 
@@ -2481,15 +2515,15 @@ julia> using DataFramesMeta;
 
 julia> df = DataFrame(x = 1:10, y = 10:-1:1);
 
-julia> @unique(df, :x + :y)
+julia> @distinct(df, :x .+ :y)
 1×2 DataFrame
  Row │ x      y      
      │ Int64  Int64  
 ─────┼───────────────
    1 │     1      10   
 
-julia> @unique df begin
-            :x + :y
+julia> @distinct df begin
+            :x .+ :y
         end
 1×2 DataFrame
  Row │ x      y      
@@ -2498,23 +2532,23 @@ julia> @unique df begin
    1 │     1      10   
 ```
 """
-macro unique(x, args...)
-    esc(unique_helper(x, args...))
+macro distinct(d, args...)
+    esc(distinct_helper(d, args...))
 end
 
-function runique_helper(x, args...)
+function rdistinct_helper(x, args...)
     exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
-    t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
-    quote
-        $DataFrames.unique($x, $(t...))
+    t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)    
+    quote                    
+        $DataFramesMeta.make_distinct($x, $(t...))
     end
 end
 
 """
-    runique(d, args...)
+    rdistinct(d, args...)
 
-Row-wise version of `@unique`, i.e. all operations use `@byrow` by
-default. See [`@unique`](@ref) for details.
+Row-wise version of `@distinct`, i.e. all operations use `@byrow` by
+default. See [`@distinct`](@ref) for details.
 
 ### Examples
 ```julia
@@ -2531,82 +2565,114 @@ julia> df = DataFrame(x = 1:5, y = 5:-1:1)
    4 │     4     2
    5 │     5     1
    
-julia> @runique(df, :x + :y)
+julia> @rdistinct(df, :x + :y)
 5×2 DataFrame
  Row │ x      y
      │ Int64  Int64
 ─────┼──────────────
    1 │     1     5
-````
+```
 """
-macro runique(x, args...)
-    esc(runique_helper(x, args...))
+macro rdistinct(d, args...)
+    esc(rdistinct_helper(d, args...))
 end
 
 ##############################################################################
 ##
-## @unique! - in-place distinct row selection
+## @distinct! - in-place distinct row selection
 ##
 ##############################################################################
 
-function unique!_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...)
-    t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
-    quote
-        $DataFrames.unique!($x, $(t...))
+function make_distinct!(x::AbstractDataFrame, @nospecialize(t...))
+    if isempty(t)
+        DataFrames.unique!(x)
+    else
+        tmp = DataFrames.select(x, (t...); copycols = false)
+        DataFrames.deleteat!(x, DataFrames._findall(DataFrames.nonunique(tmp)))                
     end
 end
 
-"""
-    @unique!(x, args)
+function make_distinct!(x::GroupedDataFrame, @nospecialize(t...))
+    throw(ArgumentError("@distinct! with a GroupedDataFrame is reserved"))
+end
 
-In-place selection of unique rows in `AbstractDataFrame`s.
+function distinct!_helper(x, args...)
+    exprs, outer_flags = create_args_vector(args...)
+    t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
+    quote                    
+        $DataFramesMeta.make_distinct!($x, $(t...))
+    end            
+end
+
+"""
+    @distinct!(d, args...)
+
+In-place selection of unique rows in an `AbstractDataFrame`.
+Users should note that `@distinct!` differs from `unique!` in DataFrames.jl,
+such that `@distinct!(df, [:x,:y])` is not equal to `unique(df, [:x,:y])`. 
+See  **Details** for a discussion of these differences.
 
 ### Arguments
 
 * `d` : an AbstractDataFrame
-* `args` :  keyword-like arguments, of the form `f(:x)` specifying
-symbols to specify identify columns
+* `args...` :   transformations of the form `:x` designating
+symbols to specify columns or `f(:x)` specifying their transformations 
+
 
 ### Returns
 
 * `::AbstractDataFrame`
 
-Inputs to `@unique!` can come in two formats: a `begin ... end` block, or as a series of
+Inputs to `@distinct!` can come in two formats: a `begin ... end` block, or as a series of
 arguments and keyword-like arguments. For example, the following are
 equivalent:
 
 ```julia
-@unique! df begin 
-    :x + :y
+@distinct! df begin 
+    :x .+ :y
 end
 ```
 
 and 
 
 ```
-@unique! df :x + :y
+@distinct!(df, :x .+ :y)
 ```
 
-`@unique!` uses the syntax `@byrow` to wrap transformations in
+`@distinct!` uses the syntax `@byrow` to wrap transformations in
 the `ByRow` function wrapper from DataFrames, apply a function row-wise,
-similar to broadcasting. For example, the call
+similar to broadcasting. `@distinct!` allows `@byrow` at the beginning of a block of 
+selections (i.e. `@byrow begin... end`). The transformation in the block 
+will operate by row. For example, the following two statements are equivalent.
+
 
 ```
-@unique!(df, @byrow :x + :y)
+@distinct! df @byrow begin 
+    :x + :y
+    :z + :t
+end
 ```
 
-becomes
+and
 
 ```
-unique!(df, :x => ByRow((x,y) -> x + y))
+@distinct! df begin 
+    @byrow :x + :y
+    @byrow :z + :t
+end
+
 ```
 
-a transformation which cannot be conveniently expressed
-using broadcasting.
+### Details
 
-`@unique!` allows `@byrow` at the beginning of a block of selections 
-(i.e. `@byrow begin... end`). The transformation in the block will operate by row.
+The implementation of `@distinct!` differs from the `unique` function in DataFrames.jl. 
+When `args` are present, `@distinct!` relies upon an internal `select` call which produces 
+an intermediate data frame containing columns of `df` specified by `args`. The unique rows
+of `df` are thus determined by this intermediate data frame. This focus on `select` allows 
+for multiple arguments to be conveniently passed in the form of column names or transformations.
+
+Users should be cautious when passing function arguments as vectors. E.g., `@distinct(df, $DOLLAR[:x,:y])`
+should be used instead of `@distinct(df, [:x,:y])` to avoid unexpected behaviors.
 
 ### Examples
 
@@ -2615,15 +2681,15 @@ julia> using DataFramesMeta;
 
 julia> df = DataFrame(x = 1:10, y = 10:-1:1);
 
-julia> @unique!(df, :x + :y)
+julia> @distinct!(df, :x .+ :y)
 1×2 DataFrame
  Row │ x      y      
      │ Int64  Int64  
 ─────┼───────────────
    1 │     1      10   
 
-julia> @unique! df begin
-            :x + :y
+julia> @distinct! df begin
+            :x .+ :y
         end
 1×2 DataFrame
  Row │ x      y      
@@ -2632,29 +2698,29 @@ julia> @unique! df begin
    1 │     1      10   
 ```
 """
-macro unique!(x, args...)
-    esc(unique!_helper(x, args...))
+macro distinct!(d, args...)
+    esc(distinct!_helper(d, args...))
 end
 
 ##############################################################################
 ##
-## @runique - select distinct rows
+## @rdistinct - select distinct rows with @byrow 
 ##
 ##############################################################################
 
-function runique!_helper(x, args...)
+function rdistinct!_helper(x, args...)
     exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
     t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
-    quote
-        $DataFrames.unique!($x, $(t...))
-    end
+    quote                    
+        $DataFramesMeta.make_distinct!($x, $(t...))    
+    end            
 end
 
 """
-    runique(d, args...)
+    rdistinct!(d, args...)
 
-Row-wise version of `@unique!`, i.e. all operations use `@byrow` by
-default. See [`@unique!`](@ref) for details.
+Row-wise version of `@distinct!`, i.e. all operations use `@byrow` by
+default. See [`@distinct!`](@ref) for details.
 
 ### Examples
 ```julia
@@ -2671,14 +2737,14 @@ julia> df = DataFrame(x = 1:5, y = 5:-1:1)
    4 │     4     2
    5 │     5     1
    
-julia> @runique!(df, :x + :y)
+julia> @rdistinct!(df, :x + :y)
 5×2 DataFrame
  Row │ x      y
      │ Int64  Int64
 ─────┼──────────────
    1 │     1     5
-````
+```
 """
-macro runique!(x, args...)
-    esc(runique!_helper(x, args...))
+macro rdistinct!(d, args...)
+    esc(rdistinct!_helper(d, args...))
 end
