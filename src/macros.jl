@@ -775,7 +775,7 @@ function where_helper(x, args...)
 end
 
 """
-    @subset(d, i...)
+    @subset(d, i...; kwargs...)
 
 Select row subsets in `AbstractDataFrame`s and `GroupedDataFrame`s.
 
@@ -783,6 +783,9 @@ Select row subsets in `AbstractDataFrame`s and `GroupedDataFrame`s.
 
 * `d` : an AbstractDataFrame or GroupedDataFrame
 * `i...` : expression for selecting rows
+* `kwargs...` : keyword arguments passed to `DataFrames.subset`
+
+### Details
 
 Multiple `i` expressions are "and-ed" together.
 
@@ -965,7 +968,7 @@ end
 
 
 """
-    @rsubset(d, i...)
+    @rsubset(d, i...; kwargs...)
 
 Row-wise version of `@subset`, i.e. all operations use `@byrow` by
 default. See [`@subset`](@ref) for details.
@@ -1005,7 +1008,7 @@ end
 
 
 """
-    @subset!(d, i...)
+    @subset!(d, i...; kwargs...)
 
 Select row subsets in `AbstractDataFrame`s and `GroupedDataFrame`s,
 mutating the underlying data-frame in-place.
@@ -1014,6 +1017,9 @@ mutating the underlying data-frame in-place.
 
 * `d` : an AbstractDataFrame or GroupedDataFrame
 * `i...` : expression for selecting rows
+* `kwargs` : keyword arguments passed to `DataFrames.subset!`
+
+### Details
 
 Multiple `i` expressions are "and-ed" together.
 
@@ -1212,6 +1218,13 @@ end
 Sort rows by values in one of several columns or a transformation of columns.
 Always returns a fresh `DataFrame`. Does not accept a `GroupedDataFrame`.
 
+### Arguments
+
+* `d`: a `DataFrame` or `GroupedDataFrame`
+* `i...`: arguments on which to sort the object
+
+### Details
+
 When given a `DataFrame`, `@orderby` applies the transformation
 given by its arguments (but does not create new columns) and sorts
 the given `DataFrame` on the result, returning a new `DataFrame`.
@@ -1378,18 +1391,21 @@ function transform_helper(x, args...)
 end
 
 """
-    @transform(d, i...)
+    @transform(d, i...; kwargs...)
 
 Add additional columns or keys based on keyword-like arguments.
 
 ### Arguments
 
-* `d` : an `AbstractDataFrame`, or `GroupedDataFrame`
-* `i...` : keyword-like arguments defining new columns or keys, of the form `:y = f(:x)`
+* `d`: an `AbstractDataFrame`, or `GroupedDataFrame`
+* `i...`: transformations defining new columns or keys, of the form `:y = f(:x)`
+* `kwargs...`: keyword arguments passed to `DataFrames.transform`
 
 ### Returns
 
 * `::AbstractDataFrame` or `::GroupedDataFrame`
+
+### Details
 
 Inputs to `@transform` can come in two formats: a `begin ... end` block,
 in which case each line in the block is a separate
@@ -1509,7 +1525,7 @@ function rtransform_helper(x, args...)
 end
 
 """
-    @rtransform(x, args...)
+    @rtransform(x, args...; kwargs...)
 
 Row-wise version of `@transform`, i.e. all operations use `@byrow` by
 default. See [`@transform`](@ref) for details.
@@ -1535,7 +1551,7 @@ function transform!_helper(x, args...)
 end
 
 """
-    @transform!(d, i...)
+    @transform!(d, i...; kwargs...)
 
 Mutate `d` inplace to add additional columns or keys based on keyword-like
 arguments and return it. No copies of existing columns are made.
@@ -1543,12 +1559,14 @@ arguments and return it. No copies of existing columns are made.
 ### Arguments
 
 * `d` : an `AbstractDataFrame`, or `GroupedDataFrame`
-* `i...` : keyword-like arguments, of the form `:y = f(:x)` defining
-new columns or keys
+* `i...` : transformations of the form `:y = f(:x)` defining new columns or keys
+* `kwargs...`: keyword arguments passed to `DataFrames.transform!`
 
 ### Returns
 
-* `::DataFrame`
+* `::DataFrame` or a `GroupedDataFrame`
+
+### Details
 
 Inputs to `@transform!` can come in two formats: a `begin ... end` block,
 in which case each line in the block is a separate
@@ -1647,7 +1665,7 @@ function rtransform!_helper(x, args...)
 end
 
 """
-    @rtransform!(x, args...)
+    @rtransform!(x, args...; kwargs...)
 
 Row-wise version of `@transform!`, i.e. all operations use `@byrow` by
 default. See [`@transform!`](@ref) for details."""
@@ -1671,19 +1689,22 @@ function select_helper(x, args...)
 end
 
 """
-    @select(d, e...)
+    @select(d, i...; kwargs...)
 
 Select and transform columns.
 
 ### Arguments
 
 * `d` : an `AbstractDataFrame` or `GroupedDataFrame`
-* `e` :  keyword-like arguments, of the form `:y = f(:x)` specifying
+* `i` :  transformations of the form `:y = f(:x)` specifying
 new columns in terms of existing columns or symbols to specify existing columns
+* `kwargs` : keyword arguments passed to `DataFrames.select`
 
 ### Returns
 
-* `::AbstractDataFrame`
+* `::AbstractDataFrame` or a `GroupedDataFrame`
+
+### Details
 
 Inputs to `@select` can come in two formats: a `begin ... end` block,
 in which case each line in the block is a separate
@@ -1801,7 +1822,7 @@ function rselect_helper(x, args...)
 end
 
 """
-    @rselect(x, args...)
+    @rselect(x, args...; kwargs...)
 
 Row-wise version of `@select`, i.e. all operations use `@byrow` by
 default. See [`@select`](@ref) for details.
@@ -1827,19 +1848,22 @@ function select!_helper(x, args...)
 end
 
 """
-    @select!(d, e...)
+    @select!(d, i...; kwargs...)
 
 Mutate `d` in-place to retain only columns or transformations specified by `e` and return it. No copies of existing columns are made.
 
 ### Arguments
 
 * `d` : an AbstractDataFrame
-* `e` :  keyword-like arguments, of the form `:y = f(:x)` specifying
+* `i` : transformations of the form `:y = f(:x)` specifying
 new columns in terms of existing columns or symbols to specify existing columns
+* `kwargs` : keyword arguments passed to `DataFrames.select!`
 
 ### Returns
 
 * `::DataFrame`
+
+### Details
 
 Inputs to `@select!` can come in two formats: a `begin ... end` block,
 in which case each line in the block is a separate
@@ -1952,7 +1976,7 @@ function rselect!_helper(x, args...)
 end
 
 """
-    @rselect!(x, args...)
+    @rselect!(x, args...; kwargs...)
 
 Row-wise version of `@select!`, i.e. all operations use `@byrow` by
 default. See [`@select!`](@ref) for details.
@@ -1980,14 +2004,21 @@ function combine_helper(x, args...; deprecation_warning = false)
 end
 
 """
-    @combine(x, args...)
+    @combine(x, args...; kwargs...)
 
 Summarize a grouping operation
 
 ### Arguments
 
 * `x` : a `GroupedDataFrame` or `AbstractDataFrame`
-* `args...` : keyword-like arguments defining new columns, of the form `:y = f(:x)`
+* `args...` : transformations defining new columns, of the form `:y = f(:x)`
+* `kwargs`: : keyword arguments passed to `DataFrames.combine`
+
+### Results
+
+* A `DataFrame` or a `GroupedDataFrame`
+
+### Details
 
 Inputs to `@combine` can come in two formats: a `begin ... end` block,
 in which case each line in the block is a separate
@@ -2118,7 +2149,7 @@ function by_helper(x, what, args...)
 end
 
 """
-    @by(d::AbstractDataFrame, cols, e...)
+    @by(d::AbstractDataFrame, cols, e...; kwargs...)
 
 Split-apply-combine in one step.
 
@@ -2128,10 +2159,13 @@ Split-apply-combine in one step.
 * `cols` : a column indicator (Symbol, Int, Vector{Symbol}, etc.)
 * `e` :  keyword-like arguments, of the form `:y = f(:x)` specifying
 new columns in terms of column groupings
+* `kwargs` : keyword arguments passed to `DataFrames.combine`
 
 ### Returns
 
-* `::DataFrame`
+* `::DataFrame` or a `GroupedDataFrame`
+
+### Details
 
 Transformation inputs to `@by` can come in two formats: a `begin ... end` block,
 in which case each line in the block is a separate

@@ -403,9 +403,10 @@ julia> @rtransform df @passmissing :x = parse(Int, :x_str)
 ## Passing keyword arguments to underlying DataFrames.jl functions
 
 All DataFramesMeta.jl macros allow passing of keyword arguments to their DataFrames.jl
-function equivelents. 
+function equivelents. The table below describes the correspondence between DataFramesMeta.jl
+macros and the function that is actually called by the macro. 
 
-| Macro | Base DataFrames.jl called |
+| Macro | Base DataFrames.jl function called |
 |-------|---------------------------|
 | @subset | `subset` |
 | @subset! | `subset!` |
@@ -436,7 +437,7 @@ julia> @rsubset(df, :x .== 1 ; view = true)
      │ Int64  Int64 
 ─────┼──────────────
    1 │     1      5
-   2 │     1      6```
+   2 │     1      6
 
 ```
 
