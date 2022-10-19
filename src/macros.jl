@@ -499,6 +499,36 @@ macro astable(args...)
     throw(ArgumentError("@astable only works inside DataFramesMeta macros."))
 end
 
+"""
+    @kwarg(args...)
+
+Inside of DataFramesMeta.jl macros, pass keyword arguments to the underlying
+DataFrames.jl function when arguments are written in "block" format.
+
+```
+julia> df = DataFrame(x = [1, 1, 2, 2], b = [5, 6, 7, 8]);
+
+julia> @rsubset df begin
+           :x == 1
+           @kwarg view = true
+       end
+2×2 SubDataFrame
+ Row │ x      b
+     │ Int64  Int64
+─────┼──────────────
+   1 │     1      5
+   2 │     1      6
+```
+
+!!! note
+    This only has meaning inside DataFramesMeta.jl macros. It does not work outside
+    of DataFrames.jl macros.
+
+"""
+macro kwarg(args...)
+    throw(ArgumentError("@kwarg only works inside DataFramesMeta macros."))
+end
+
 ##############################################################################
 ##
 ## @with
@@ -728,23 +758,24 @@ write
 ##############################################################################
 
 function subset_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...)
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)
+
     t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
     quote
-        $subset($x, $(t...); skipmissing=true)
+        $subset($x, $(t...); (skipmissing = true,)..., $(kw...))
     end
 end
 
 function where_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...)
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)
     t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
     quote
-        $subset($x, $(t...); skipmissing=true)
+        $subset($x, $(t...); skipmissing=true, $(kw...))
     end
 end
 
 """
-    @subset(d, i...)
+    @subset(d, i...; kwargs...)
 
 Select row subsets in `AbstractDataFrame`s and `GroupedDataFrame`s.
 
@@ -752,6 +783,9 @@ Select row subsets in `AbstractDataFrame`s and `GroupedDataFrame`s.
 
 * `d` : an AbstractDataFrame or GroupedDataFrame
 * `i...` : expression for selecting rows
+* `kwargs...` : keyword arguments passed to `DataFrames.subset`
+
+### Details
 
 Multiple `i` expressions are "and-ed" together.
 
@@ -804,6 +838,25 @@ end
 ```
 
 $ASTABLE_RHS_SUBSET_DOCS
+
+`@subset` accepts the same keyword arguments as `DataFrames.subset` and can be added in
+two ways. When inputs are given as multiple arguments, they are added at the end after
+a semi-colon `;`, as in
+
+```
+@subset(df, :a; skipmissing = false, view = true)
+```
+
+When inputs are given in "block" format, the last lines may be written
+`@kwarg key = value`, which indicates keyword arguments to be passed to `subset` function.
+
+```
+@subset df begin
+    :a .== 1
+    @kwarg skipmissing = false
+    @kwarg view = true
+end
+```
 
 ### Examples
 
@@ -879,6 +932,25 @@ julia> @subset(df, :a .== 1)
      │ Int64?  String?
 ─────┼─────────────────
    1 │      1  x
+
+julia> @subset(df, :a .< 3; view = true)
+2×2 SubDataFrame
+ Row │ a       b
+     │ Int64?  String?
+─────┼─────────────────
+   1 │      1  x
+   2 │      2  y
+
+julia> @subset df begin
+           :a .< 3
+           @kwarg view = true
+       end
+2×2 SubDataFrame
+ Row │ a       b
+     │ Int64?  String?
+─────┼─────────────────
+   1 │      1  x
+   2 │      2  y
 ```
 """
 macro subset(x, args...)
@@ -886,16 +958,17 @@ macro subset(x, args...)
 end
 
 function rsubset_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = true)
+
     t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
     quote
-        $subset($x, $(t...); skipmissing=true)
+        $subset($x, $(t...); (skipmissing = true,)..., $(kw...))
     end
 end
 
 
 """
-    @rsubset(d, i...)
+    @rsubset(d, i...; kwargs...)
 
 Row-wise version of `@subset`, i.e. all operations use `@byrow` by
 default. See [`@subset`](@ref) for details.
@@ -941,7 +1014,7 @@ end
 
 
 """
-    @subset(x, args...)
+    @where(x, args...)
 
 Deprecated version of `@subset`, see `?@subset` for details.
 """
@@ -951,24 +1024,26 @@ macro where(x, args...)
 end
 
 function subset!_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...)
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)
+
     t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
     quote
-        $subset!($x, $(t...); skipmissing=true)
+        $subset!($x, $(t...); (;skipmissing = true,)..., $(kw...))
     end
 end
 
 function rsubset!_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = true)
+
     t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
     quote
-        $subset!($x, $(t...); skipmissing=true)
+        $subset!($x, $(t...); (skipmissing = true,)..., $(kw...))
     end
 end
 
 
 """
-    @subset!(d, i...)
+    @subset!(d, i...; kwargs...)
 
 Select row subsets in `AbstractDataFrame`s and `GroupedDataFrame`s,
 mutating the underlying data-frame in-place.
@@ -977,6 +1052,9 @@ mutating the underlying data-frame in-place.
 
 * `d` : an AbstractDataFrame or GroupedDataFrame
 * `i...` : expression for selecting rows
+* `kwargs` : keyword arguments passed to `DataFrames.subset!`
+
+### Details
 
 Multiple `i` expressions are "and-ed" together.
 
@@ -1029,6 +1107,24 @@ end
 ```
 
 $ASTABLE_RHS_SUBSET_DOCS
+
+`@subset!` accepts the same keyword arguments as `DataFrames.subset!` and can be added in
+two ways. When inputs are given as multiple arguments, they are added at the end after
+a semi-colon `;`, as in
+
+```
+@subset!(df, :a; skipmissing = false)
+```
+
+When inputs are given in "block" format, the last lines may be written
+`@kwarg key = value`, which indicates keyword arguments to be passed to `subset!` function.
+
+```
+@subset! df begin
+    :a .== 1
+    @kwarg skipmissing = false
+end
+```
 
 ### Examples
 
@@ -1129,12 +1225,11 @@ end
 ## @orderby
 ##
 ##############################################################################
-
 function orderby_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...)
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)
     t = (fun_to_vec(ex; gensym_names = true, outer_flags = outer_flags) for ex in exprs)
     quote
-        $DataFramesMeta.orderby($x, $(t...))
+        $orderby($x, $(t...); $(kw...))
     end
 end
 
@@ -1157,6 +1252,13 @@ end
 
 Sort rows by values in one of several columns or a transformation of columns.
 Always returns a fresh `DataFrame`. Does not accept a `GroupedDataFrame`.
+
+### Arguments
+
+* `d`: a `DataFrame` or `GroupedDataFrame`
+* `i...`: arguments on which to sort the object
+
+### Details
 
 When given a `DataFrame`, `@orderby` applies the transformation
 given by its arguments (but does not create new columns) and sorts
@@ -1289,10 +1391,10 @@ macro orderby(d, args...)
 end
 
 function rorderby_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = true)
     t = (fun_to_vec(ex; gensym_names=true, outer_flags=outer_flags) for ex in exprs)
     quote
-        $DataFramesMeta.orderby($x, $(t...))
+        $orderby($x, $(t...); $(kw...))
     end
 end
 
@@ -1357,26 +1459,30 @@ end
 
 
 function transform_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...)
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)
+
     t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
     quote
-        $DataFrames.transform($x, $(t...))
+        $transform($x, $(t...);  $(kw...))
     end
 end
 
 """
-    @transform(d, i...)
+    @transform(d, i...; kwargs...)
 
 Add additional columns or keys based on keyword-like arguments.
 
 ### Arguments
 
-* `d` : an `AbstractDataFrame`, or `GroupedDataFrame`
-* `i...` : keyword-like arguments defining new columns or keys, of the form `:y = f(:x)`
+* `d`: an `AbstractDataFrame`, or `GroupedDataFrame`
+* `i...`: transformations defining new columns or keys, of the form `:y = f(:x)`
+* `kwargs...`: keyword arguments passed to `DataFrames.transform`
 
 ### Returns
 
 * `::AbstractDataFrame` or `::GroupedDataFrame`
+
+### Details
 
 Inputs to `@transform` can come in two formats: a `begin ... end` block,
 in which case each line in the block is a separate
@@ -1422,6 +1528,24 @@ All transformations in the block will operate by row.
 $ASTABLE_MACRO_FLAG_DOCS
 
 $ASTABLE_RHS_SELECT_TRANSFORM_DOCS
+
+`@transform` accepts the same keyword arguments as `DataFrames.transform!` and can be added in
+two ways. When inputs are given as multiple arguments, they are added at the end after
+a semi-colon `;`, as in
+
+```
+@transform(gd, :x = :a .- 1; ungroup = false)
+```
+
+When inputs are given in "block" format, the last lines may be written
+`@kwarg key = value`, which indicates keyword arguments to be passed to `transform!` function.
+
+```
+@transform gd begin
+    :x = :a .- 1
+    @kwarg ungroup = false
+end
+```
 
 ### Examples
 
@@ -1469,16 +1593,16 @@ macro transform(x, args...)
 end
 
 function rtransform_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = true)
 
     t = (fun_to_vec(ex; gensym_names=false, outer_flags=outer_flags) for ex in exprs)
     quote
-        $DataFrames.transform($x, $(t...))
+        $transform($x, $(t...); $(kw...))
     end
 end
 
 """
-    @rtransform(x, args...)
+    @rtransform(x, args...; kwargs...)
 
 Row-wise version of `@transform`, i.e. all operations use `@byrow` by default.
 See [`@transform`](@ref) for details.
@@ -1522,15 +1646,16 @@ end
 
 
 function transform!_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...)
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)
+
     t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
     quote
-        $DataFrames.transform!($x, $(t...))
+        $transform!($x, $(t...); $(kw...))
     end
 end
 
 """
-    @transform!(d, i...)
+    @transform!(d, i...; kwargs...)
 
 Mutate `d` inplace to add additional columns or keys based on keyword-like
 arguments and return it. No copies of existing columns are made.
@@ -1538,12 +1663,14 @@ arguments and return it. No copies of existing columns are made.
 ### Arguments
 
 * `d` : an `AbstractDataFrame`, or `GroupedDataFrame`
-* `i...` : keyword-like arguments, of the form `:y = f(:x)` defining
-new columns or keys
+* `i...` : transformations of the form `:y = f(:x)` defining new columns or keys
+* `kwargs...`: keyword arguments passed to `DataFrames.transform!`
 
 ### Returns
 
-* `::DataFrame`
+* `::DataFrame` or a `GroupedDataFrame`
+
+### Details
 
 Inputs to `@transform!` can come in two formats: a `begin ... end` block,
 in which case each line in the block is a separate
@@ -1590,6 +1717,24 @@ $ASTABLE_MACRO_FLAG_DOCS
 
 $ASTABLE_RHS_SELECT_TRANSFORM_DOCS
 
+`@transform!` accepts the same keyword arguments as `DataFrames.transform!` and can be added in
+two ways. When inputs are given as multiple arguments, they are added at the end after
+a semi-colon `;`, as in
+
+```
+@transform!(gd, :x = :a .- 1; ungroup = false)
+```
+
+When inputs are given in "block" format, the last lines may be written
+`@kwarg key = value`, which indicates keyword arguments to be passed to `transform!` function.
+
+```
+@transform! gd begin
+    :x = :a .- 1
+    @kwarg ungroup = false
+end
+```
+
 ### Examples
 
 ```jldoctest
@@ -1615,16 +1760,16 @@ macro transform!(x, args...)
 end
 
 function rtransform!_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = true)
 
     t = (fun_to_vec(ex; gensym_names=false, outer_flags=outer_flags) for ex in exprs)
     quote
-        $DataFrames.transform!($x, $(t...))
+        $transform!($x, $(t...); $(kw...))
     end
 end
 
 """
-    @rtransform!(x, args...)
+    @rtransform!(x, args...; kwargs...)
 
 Row-wise version of `@transform!`, i.e. all operations use `@byrow` by
 default. See [`@transform!`](@ref) for details."""
@@ -1639,27 +1784,31 @@ end
 ##############################################################################
 
 function select_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...)
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)
+
     t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
     quote
-        $DataFrames.select($x, $(t...))
+        $select($x, $(t...); $(kw...))
     end
 end
 
 """
-    @select(d, e...)
+    @select(d, i...; kwargs...)
 
 Select and transform columns.
 
 ### Arguments
 
 * `d` : an `AbstractDataFrame` or `GroupedDataFrame`
-* `e` :  keyword-like arguments, of the form `:y = f(:x)` specifying
+* `i` :  transformations of the form `:y = f(:x)` specifying
 new columns in terms of existing columns or symbols to specify existing columns
+* `kwargs` : keyword arguments passed to `DataFrames.select`
 
 ### Returns
 
-* `::AbstractDataFrame`
+* `::AbstractDataFrame` or a `GroupedDataFrame`
+
+### Details
 
 Inputs to `@select` can come in two formats: a `begin ... end` block,
 in which case each line in the block is a separate
@@ -1706,6 +1855,24 @@ $ASTABLE_MACRO_FLAG_DOCS
 
 $ASTABLE_RHS_SELECT_TRANSFORM_DOCS
 
+`@select` accepts the same keyword arguments as `DataFrames.select` and can be added in
+two ways. When inputs are given as multiple arguments, they are added at the end after
+a semi-colon `;`, as in
+
+```
+@select(df, :a; copycols = false)
+```
+
+When inputs are given in "block" format, the last lines may be written
+`@kwarg key = value`, which indicates keyword arguments to be passed to `select` function.
+
+```
+@select gd begin
+    :a
+    @select copycols = false
+end
+```
+
 ### Examples
 
 ```jldoctest
@@ -1750,16 +1917,16 @@ macro select(x, args...)
 end
 
 function rselect_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = true)
 
     t = (fun_to_vec(ex; gensym_names=false, outer_flags=outer_flags) for ex in exprs)
     quote
-        $DataFrames.select($x, $(t...))
+        $select($x, $(t...); $(kw...))
     end
 end
 
 """
-    @rselect(x, args...)
+    @rselect(x, args...; kwargs...)
 
 Row-wise version of `@select`, i.e. all operations use `@byrow` by
 default. See [`@select`](@ref) for details.
@@ -1803,27 +1970,31 @@ end
 ##############################################################################
 
 function select!_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...)
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)
+
     t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
     quote
-        $DataFrames.select!($x, $(t...))
+        $select!($x, $(t...); $(kw...))
     end
 end
 
 """
-    @select!(d, e...)
+    @select!(d, i...; kwargs...)
 
 Mutate `d` in-place to retain only columns or transformations specified by `e` and return it. No copies of existing columns are made.
 
 ### Arguments
 
 * `d` : an AbstractDataFrame
-* `e` :  keyword-like arguments, of the form `:y = f(:x)` specifying
+* `i` : transformations of the form `:y = f(:x)` specifying
 new columns in terms of existing columns or symbols to specify existing columns
+* `kwargs` : keyword arguments passed to `DataFrames.select!`
 
 ### Returns
 
 * `::DataFrame`
+
+### Details
 
 Inputs to `@select!` can come in two formats: a `begin ... end` block,
 in which case each line in the block is a separate
@@ -1856,6 +2027,24 @@ All transformations in the block will operate by row.
 $ASTABLE_MACRO_FLAG_DOCS
 
 $ASTABLE_RHS_SELECT_TRANSFORM_DOCS
+
+`@select!` accepts the same keyword arguments as `DataFrames.select!` and can be added in
+two ways. When inputs are given as multiple arguments, they are added at the end after
+a semi-colon `;`, as in
+
+```
+@select!(gd, :a; ungroup = false)
+```
+
+When inputs are given in "block" format, the last lines may be written
+`@kwarg key = value`, which indicates keyword arguments to be passed to `select!` function.
+
+```
+@select! gd begin
+    :a
+    @kwarg ungroup = false
+end
+```
 
 ### Examples
 
@@ -1909,16 +2098,16 @@ macro select!(x, args...)
 end
 
 function rselect!_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = true)
 
     t = (fun_to_vec(ex; gensym_names=false, outer_flags=outer_flags) for ex in exprs)
     quote
-        $DataFrames.select!($x, $(t...))
+        $select!($x, $(t...); $(kw...))
     end
 end
 
 """
-    @rselect!(x, args...)
+    @rselect!(x, args...; kwargs...)
 
 Row-wise version of `@select!`, i.e. all operations use `@byrow` by
 default. See [`@select!`](@ref) for details.
@@ -1934,26 +2123,33 @@ end
 ##############################################################################
 
 function combine_helper(x, args...; deprecation_warning = false)
-    deprecation_warning && @warn "`@based_on` is deprecated. Use `@combine` instead."
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)
 
-    exprs, outer_flags = create_args_vector(args...)
+    deprecation_warning && @warn "`@based_on` is deprecated. Use `@combine` instead."
 
     t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
 
     quote
-        $DataFrames.combine($x, $(t...))
+        $combine($x, $(t...); $(kw...))
     end
 end
 
 """
-    @combine(x, args...)
+    @combine(x, args...; kwargs...)
 
 Summarize a grouping operation
 
 ### Arguments
 
 * `x` : a `GroupedDataFrame` or `AbstractDataFrame`
-* `args...` : keyword-like arguments defining new columns, of the form `:y = f(:x)`
+* `args...` : transformations defining new columns, of the form `:y = f(:x)`
+* `kwargs`: : keyword arguments passed to `DataFrames.combine`
+
+### Results
+
+* A `DataFrame` or a `GroupedDataFrame`
+
+### Details
 
 Inputs to `@combine` can come in two formats: a `begin ... end` block,
 in which case each line in the block is a separate
@@ -1974,6 +2170,24 @@ and
 ```
 
 $ASTABLE_MACRO_FLAG_DOCS
+
+`@combine` accepts the same keyword arguments as `DataFrames.combine` and can be added in
+two ways. When inputs are given as multiple arguments, they are added at the end after
+a semi-colon `;`, as in
+
+```
+@combine(gd, :x = first(:a); ungroup = false)
+```
+
+When inputs are given in "block" format, the last lines may be written
+`@kwarg key = value`, which indicates keyword arguments to be passed to `combine` function.
+
+```
+@combine gd begin
+    :x = first(:a)
+    @kwarg ungroup = false
+end
+```
 
 ### Examples
 
@@ -2047,18 +2261,26 @@ end
 ##############################################################################
 
 function by_helper(x, what, args...)
-    # Only allow one argument when returning a Table object
-    exprs, outer_flags = create_args_vector(args...)
+    # Handle keyword arguments initially due the gouping instruction, what
+    if x isa Expr && x.head === :parameters
+        # with keyword arguments, everything is shifted to
+        # the right
+        new_what = args[1]
+        args = (what, args[2:end]...)
+        what = new_what
+    end
+
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)
 
     t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
 
     quote
-        $DataFrames.combine($groupby($x, $what), $(t...))
+        $combine($groupby($x, $what), $(t...); $(kw...))
     end
 end
 
 """
-    @by(d::AbstractDataFrame, cols, e...)
+    @by(d::AbstractDataFrame, cols, e...; kwargs...)
 
 Split-apply-combine in one step.
 
@@ -2068,10 +2290,13 @@ Split-apply-combine in one step.
 * `cols` : a column indicator (Symbol, Int, Vector{Symbol}, etc.)
 * `e` :  keyword-like arguments, of the form `:y = f(:x)` specifying
 new columns in terms of column groupings
+* `kwargs` : keyword arguments passed to `DataFrames.combine`
 
 ### Returns
 
-* `::DataFrame`
+* `::DataFrame` or a `GroupedDataFrame`
+
+### Details
 
 Transformation inputs to `@by` can come in two formats: a `begin ... end` block,
 in which case each line in the block is a separate
@@ -2092,6 +2317,28 @@ and
 ```
 
 $ASTABLE_MACRO_FLAG_DOCS
+
+`@by` accepts the same keyword arguments as `DataFrames.combine` and can be added in
+two ways. When inputs are given as multiple arguments, they are added at the end after
+a semi-colon `;`, as in
+
+```
+@by(ds, :g, :x = first(:a); ungroup = false)
+```
+
+When inputs are given in "block" format, the last lines may be written
+`@kwarg key = value`, which indicates keyword arguments to be passed to `combine` function.
+
+```
+@by df :a begin
+    :x = first(:a)
+    @kwarg ungroup = false
+end
+```
+
+Though `@by` performs both `groupby` and `combine`, `@by` only forwards keyword arguments
+to `combine`, and not `groupby`. To pass keyword arguments to `groupby`, perform the
+`groupby` and `@combine` steps separately.
 
 ### Examples
 

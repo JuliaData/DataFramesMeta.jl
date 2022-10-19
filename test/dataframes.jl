@@ -553,11 +553,6 @@ cr = "c"
     @test_throws MethodError @eval @select(df, :n = sum(Between(:i, :t)))
 end
 
-@testset "Keyword arguments failure" begin
-    @test_throws LoadError @eval @transform(df; :n = :i)
-    @test_throws LoadError @eval @select(df; :n = :i)
-end
-
 @testset "with" begin
     df = DataFrame(A = 1:3, B = [2, 1, 2])
 

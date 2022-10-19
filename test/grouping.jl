@@ -149,7 +149,6 @@ newvar = :n
 
 @testset "Limits of @combine" begin
     @test_throws MethodError @eval @combine(gd, :n = sum(Between(:i, :t)))
-    @test_throws LoadError @eval @combine(gd; :n = mean(:i))
     @test_throws ArgumentError @eval @combine(gd, :n = mean(:i) + mean(cols(1)))
 end
 
