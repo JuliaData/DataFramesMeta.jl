@@ -2418,8 +2418,8 @@ end
 function make_distinct(x::AbstractDataFrame, @nospecialize(t...))    
     if isempty(t)
         DataFrames.unique(x)
-    else
-        tmp = DataFrames.select(x, (t...); copycols = false)
+    else        
+        tmp = DataFrames.select(x, t...; copycols = false)
         rowidxs = (!).(DataFrames.nonunique(tmp))
         (x)[rowidxs, :]                
     end
@@ -2429,11 +2429,11 @@ function make_distinct(x::GroupedDataFrame, @nospecialize(t...))
     throw(ArgumentError("@distinct with a GroupedDataFrame is reserved"))
 end
 
-function distinct_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...)
-    t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)     
+function distinct_helper(x, args...)    
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)    
+    t = (fun_to_vec(ex; no_dest = true, outer_flags=outer_flags) for ex in exprs)
     quote            
-        $DataFramesMeta.make_distinct($x, $(t...))
+        $DataFramesMeta.make_distinct($x, $(t...); $(kw...))
     end
 end
 
@@ -2537,10 +2537,10 @@ macro distinct(d, args...)
 end
 
 function rdistinct_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
-    t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)    
-    quote                    
-        $DataFramesMeta.make_distinct($x, $(t...))
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = true)    
+    t = (fun_to_vec(ex; no_dest = true, outer_flags=outer_flags) for ex in exprs)
+    quote            
+        $DataFramesMeta.make_distinct($x, $(t...); $(kw...))
     end
 end
 
@@ -2587,7 +2587,7 @@ function make_distinct!(x::AbstractDataFrame, @nospecialize(t...))
     if isempty(t)
         DataFrames.unique!(x)
     else
-        tmp = DataFrames.select(x, (t...); copycols = false)
+        tmp = DataFrames.select(x, t...; copycols = false)
         DataFrames.deleteat!(x, DataFrames._findall(DataFrames.nonunique(tmp)))                
     end
 end
@@ -2597,11 +2597,11 @@ function make_distinct!(x::GroupedDataFrame, @nospecialize(t...))
 end
 
 function distinct!_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...)
-    t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
-    quote                    
-        $DataFramesMeta.make_distinct!($x, $(t...))
-    end            
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)    
+    t = (fun_to_vec(ex; no_dest = true, outer_flags=outer_flags) for ex in exprs)
+    quote            
+        $DataFramesMeta.make_distinct!($x, $(t...); $(kw...))
+    end
 end
 
 """
@@ -2709,11 +2709,11 @@ end
 ##############################################################################
 
 function rdistinct!_helper(x, args...)
-    exprs, outer_flags = create_args_vector(args...; wrap_byrow=true)
-    t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
-    quote                    
-        $DataFramesMeta.make_distinct!($x, $(t...))    
-    end            
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = true)    
+    t = (fun_to_vec(ex; no_dest = true, outer_flags=outer_flags) for ex in exprs)
+    quote            
+        $DataFramesMeta.make_distinct!($x, $(t...); $(kw...))
+    end
 end
 
 """
