@@ -89,6 +89,16 @@ function is_nested_fun_recursive(x::Expr, nested_once)
         return false
     end
 end
+
+fix_simple_dot(x) = x
+function fix_simple_dot(x::Symbol)
+    if startswith(string(x), '.')
+        f_sym_without_dot = Symbol(chop(string(x), head = 1, tail = 0))
+        return Expr(:., f_sym_without_dot)
+    else
+        return x
+    end
+end
 make_composed(x) = x
 function make_composed(x::Expr)
     funs = Any[]
@@ -96,13 +106,16 @@ function make_composed(x::Expr)
     nested_once = false
     while true
         if is_nested_fun(x)
-            push!(funs, x.args[1])
+            fun = x.args[1]
+            push!(funs, fun)
             x = x.args[2]
             nested_once = true
         elseif is_simple_non_broadcast_call(x) && nested_once
-            push!(funs, x.args[1])
+            fun = fix_simple_dot(x.args[1])
+            push!(funs, fun)
             # ∘(f, g, h)(:x, :y, :z)
-            return Expr(:call, Expr(:call, ∘, funs...), x.args[2:end]...)
+            x = Expr(:call, Expr(:call, ∘, funs...), x.args[2:end]...)
+            return x
         else
             throw(ArgumentError("Not eligible for function composition"))
         end
@@ -244,7 +257,8 @@ function get_source_fun(function_expr; exprflags = deepcopy(DEFAULT_FLAGS))
         source = args_to_selectors(function_expr.args[2:end])
         fun_t = function_expr.args[1]
 
-        # .+ to +
+        # .+ to ByRow(+) to take advantage of
+        # DataFrames.jl optimizations
         if startswith(string(fun_t), '.')
             f_sym_without_dot = Symbol(chop(string(fun_t), head = 1, tail = 0))
             fun = :(DataFrames.ByRow($f_sym_without_dot))
