@@ -659,4 +659,55 @@ end
     @test names(df) == ["x"]
 end
 
+@testset "@distinct with @byrow" begin
+    df = DataFrame(A=[1, 2, 3, missing], B=[2, 1, 2, 1])
+
+    d = @distinct df begin
+        @byrow :A * 0 + 1
+    end
+    @test d ≅ @distinct(df, :A .* 0 .+ 1)
+
+    d = @distinct df @byrow begin
+        :A * 0 + 1
+    end
+    @test d ≅ @distinct(df, :A .* 0 .+ 1)
+end
+
+
+@testset "@rdistinct" begin
+    df = DataFrame(A=[1, 2, 3, missing], B=[2, 1, 2, 1])
+
+    d = @rdistinct df begin
+        :A * 0 + 1
+    end
+    @test d ≅ @distinct(df, :A .* 0 .+ 1)
+
+end
+
+@testset "@distinct! with @byrow" begin
+    df = DataFrame(A=[1, 2, 3, missing], B=[2, 1, 2, 1])
+
+    d = @distinct! copy(df) begin
+        @byrow :A * 0 + 1
+    end
+    @test d ≅ @distinct!(df, :A .* 0 .+ 1)
+
+    d = @distinct! copy(df) @byrow begin
+        :A * 0 + 1
+    end
+    @test d ≅ @distinct!(df, :A .* 0 .+ 1)
+end
+
+
+@testset "@rdistinct!" begin
+    df = DataFrame(A=[1, 2, 3, missing], B=[2, 1, 2, 1])
+
+    d = @rdistinct! copy(df) begin
+        :A * 0 + 1
+    end
+    @test d ≅ @distinct!(df, :A .* 0 .+ 1)
+
+end
+
+
 end
