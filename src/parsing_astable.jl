@@ -49,6 +49,20 @@ function is_column_assigment(ex::Expr)
     ex.head == :(=) && (get_column_expr(ex.args[1]) !== nothing)
 end
 
+is_multi_column_assignment(ex) = false
+function is_multi_column_assignment(ex::Expr)
+    if ex.head == :(=)
+        exarg = ex.args[1]
+        if exarg isa Expr && exarg.head == :tuple
+            return all(!isnothing, get_column_expr.(exarg.args))
+        else
+            return false
+        end
+    else
+        return false
+    end
+end
+
 # Taken from MacroTools.jl
 # No docstring so assumed unstable
 block(ex) = isexpr(ex, :block) ? ex : :($ex;)
@@ -68,7 +82,7 @@ function get_source_fun_astable(ex; exprflags = deepcopy(DEFAULT_FLAGS))
         if is_column_assigment(arg)
             lhs = get_column_expr(arg.args[1])
             rhs = arg.args[2]
-            new_ex = replace_syms_astable!(inputs_to_function, lhs_assignments, arg.args[2])
+            new_ex = replace_syms_astable!(inputs_to_function, lhs_assignments, rhs)
             if haskey(inputs_to_function, lhs)
                 new_lhs = inputs_to_function[lhs]
                 lhs_assignments[lhs] = new_lhs
@@ -77,6 +91,28 @@ function get_source_fun_astable(ex; exprflags = deepcopy(DEFAULT_FLAGS))
             end
 
             Expr(:(=), new_lhs, new_ex)
+        elseif is_multi_column_assignment(arg)
+            @show exarg = arg.args[1]
+            lhss = get_column_expr.(exarg.args)
+            rhs = arg.args[2]
+            new_ex = replace_syms_astable!(inputs_to_function, lhs_assignments, rhs)
+            new_lhss = Expr(:tuple,)
+            for lhs in lhss
+                @show lhs
+                if haskey(inputs_to_function, lhs)
+                    new_lhs = inputs_to_function[lhs]
+                    lhs_assignments[lhs] = new_lhs
+                else
+                    new_lhs = addkey!(lhs_assignments, lhs)
+                end
+                push!(new_lhss.args, new_lhs)
+            end
+            @show new_lhs
+            @show new_ex
+            @show new_lhss
+            t = Expr(:(=), new_lhss, new_ex)
+            @show MacroTools.prettify(t)
+            t
         else
             replace_syms_astable!(inputs_to_function, lhs_assignments, arg)
         end
