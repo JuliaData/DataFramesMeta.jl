@@ -2821,7 +2821,7 @@ julia> @rename(df, :new1 = :old_col1)
    4 │ 0.643179   0.299391   0.780125
    5 │ 0.731267   0.18905    0.767292
 
-julia> @rename(df, :new1 = :old_col1, :new2 = $"old_col2")
+julia> @rename(df, :new1 = :old_col1, :new2 = $DOLLAR"old_col2")
 5×3 DataFrame
  Row │ new1       new2       old_col3 
      │ Float64    Float64    Float64  
@@ -2832,7 +2832,7 @@ julia> @rename(df, :new1 = :old_col1, :new2 = $"old_col2")
    4 │ 0.643179   0.299391   0.780125
    5 │ 0.731267   0.18905    0.767292
 
-julia> @rename(df, :new1 = $("old_col" * "1"), :new2 = :old_col2)
+julia> @rename(df, :new1 = $DOLLAR("old_col" * "1"), :new2 = :old_col2)
 5×3 DataFrame
  Row │ new1       new2       old_col3 
      │ Float64    Float64    Float64  
@@ -2908,7 +2908,7 @@ julia> @rename!(df, :new1 = :old_col1)
 
 julia> df = DataFrame(old_col1 = rand(5), old_col2 = rand(5),old_col3 = rand(5));
 
-julia> @rename!(df, :new1 = :old_col1, :new2 = $"old_col2")
+julia> @rename!(df, :new1 = :old_col1, :new2 = $DOLLAR"old_col2")
 5×3 DataFrame
  Row │ new1       new2       old_col3 
      │ Float64    Float64    Float64  
@@ -2921,7 +2921,7 @@ julia> @rename!(df, :new1 = :old_col1, :new2 = $"old_col2")
 
 julia> df = DataFrame(old_col1 = rand(5), old_col2 = rand(5),old_col3 = rand(5));
 
-julia> @rename!(df, :new1 = $("old_col" * "1"), :new2 = :old_col2)
+julia> @rename!(df, :new1 = $DOLLAR("old_col" * "1"), :new2 = :old_col2)
 5×3 DataFrame
  Row │ new1       new2       old_col3 
      │ Float64    Float64    Float64  
