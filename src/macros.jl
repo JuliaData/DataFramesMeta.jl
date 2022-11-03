@@ -2748,3 +2748,192 @@ julia> @rdistinct!(df, :x + :y)
 macro rdistinct!(d, args...)
     esc(rdistinct!_helper(d, args...))
 end
+
+##############################################################################
+##
+## @rename - rename columns with keyword args 
+##
+##############################################################################
+
+function pair_to_string(p...)        
+    str_p = Vector{Pair{String, String}}(undef,length(p))
+    for (i,j) in enumerate(p)                    
+        str_p[i] = string(j[1])=> string(j[2])     
+    end    
+    return str_p
+end
+
+function make_renamed(x, @nospecialize(t...))   
+    p = pair_to_string(t...)     
+    DataFrames.rename(x,p...)
+end
+
+function rename_helper(x, args...)
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)    
+    t = (fun_to_vec(ex; gensym_names = false,  outer_flags=outer_flags) for ex in exprs)
+    quote                  
+        $make_renamed($x,$(t...))
+    end
+end
+
+"""
+    @rename(d, args...)
+
+Change column names.
+
+### Arguments
+
+* `d` : an AbstractDataFrame
+* `args...` : expressions of the form `:new = :old` specifying the change of a column's name 
+from "old" to "new"
+
+### Returns
+
+* `::AbstractDataFrame`
+
+Inputs to `@rename` can come in two formats: a `begin ... end` block, or as a series of
+arguments and keyword-like arguments. For example, the following are equivalent:
+
+```julia
+@rename df begin 
+    :new_col = :old_col
+end
+```
+
+and 
+
+```
+@rename(df, :new_col = :old_col)
+```
+
+### Examples
+```
+julia> df = DataFrame(old_col1 = rand(5), old_col2 = rand(5),old_col3 = rand(5));
+
+julia> @rename(df, :new1 = :old_col1)
+5×3 DataFrame
+ Row │ new1       old_col2   old_col3 
+     │ Float64    Float64    Float64  
+─────┼────────────────────────────────
+   1 │ 0.0176206  0.493592   0.348072
+   2 │ 0.861545   0.512254   0.85763
+   3 │ 0.263082   0.0267507  0.696494
+   4 │ 0.643179   0.299391   0.780125
+   5 │ 0.731267   0.18905    0.767292
+
+julia> @rename(df, :new1 = :old_col1, :new2 = $"old_col2")
+5×3 DataFrame
+ Row │ new1       new2       old_col3 
+     │ Float64    Float64    Float64  
+─────┼────────────────────────────────
+   1 │ 0.0176206  0.493592   0.348072
+   2 │ 0.861545   0.512254   0.85763
+   3 │ 0.263082   0.0267507  0.696494
+   4 │ 0.643179   0.299391   0.780125
+   5 │ 0.731267   0.18905    0.767292
+
+julia> @rename(df, :new1 = $("old_col" * "1"), :new2 = :old_col2)
+5×3 DataFrame
+ Row │ new1       new2       old_col3 
+     │ Float64    Float64    Float64  
+─────┼────────────────────────────────
+   1 │ 0.0176206  0.493592   0.348072
+   2 │ 0.861545   0.512254   0.85763
+   3 │ 0.263082   0.0267507  0.696494
+   4 │ 0.643179   0.299391   0.780125
+   5 │ 0.731267   0.18905    0.767292
+```
+"""
+macro rename(x, args...)
+    esc(rename_helper(x, args...))        
+end
+
+function make_renamed!(x, @nospecialize(t...))
+    p = pair_to_string(t...)    
+    DataFrames.rename!(x, p...)
+end
+
+function rename!_helper(x, args...)
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)    
+    t = (fun_to_vec(ex; gensym_names = false,  outer_flags=outer_flags) for ex in exprs)
+    quote                  
+        $make_renamed!($x, $(t...))
+    end
+end
+
+"""
+    @rename!(d, args...)
+
+In-place modification of column names.
+
+### Arguments
+
+* `d` : an AbstractDataFrame
+* `args...` : expressions of the form `:new = :old` specifying the change of a column's name 
+from "old" to "new"
+
+### Returns
+
+* `::AbstractDataFrame`
+
+Inputs to `@rename!` can come in two formats: a `begin ... end` block, or as a series of
+arguments and keyword-like arguments. For example, the following are equivalent:
+
+```julia
+@rename! df begin 
+    :new_col = :old_col
+end
+```
+
+and 
+
+```
+@rename!(df, :new_col = :old_col)
+```
+
+### Examples
+```
+julia> df = DataFrame(old_col1 = rand(5), old_col2 = rand(5),old_col3 = rand(5));
+
+julia> @rename!(df, :new1 = :old_col1)
+5×3 DataFrame
+ Row │ new1       old_col2   old_col3 
+     │ Float64    Float64    Float64  
+─────┼────────────────────────────────
+   1 │ 0.0176206  0.493592   0.348072
+   2 │ 0.861545   0.512254   0.85763
+   3 │ 0.263082   0.0267507  0.696494
+   4 │ 0.643179   0.299391   0.780125
+   5 │ 0.731267   0.18905    0.767292
+
+julia> df = DataFrame(old_col1 = rand(5), old_col2 = rand(5),old_col3 = rand(5));
+
+julia> @rename!(df, :new1 = :old_col1, :new2 = $"old_col2")
+5×3 DataFrame
+ Row │ new1       new2       old_col3 
+     │ Float64    Float64    Float64  
+─────┼────────────────────────────────
+   1 │ 0.0176206  0.493592   0.348072
+   2 │ 0.861545   0.512254   0.85763
+   3 │ 0.263082   0.0267507  0.696494
+   4 │ 0.643179   0.299391   0.780125
+   5 │ 0.731267   0.18905    0.767292
+
+julia> df = DataFrame(old_col1 = rand(5), old_col2 = rand(5),old_col3 = rand(5));
+
+julia> @rename!(df, :new1 = $("old_col" * "1"), :new2 = :old_col2)
+5×3 DataFrame
+ Row │ new1       new2       old_col3 
+     │ Float64    Float64    Float64  
+─────┼────────────────────────────────
+   1 │ 0.0176206  0.493592   0.348072
+   2 │ 0.861545   0.512254   0.85763
+   3 │ 0.263082   0.0267507  0.696494
+   4 │ 0.643179   0.299391   0.780125
+   5 │ 0.731267   0.18905    0.767292
+```
+"""
+macro rename!(x, args...)
+    esc(rename!_helper(x, args...))        
+end
+
