@@ -2758,7 +2758,7 @@ end
 function pair_to_string(p...)        
     str_p = Vector{Pair{String, String}}(undef,length(p))
     for (i,j) in enumerate(p)                    
-        str_p[i] = string(j[1])=> string(j[2])     
+        str_p[i] = string(first(j))=> string(last(j))     
     end    
     return str_p
 end
@@ -2785,14 +2785,16 @@ Change column names.
 
 * `d` : an AbstractDataFrame
 * `args...` : expressions of the form `:new = :old` specifying the change of a column's name 
-from "old" to "new"
+from "old" to "new". The left- and right-hand side of each expression can be passed as
+symbol arguments, as in `:old_col`, or strings escaped with `$DOLLAR` as in `$DOLLAR"new_col"`.
+See  **Details** for a description of accepted values.
 
 ### Returns
 
 * `::AbstractDataFrame`
 
-Inputs to `@rename` can come in two formats: a `begin ... end` block, or as a series of
-arguments and keyword-like arguments. For example, the following are equivalent:
+Inputs to `@rename` can come in two formats: a `begin ... end` block, or as a series of 
+keyword-like arguments. For example, the following are equivalent:
 
 ```julia
 @rename df begin 
@@ -2804,6 +2806,25 @@ and
 
 ```
 @rename(df, :new_col = :old_col)
+```
+
+### Details
+
+Both the left- and right-hand side of an expression specifying a column name assignment 
+can be either a `Symbol` or a `String`` escaped with `$DOLLAR` For example `:new = ...`, 
+and `$(DOLLAR)"new" = ...` are both valid ways of assigning a new column name.
+
+This idea can be extended to pass arbitrary right-hand side expressions. For example, 
+the following are equivalent:
+
+```
+@rename(df, :new = :old1)
+```
+
+and
+
+```
+@rename(df, :new = $("old_col" * "1"))
 ```
 
 ### Examples
@@ -2870,14 +2891,16 @@ In-place modification of column names.
 
 * `d` : an AbstractDataFrame
 * `args...` : expressions of the form `:new = :old` specifying the change of a column's name 
-from "old" to "new"
+from "old" to "new". The left- and right-hand side of each expression can be passed as
+symbol arguments, as in `:old_col`, or strings escaped with `$DOLLAR` as in `$DOLLAR"new_col"`.
+See  **Details** for a description of accepted values.
 
 ### Returns
 
 * `::AbstractDataFrame`
 
-Inputs to `@rename!` can come in two formats: a `begin ... end` block, or as a series of
-arguments and keyword-like arguments. For example, the following are equivalent:
+Inputs to `@rename!` can come in two formats: a `begin ... end` block, or as a series of 
+keyword-like arguments. For example, the following are equivalent:
 
 ```julia
 @rename! df begin 
@@ -2889,6 +2912,25 @@ and
 
 ```
 @rename!(df, :new_col = :old_col)
+```
+
+### Details
+
+Both the left- and right-hand side of an expression specifying a column name assignment 
+can be either a `Symbol` or a `String`` escaped with `$DOLLAR` For example `:new = ...`, 
+and `$(DOLLAR)"new" = ...` are both valid ways of assigning a new column name.
+
+This idea can be extended to pass arbitrary right-hand side expressions. For example, 
+the following are equivalent:
+
+```
+@rename!(df, :new = :old1)
+```
+
+and
+
+```
+@rename!(df, :new = $("old_col" * "1"))
 ```
 
 ### Examples
