@@ -387,6 +387,54 @@ fun_to_vec(ex::QuoteNode;
            gensym_names::Bool=false,
            outer_flags::Union{NamedTuple, Nothing}=nothing) = ex
 
+
+"""
+    fun_to_pair(ex::Expr)
+
+Given an expression where the left- and right- hand side 
+both are both valid column identifiers,  i.e., a `QuoteNode`
+or an expression beginning with `$DOLLAR`, or a "full" expression of the form 
+`$DOLLAR(:x => :y)`, return an expression, where expression arguments of type 
+`QuoteNode`` are converted to `String``.
+"""           
+function fun_to_pair(ex::Expr)
+    
+    ex_col = get_column_expr(ex)        
+    if ex_col !== nothing         
+        str_p = MacroTools.postwalk(x->x isa QuoteNode ? String(x.value) : x, ex_col )                          
+        return str_p
+    end
+    
+    lhs = let t = ex.args[1]
+        if t isa Symbol
+            t = QuoteNode(t)
+            msg = "Using an un-quoted Symbol on the LHS is deprecated. " *
+                  "Write $t = ... instead."
+            @warn msg
+        end
+
+        s = get_column_expr(t)
+        if s === nothing
+            throw(ArgumentError("Invalid column identifier on LHS in DataFramesMeta.jl macro"))
+        end
+        
+        s
+    end
+
+    rhs = MacroTools.unblock(ex.args[2])
+    rhs_col = get_column_expr(rhs)
+    if rhs_col === nothing
+        throw(ArgumentError("Invalid column identifier on RHS in DataFramesMeta.jl macro"))
+    end
+
+    if rhs_col !== nothing
+        src = rhs_col
+        dest = lhs
+        return :(String($src) => String($dest))
+    end
+
+end
+
 function make_source_concrete(x::AbstractVector)
     if length(x) == 1 && x[1] isa AsTable
         return x[1]

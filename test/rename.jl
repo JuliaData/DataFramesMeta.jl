@@ -51,14 +51,14 @@ end
     @test res ≅ @rename(df, :new1 =:old_col1, :new2 = :old_col2)  
 
 
-    res = @rename copy(df) begin
+    res = @rename df begin
         :new1 = $("old_col" * "1")        
     end
     
     @test res ≅ @rename(df, :new1 =:old_col1)  
 
-    res = @rename copy(df) begin
-       $("old_col" * "1" => string(:new1))        
+    res = @rename df begin
+       $("old_col" * "1" => String(:new1))        
     end
     
     @test res ≅ @rename(df, :new1 = :old_col1)  

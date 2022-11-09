@@ -2754,26 +2754,12 @@ end
 ## @rename - rename columns with keyword args 
 ##
 ##############################################################################
-
-function pair_to_string(p...)        
-    str_p = Vector{Pair{String, String}}(undef,length(p))
-    for (i,j) in enumerate(p)                    
-        str_p[i] = string(first(j))=> string(last(j))     
-    end    
-    return str_p
-end
-
-function make_renamed(x, @nospecialize(t...))   
-    p = pair_to_string(t...)     
-    DataFrames.rename(x,p...)
-end
-
 function rename_helper(x, args...)
     x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)    
-    t = (fun_to_vec(ex; gensym_names = false,  outer_flags=outer_flags) for ex in exprs)
-    quote                  
-        $make_renamed($x,$(t...))
-    end
+    t = (fun_to_pair(ex) for ex in exprs)            
+    quote            
+        $DataFrames.rename($x, $(t...))
+    end    
 end
 
 """
@@ -2869,17 +2855,12 @@ macro rename(x, args...)
     esc(rename_helper(x, args...))        
 end
 
-function make_renamed!(x, @nospecialize(t...))
-    p = pair_to_string(t...)    
-    DataFrames.rename!(x, p...)
-end
-
 function rename!_helper(x, args...)
     x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)    
-    t = (fun_to_vec(ex; gensym_names = false,  outer_flags=outer_flags) for ex in exprs)
-    quote                  
-        $make_renamed!($x, $(t...))
-    end
+    t = (fun_to_pair(ex) for ex in exprs)            
+    quote            
+        $DataFrames.rename!($x, $(t...))
+    end    
 end
 
 """
