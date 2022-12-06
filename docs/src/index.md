@@ -115,6 +115,8 @@ outside_var = 1;
 @subset(df, :x .> 1)
 @subset(df, :x .> outside_var)
 @subset(df, :x .> outside_var, :y .< 102)  # the two expressions are "and-ed"
+@subset(df, in.(:y, Ref([101, 102]))) # pick rows with values found in a reference list
+@rsubset(df, :y in [101, 102]) # the same with @rsubset - explained below; broadcasting is not needed
 @subset(gd, :x .> mean(:x))
 ```
 
@@ -431,7 +433,7 @@ arguments, they are added at the end after a semi-colon `;`, as in
 ```julia
 julia> df = DataFrame(x = [1, 1, 2, 2], b = [5, 6, 7, 8]);
 
-julia> @rsubset(df, :x .== 1 ; view = true)
+julia> @rsubset(df, :x == 1 ; view = true)
 2×2 SubDataFrame
  Row │ x      b     
      │ Int64  Int64 
@@ -467,7 +469,7 @@ julia> df = DataFrame(x = [1, 1, 2, 2], b = [5, 6, 7, 8]);
 
 julia> my_kwargs = [:view => true, :skipmissing => false];
 
-julia> @rsubset(df, :x .== 1; my_kwargs...)
+julia> @rsubset(df, :x == 1; my_kwargs...)
 2×2 SubDataFrame
  Row │ x      b     
      │ Int64  Int64 
@@ -476,7 +478,7 @@ julia> @rsubset(df, :x .== 1; my_kwargs...)
    2 │     1      6
 
 julia> @rsubset df begin 
-           :x .== 1
+           :x == 1
            @kwarg my_kwargs...
        end
 2×2 SubDataFrame
