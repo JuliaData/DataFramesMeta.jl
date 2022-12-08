@@ -1,8 +1,27 @@
-function addkey!(membernames, nam)
-    if !haskey(membernames, nam)
-        membernames[nam] = gensym()
+"""
+Given a dictionany mapping column identifiers to gensym'd
+symbols used in the body of the anonymous function, check
+if the identifier currently exists. If the identifier does
+not exist, create a `col_identifier => gensym` mapping in
+the dictionary.
+
+### Examples
+
+```
+julia> d = Dict(:a => :a_sym);
+
+julia> DataFramesMeta.addkey!(d, :a)
+:a_sym
+
+julia> DataFramesMeta.addkey!(d, :b)
+Symbol("##316")
+```
+"""
+function addkey!(membernames, col_identifier)
+    if !haskey(membernames, col_identifier)
+        membernames[col_identifier] = gensym()
     end
-    membernames[nam]
+    membernames[col_identifier]
 end
 
 onearg(e::Expr, f) = e.head == :call && length(e.args) == 2 && e.args[1] == f
@@ -17,6 +36,21 @@ a `QuoteNode` or an expression beginning with
 
 If input is not a valid column identifier,
 returns `nothing`.
+
+### Examples
+
+```
+julia> get_column_expr(:(:x))
+:(:x)
+
+julia> get_column_expr(Expr(: $DOLLAR, "A string"))
+"A string"
+
+julia> get_column_expr(begin 1 end)
+
+julia> typeof(ans)
+Nothing
+```
 """
 get_column_expr(x) = nothing
 function get_column_expr(e::Expr)
@@ -30,12 +64,65 @@ function get_column_expr(e::Expr)
 end
 get_column_expr(x::QuoteNode) = x
 
+"""
+Apply a function to every element of an expression's `args`
+vector.
+
+### Examples
+
+```
+julia> t = :(foo(:x, :y, :z))
+:(foo(:x, :y, :z))
+
+julia> mapexpr(x -> 1, t)
+:((1)(1, 1, 1))
+```
+"""
 mapexpr(f, e) = Expr(e.head, Base.Generator(f, e.args)...)
+
 
 replace_syms!(membernames, x) = x
 replace_syms!(membernames, q::QuoteNode) = addkey!(membernames, q)
 
-function replace_syms!(membernames, e::Expr)
+"""
+Recursively replace all occurances of column identifiers
+in an expression with their corresponding `gensym`-ed name
+extracted from the dictionary membernames. Protect
+expressions of the form
+`^(some stuff)`.
+
+!!! note
+    Even though we protect expressions of the form `^(:a)`,
+    this fortunately does not alter `:b^(:a)`. Since
+    `:b ^(:a)` will have an `args` vector of length `3`.
+
+### Examples
+
+```
+julia> t = quote
+           :x + :y
+           ^(:z)
+       end;
+
+julia> d = Dict();
+
+julia> replace_syms!(d, t) |> MacroTools.rmlines
+quote
+    var"##323" + var"##324"
+    :z
+end
+
+julia> d
+Dict{Any, Any} with 2 entries:
+  :(:y) => Symbol("##324")
+  :(:x) => Symbol("##323")
+```
+
+!!! note
+    In earlier versionf of Julia, the `.` in `f.(x, y)` was
+    parsed as a `QuoteNode` and required special handling.
+"""
+function replace_syms!(membernames::AbstractDict, e::Expr)
     if onearg(e, :^)
         return e.args[2]
     end
@@ -61,6 +148,11 @@ end
 
 composed_or_symbol(x) = false
 composed_or_symbol(x::Symbol) = true
+"""
+Check if an expression if s `Symbol`, such as the `f`
+in `f(:x, :y)`. Or is an `Expr` indicating a composed
+function, such as the `∘(f, g)` in `∘(f, g)(:x, :y)`.
+"""
 function composed_or_symbol(x::Expr)
     x.head == :call &&
         x.args[1] == :∘ &&
@@ -99,6 +191,7 @@ function fix_simple_dot(x::Symbol)
         return x
     end
 end
+
 make_composed(x) = x
 function make_composed(x::Expr)
     funs = Any[]
@@ -253,28 +346,28 @@ julia> MacroTools.prettify(fun)
 function get_source_fun(function_expr; exprflags = deepcopy(DEFAULT_FLAGS))
     function_expr = MacroTools.unblock(function_expr)
 
+    # f(:x, :y) => f
+    # :x .+ :y = .+ (Expr(:, ., :x, :y))
     if is_simple_non_broadcast_call(function_expr)
         source = args_to_selectors(function_expr.args[2:end])
         fun_t = function_expr.args[1]
 
-        # .+ to ByRow(+) to take advantage of
-        # DataFrames.jl optimizations
-        if startswith(string(fun_t), '.')
-            f_sym_without_dot = Symbol(chop(string(fun_t), head = 1, tail = 0))
-            fun = :(DataFrames.ByRow($f_sym_without_dot))
-        else
-            fun = fun_t
-        end
+        # In case we see `.+`
+        # See https://github.com/JuliaLang/julia/issues/47408
+        fun = fix_simple_dot(fun_t)
+    # f.(:x, :y) => ByRow(f)
     elseif is_simple_broadcast_call(function_expr)
         # extract source symbols from quotenodes
         source = args_to_selectors(function_expr.args[2].args)
         fun_t = function_expr.args[1]
         fun = :(DataFrames.ByRow($fun_t))
+    # f(g(h(:x, :y))) => ∘(f, g, y)
     elseif is_nested_fun_recursive(function_expr, false)
         composed_expr = make_composed(function_expr)
         # Repeat clean up from simple non-broadcast above
         source = args_to_selectors(composed_expr.args[2:end])
         fun = composed_expr.args[1]
+    # An anonymous function
     else
         membernames = Dict{Any, Symbol}()
 
