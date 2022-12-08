@@ -220,7 +220,8 @@ fix_simple_dot(x) = x
 function fix_simple_dot(x::Symbol)
     if startswith(string(x), '.')
         f_sym_without_dot = Symbol(chop(string(x), head = 1, tail = 0))
-        return Expr(:., f_sym_without_dot)
+        #return Expr(:., f_sym_without_dot)
+        return :($ByRow($f_sym_without_dot))
     else
         return x
     end
