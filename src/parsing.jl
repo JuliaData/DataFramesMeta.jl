@@ -153,6 +153,19 @@ composed_or_symbol(x::Symbol) = true
 Check if an expression if s `Symbol`, such as the `f`
 in `f(:x, :y)`. Or is an `Expr` indicating a composed
 function, such as the `∘(f, g)` in `∘(f, g)(:x, :y)`.
+
+### Examples
+
+```
+julia> composed_or_symbol(:f)
+true
+
+julia> composed_or_symbol(:(f ∘ g))
+true
+
+julia> composed_or_symbol(:(f(g(x))))
+false
+```
 """
 function composed_or_symbol(x::Expr)
     x.head == :call &&
@@ -160,17 +173,27 @@ function composed_or_symbol(x::Expr)
         all(composed_or_symbol, x.args[2:end])
 end
 
-"""
-Check if an expression is of the form f(...)
-"""
 is_call(x) = false
 is_call(x::Expr) = x.head === :call
 
 """
 Check if an expression is of the form f(g(...)).
 However some column identifiers satisfy this
-pattern, such as AsTable(:x) or $(x), so we also
+pattern, such as AsTable(:x) or $DOLLAR(x), so we also
 check these cases.
+
+### Examples
+
+```
+julia> is_nested_fun(:(f(g(a, b, c))))
+true
+
+julia> is_nested_fun(:(f(AsTable(a))))
+false
+
+julia> is_nested_fun(:(f(a)))
+false
+```
 """
 is_nested_fun(x) = false
 function is_nested_fun(x::Expr)
