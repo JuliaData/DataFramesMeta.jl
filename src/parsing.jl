@@ -148,6 +148,7 @@ end
 
 composed_or_symbol(x) = false
 composed_or_symbol(x::Symbol) = true
+
 """
 Check if an expression if s `Symbol`, such as the `f`
 in `f(:x, :y)`. Or is an `Expr` indicating a composed
@@ -159,9 +160,18 @@ function composed_or_symbol(x::Expr)
         all(composed_or_symbol, x.args[2:end])
 end
 
+"""
+Check if an expression is of the form f(...)
+"""
 is_call(x) = false
 is_call(x::Expr) = x.head === :call
 
+"""
+Check if an expression is of the form f(g(...)).
+However some column identifiers satisfy this
+pattern, such as AsTable(:x) or $(x), so we also
+check these cases.
+"""
 is_nested_fun(x) = false
 function is_nested_fun(x::Expr)
     x.head === :call &&
@@ -170,6 +180,7 @@ function is_nested_fun(x::Expr)
     # AsTable(:x) or `$(:x)`
     return get_column_expr(x.args[2]) === nothing
 end
+
 
 is_nested_fun_recursive(x, nested_once) = false
 function is_nested_fun_recursive(x::Expr, nested_once)
