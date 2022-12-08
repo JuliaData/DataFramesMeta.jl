@@ -393,9 +393,10 @@ function get_source_fun(function_expr; exprflags = deepcopy(DEFAULT_FLAGS))
     # f.(:x, :y) => ByRow(f)
     elseif is_simple_broadcast_call(function_expr)
         # extract source symbols from quotenodes
+        @show function_expr
         source = args_to_selectors(function_expr.args[2].args)
         fun_t = function_expr.args[1]
-        fun = :(DataFrames.ByRow($fun_t))
+        fun = :($ByRow($fun_t))
     # f(g(h(:x, :y))) => ∘(f, g, y)
     elseif is_nested_fun_recursive(function_expr, false)
         composed_expr = make_composed(function_expr)
