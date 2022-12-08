@@ -255,7 +255,7 @@ function get_source_fun(function_expr; exprflags = deepcopy(DEFAULT_FLAGS))
         # extract source symbols from quotenodes
         source = args_to_selectors(function_expr.args[2].args)
         fun_t = function_expr.args[1]
-        fun = :(DataFrames.ByRow($fun_t))
+        fun = :($ByRow($fun_t))
     elseif is_nested_fun_recursive(function_expr, false)
         composed_expr = make_composed(function_expr)
         # Repeat clean up from simple non-broadcast above
