@@ -2756,9 +2756,9 @@ end
 ##############################################################################
 function rename_helper(x, args...)
     x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)    
-    t = (fun_to_pair(ex) for ex in exprs)            
-    quote            
-        $DataFrames.rename($x, $(t...))
+    t = (rename_kw_to_pair(ex) for ex in exprs)                
+    quote                                            
+        $DataFrames.rename($x, $pairs_to_str_pairs($(t...))...)
     end    
 end
 
@@ -2857,9 +2857,9 @@ end
 
 function rename!_helper(x, args...)
     x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)    
-    t = (fun_to_pair(ex) for ex in exprs)            
-    quote            
-        $DataFrames.rename!($x, $(t...))
+    t = (rename_kw_to_pair(ex) for ex in exprs)                
+    quote                                            
+        $DataFrames.rename!($x, $pairs_to_str_pairs($(t...))...)
     end    
 end
 

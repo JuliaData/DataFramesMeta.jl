@@ -8,7 +8,7 @@ using Statistics
 const ≅ = isequal
 
 @testset "rename" begin
-   
+
     df = DataFrame(old_col1 = rand(10), old_col2 = rand([missing;2:10],10),old_col3 = rand(10));
 
     # rename test set
@@ -29,6 +29,10 @@ const ≅ = isequal
     
     @test res ≅ rename(df, :old_col1 .=> :new1 )
     
+    @test @rename(df, :new1 = $1)≅ rename(df, 1=>:new1)
+    @test @rename(df, $(1=> :new1 )) ≅ rename(df, 1=>:new1)
+    
+
 end
 
 
@@ -71,6 +75,18 @@ end
 
     @test res ≅ @rename(subdf, :new1 = :old_col1)
 
+    res =  @rename df begin 
+        :new1 = $1
+    end
+    @test res≅ @rename(df, :new1 = $1)
+        
+    res =  @rename df begin 
+        $(1=> :new1 )
+    end
+
+    @test res ≅ @rename(df, :new1 = $1)
+
+
 end
 
 
@@ -92,7 +108,11 @@ end
     res = @rename! copy(df) :new1 = begin
         $("old_col" * "1")
     end
-    @test res ≅ rename!(copy(df), :old_col1 .=> :new1 )        
+    @test res ≅ rename!(copy(df), :old_col1 .=> :new1 )     
+
+    @test @rename!(copy(df), :new1 = $1) ≅ rename(copy(df), 1=>:new1)
+    @test @rename!(copy(df), $(1=> :new1 )) ≅ rename(copy(df), 1=>:new1)
+    
 
 end
 
@@ -134,6 +154,17 @@ end
     end
 
     @test d ≅ @rename!(copy(subdf), :new1 = :old_col1)
+
+    res =  @rename! copy(df) begin 
+        :new1 = $1
+    end
+    @test res≅ @rename!(copy(df), :new1 = $1)
+        
+    res =  @rename! copy(df) begin 
+        $(1=> :new1 )
+    end
+
+    @test res ≅ @rename!(copy(df), :new1 = $1)
 
 end
 

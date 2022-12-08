@@ -389,7 +389,7 @@ fun_to_vec(ex::QuoteNode;
 
 
 """
-    fun_to_pair(ex::Expr)
+    rename_kw_to_pair(ex::Expr)
 
 Given an expression where the left- and right- hand side 
 both are both valid column identifiers,  i.e., a `QuoteNode`
@@ -397,22 +397,15 @@ or an expression beginning with `$DOLLAR`, or a "full" expression of the form
 `$DOLLAR(:x => :y)`, return an expression, where expression arguments of type 
 `QuoteNode`` are converted to `String``.
 """           
-function fun_to_pair(ex::Expr)
+function rename_kw_to_pair(ex::Expr)
     
     ex_col = get_column_expr(ex)        
-    if ex_col !== nothing         
-        str_p = MacroTools.postwalk(x->x isa QuoteNode ? String(x.value) : x, ex_col )                          
-        return str_p
+    if ex_col !== nothing                 
+        return ex_col
     end
     
     lhs = let t = ex.args[1]
-        if t isa Symbol
-            t = QuoteNode(t)
-            msg = "Using an un-quoted Symbol on the LHS is deprecated. " *
-                  "Write $t = ... instead."
-            @warn msg
-        end
-
+        
         s = get_column_expr(t)
         if s === nothing
             throw(ArgumentError("Invalid column identifier on LHS in DataFramesMeta.jl macro"))
@@ -423,16 +416,31 @@ function fun_to_pair(ex::Expr)
 
     rhs = MacroTools.unblock(ex.args[2])
     rhs_col = get_column_expr(rhs)
+    
     if rhs_col === nothing
         throw(ArgumentError("Invalid column identifier on RHS in DataFramesMeta.jl macro"))
     end
 
     if rhs_col !== nothing
         src = rhs_col
-        dest = lhs
-        return :(String($src) => String($dest))
+        dest = lhs        
+        return :($src => $dest)
     end
 
+end
+
+function pairs_to_str_pairs(args...)
+    
+    map(args) do arg        
+        if !(arg isa Pair)            
+            throw(ArgumentError("Non-pair created in @rename"))
+        end         
+
+        if first(arg) isa Int            
+            return first(arg) => string(last(arg))
+        end
+        string(first(arg)) => string(last(arg))
+    end
 end
 
 function make_source_concrete(x::AbstractVector)
