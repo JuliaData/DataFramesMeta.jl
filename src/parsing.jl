@@ -247,7 +247,7 @@ function get_source_fun(function_expr; exprflags = deepcopy(DEFAULT_FLAGS))
         # .+ to +
         if startswith(string(fun_t), '.')
             f_sym_without_dot = Symbol(chop(string(fun_t), head = 1, tail = 0))
-            fun = :(DataFrames.ByRow($f_sym_without_dot))
+            fun = :($ByRow($f_sym_without_dot))
         else
             fun = fun_t
         end
