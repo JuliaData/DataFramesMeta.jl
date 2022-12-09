@@ -16,23 +16,26 @@ const ≅ = isequal
     @test @rename(df, :new1 = $"old_col1", :new2 = $"old_col2") ≅ rename(df, [:old_col1, :old_col2] .=> [:new1,:new2] )
     @test @rename(df, :new1 = :old_col1, :new2 = :old_col2) ≅ rename(df, [:old_col1, :old_col2] .=> [:new1,:new2] )
     @test @rename(df, :new1 = :old_col1, :new2 = $"old_col2") ≅ rename(df, [:old_col1, :old_col2] .=> [:new1,:new2] )
-    @test @rename(df, :new1 = $("old_col" *"1"), :new2 = :old_col2) ≅ rename(df, [:old_col1, :old_col2] .=> [:new1,:new2] )
+    @test @rename(df, :new1 = $("old_col" * "1"), :new2 = :old_col2) ≅ rename(df, [:old_col1, :old_col2] .=> [:new1,:new2] )
 
     @test @rename(df, $("old_col1" => "new1") ) ≅ rename(df, :old_col1 .=> :new1 )
     @test @rename(df, $(:old_col1 => :new1)) ≅ rename(df, :old_col1 .=> :new1 )
     @test @rename(df, $(:old_col1 => "new1"), $(:old_col2 => :new2) ) ≅ rename(df, [:old_col1, :old_col2] .=> [:new1,:new2] )
     @test @rename(df, $(:old_col1 => "new1"), :new2 = :old_col2) ≅ rename(df, [:old_col1, :old_col2] .=> [:new1,:new2] )
     
-    res = @rename df :new1 = begin
-        $("old_col" * "1")
-    end
+    res = @rename df :new1 = $(begin 
+            "old_col" * "1"
+        end)
     
     @test res ≅ rename(df, :old_col1 .=> :new1 )
     
     @test @rename(df, :new1 = $1)≅ rename(df, 1=>:new1)
     @test @rename(df, $(1=> :new1 )) ≅ rename(df, 1=>:new1)
     
+    @test @rename(df, $"new1" = :old_col1) ≅ rename(df, :old_col1=>:new1)
+    @test @rename(df, $("new" * "1") = :old_col1) ≅ rename(df, :old_col1=>:new1) 
 
+    @test @rename(df, $("new" * "1") = $"old_col1") ≅ rename(df, :old_col1=>:new1) 
 end
 
 
@@ -54,10 +57,9 @@ end
     
     @test res ≅ @rename(df, :new1 =:old_col1, :new2 = :old_col2)  
 
-
-    res = @rename df begin
-        :new1 = $("old_col" * "1")        
-    end
+    res = @rename df :new1 = $(begin
+        "old_col" * "1"
+    end)
     
     @test res ≅ @rename(df, :new1 =:old_col1)  
 
@@ -81,7 +83,7 @@ end
     @test res≅ @rename(df, :new1 = $1)
         
     res =  @rename df begin 
-        $(1=> :new1 )
+        $(1 => :new1)
     end
 
     @test res ≅ @rename(df, :new1 = $1)
@@ -104,16 +106,18 @@ end
     @test @rename!(copy(df), $(:old_col1 => :new1)) ≅ rename(copy(df), :old_col1 .=> :new1 )
     @test @rename!(copy(df), $(:old_col1 => "new1"), $(:old_col2 => :new2)) ≅ rename(copy(df), [:old_col1,:old_col2] .=> [:new1,:new2] )
     @test @rename!(copy(df), $(:old_col1 => "new1"), :new2 = :old_col2) ≅ rename(copy(df), [:old_col1, :old_col2] .=> [:new1,:new2] )
-
-    res = @rename! copy(df) :new1 = begin
-        $("old_col" * "1")
-    end
+    
+    res = @rename! copy(df) :new1 = $(begin
+        ("old_col" * "1")
+    end)
     @test res ≅ rename!(copy(df), :old_col1 .=> :new1 )     
 
     @test @rename!(copy(df), :new1 = $1) ≅ rename(copy(df), 1=>:new1)
     @test @rename!(copy(df), $(1=> :new1 )) ≅ rename(copy(df), 1=>:new1)
-    
 
+    @test @rename(df, $"new1" = :old_col1) ≅ rename(df, :old_col1=>:new1)
+    @test @rename(df, $("new" * "1") = :old_col1) ≅ rename(df, :old_col1=>:new1) 
+    @test @rename(df, $("new" * "1") = $"old_col1") ≅ rename(df, :old_col1=>:new1) 
 end
 
 

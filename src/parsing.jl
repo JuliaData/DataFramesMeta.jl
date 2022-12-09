@@ -413,8 +413,8 @@ function rename_kw_to_pair(ex::Expr)
         
         s
     end
-
-    rhs = MacroTools.unblock(ex.args[2])
+    
+    rhs = ex.args[2]    
     rhs_col = get_column_expr(rhs)
     
     if rhs_col === nothing
