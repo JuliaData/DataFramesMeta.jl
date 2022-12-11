@@ -60,4 +60,53 @@ end
     @test n === nothing
 end
 
+@testset "broadcasted binary operators" begin
+    df = DataFrame(x = [1, 2], y = [3, 4])
+
+    df2 = @select df :z = first(:x .+ :y)
+    @test df2 == DataFrame(z = [4, 4])
+
+    df2 = @by df :x :y = first(:y .* :y)
+
+    @test df2 == DataFrame(x = [1, 2], y = [9, 16])
+
+    df2 = @select df :y = first(last(:y))
+
+    @test df2 == DataFrame(y = [4, 4])
+
+    df2 = @select df :z = .+(:x)
+
+    @test df2 == DataFrame(z = [1, 2])
+
+    df2 = @select df :z = .+(first(:x))
+
+    @test df2 == DataFrame(z = [1, 1])
+
+    df2 = @select df :z = first(.*(:x))
+
+    @test df2 == DataFrame(z = 1)
+
+    df2 = @select df :z = .+(.*(:x))
+
+    @test df2 == DataFrame(z = 1)
+
+    df2 = @select df :z = .+(.*(:x, :y))
+
+    @test df2 == DataFrame(z = 2)
+
+    @test df2 == DataFrame(y = 2)
+
+    df = DataFrame(
+        x = [1, 1, 2, 2, 3, 3],
+        y = [true, false, true, false, true, false],
+        z = [true, true, true, false, false, false])
+
+    df2 = @by(df,
+    :x,
+    :a = maximum(:y .* :z))
+
+    @test df2 == DataFrame(x = [1, 2, 3], a = [true, true, false])
+
+end
+
 end # module
