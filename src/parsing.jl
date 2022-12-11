@@ -75,6 +75,8 @@ function is_nested_fun(x::Expr)
     x.head === :call &&
     length(x.args) == 2 &&
     is_call(x.args[2]) &&
+    # Don't count `^(x)`
+    onearg(x, :^) == false &&
     # AsTable(:x) or `$(:x)`
     return get_column_expr(x.args[2]) === nothing
 end
@@ -113,6 +115,7 @@ is_simple_non_broadcast_call(x) = false
 function is_simple_non_broadcast_call(expr::Expr)
     expr.head == :call &&
         length(expr.args) >= 2 &&
+        onearg(expr, :^) == false &&
         composed_or_symbol(expr.args[1]) &&
         all(a -> get_column_expr(a) !== nothing, expr.args[2:end])
 end
