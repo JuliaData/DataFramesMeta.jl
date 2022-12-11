@@ -94,8 +94,7 @@ fix_simple_dot(x) = x
 function fix_simple_dot(x::Symbol)
     if startswith(string(x), '.')
         f_sym_without_dot = Symbol(chop(string(x), head = 1, tail = 0))
-        #return Expr(:., f_sym_without_dot)
-        return :($ByRow($f_sym_without_dot))
+        return Expr(:., f_sym_without_dot)
     else
         return x
     end
@@ -107,13 +106,12 @@ function make_composed(x::Expr)
     x_orig = x
     nested_once = false
     while true
+        fun = fix_simple_dot(x.args[1])
         if is_nested_fun(x)
-            fun = x.args[1]
             push!(funs, fun)
             x = x.args[2]
             nested_once = true
         elseif is_simple_non_broadcast_call(x) && nested_once
-            fun = fix_simple_dot(x.args[1])
             push!(funs, fun)
             # ∘(f, g, h)(:x, :y, :z)
             x = Expr(:call, Expr(:call, ∘, funs...), x.args[2:end]...)
@@ -266,7 +264,7 @@ function get_source_fun(function_expr; exprflags = deepcopy(DEFAULT_FLAGS))
         # extract source symbols from quotenodes
         source = args_to_selectors(function_expr.args[2].args)
         fun_t = function_expr.args[1]
-        fun = :($ByRow($fun_t))
+        fun = Expr(:., fun_t)
     elseif is_nested_fun_recursive(function_expr, false)
         composed_expr = make_composed(function_expr)
         # Repeat clean up from simple non-broadcast above
