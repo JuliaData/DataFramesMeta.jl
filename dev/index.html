@@ -25,6 +25,8 @@ outside_var = 1;
 @subset(df, :x .&gt; 1)
 @subset(df, :x .&gt; outside_var)
 @subset(df, :x .&gt; outside_var, :y .&lt; 102)  # the two expressions are &quot;and-ed&quot;
+@subset(df, in.(:y, Ref([101, 102]))) # pick rows with values found in a reference list
+@rsubset(df, :y in [101, 102]) # the same with @rsubset - explained below; broadcasting is not needed
 @subset(gd, :x .&gt; mean(:x))</code></pre><h2 id="@combine"><a class="docs-heading-anchor" href="#@combine"><code>@combine</code></a><a id="@combine-1"></a><a class="docs-heading-anchor-permalink" href="#@combine" title="Permalink"></a></h2><p>Summarize, or collapse, a grouped data frame by performing transformations at the group level and  collecting the result into a single data frame. Also works on a <code>DataFrame</code>, which  acts like a <code>GroupedDataFrame</code> with one group. </p><p>Like <code>@select</code> and <code>@transform</code>, transformations are called with the keyword-like  syntax <code>:y = f(:x)</code>. </p><p>Examples:</p><pre><code class="language-julia hljs">df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
 gd = groupby(df, :x);
 @combine(gd, :x2 = sum(:y))
@@ -128,7 +130,7 @@ julia&gt; @rtransform df @passmissing :x = parse(Int, :x_str)
    2 │ 2              2
    3 │ missing  missing</code></pre><h2 id="Passing-keyword-arguments-to-underlying-DataFrames.jl-functions"><a class="docs-heading-anchor" href="#Passing-keyword-arguments-to-underlying-DataFrames.jl-functions">Passing keyword arguments to underlying DataFrames.jl functions</a><a id="Passing-keyword-arguments-to-underlying-DataFrames.jl-functions-1"></a><a class="docs-heading-anchor-permalink" href="#Passing-keyword-arguments-to-underlying-DataFrames.jl-functions" title="Permalink"></a></h2><p>All DataFramesMeta.jl macros allow passing of keyword arguments to their DataFrames.jl function equivelents. The table below describes the correspondence between DataFramesMeta.jl macros and the function that is actually called by the macro. </p><table><tr><th style="text-align: right">Macro</th><th style="text-align: right">Base DataFrames.jl function called</th></tr><tr><td style="text-align: right">@subset</td><td style="text-align: right"><code>subset</code></td></tr><tr><td style="text-align: right">@subset!</td><td style="text-align: right"><code>subset!</code></td></tr><tr><td style="text-align: right">@rsubset</td><td style="text-align: right"><code>subset</code></td></tr><tr><td style="text-align: right">@rsubset!</td><td style="text-align: right"><code>subset!</code></td></tr><tr><td style="text-align: right">@orderby</td><td style="text-align: right">None (no keyword arguments supported)</td></tr><tr><td style="text-align: right">@rorderby</td><td style="text-align: right">None (no keyword arguments supported)</td></tr><tr><td style="text-align: right">@by</td><td style="text-align: right"><code>combine</code></td></tr><tr><td style="text-align: right">@combine</td><td style="text-align: right"><code>combine</code></td></tr><tr><td style="text-align: right">@transform</td><td style="text-align: right"><code>transform</code></td></tr><tr><td style="text-align: right">@transform!</td><td style="text-align: right"><code>transform!</code></td></tr><tr><td style="text-align: right">@rtransform</td><td style="text-align: right"><code>transform</code></td></tr><tr><td style="text-align: right">@rtransform!</td><td style="text-align: right"><code>transform!</code></td></tr><tr><td style="text-align: right">@select</td><td style="text-align: right"><code>select</code></td></tr><tr><td style="text-align: right">@select!</td><td style="text-align: right"><code>select!</code></td></tr><tr><td style="text-align: right">@rselect</td><td style="text-align: right"><code>select</code></td></tr><tr><td style="text-align: right">@rselect!</td><td style="text-align: right"><code>select!</code></td></tr></table><p>This can be done in two ways. When inputs are given as multiple  arguments, they are added at the end after a semi-colon <code>;</code>, as in</p><pre><code class="language-julia hljs">julia&gt; df = DataFrame(x = [1, 1, 2, 2], b = [5, 6, 7, 8]);
 
-julia&gt; @rsubset(df, :x .== 1 ; view = true)
+julia&gt; @rsubset(df, :x == 1 ; view = true)
 2×2 SubDataFrame
  Row │ x      b     
      │ Int64  Int64 
@@ -150,7 +152,7 @@ julia&gt; @rsubset df begin
 
 julia&gt; my_kwargs = [:view =&gt; true, :skipmissing =&gt; false];
 
-julia&gt; @rsubset(df, :x .== 1; my_kwargs...)
+julia&gt; @rsubset(df, :x == 1; my_kwargs...)
 2×2 SubDataFrame
  Row │ x      b     
      │ Int64  Int64 
@@ -159,7 +161,7 @@ julia&gt; @rsubset(df, :x .== 1; my_kwargs...)
    2 │     1      6
 
 julia&gt; @rsubset df begin 
-           :x .== 1
+           :x == 1
            @kwarg my_kwargs...
        end
 2×2 SubDataFrame
@@ -307,4 +309,4 @@ end</code></pre><p><code>@chain</code> also provides the <code>@aside</code> mac
     @transform :y = 10 .* :x
     @aside y_mean = mean(_.y) # From Chain.jl, not DataFramesMeta.jl
     @select :y_standardize = :y .- y_mean
-end</code></pre><ul><li><a href="api/api/#API">API</a></li></ul></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="dplyr/">Tutorial for coming from dplyr »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.23 on <span class="colophon-date" title="Sunday 11 December 2022 23:31">Sunday 11 December 2022</span>. Using Julia version 1.8.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+end</code></pre><ul><li><a href="api/api/#API">API</a></li></ul></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="dplyr/">Tutorial for coming from dplyr »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.23 on <span class="colophon-date" title="Wednesday 14 December 2022 14:47">Wednesday 14 December 2022</span>. Using Julia version 1.8.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
