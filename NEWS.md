@@ -1,3 +1,10 @@
+# DataFramesMeta v0.13.0 Release notes
+
+* Add the `@distinct` and `@rdistinct` macros, for getting unique observations of a data frame. ([#340](https://github.com/JuliaData/DataFramesMeta.jl/pull/340))
+* Fix a bug which created `UndefVarErrors` with broadcasted functions. ([#346](https://github.com/JuliaData/DataFramesMeta.jl/pull/346))
+* Fixed bad use of `sortperm` with correct use of `ordinalrank` from StatsBase.jl in tutorial ([#338](https://github.com/JuliaData/DataFramesMeta.jl/pull/338))
+* Minor documentation fixes ([#345](https://github.com/JuliaData/DataFramesMeta.jl/pull/345))
+
 # DataFramesMeta v0.12.0 Release notes
 * Add support for Chain.jl version 0.5, and remove support for Chain.jl 0.4. In Chain.jl 0.4, the command
 
