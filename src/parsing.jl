@@ -406,7 +406,7 @@ function rename_kw_to_pair(ex::Expr)
     lhs = let t = ex.args[1]
         s = get_column_expr(t)
         if s === nothing
-            throw(ArgumentError("Invalid column identifier on LHS in DataFramesMeta.jl @rename macro"))
+            throw(ArgumentError("Invalid column identifier on LHS in @rename macro"))
         end
         s
     end
@@ -414,7 +414,7 @@ function rename_kw_to_pair(ex::Expr)
     rhs = let t = ex.args[2]
         s = get_column_expr(t)
         if s === nothing
-            throw(ArgumentError("Invalid column identifier on LHS in DataFramesMeta.jl @rename macro"))
+            throw(ArgumentError("Invalid column identifier on RHS in @rename macro"))
         end
         s
     end
