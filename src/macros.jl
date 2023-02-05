@@ -2791,6 +2791,7 @@ end
 and
 
 ```
+@rename df :new_col = :old_col
 @rename(df, :new_col = :old_col)
 ```
 

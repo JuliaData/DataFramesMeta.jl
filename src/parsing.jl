@@ -30,6 +30,13 @@ function get_column_expr(e::Expr)
 end
 get_column_expr(x::QuoteNode) = x
 
+get_column_expr_rename(x) = nothing
+function get_column_expr_rename(e::Expr)
+    e.head == :$ && return e.args[1]
+    return nothing
+end
+get_column_expr_rename(x::QuoteNode) = x
+
 mapexpr(f, e) = Expr(e.head, Base.Generator(f, e.args)...)
 
 replace_syms!(membernames, x) = x
@@ -404,7 +411,7 @@ function rename_kw_to_pair(ex::Expr)
     end
 
     lhs = let t = ex.args[1]
-        s = get_column_expr(t)
+        s = get_column_expr_rename(t)
         if s === nothing
             throw(ArgumentError("Invalid column identifier on LHS in @rename macro"))
         end
@@ -412,7 +419,7 @@ function rename_kw_to_pair(ex::Expr)
     end
 
     rhs = let t = ex.args[2]
-        s = get_column_expr(t)
+        s = get_column_expr_rename(t)
         if s === nothing
             throw(ArgumentError("Invalid column identifier on RHS in @rename macro"))
         end

@@ -171,4 +171,14 @@ end
     @test res ≅ @rename!(copy(df), :new1 = $1)
 end
 
+df = DataFrame(x = 1)
+@testset "rename errors" begin
+    @test_throws LoadError @eval @rename df $1 = :x
+    @test_throws LoadError @eval @rename df $(1.1) = :x
+    @test_throws LoadError @eval @rename df :y = $(1.1)
+    @test_throws LoadError @eval @rename df :y = AsTable(:y)
+    @test_throws LoadError @eval @rename df "y" = :x
+    @test_throws LoadError @eval @rename df :y = "x"
+end
+
 end # module
