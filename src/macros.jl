@@ -2751,15 +2751,15 @@ end
 
 ##############################################################################
 ##
-## @rename - rename columns with keyword args 
+## @rename - rename columns with keyword args
 ##
 ##############################################################################
 function rename_helper(x, args...)
-    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)    
-    t = (rename_kw_to_pair(ex) for ex in exprs)                
-    quote                                            
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)
+    t = (rename_kw_to_pair(ex) for ex in exprs)
+    quote
         $DataFrames.rename($x, $pairs_to_str_pairs($(t...))...)
-    end    
+    end
 end
 
 """
@@ -2770,7 +2770,7 @@ Change column names.
 ### Arguments
 
 * `d` : an AbstractDataFrame
-* `args...` : expressions of the form `:new = :old` specifying the change of a column's name 
+* `args...` : expressions of the form `:new = :old` specifying the change of a column's name
 from "old" to "new". The left- and right-hand side of each expression can be passed as
 symbol arguments, as in `:old_col`, or strings escaped with `$DOLLAR` as in `$DOLLAR"new_col"`.
 See  **Details** for a description of accepted values.
@@ -2779,16 +2779,16 @@ See  **Details** for a description of accepted values.
 
 * `::AbstractDataFrame`
 
-Inputs to `@rename` can come in two formats: a `begin ... end` block, or as a series of 
+Inputs to `@rename` can come in two formats: a `begin ... end` block, or as a series of
 keyword-like arguments. For example, the following are equivalent:
 
 ```julia
-@rename df begin 
+@rename df begin
     :new_col = :old_col
 end
 ```
 
-and 
+and
 
 ```
 @rename(df, :new_col = :old_col)
@@ -2796,11 +2796,11 @@ and
 
 ### Details
 
-Both the left- and right-hand side of an expression specifying a column name assignment 
-can be either a `Symbol` or a `String`` escaped with `$DOLLAR` For example `:new = ...`, 
+Both the left- and right-hand side of an expression specifying a column name assignment
+can be either a `Symbol` or a `String`` escaped with `$DOLLAR` For example `:new = ...`,
 and `$(DOLLAR)"new" = ...` are both valid ways of assigning a new column name.
 
-This idea can be extended to pass arbitrary right-hand side expressions. For example, 
+This idea can be extended to pass arbitrary right-hand side expressions. For example,
 the following are equivalent:
 
 ```
@@ -2819,8 +2819,8 @@ julia> df = DataFrame(old_col1 = rand(5), old_col2 = rand(5),old_col3 = rand(5))
 
 julia> @rename(df, :new1 = :old_col1)
 5×3 DataFrame
- Row │ new1       old_col2   old_col3 
-     │ Float64    Float64    Float64  
+ Row │ new1       old_col2   old_col3
+     │ Float64    Float64    Float64
 ─────┼────────────────────────────────
    1 │ 0.0176206  0.493592   0.348072
    2 │ 0.861545   0.512254   0.85763
@@ -2830,8 +2830,8 @@ julia> @rename(df, :new1 = :old_col1)
 
 julia> @rename(df, :new1 = :old_col1, :new2 = $DOLLAR"old_col2")
 5×3 DataFrame
- Row │ new1       new2       old_col3 
-     │ Float64    Float64    Float64  
+ Row │ new1       new2       old_col3
+     │ Float64    Float64    Float64
 ─────┼────────────────────────────────
    1 │ 0.0176206  0.493592   0.348072
    2 │ 0.861545   0.512254   0.85763
@@ -2841,8 +2841,8 @@ julia> @rename(df, :new1 = :old_col1, :new2 = $DOLLAR"old_col2")
 
 julia> @rename(df, :new1 = $DOLLAR("old_col" * "1"), :new2 = :old_col2)
 5×3 DataFrame
- Row │ new1       new2       old_col3 
-     │ Float64    Float64    Float64  
+ Row │ new1       new2       old_col3
+     │ Float64    Float64    Float64
 ─────┼────────────────────────────────
    1 │ 0.0176206  0.493592   0.348072
    2 │ 0.861545   0.512254   0.85763
@@ -2852,15 +2852,15 @@ julia> @rename(df, :new1 = $DOLLAR("old_col" * "1"), :new2 = :old_col2)
 ```
 """
 macro rename(x, args...)
-    esc(rename_helper(x, args...))        
+    esc(rename_helper(x, args...))
 end
 
 function rename!_helper(x, args...)
-    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)    
-    t = (rename_kw_to_pair(ex) for ex in exprs)                
-    quote                                            
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)
+    t = (rename_kw_to_pair(ex) for ex in exprs)
+    quote
         $DataFrames.rename!($x, $pairs_to_str_pairs($(t...))...)
-    end    
+    end
 end
 
 """
@@ -2871,7 +2871,7 @@ In-place modification of column names.
 ### Arguments
 
 * `d` : an AbstractDataFrame
-* `args...` : expressions of the form `:new = :old` specifying the change of a column's name 
+* `args...` : expressions of the form `:new = :old` specifying the change of a column's name
 from "old" to "new". The left- and right-hand side of each expression can be passed as
 symbol arguments, as in `:old_col`, or strings escaped with `$DOLLAR` as in `$DOLLAR"new_col"`.
 See  **Details** for a description of accepted values.
@@ -2880,16 +2880,16 @@ See  **Details** for a description of accepted values.
 
 * `::AbstractDataFrame`
 
-Inputs to `@rename!` can come in two formats: a `begin ... end` block, or as a series of 
+Inputs to `@rename!` can come in two formats: a `begin ... end` block, or as a series of
 keyword-like arguments. For example, the following are equivalent:
 
 ```julia
-@rename! df begin 
+@rename! df begin
     :new_col = :old_col
 end
 ```
 
-and 
+and
 
 ```
 @rename!(df, :new_col = :old_col)
@@ -2897,11 +2897,11 @@ and
 
 ### Details
 
-Both the left- and right-hand side of an expression specifying a column name assignment 
-can be either a `Symbol` or a `String`` escaped with `$DOLLAR` For example `:new = ...`, 
+Both the left- and right-hand side of an expression specifying a column name assignment
+can be either a `Symbol` or a `String`` escaped with `$DOLLAR` For example `:new = ...`,
 and `$(DOLLAR)"new" = ...` are both valid ways of assigning a new column name.
 
-This idea can be extended to pass arbitrary right-hand side expressions. For example, 
+This idea can be extended to pass arbitrary right-hand side expressions. For example,
 the following are equivalent:
 
 ```
@@ -2920,8 +2920,8 @@ julia> df = DataFrame(old_col1 = rand(5), old_col2 = rand(5),old_col3 = rand(5))
 
 julia> @rename!(df, :new1 = :old_col1)
 5×3 DataFrame
- Row │ new1       old_col2   old_col3 
-     │ Float64    Float64    Float64  
+ Row │ new1       old_col2   old_col3
+     │ Float64    Float64    Float64
 ─────┼────────────────────────────────
    1 │ 0.0176206  0.493592   0.348072
    2 │ 0.861545   0.512254   0.85763
@@ -2933,8 +2933,8 @@ julia> df = DataFrame(old_col1 = rand(5), old_col2 = rand(5),old_col3 = rand(5))
 
 julia> @rename!(df, :new1 = :old_col1, :new2 = $DOLLAR"old_col2")
 5×3 DataFrame
- Row │ new1       new2       old_col3 
-     │ Float64    Float64    Float64  
+ Row │ new1       new2       old_col3
+     │ Float64    Float64    Float64
 ─────┼────────────────────────────────
    1 │ 0.0176206  0.493592   0.348072
    2 │ 0.861545   0.512254   0.85763
@@ -2946,8 +2946,8 @@ julia> df = DataFrame(old_col1 = rand(5), old_col2 = rand(5),old_col3 = rand(5))
 
 julia> @rename!(df, :new1 = $DOLLAR("old_col" * "1"), :new2 = :old_col2)
 5×3 DataFrame
- Row │ new1       new2       old_col3 
-     │ Float64    Float64    Float64  
+ Row │ new1       new2       old_col3
+     │ Float64    Float64    Float64
 ─────┼────────────────────────────────
    1 │ 0.0176206  0.493592   0.348072
    2 │ 0.861545   0.512254   0.85763
@@ -2957,6 +2957,6 @@ julia> @rename!(df, :new1 = $DOLLAR("old_col" * "1"), :new2 = :old_col2)
 ```
 """
 macro rename!(x, args...)
-    esc(rename!_helper(x, args...))        
+    esc(rename!_helper(x, args...))
 end
 

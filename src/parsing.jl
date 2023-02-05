@@ -391,52 +391,46 @@ fun_to_vec(ex::QuoteNode;
 """
     rename_kw_to_pair(ex::Expr)
 
-Given an expression where the left- and right- hand side 
+Given an expression where the left- and right- hand side
 both are both valid column identifiers,  i.e., a `QuoteNode`
-or an expression beginning with `$DOLLAR`, or a "full" expression of the form 
-`$DOLLAR(:x => :y)`, return an expression, where expression arguments of type 
+or an expression beginning with `$DOLLAR`, or a "full" expression of the form
+`$DOLLAR(:x => :y)`, return an expression, where expression arguments of type
 `QuoteNode`` are converted to `String``.
-"""           
+"""
 function rename_kw_to_pair(ex::Expr)
-    
-    ex_col = get_column_expr(ex)        
-    if ex_col !== nothing                 
+    ex_col = get_column_expr(ex)
+    if ex_col !== nothing
         return ex_col
     end
-    
+
     lhs = let t = ex.args[1]
-        
         s = get_column_expr(t)
         if s === nothing
-            throw(ArgumentError("Invalid column identifier on LHS in DataFramesMeta.jl macro"))
+            throw(ArgumentError("Invalid column identifier on LHS in DataFramesMeta.jl @rename macro"))
         end
-        
         s
     end
-    
-    rhs = ex.args[2]    
-    rhs_col = get_column_expr(rhs)
-    
-    if rhs_col === nothing
-        throw(ArgumentError("Invalid column identifier on RHS in DataFramesMeta.jl macro"))
+
+    rhs = let t = ex.args[2]
+        s = get_column_expr(t)
+        if s === nothing
+            throw(ArgumentError("Invalid column identifier on LHS in DataFramesMeta.jl @rename macro"))
+        end
+        s
     end
 
-    if rhs_col !== nothing
-        src = rhs_col
-        dest = lhs        
-        return :($src => $dest)
-    end
-
+    src = rhs
+    dest = lhs
+    return :($src => $dest)
 end
 
 function pairs_to_str_pairs(args...)
-    
-    map(args) do arg        
-        if !(arg isa Pair)            
+    map(args) do arg
+        if !(arg isa Pair)
             throw(ArgumentError("Non-pair created in @rename"))
-        end         
+        end
 
-        if first(arg) isa Int            
+        if first(arg) isa Int
             return first(arg) => string(last(arg))
         end
         string(first(arg)) => string(last(arg))

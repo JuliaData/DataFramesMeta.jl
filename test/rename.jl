@@ -169,7 +169,6 @@ end
     end
 
     @test res ≅ @rename!(copy(df), :new1 = $1)
-
 end
 
 end # module
