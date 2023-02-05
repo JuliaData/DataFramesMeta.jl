@@ -419,9 +419,9 @@ function rename_kw_to_pair(ex::Expr)
         s
     end
 
-    src = rhs
-    dest = lhs
-    return :($src => $dest)
+    newname = lhs
+    oldname = rhs
+    return :($oldname => $newname)
 end
 
 function pairs_to_str_pairs(args...)
@@ -430,10 +430,22 @@ function pairs_to_str_pairs(args...)
             throw(ArgumentError("Non-pair created in @rename"))
         end
 
-        if first(arg) isa Int
-            return first(arg) => string(last(arg))
+        oldname = first(arg)
+        newname = last(arg)
+
+        if !(oldname isa Symbol || oldname isa AbstractString || oldname isa Integer)
+            throw(ArgumentError("RHS in @rename must be an Integer, Symbol, or AbstractString"))
         end
-        string(first(arg)) => string(last(arg))
+
+        if !(newname isa Symbol || newname isa AbstractString)
+            throw(ArgumentError("LHS in @rename must be a Symbol, or AbstractString"))
+        end
+
+        if oldname isa Integer
+            return oldname => string(newname)
+        end
+
+        return string(oldname) => string(newname)
     end
 end
 
