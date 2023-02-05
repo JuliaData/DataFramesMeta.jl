@@ -168,9 +168,7 @@ df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
 
 ## `@rename`
 
-Rename columns in a data frame using the keyword argument-like syntax. All arguments on the lef and right-hand sides must be either `Symbol`s or quoted with `$`. Like other macros, `@rename` can be used in both multi-argument and "block" format. 
-
-The new name goes on the left hand side of the expression. The old name goes on the right hand side. 
+Rename columns in a data frame using the keyword argument-like syntax `:new = :old`. Like other macros, `@rename` can be used in both multi-argument and "block" format. 
 
 ```julia
 df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);

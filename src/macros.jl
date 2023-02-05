@@ -2798,8 +2798,9 @@ and
 ### Details
 
 Both the left- and right-hand side of an expression specifying a column name assignment
-can be either a `Symbol` or a `String`` escaped with `$DOLLAR` For example `:new = ...`,
-and `$(DOLLAR)"new" = ...` are both valid ways of assigning a new column name.
+can be either a `Symbol` or an `AbstractString` (which may contain apces) escaped with `
+$DOLLAR`. For example `:new = ...`, and `$(DOLLAR)"new" = ...` are both valid ways
+of assigning a new column name.
 
 This idea can be extended to pass arbitrary right-hand side expressions. For example,
 the following are equivalent:
@@ -2814,42 +2815,68 @@ and
 @rename(df, :new = $("old_col" * "1"))
 ```
 
+The right-hand side can additionally be an `Integer`, escaped with $(DOLLAR), to indicate
+column position. For example, to rename the 4th column in a data frame to a new name, write
+`@rename df :newname = $(DOLLAR)`.
+
 ### Examples
 ```
-julia> df = DataFrame(old_col1 = rand(5), old_col2 = rand(5),old_col3 = rand(5));
+julia> df = DataFrame(old_col1 = 1:5, old_col2 = 11:15, old_col3 = 21:25);
 
 julia> @rename(df, :new1 = :old_col1)
 5×3 DataFrame
- Row │ new1       old_col2   old_col3
-     │ Float64    Float64    Float64
-─────┼────────────────────────────────
-   1 │ 0.0176206  0.493592   0.348072
-   2 │ 0.861545   0.512254   0.85763
-   3 │ 0.263082   0.0267507  0.696494
-   4 │ 0.643179   0.299391   0.780125
-   5 │ 0.731267   0.18905    0.767292
+ Row │ new1   old_col2  old_col3
+     │ Int64  Int64     Int64
+─────┼───────────────────────────
+   1 │     1        11        21
+   2 │     2        12        22
+   3 │     3        13        23
+   4 │     4        14        24
+   5 │     5        15        25
 
-julia> @rename(df, :new1 = :old_col1, :new2 = $DOLLAR"old_col2")
+julia> @rename(df, :new1 = :old_col1, :new2 = $(DOLLAR)"old_col2")
 5×3 DataFrame
- Row │ new1       new2       old_col3
-     │ Float64    Float64    Float64
-─────┼────────────────────────────────
-   1 │ 0.0176206  0.493592   0.348072
-   2 │ 0.861545   0.512254   0.85763
-   3 │ 0.263082   0.0267507  0.696494
-   4 │ 0.643179   0.299391   0.780125
-   5 │ 0.731267   0.18905    0.767292
+ Row │ new1   new2   old_col3
+     │ Int64  Int64  Int64
+─────┼────────────────────────
+   1 │     1     11        21
+   2 │     2     12        22
+   3 │     3     13        23
+   4 │     4     14        24
+   5 │     5     15        25
 
-julia> @rename(df, :new1 = $DOLLAR("old_col" * "1"), :new2 = :old_col2)
+julia> @rename(df, :new1 = $(DOLLAR)("old_col" * "1"), :new2 = :old_col2)
 5×3 DataFrame
- Row │ new1       new2       old_col3
-     │ Float64    Float64    Float64
-─────┼────────────────────────────────
-   1 │ 0.0176206  0.493592   0.348072
-   2 │ 0.861545   0.512254   0.85763
-   3 │ 0.263082   0.0267507  0.696494
-   4 │ 0.643179   0.299391   0.780125
-   5 │ 0.731267   0.18905    0.767292
+ Row │ new1   new2   old_col3
+     │ Int64  Int64  Int64
+─────┼────────────────────────
+   1 │     1     11        21
+   2 │     2     12        22
+   3 │     3     13        23
+   4 │     4     14        24
+   5 │     5     15        25
+
+julia> @rename df $(DOLLAR)("New with spaces") = :old_col1
+5×3 DataFrame
+ Row │ New with spaces  old_col2  old_col3
+     │ Int64            Int64     Int64
+─────┼─────────────────────────────────────
+   1 │               1        11        21
+   2 │               2        12        22
+   3 │               3        13        23
+   4 │               4        14        24
+   5 │               5        15        25
+
+julia> @rename df :new_col2 = $(DOLLAR)2
+5×3 DataFrame
+ Row │ old_col1  new_col2  old_col3
+     │ Int64     Int64     Int64
+─────┼──────────────────────────────
+   1 │        1        11        21
+   2 │        2        12        22
+   3 │        3        13        23
+   4 │        4        14        24
+   5 │        5        15        25
 ```
 """
 macro rename(x, args...)
