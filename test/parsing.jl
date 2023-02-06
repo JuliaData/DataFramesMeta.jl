@@ -109,4 +109,24 @@ end
 
 end
 
+@testset "caret bug #333" begin
+    df = DataFrame(a = 1)
+    res = DataFrame(a = 1, b_sym = :xxx)
+    df2 = @transform df :b_sym = ^(:xxx)
+    @test df2 == res
+    df2 = @select df begin
+        :a
+        :b_sym = ^(:xxx)
+    end
+    @test df2 == res
+    df2 = @rsubset df begin ^(true) end
+    @test df2 == df
+    @eval df = DataFrame(a = 1)
+    # Some errors when we dont have keyword arguments, since
+    # the following gets parsed as (a^b) and we want
+    # (a, b...) in @subset and (a, b) in @with
+    @test_throws MethodError @eval @rsubset df ^(true)
+    @test_throws LoadError @eval @with df ^(true)
+end
+
 end # module
