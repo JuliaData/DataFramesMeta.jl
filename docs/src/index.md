@@ -15,6 +15,7 @@ In addition, DataFramesMeta provides
 * `@subset` and `@subset!`, for keeping rows of a data frame matching a given condition
 * Row-wise versions of the above macros in the form of `@rtransform`, `@rtransform!`,
   `@rselect`, `@rselect!`, `@rorderby`, `@rsubset`, and `@rsubset!`.
+* `@rename` and `@rename!` for renaming columns
 * `@by`, for grouping and combining a data frame in a single step
 * `@with`, for working with the columns of a data frame with high performance and 
   convenient syntax
@@ -165,6 +166,21 @@ transformation of columns. Only operates on `DataFrame`s and not `GroupedDataFra
 df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
 @orderby(df, -1 .* :x)
 @orderby(df, :x, :y .- mean(:y))
+```
+
+## `@rename`
+
+Rename columns in a data frame using the keyword argument-like syntax `:new = :old`. Like other macros, `@rename` can be used in both multi-argument and "block" format. 
+
+```julia
+df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+@rename df :x_new = :x
+@rename(df, :x_new = :x)
+@rename df $"Name with spaces" = :y
+@rename df begin 
+    :x_new = :x
+    :y_new = :y
+end
 ```
 
 ## `@with`
