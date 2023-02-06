@@ -30,6 +30,13 @@ function get_column_expr(e::Expr)
 end
 get_column_expr(x::QuoteNode) = x
 
+get_column_expr_rename(x) = nothing
+function get_column_expr_rename(e::Expr)
+    e.head == :$ && return e.args[1]
+    return nothing
+end
+get_column_expr_rename(x::QuoteNode) = x
+
 mapexpr(f, e) = Expr(e.head, Base.Generator(f, e.args)...)
 
 replace_syms!(membernames, x) = x
@@ -395,6 +402,68 @@ fun_to_vec(ex::QuoteNode;
            no_dest::Bool=false,
            gensym_names::Bool=false,
            outer_flags::Union{NamedTuple, Nothing}=nothing) = ex
+
+
+"""
+    rename_kw_to_pair(ex::Expr)
+
+Given an expression where the left- and right- hand side
+both are both valid column identifiers,  i.e., a `QuoteNode`
+or an expression beginning with `$DOLLAR`, or a "full" expression of the form
+`$DOLLAR(:x => :y)`, return an expression, where expression arguments of type
+`QuoteNode`` are converted to `String``.
+"""
+function rename_kw_to_pair(ex::Expr)
+    ex_col = get_column_expr(ex)
+    if ex_col !== nothing
+        return ex_col
+    end
+
+    lhs = let t = ex.args[1]
+        s = get_column_expr_rename(t)
+        if s === nothing
+            throw(ArgumentError("Invalid column identifier on LHS in @rename macro"))
+        end
+        s
+    end
+
+    rhs = let t = ex.args[2]
+        s = get_column_expr_rename(t)
+        if s === nothing
+            throw(ArgumentError("Invalid column identifier on RHS in @rename macro"))
+        end
+        s
+    end
+
+    newname = lhs
+    oldname = rhs
+    return :($oldname => $newname)
+end
+
+function pairs_to_str_pairs(args...)
+    map(args) do arg
+        if !(arg isa Pair)
+            throw(ArgumentError("Non-pair created in @rename"))
+        end
+
+        oldname = first(arg)
+        newname = last(arg)
+
+        if !(oldname isa Symbol || oldname isa AbstractString || oldname isa Integer)
+            throw(ArgumentError("RHS in @rename must be an Integer, Symbol, or AbstractString"))
+        end
+
+        if !(newname isa Symbol || newname isa AbstractString)
+            throw(ArgumentError("LHS in @rename must be a Symbol, or AbstractString"))
+        end
+
+        if oldname isa Integer
+            return oldname => string(newname)
+        end
+
+        return string(oldname) => string(newname)
+    end
+end
 
 function make_source_concrete(x::AbstractVector)
     if length(x) == 1 && x[1] isa AsTable
