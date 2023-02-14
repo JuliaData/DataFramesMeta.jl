@@ -10,7 +10,7 @@ macro protect(x)
     esc(DataFramesMeta.get_column_expr(x))
 end
 
-@testset "Returning columnn identifiers" begin
+@testset "Returning column identifiers" begin
 
     v_sym = @protect $[:a, :b]
     @test v_sym == [:a, :b]
