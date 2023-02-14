@@ -183,7 +183,7 @@ julia> df
 
 ### Comparison with `@.` and Base broadcasting
 
-Base Julia provides the broadasting macro `@.` and in many cases `@.`
+Base Julia provides the broadcasting macro `@.` and in many cases `@.`
 and `@byrow` will give equivalent results. But there are important
 deviations in behavior. Consider the setup
 
@@ -1848,7 +1848,7 @@ using broadcasting.
 
 To avoid writing `@byrow` multiple times when performing multiple
 transformations by row, `@select` allows `@byrow` at the
-beginning of a block of selectations (i.e. `@byrow begin... end`).
+beginning of a block of selections (i.e. `@byrow begin... end`).
 All transformations in the block will operate by row.
 
 $ASTABLE_MACRO_FLAG_DOCS
@@ -2261,7 +2261,7 @@ end
 ##############################################################################
 
 function by_helper(x, what, args...)
-    # Handle keyword arguments initially due the gouping instruction, what
+    # Handle keyword arguments initially due the grouping instruction, what
     if x isa Expr && x.head === :parameters
         # with keyword arguments, everything is shifted to
         # the right
@@ -2440,7 +2440,7 @@ end
 """
     @distinct(d, args...)
 
-Return the first occurence of unique rows in an `AbstractDataFrame` according 
+Return the first occurrence of unique rows in an `AbstractDataFrame` according 
 to given combinations of values in selected columns or their transformation. 
 `args` can be most column selectors or transformation accepted by `select`. 
 Users should note that `@distinct` differs from `unique` in DataFrames.jl,

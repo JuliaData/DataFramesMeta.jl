@@ -30,7 +30,7 @@ To install DataFramesMeta.jl, which also installs DataFrames.jl:
 
 ```julia
 import Pkg
-Pkg.activate(; temp=true) # activate a temprary environment for this tutorial
+Pkg.activate(; temp=true) # activate a temporary environment for this tutorial
 Pkg.add("DataFramesMeta");
 ```
 
@@ -211,7 +211,7 @@ msleep_1 = @select msleep :name :sleep_total
 msleep_2 = @rsubset msleep_1 :sleep_total > 16
 ```
 
-Now in this case, we will pipe the msleep data frame to the function that will select two columns (`:name` and `:sleep_total`) and then pipe the new data frame to the `@rsubset` opertaion. This method involves awkwardly creating and naming temporary data frames. We can avoid this with `@chain`.
+Now in this case, we will pipe the msleep data frame to the function that will select two columns (`:name` and `:sleep_total`) and then pipe the new data frame to the `@rsubset` operation. This method involves awkwardly creating and naming temporary data frames. We can avoid this with `@chain`.
 
 ```@repl 1
 @chain msleep begin 

@@ -421,7 +421,7 @@ julia> @rtransform df @passmissing :x = parse(Int, :x_str)
 ## Passing keyword arguments to underlying DataFrames.jl functions
 
 All DataFramesMeta.jl macros allow passing of keyword arguments to their DataFrames.jl
-function equivelents. The table below describes the correspondence between DataFramesMeta.jl
+function equivalents. The table below describes the correspondence between DataFramesMeta.jl
 macros and the function that is actually called by the macro. 
 
 | Macro | Base DataFrames.jl function called |
@@ -634,7 +634,7 @@ inside the expression. The command
 
 will fail. 
 
-Finally, note that everyting inside `AsTable` is escaped by default.
+Finally, note that everything inside `AsTable` is escaped by default.
 There is no ned to use `$` inside `AsTable` on the right-hand side.
 For example
 
@@ -821,7 +821,7 @@ Not all functions in DataFrames.jl allow for multi-column selectors, so detailed
 subset(df, [:a, :b])
 ```
 
-will fail in DataFrames.jl, bcause `DataFrames.subset` does not support vectors of column names. Likewise, `@subset df $[:a, :b]` will fail. The macros which support multi-column selectors are 
+will fail in DataFrames.jl, because `DataFrames.subset` does not support vectors of column names. Likewise, `@subset df $[:a, :b]` will fail. The macros which support multi-column selectors are 
 
 * `@select`
 * `@transform` (multi-argument selectors have no effect)
