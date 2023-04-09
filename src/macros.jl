@@ -1459,11 +1459,17 @@ end
 
 
 function transform_helper(x, args...)
-    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)
+    a1 = first(args)
+    if is_macro_head(a1, "@when")
+        x, exprs, outer_flags, kw = get_df_args_kwargs(x, args[2:end]...; wrap_byrow = false)
+        t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
 
-    t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
-    quote
-        $transform($x, $(t...);  $(kw...))
+        z = subset_helper(:($copy($x)), a1.args[2:end]..., :(@kwarg view = true))
+
+        :($parent($transform!($z, $(t...);  $(kw...))))
+    else
+        t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
+        :($transform($x, $(t...);  $(kw...)))
     end
 end
 
