@@ -1,6 +1,6 @@
 name = "DataFramesMeta"
 uuid = "1313f7d8-7da2-5740-9ea0-a2ca25f37964"
-version = "0.13.0"
+version = "0.14.0"
 
 [deps]
 Chain = "8be319e6-bccf-4806-a6f7-6fae938471bc"
