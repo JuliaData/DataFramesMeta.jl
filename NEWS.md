@@ -1,3 +1,9 @@
+# DataFramesMeta v0.14.0 Release notes
+
+* Add the `@rename` macro for renaming columns in keyword argument-like syntax. ([#343](https://github.com/JuliaData/DataFramesMeta.jl/pull/343))
+* Fix a bug relating to `^` for escaping symbols ([#347](https://github.com/JuliaData/DataFramesMeta.jl/pull/347))
+* Fix typos in documentation ([#355](https://github.com/JuliaData/DataFramesMeta.jl/pull/355))
+
 # DataFramesMeta v0.13.0 Release notes
 
 * Add the `@distinct` and `@rdistinct` macros, for getting unique observations of a data frame. ([#340](https://github.com/JuliaData/DataFramesMeta.jl/pull/340))
