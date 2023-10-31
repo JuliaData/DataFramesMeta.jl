@@ -546,7 +546,7 @@ getsinglecolumn(df, s::DataFrames.ColumnIndex) = df[!, s]
 getsinglecolumn(df, s) = throw(ArgumentError("Only indexing with Symbols, strings and integers " *
     "is currently allowed with $DOLLAR"))
 
-function with_helper(d, body)
+function attach_helper(d, body)
     # Make body an expression to force the
     # complicated method of fun_to_vec
     # in the case of QuoteNode
@@ -659,8 +659,8 @@ julia> @attach df @byrow :x * :y
 !!! note
     Using `AsTable` inside `@attach` block is currently not supported.
 """
-macro with(d, body)
-    esc(with_helper(d, body))
+macro attach(d, body)
+    esc(attach_helper(d, body))
 end
 
 ASTABLE_RHS_ORDERBY_DOCS = """
