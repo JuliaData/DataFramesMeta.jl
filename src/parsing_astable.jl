@@ -100,7 +100,7 @@ function get_source_fun_astable(ex; exprflags = deepcopy(DEFAULT_FLAGS))
     # and if-so, making a named tuple with
     # missing values
     if exprflags[BYROW_SYM][]
-        fun = :(ByRow($fun))
+        fun = :($ByRow($fun))
     end
 
     return source, fun

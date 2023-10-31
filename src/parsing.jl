@@ -295,9 +295,9 @@ function get_source_fun(function_expr; exprflags = deepcopy(DEFAULT_FLAGS))
 
     if exprflags[BYROW_SYM][]
         if exprflags[PASSMISSING_SYM][]
-            fun = :(ByRow(Missings.passmissing($fun)))
+            fun = :($ByRow($(Missings.passmissing)($fun)))
         else
-            fun = :(ByRow($fun))
+            fun = :($ByRow($fun))
         end
     end
 
@@ -350,7 +350,7 @@ function fun_to_vec(ex::Expr;
     if final_flags[ASTABLE_SYM][]
         src, fun = get_source_fun_astable(ex; exprflags = final_flags)
 
-        return :($src => $fun => AsTable)
+        return :($src => $fun => $AsTable)
     end
 
     if no_dest # subset and with
