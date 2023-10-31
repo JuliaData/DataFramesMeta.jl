@@ -91,7 +91,7 @@ end
 Includes support for control flow and `begin end` blocks. Since the
 "environment" induced by `@eachrow df` is implicitly a single row of `df`,
 use regular operators and comparisons instead of their elementwise counterparts
-as in `@with`. Note that the scope within `@eachrow` is a hard scope.
+as in `@attach`. Note that the scope within `@eachrow` is a hard scope.
 
 `eachrow` also supports special syntax for allocating new columns. The syntax
 `@newcol x::Vector{Int}` allocates a new uninitialized column `:x` with an `Vector` container
@@ -246,7 +246,7 @@ end
 Includes support for control flow and `begin end` blocks. Since the
 "environment" induced by `@eachrow! df` is implicitly a single row of `df`,
 use regular operators and comparisons instead of their elementwise counterparts
-as in `@with`. Note that the scope within `@eachrow!` is a hard scope.
+as in `@attach`. Note that the scope within `@eachrow!` is a hard scope.
 
 `eachrow!` also supports special syntax for allocating new columns. The syntax
 `@newcol x::Vector{Int}` allocates a new uninitialized column `:x` with an `Vector` container

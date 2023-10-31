@@ -162,29 +162,29 @@ using DataFramesMeta
             slowtime = @timed combine(gd, :b => (b -> testnt(b)) => AsTable)
             (slowtime[2] > fasttime[2]) || @warn("Slow compilation")
 
-            @test @with df (:a + :b) == [3]
+            @test @attach df (:a + :b) == [3]
 
-            fasttime = @timed @with df (:a + :b)
-            slowtime = @timed @with df ((a, b) -> a + b)(df.a, df.b)
+            fasttime = @timed @attach df (:a + :b)
+            slowtime = @timed @attach df ((a, b) -> a + b)(df.a, df.b)
             (slowtime[2] > fasttime[2]) || @warn("Slow compilation")
 
-            @test @with df (:a .* :b) == [2]
+            @test @attach df (:a .* :b) == [2]
 
-            @with df (:a .* :b)
-            fasttime = @timed @with df (:a .* :b)
-            slowtime = @timed @with df ((a, b) -> a .* b)(df.a, df.b)
+            @attach df (:a .* :b)
+            fasttime = @timed @attach df (:a .* :b)
+            slowtime = @timed @attach df ((a, b) -> a .* b)(df.a, df.b)
             (slowtime[2] > fasttime[2]) || @warn("Slow compilation")
 
-            @test @with df testfun(:a, :b) == [2]
+            @test @attach df testfun(:a, :b) == [2]
 
-            fasttime = @timed @with df testfun(:a, :b)
-            slowtime = @timed @with df ((a, b) -> testfun(a, b))(df.a, df.b)
+            fasttime = @timed @attach df testfun(:a, :b)
+            slowtime = @timed @attach df ((a, b) -> testfun(a, b))(df.a, df.b)
             (slowtime[2] > fasttime[2]) || @warn("Slow compilation")
 
-            @test @with df testdotfun.(:a, :b) == [2]
+            @test @attach df testdotfun.(:a, :b) == [2]
 
-            fasttime = @timed @with df testdotfun.(:a, :b)
-            slowtime = @timed @with df ((a, b) -> testdotfun.(a, b))(df.a, df.b)
+            fasttime = @timed @attach df testdotfun.(:a, :b)
+            slowtime = @timed @attach df ((a, b) -> testdotfun.(a, b))(df.a, df.b)
             (slowtime[2] > fasttime[2]) || @warn("Slow compilation")
         end
     end

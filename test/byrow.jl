@@ -393,18 +393,18 @@ end
     @test d ≅ @select!(copy(df), :n1 = :i .* :g, :n2 = :i .* :g)
 end
 
-@testset "@with with @byrow" begin
+@testset "@attach with @byrow" begin
     df = DataFrame(A = 1:3, B = [2, 1, 2])
 
-    @test @with(df, @byrow :A * 1)   ==  df.A .* 1
-    @test @with(df, @byrow :A * :B)  ==  df.A .* df.B
+    @test @attach(df, @byrow :A * 1)   ==  df.A .* 1
+    @test @attach(df, @byrow :A * :B)  ==  df.A .* df.B
 
-    t = @with df @byrow begin
+    t = @attach df @byrow begin
         :A * 1
     end
     @test t == df.A .* 1
 
-    t = @with df @byrow begin
+    t = @attach df @byrow begin
         :A * :B
     end
     @test t == df.A .* df.B

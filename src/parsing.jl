@@ -318,7 +318,7 @@ function fun_to_vec(ex::Expr;
     # classify the type of expression
     # :x # handled via dispatch
     # $:x # handled as though above
-    # f(:x) # requires no_dest, for `@with` and `@subset` in future
+    # f(:x) # requires no_dest, for `@attach` and `@subset` in future
     # :y = :x # Simple pair
     # :y = $:x # Extract and return simple pair (no function)
     # $:y = :x # Simple pair

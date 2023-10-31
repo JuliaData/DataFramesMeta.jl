@@ -124,9 +124,9 @@ end
     @eval df = DataFrame(a = 1)
     # Some errors when we dont have keyword arguments, since
     # the following gets parsed as (a^b) and we want
-    # (a, b...) in @subset and (a, b) in @with
+    # (a, b...) in @subset and (a, b) in @attach
     @test_throws MethodError @eval @rsubset df ^(true)
-    @test_throws LoadError @eval @with df ^(true)
+    @test_throws LoadError @eval @attach df ^(true)
 end
 
 end # module

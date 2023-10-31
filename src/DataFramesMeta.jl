@@ -11,7 +11,7 @@ using OrderedCollections: OrderedCollections
 @reexport using Chain
 
 # Basics:
-export @with,
+export @attach,
        @subset, @subset!, @rsubset, @rsubset!,
        @orderby, @rorderby,
        @by, @combine,

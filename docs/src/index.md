@@ -17,7 +17,7 @@ In addition, DataFramesMeta provides
   `@rselect`, `@rselect!`, `@rorderby`, `@rsubset`, and `@rsubset!`.
 * `@rename` and `@rename!` for renaming columns
 * `@by`, for grouping and combining a data frame in a single step
-* `@with`, for working with the columns of a data frame with high performance and 
+* `@attach`, for working with the columns of a data frame with high performance and 
   convenient syntax
 * `@eachrow` and `@eachrow!` for looping through rows in data frame, again with high performance and 
   convenient syntax. 
@@ -183,19 +183,19 @@ df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
 end
 ```
 
-## `@with`
+## `@attach`
 
-`@with` creates a scope in which all symbols that appear are aliases for the columns
+`@attach` creates a scope in which all symbols that appear are aliases for the columns
 in a DataFrame. 
 
 ```julia
 df = DataFrame(x = 1:3, y = [2, 1, 2])
 x = [2, 1, 0]
 
-@with(df, :y .+ 1)
-@with(df, :x + x)  # the two x's are different
+@attach(df, :y .+ 1)
+@attach(df, :x + x)  # the two x's are different
 
-x = @with df begin
+x = @attach df begin
     res = 0.0
     for i in 1:length(:x)
         res += :x[i] * :y[i]
@@ -203,12 +203,12 @@ x = @with df begin
     res
 end
 
-@with(df, df[:x .> 1, ^(:y)]) # The ^ means leave the :y alone
+@attach(df, df[:x .> 1, ^(:y)]) # The ^ means leave the :y alone
 
 ```
 
 !!! note 
-    `@with` creates a function, so scope within `@with` is a local scope.
+    `@attach` creates a function, so scope within `@attach` is a local scope.
     Variables in the parent can be read. Writing to variables in the parent scope
     differs depending on the type of scope of the parent. If the parent scope is a
     global scope, then a variable cannot be assigned without using the `global` keyword.
@@ -216,12 +216,12 @@ end
     the `global` keyword is not needed to assign to that parent scope.
 
 !!! note
-    Because `@with` creates a function, be careful with the use of `return`. 
+    Because `@attach` creates a function, be careful with the use of `return`. 
 
     ```
     function data_transform(df; returnearly = true)
         if returnearly
-            @with df begin 
+            @attach df begin 
                 z = :x + :y
                 return z
             end
@@ -233,10 +233,10 @@ end
     end
     ```
 
-    The above function will return `[4, 5, 6]` because the `return` inside the `@with`
-    applies to the anonymous function created by `@with`. 
+    The above function will return `[4, 5, 6]` because the `return` inside the `@attach`
+    applies to the anonymous function created by `@attach`. 
 
-    Given that `@eachrow` (below) is implemented with `@with`, the same caveat applies to 
+    Given that `@eachrow` (below) is implemented with `@attach`, the same caveat applies to 
     `@eachrow` blocks. 
 
 
@@ -245,7 +245,7 @@ end
 Act on each row of a data frame. Includes support for control flow and `begin end` 
 blocks. Since the "environment" induced by `@eachrow df` is implicitly a 
 single row of `df`, one uses regular operators and comparisons instead of 
-their elementwise counterparts as in `@with`. Does not change the input data 
+their elementwise counterparts as in `@attach`. Does not change the input data 
 frame argument.
 
 `@eachrow!` is identical to `@eachrow` but acts on a data frame in-place, modifying
@@ -326,8 +326,8 @@ The following macros accept `@byrow`:
   `@byrow` can be used in the left hand side of expressions, e.g.
   `@select(df, @byrow z = :x * :y)`. 
 * `@subset`, `@subset!` and `@orderby`, with syntax of the form `@subset(df, @byrow :x > :y)`
-* `@with`, where the anonymous function created by `@with` is wrapped in
-  `ByRow`, as in `@with(df, @byrow :x * :y)`.
+* `@attach`, where the anonymous function created by `@attach` is wrapped in
+  `ByRow`, as in `@attach(df, @byrow :x * :y)`.
 
 To avoid writing `@byrow` multiple times when performing multiple
 operations, it is allowed to use `@byrow` at the beginning of a block of 
@@ -723,9 +723,9 @@ transform(df, [:A, "B"] => (+) => :y)
 
 will error in DataFrames. 
 
-For consistency, this restriction in the input column types also applies to `@with`
+For consistency, this restriction in the input column types also applies to `@attach`
 and `@eachrow`. You cannot mix integer column references with `Symbol` or string column 
-references in `@with` and `@eachrow` in any part of the expression, but you can mix 
+references in `@attach` and `@eachrow` in any part of the expression, but you can mix 
 `Symbol`s and strings. The following will fail:
 
 ```julia
@@ -734,7 +734,7 @@ df = DataFrame(A = 1:3, B = [2, 1, 2])
     :A = $2
 end
 
-@with df begin 
+@attach df begin 
     $1 + $"A"
 end
 ```
@@ -746,7 +746,7 @@ while the following will work without error
     $1 + $2
 end
 
-@with df begin 
+@attach df begin 
     $1 + $2
 end
 ```
@@ -860,7 +860,7 @@ julia> @subset df $(:a => t -> t .>= 2)
 ```
 
 !!! warning
-    The macros `@orderby` and `@with` do not transparently call underlying DataFrames.jl functions. Escaping entire transformations should be considered unstable and may change in future versions.
+    The macros `@orderby` and `@attach` do not transparently call underlying DataFrames.jl functions. Escaping entire transformations should be considered unstable and may change in future versions.
 
 !!! warning
     Row-wise macros such as `@rtransform` and `@rsubset` will not automatically wrap functions in `src => fun => dest` in `ByRow`. 
@@ -880,7 +880,7 @@ In summary
     * Regular expressions, `$(r"^a")`
     * Filtering column selectors, such as `$(Not(:x))` and `$(Between(:a, :z))`
 
-    The macros `@with`, `@subset`, and `@orderby` do not support multi-column selectors. 
+    The macros `@attach`, `@subset`, and `@orderby` do not support multi-column selectors. 
 
 * Advanced users of DataFramesMeta.jl and DataFrames.jl may wrap an argument entirely in `$()` to pass `src => fun => dest` pairs directly to DataFrames.jl functions. However this is discouraged and it's behavior may change in future versions. 
 
