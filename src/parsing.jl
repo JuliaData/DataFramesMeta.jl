@@ -21,7 +21,7 @@ returns `nothing`.
 get_column_expr(x) = nothing
 function get_column_expr(e::Expr)
     e.head == :$ && return e.args[1]
-    onearg(e, :AsTable) && return e
+    onearg(e, :AsTable) && return :($AsTable($(e.args[2])))
     if onearg(e, :cols)
         Base.depwarn("cols is deprecated use $DOLLAR to escape column names instead", :cols)
         return e.args[2]

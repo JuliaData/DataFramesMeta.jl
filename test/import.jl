@@ -20,8 +20,8 @@ import DataFramesMeta
     @test t == DataFrames.DataFrame(a = [1, 2, 3], b = [1, 1, 1], c  = [2, 2, 2])
 
     # AsTable on the RHS relies on the literal "AsTable" appearing
-    # so we test that this throws an error
-    @test_throws UndefVarError t = DataFramesMeta.@transform df :c = sum(AsTable([:a]))
+    t = DataFramesMeta.@rtransform df :c = sum(AsTable([:a]))
+    @test t == DataFrames.DataFrame(a = [1, 2, 3], c = [1, 2, 3])
 
     # And confusingly, if you use DataFrames.AsTable on the RHS, none of the
     # special escaping happens.
