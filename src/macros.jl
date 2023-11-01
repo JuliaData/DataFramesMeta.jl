@@ -666,7 +666,7 @@ end
 """
     @with(x, args...)
 
-Deprecated version of `@attach`, see `?@with` for details.
+Deprecated version of `@attach`, see `?@attach` for details.
 """
 macro with(d, body)
     @warn "`@with is deprecated, use `@attach` instead."
