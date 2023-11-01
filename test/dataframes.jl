@@ -553,7 +553,7 @@ cr = "c"
     @test_throws MethodError @eval @select(df, :n = sum(Between(:i, :t)))
 end
 
-@testset "with" begin
+@testset "attach" begin
     df = DataFrame(A = 1:3, B = [2, 1, 2])
 
     x = [2, 1, 0]

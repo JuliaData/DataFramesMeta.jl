@@ -663,6 +663,17 @@ macro attach(d, body)
     esc(attach_helper(d, body))
 end
 
+"""
+    @with(x, args...)
+
+Deprecated version of `@attach`, see `?@with` for details.
+"""
+macro with(x, args...)
+    @warn "`@with is deprecated, use `@with` instead."
+    esc(attach_helper(d, body))
+end
+
+
 ASTABLE_RHS_ORDERBY_DOCS = """
 In operations, it is also allowed to use `AsTable(cols)` to work with
 multiple columns at once, where the columns are grouped together in a
