@@ -668,7 +668,7 @@ end
 
 Deprecated version of `@attach`, see `?@with` for details.
 """
-macro with(x, args...)
+macro with(d, body)
     @warn "`@with is deprecated, use `@with` instead."
     esc(attach_helper(d, body))
 end

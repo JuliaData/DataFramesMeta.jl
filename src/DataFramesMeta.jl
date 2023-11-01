@@ -21,7 +21,7 @@ export @attach,
        @distinct, @rdistinct, @distinct!, @rdistinct!,
        @eachrow, @eachrow!,
        @byrow, @passmissing, @astable, @kwarg,
-       @based_on, @where # deprecated
+       @based_on, @where, @with # deprecated
 
 const DOLLAR = raw"$"
 

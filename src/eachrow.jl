@@ -68,7 +68,7 @@ function eachrow_helper(df, body, deprecation_warning)
         let $_df = $df
             local _N = nrow($_df)
             local _DF = @transform($_df, $(e_newcols...))
-            $(with_helper(:_DF, :(for row = 1:_N
+            $(attach_helper(:_DF, :(for row = 1:_N
                 $(eachrow_replace(e_body))
             end)))
             _DF
@@ -224,7 +224,7 @@ function eachrow!_helper(df, body)
         let $_df = $df
             local _N = nrow($_df)
             local _DF = @transform!($_df, $(e_newcols...))
-            $(with_helper(:_DF, :(for row = 1:_N
+            $(attach_helper(:_DF, :(for row = 1:_N
                 $(eachrow_replace(e_body))
             end)))
             _DF

@@ -111,7 +111,7 @@ end
 linq(::SymbolParameter{s}, args...) where {s} = Expr(:call, s, args...)
 
 function linq(::SymbolParameter{:with}, d, body)
-    with_helper(d, body)
+    attach_helper(d, body)
 end
 
 function linq(::SymbolParameter{:where}, d, args...)
