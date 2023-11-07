@@ -899,6 +899,9 @@ julia> @subset df begin
            :y .== 3
        end
 0×2 DataFrame
+ Row │ x      y
+     │ Int64  Int64
+─────┴──────────────
 
 julia> df = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
                                     2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
@@ -1011,12 +1014,12 @@ julia> @rsubset df :A > 3
 
 julia> @rsubset df :A > 3 || :B == "pear"
 3×2 DataFrame
-  Row │ A      B
-      │ Int64  String
- ─────┼───────────────
-    1 │     2  pear
-    2 │     4  orange
-    3 │     5  pear
+ Row │ A      B
+     │ Int64  String
+─────┼───────────────
+   1 │     2  pear
+   2 │     4  orange
+   3 │     5  pear
 ```
 """
 macro rsubset(x, args...)
@@ -1167,6 +1170,9 @@ julia> @subset! copy(df) begin
            :y .== 3
        end
 0×2 DataFrame
+ Row │ x      y
+     │ Int64  Int64
+─────┴──────────────
 
 julia> df = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
                                     2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
@@ -1369,15 +1375,15 @@ julia> @orderby d begin
  Row │ x      n      c
      │ Int64  Int64  String
 ─────┼──────────────────────
-   1 │     1      5  e
-   2 │     1      6  f
-   3 │     1      7  g
-   4 │     1      9  i
-   5 │     1     10  j
-   6 │     2      4  d
-   7 │     2      8  h
-   8 │     3      3  c
-   9 │     3      2  b
+   1 │     1      5  d
+   2 │     1      6  g
+   3 │     1      7  f
+   4 │     1      9  j
+   5 │     1     10  h
+   6 │     2      4  e
+   7 │     2      8  i
+   8 │     3      3  b
+   9 │     3      2  c
   10 │     3      1  a
 
 julia> @orderby d @byrow :x^2
@@ -1434,6 +1440,7 @@ julia> df = DataFrame(x = [8,8,-8,7,7,-7], y = [-1, 1, -2, 2, -3, 3])
    6 │    -7      3
 
 julia> @rorderby df abs(:x) (:x * :y^3)
+6×2 DataFrame
  Row │ x      y
      │ Int64  Int64
 ─────┼──────────────
@@ -2528,19 +2535,19 @@ julia> df = DataFrame(x = 1:10, y = 10:-1:1);
 
 julia> @distinct(df, :x .+ :y)
 1×2 DataFrame
- Row │ x      y      
-     │ Int64  Int64  
-─────┼───────────────
-   1 │     1      10   
+ Row │ x      y
+     │ Int64  Int64
+─────┼──────────────
+   1 │     1     10
 
 julia> @distinct df begin
             :x .+ :y
         end
 1×2 DataFrame
- Row │ x      y      
-     │ Int64  Int64  
-─────┼───────────────
-   1 │     1      10   
+ Row │ x      y
+     │ Int64  Int64
+─────┼──────────────
+   1 │     1     10
 ```
 """
 macro distinct(d, args...)
