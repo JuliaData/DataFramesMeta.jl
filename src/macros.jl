@@ -2798,7 +2798,7 @@ and
 ### Details
 
 Both the left- and right-hand side of an expression specifying a column name assignment
-can be either a `Symbol` or an `AbstractString` (which may contain apces) escaped with `
+can be either a `Symbol` or an `AbstractString` (which may contain spaces) escaped with `
 $DOLLAR`. For example `:new = ...`, and `$(DOLLAR)"new" = ...` are both valid ways
 of assigning a new column name.
 
