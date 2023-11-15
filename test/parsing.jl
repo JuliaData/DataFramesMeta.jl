@@ -122,7 +122,7 @@ end
     df2 = @rsubset df begin ^(true) end
     @test df2 == df
     @eval df = DataFrame(a = 1)
-    # Some errors when we dont have keyword arguments, since
+    # Some errors when we don't have keyword arguments, since
     # the following gets parsed as (a^b) and we want
     # (a, b...) in @subset and (a, b) in @with
     @test_throws MethodError @eval @rsubset df ^(true)
