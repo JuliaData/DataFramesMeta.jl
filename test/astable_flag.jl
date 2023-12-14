@@ -200,7 +200,7 @@ end
 
 @testset "errors with passmissing" begin
     @eval df = DataFrame(y = 1)
-    @test_throws LoadError @eval @transform df @passmising @byrow @astable :x = 2
+    @test_throws LoadError @eval @transform df @passmissing @byrow @astable :x = 2
     @test_throws LoadError @eval @transform df @byrow @astable @passmissing :x = 2
     @test_throws LoadError @eval @transform df @astable @passmissing @byrow :x = 2
     @test_throws LoadError @eval @rtransform df @astable @passmissing :x = 2
