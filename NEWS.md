@@ -1,3 +1,6 @@
+# DataFramesMeta v0.14.2 Release notes
+* `@with` is deprecated and functionality is moved to the new `@attach` macro. ([#367](https://github.com/JuliaData/DataFramesMeta.jl/pull/367)). Julia version 1.11 introduces a macro named `@with` which provides a syntax for dynamic scoping. To avoid conflicts with `@with` when Julia version 1.11 is released, we rename `@with` to `@attach` and begin the depreaction process. 
+
 # DataFramesMeta v0.14.1 Release notes
 * Fixed a bug where `ByRow` was not properly identified if DataFramesMeta.jl was `import`ed ([#366](https://github.com/JuliaData/DataFramesMeta.jl/pull/366))
 
