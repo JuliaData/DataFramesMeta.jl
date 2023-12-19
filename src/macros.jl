@@ -558,17 +558,17 @@ function with_helper(d, body)
     # Remove the @when statements, recording that they
     # exist. To do this we also have to de-construct
     # body into a vector expressions.
-    es, whens = get_when_statements(MacroTools.rmlines(MacroTools.block(body)).args)
-    newbody = MacroTools.block(es...)
+    es, when = get_when_statements(MacroTools.rmlines(MacroTools.block(body)).args)
+    newbody = Expr(:block, es...)
     # Make body an expression to force the
     # complicated method of fun_to_vec
     # in the case of QuoteNode
     t = fun_to_vec(newbody; no_dest=true, outer_flags = outer_flags)
-    if !isempty(whens)
-        w = (fun_to_vec(ex; no_dest = true, gensym_names=false, outer_flags = outer_flags) for ex in whens)
+    if !isnothing(when)
+        w = fun_to_vec(when; no_dest = true, gensym_names=false, outer_flags = outer_flags)
         z = gensym()
         quote
-            $z = $subset($d, $(w...); view = true)
+            $z = $subset($d, $w; view = true, skipmissing = true)
             $exec($z, $t)
         end
     else
@@ -1496,19 +1496,20 @@ function generic_transform_select_helper(x, args...; wrap_byrow::Bool = false, m
     end
 
     x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = wrap_byrow)
-    exprs, whens = get_when_statements(exprs)
-    if !isempty(whens)
-        w = (fun_to_vec(ex; no_dest = true, gensym_names=false, outer_flags=outer_flags) for ex in whens)
+    exprs, when = get_when_statements(exprs)
+   # Main.@infiltrate
+    if !isnothing(when)
+        w = fun_to_vec(when; no_dest = true, gensym_names=false, outer_flags=outer_flags)
         t = (fun_to_vec(ex; gensym_names=false, outer_flags=outer_flags) for ex in exprs)
         z = gensym()
         if modify
             quote
-                $z = $subset($x, $(w...); view = true)
+                $z = $subset($x, $w; view = true, skipmissing = true)
                 $parent($secondstagefun($z, $(t...); $(kw...)))
             end
         else
             quote
-                $z = $subset($copy($x), $(w...); view = true)
+                $z = $subset($copy($x), $w; view = true, skipmissing = true)
                 $parent($secondstagefun($z, $(t...); $(kw...)))
             end
         end
@@ -2002,7 +2003,7 @@ end
 ##############################################################################
 
 function select!_helper(x, args...)
-    generic_transform_select_helper(x, args...; wrap_byrow = true, modify = true, selectfun = true)
+    generic_transform_select_helper(x, args...; wrap_byrow = false, modify = true, selectfun = true)
 end
 
 """

@@ -200,6 +200,9 @@ a flag signifying a `@when` statement was present.
 function omit_nested_when(ex::Expr, when = Ref(false))
     if ex.head == :macrocall && ex.args[1] in keys(DEFAULT_FLAGS) || is_macro_head(ex, "@when")
         macroname = ex.args[1]
+        if length(ex.args) > 3
+            throw(ArgumentError("Too many arguments passed to $macroname"))
+        end
         if macroname == Symbol("@when")
             when[] = true
             return omit_nested_when(MacroTools.unblock(ex.args[3]), when)
@@ -214,22 +217,27 @@ omit_nested_when(ex, when = Ref(false)) = ex, when
 
 function get_when_statements(exprs)
     new_exprs = []
-    when_statements = []
+    when_statement = nothing
     seen_non_when = false
+    seen_when = false
     for expr in exprs
         e, when = omit_nested_when(expr)
         if when[]
+            if seen_when
+                throw(ArgumentError("Only one @when statement allowed at a time"))
+            end
             if seen_non_when
                 throw(ArgumentError("All @when statements must come first"))
             end
-            push!(when_statements, e)
+            seen_when = true
+            when_statement = e
         else
             seen_non_when = true
             push!(new_exprs, expr)
         end
     end
 
-    new_exprs, when_statements
+    new_exprs, when_statement
 end
 
 
