@@ -547,14 +547,23 @@ getsinglecolumn(df, s) = throw(ArgumentError("Only indexing with Symbols, string
     "is currently allowed with $DOLLAR"))
 
 function with_helper(d, body)
+    # Get rid of the leading @byrow, @passmissing etc.
+    # but otherwise leave body untouched
     body, outer_flags = extract_macro_flags(body)
-    if body isa Expr && body.head == :block
-        es, whens = get_when_statements(MacroTools.rmlines(body).args)
+    if outer_flags[ASTABLE_SYM][]
+        throw(ArgumentError("@astable macro-flag cannot be used inside of @with"))
     end
+    # If we have a begin...end somewhere, we might
+    # have a @when.
+    # Remove the @when statements, recording that they
+    # exist. To do this we also have to de-construct
+    # body into a vector expressions.
+    es, whens = get_when_statements(MacroTools.rmlines(MacroTools.block(body)).args)
+    newbody = MacroTools.block(es...)
     # Make body an expression to force the
     # complicated method of fun_to_vec
     # in the case of QuoteNode
-    t = fun_to_vec(Expr(:block, es...); no_dest=true, outer_flags = outer_flags)
+    t = fun_to_vec(newbody; no_dest=true, outer_flags = outer_flags)
     if !isempty(whens)
         w = (fun_to_vec(ex; no_dest = true, gensym_names=false, outer_flags = outer_flags) for ex in whens)
         z = gensym()
@@ -1487,7 +1496,6 @@ function generic_transform_select_helper(x, args...; wrap_byrow::Bool = false, m
     end
 
     x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = wrap_byrow)
-
     exprs, whens = get_when_statements(exprs)
     if !isempty(whens)
         w = (fun_to_vec(ex; no_dest = true, gensym_names=false, outer_flags=outer_flags) for ex in whens)

@@ -180,6 +180,9 @@ function extract_macro_flags(ex::Expr, exprflags = deepcopy(DEFAULT_FLAGS))
                 throw(ArgumentError("Redundant flag $macroname used."))
             end
             exprflag[] = true
+            if length(ex.args) > 3
+                throw(ArgumentError("Too many arguments passed to $macroname"))
+            end
             return extract_macro_flags(MacroTools.unblock(ex.args[3]), exprflags)
         else
             return (ex, exprflags)
