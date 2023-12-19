@@ -421,14 +421,28 @@ end
     @test df2 === df
 end
 
-@testset "@when many conditions" begin
-    df = DataFrame(a = [1, missing, 3, 4], z = [50, 60, 70, 80])
-    @transform df begin
+df = DataFrame(a = [1, missing, 3, 4], z = [50, 60, 70, 80])
+@testset "@when errors" begin
+    @test_throws LoadError @eval @transform df begin
         @when :a .> 1
         @when :a .> 2
         :c = 5
     end
 
+    @test_throws LoadError @eval @transform df @when(:a .== 1) begin
+        :c = 1
+        :b = 2
+    end
+
+    @test_throws LoadError @eval @transform df @byrow @when(:a == 1) begin
+        :c = 1
+        :b = 2
+    end
+
+    @test_throws LoadError @eval @transform df @when(:a == 1) @byrow begin
+        :c = 1
+        :b = 2
+    end
 end
 
 
