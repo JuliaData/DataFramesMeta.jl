@@ -168,7 +168,7 @@ const BYROW_SYM = Symbol("@byrow")
 const PASSMISSING_SYM = Symbol("@passmissing")
 const ASTABLE_SYM = Symbol("@astable")
 const WHEN_SYM = Symbol("@when")
-const DEFAULT_FLAGS = (;BYROW_SYM => Ref(false), PASSMISSING_SYM => Ref(false), ASTABLE_SYM => Ref(false), WHEN_SYM => Ref(false))
+const DEFAULT_FLAGS = (;BYROW_SYM => Ref(false), PASSMISSING_SYM => Ref(false), ASTABLE_SYM => Ref(false))
 
 extract_macro_flags(ex, exprflags = deepcopy(DEFAULT_FLAGS)) = (ex, exprflags)
 function extract_macro_flags(ex::Expr, exprflags = deepcopy(DEFAULT_FLAGS))
@@ -187,6 +187,48 @@ function extract_macro_flags(ex::Expr, exprflags = deepcopy(DEFAULT_FLAGS))
     end
     return (ex, exprflags)
 end
+
+"""
+    omit_nested_when(ex::Expr, when = Ref(false))
+
+For a statement of the form `@passmissing @when x` return `@passmissing x` and
+a flag signifying a `@when` statement was present.
+"""
+function omit_nested_when(ex::Expr, when = Ref(false))
+    if ex.head == :macrocall && ex.args[1] in keys(DEFAULT_FLAGS) || is_macro_head(ex, "@when")
+        macroname = ex.args[1]
+        if macroname == Symbol("@when")
+            when[] = true
+            return omit_nested_when(MacroTools.unblock(ex.args[3]), when)
+        else
+            new_expr, when = omit_nested_when(MacroTools.unblock(ex.args[3]), when)
+            ex.args[3] = new_expr
+        end
+    end
+    return ex, when
+end
+omit_nested_when(ex, when = Ref(false)) = ex, when
+
+function get_when_statements(exprs)
+    new_exprs = []
+    when_statements = []
+    seen_non_when = false
+    for expr in exprs
+        e, when = omit_nested_when(expr)
+        if when[]
+            if seen_non_when
+                throw(ArgumentError("All @when statements must come first"))
+            end
+            push!(when_statements, e)
+        else
+            seen_non_when = true
+            push!(new_exprs, expr)
+        end
+    end
+
+    new_exprs, when_statements
+end
+
 
 """
     check_macro_flags_consistency(exprflags)
