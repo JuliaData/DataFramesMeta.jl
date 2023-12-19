@@ -443,17 +443,44 @@ df = DataFrame(a = [1, missing, 3, 4], z = [50, 60, 70, 80])
         :c = 1
         :b = 2
     end
+
+    @test_throws LoadError @eval @transform df @astable begin
+        @when :x == 1
+        :z = 1
+    end
+
+
+    @test_throws LoadError @eval @with df @when(:a == 1) begin
+        first(:z)
+    end
 end
 
-
 @testset "@with when" begin
-    df = DataFrame(a = [1, 2], z = [60, 70])
+    df = DataFrame(a = [missing, 2], z = [60, 70])
 
     t = @with df begin
         @when :a .> 1
         :z
     end
     @test t === view(df.z, 2:2)
+
+    t = @with df @byrow begin
+        @when :a > 1
+        first(:z)
+    end
+    @test t == [70]
+
+    t = @with df begin
+        @when @byrow :a > 1
+        first(:z)
+    end
+    @test t == 70
+
+    t = @with df begin
+        @when @byrow @passmissing :a > 1 && true
+        first(:z)
+    end
+    @test t == 70
 end
 
 end # module
