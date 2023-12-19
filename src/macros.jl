@@ -1622,24 +1622,40 @@ function get_when_statements(exprs)
     new_exprs, when_statements
 end
 
-function rtransform_helper(x, args...)
-    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = true)
+function generic_transform_helper(x, args...; wrap_byrow::Bool = false, modify::Bool = false)
+    if modify == true
+        transformfun = transform!
+    else
+        transformfun = transform
+    end
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = wrap_byrow)
 
     exprs, whens = get_when_statements(exprs)
     if !isempty(whens)
         w = (fun_to_vec(ex; no_dest = true, gensym_names=false, outer_flags=outer_flags) for ex in whens)
         t = (fun_to_vec(ex; gensym_names=false, outer_flags=outer_flags) for ex in exprs)
         z = gensym()
-        quote
-            $z = $subset($copy($x), $(w...); view = true)
-            $parent($transform!($z, $(t...); $(kw...)))
+        if modify
+            quote
+                $z = $subset($x, $(w...); view = true)
+                $parent($transform!($z, $(t...); $(kw...)))
+            end
+        else
+            quote
+                $z = $subset($copy($x), $(w...); view = true)
+                $parent($transform!($z, $(t...); $(kw...)))
+            end
         end
     else
         t = (fun_to_vec(ex; gensym_names=false, outer_flags=outer_flags) for ex in exprs)
         quote
-            $transform($x, $(t...); $(kw...))
+            $transformfun($x, $(t...); $(kw...))
         end
     end
+end
+
+function rtransform_helper(x, args...)
+    generic_transform_helper(x, args...; wrap_byrow = true, modify = false)
 end
 
 """
