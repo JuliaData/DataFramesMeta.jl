@@ -1456,45 +1456,10 @@ end
 ## transform & @transform
 ##
 ##############################################################################
-
-function contains_when(args...)
-    for arg in args
-        if is_macro_head(arg, "@when")
-            return true
-        end
-    end
-    return false
-end
-
-function when_helper(x, args...)
-    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args[2:end]...; wrap_byrow = false)
-    t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
-
-    z = subset_helper(:($copy($x)), a1.args[2:end]..., :(@kwarg view = true))
-
-    :($parent($transform!($z, $(t...);  $(kw...))))
-end
-
 function transform_helper(x, args...)
-    a1 = first(args)
-    when = is_macro_head(a1, "@when")
-    rwhen = is_macro_head(a1, "@rwhen")
-    if when || rwhen
-        if when
-            z = subset_helper(:($copy($x)), a1.args[2:end]..., :(@kwarg view = true))
-        else #rwhen
-            z = rsubset_helper(:($copy($x)), a1.args[2:end]..., :(@kwarg view = true))
-        end
-
-        x, exprs, outer_flags, kw = get_df_args_kwargs(x, args[2:end]...; wrap_byrow = false)
-        t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
-
-        :($parent($transform!($z, $(t...);  $(kw...))))
-    else
-        x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)
-        t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
-        :($transform($x, $(t...);  $(kw...)))
-    end
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)
+    t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
+    :($transform($x, $(t...);  $(kw...)))
 end
 
 """
@@ -1622,12 +1587,58 @@ macro transform(x, args...)
     esc(transform_helper(x, args...))
 end
 
+omit_nested_when(ex, when = Ref(false)) = ex, when
+function omit_nested_when(ex::Expr, when = Ref(false))
+    if ex.head == :macrocall && ex.args[1] in keys(DEFAULT_FLAGS)
+        macroname = ex.args[1]
+        if macroname == WHEN_SYM
+            when[] = true
+            return omit_nested_when(MacroTools.unblock(ex.args[3]), when)
+        else
+            new_expr, when = omit_nested_when(MacroTools.unblock(ex.args[3]), when)
+            ex.args[3] = new_expr
+        end
+    end
+    return ex, when
+end
+
+function get_when_statements(exprs)
+    new_exprs = []
+    when_statements = []
+    seen_non_when = false
+    for expr in exprs
+        e, when = omit_nested_when(expr)
+        if when[]
+            if seen_non_when
+                throw(ArgumentError("All @when statements must come first"))
+            end
+            push!(when_statements, e)
+        else
+            seen_non_when = true
+            push!(new_exprs, expr)
+        end
+    end
+
+    new_exprs, when_statements
+end
+
 function rtransform_helper(x, args...)
     x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = true)
 
-    t = (fun_to_vec(ex; gensym_names=false, outer_flags=outer_flags) for ex in exprs)
-    quote
-        $transform($x, $(t...); $(kw...))
+    exprs, whens = get_when_statements(exprs)
+    if !isempty(whens)
+        w = (fun_to_vec(ex; no_dest = true, gensym_names=false, outer_flags=outer_flags) for ex in whens)
+        t = (fun_to_vec(ex; gensym_names=false, outer_flags=outer_flags) for ex in exprs)
+        z = gensym()
+        quote
+            $z = $subset($copy($x), $(w...); view = true)
+            $parent($transform!($z, $(t...); $(kw...)))
+        end
+    else
+        t = (fun_to_vec(ex; gensym_names=false, outer_flags=outer_flags) for ex in exprs)
+        quote
+            $transform($x, $(t...); $(kw...))
+        end
     end
 end
 

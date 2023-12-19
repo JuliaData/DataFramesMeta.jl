@@ -167,7 +167,8 @@ is_macro_head(ex::Expr, name) = ex.head == :macrocall && ex.args[1] == Symbol(na
 const BYROW_SYM = Symbol("@byrow")
 const PASSMISSING_SYM = Symbol("@passmissing")
 const ASTABLE_SYM = Symbol("@astable")
-const DEFAULT_FLAGS = (;BYROW_SYM => Ref(false), PASSMISSING_SYM => Ref(false), ASTABLE_SYM => Ref(false))
+const WHEN_SYM = Symbol("@when")
+const DEFAULT_FLAGS = (;BYROW_SYM => Ref(false), PASSMISSING_SYM => Ref(false), ASTABLE_SYM => Ref(false), WHEN_SYM => Ref(false))
 
 extract_macro_flags(ex, exprflags = deepcopy(DEFAULT_FLAGS)) = (ex, exprflags)
 function extract_macro_flags(ex::Expr, exprflags = deepcopy(DEFAULT_FLAGS))
