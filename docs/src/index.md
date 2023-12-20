@@ -24,6 +24,7 @@ In addition, DataFramesMeta provides
 * `@byrow` for applying functions to each row of a data frame (only supported inside other macros).
 * `@passmissing` for propagating missing values inside row-wise DataFramesMeta.jl transformations.
 * `@astable` to create multiple columns within a single transformation.
+* `@when` to non-destructively work with a subset of observations (Similar to Stata's `if`)
 * `@chain`, from [Chain.jl](https://github.com/jkrumbiegel/Chain.jl) for piping the above macros together, similar to [magrittr](https://cran.r-project.org/web/packages/magrittr/vignettes/magrittr.html)'s
   `%>%` in R. 
 
@@ -47,7 +48,133 @@ Use `passmissing`  to propagate `missing` values more easily. See `?passmissing`
 details. `passmissing` is defined in [Missings.jl](https://github.com/JuliaData/Missings.jl)
 but exported by DataFramesMeta for convenience. 
 
-# Provided macros
+# Provided macrosp = graph_mean_outp = graph_mean_outcomes_bins(
+  "dev_status", 
+  "income_pctile",  
+  "distance_bin", p = graph_mean_outcomes_bins(
+  "dev_status", 
+  "income_pctile",  
+  "distance_bin", 
+  "hilly", 
+  "pop_weight_country", 
+  long_shapes)
+
+  "hilly", 
+  "pop_weight_country", 
+  long_shapes)
+p = graph_mean_outcomes_bins(
+  "dev_status", 
+  "income_pctile",  
+  "distance_bin", 
+  "hilly", 
+  "pop_weight_country", 
+  long_shapes)
+p = graph_mean_outcomes_bins(
+  "dev_status", 
+  "income_pctile",  
+  "distance_bin", 
+  "hilly", 
+  "pop_weight_country", 
+  long_shapes)
+p = graph_mean_outcomes_bins(
+  "dev_status", 
+  "income_pctile",  
+  "distance_bin", 
+  "hilly", 
+  "pop_weight_country", 
+  long_shapes)
+p = graph_mean_outcomes_bins(
+  "dev_status", 
+  "income_pctile",  
+  "distance_bin", 
+  "hilly", 
+  "pop_weight_country", 
+  long_shapes)
+p = graph_mean_outcomes_bins(
+  "dev_status", 
+  "income_pctile",  
+  "distance_bin", 
+  "hilly", 
+  "pop_weight_country", 
+  long_shapes)
+p = graph_mean_outcomes_bins(
+  "dev_status", 
+  "income_pctile",  
+  "distance_bin", 
+  "hilly", 
+  "pop_weight_country", 
+  long_shapes)
+p = graph_mean_outcomes_bins(
+  "dev_status", 
+  "income_pctile",  
+  "distance_bin", 
+  "hilly", 
+  "pop_weight_country", 
+  long_shapes)
+p = graph_mean_outcomes_bins(
+  "dev_status", 
+  "income_pctile",  
+  "distance_bin", 
+  "hilly", 
+  "pop_weight_country", 
+  long_shapes)
+p = graph_mean_outcomes_bins(
+  "dev_status", 
+  "income_pctile",  
+  "distance_bin", 
+  "hilly", 
+  "pop_weight_country", 
+  long_shapes)
+p = graph_mean_outcomes_bins(
+  "dev_status", 
+  "income_pctile",  
+  "distance_bin", 
+  "hilly", 
+  "pop_weight_country", 
+  long_shapes)
+p = graph_mean_outcomes_bins(
+  "dev_status", 
+  "income_pctile",  
+  "distance_bin", 
+  "hilly", 
+  "pop_weight_country", 
+  long_shapes)
+p = graph_mean_outcomes_bins(
+  "dev_status", 
+  "income_pctile",  
+  "distance_bin", 
+  "hilly", 
+  "pop_weight_country", 
+  long_shapes)
+cp = graph_mean_outcomes_bins(
+  "dev_status", 
+  "income_pctile",  
+  "distance_bin", 
+  "hilly", 
+  "pop_weight_country", 
+  long_shapes)
+p = graph_mean_outcomes_bins(
+  "dev_status", 
+  "income_pctile",  
+  "distance_bin", 
+  "hilly", 
+  "pop_weight_country", 
+  long_shapes)
+op = graph_mean_outcomes_bins(
+  "dev_status", 
+  "income_pctile",  
+  "distance_bin", 
+  "hilly", 
+  "pop_weight_country", 
+  long_shapes)
+mes_bins(
+  "dev_status", 
+  "income_pctile",  
+  "distance_bin", 
+  "hilly", 
+  "pop_weight_country", 
+  long_shapes)
+
 
 !!! note 
     

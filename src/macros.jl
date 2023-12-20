@@ -685,6 +685,83 @@ macro with(d, body)
     esc(with_helper(d, body))
 end
 
+"""
+    @when(args...)
+
+Perform operations on a subset of `df`, but still
+return a data frame with the same number of rows as `df`. `@when` can be used
+with the `@transform` macros, `@select` macros, and `@with`.
+
+`@when` is not a "real" macro. It is only functional inside DataFramesMeta.jl macros.
+A motivating example:
+
+```
+@rtransform df begin
+    @when :a == 1
+    :y = :y - mean(:y)
+end
+```
+
+The above block generates the column `:y` which is de-meaned with respect to observations where
+`:a == 1`. If `:y` already exists in `df`, then new values over-write old values only
+when `:a == 1`. If `:y` does not already exist in `df`, then new values are written
+when `:a == 1`, and remaining values are filled with `missing`.
+
+Only one `@when` statement is allowed per transformation macro and it must be the
+first argument in the transformation.
+
+`@when` inherits `@byrow` and `@passmissing` from the transformation. As an example:
+
+```
+@transform df @byrow begin
+    @when :a == 1
+    ...
+end
+```
+
+In the above, the condition inside `@when` operates row-wise. However, `@byrow` and `@passmissing` can
+also be passed independently, such as `@byrow @when :a == 1`.
+
+Like `@subset`, `@when` drops rows where `missing` values are returned. Unlike `@subset`,
+there is currently no way to control this behavior.
+
+## Details
+
+`@when` operates by calling `select` with the `view = true` keyword argument,
+followed by a `transform!` call. See `?transform!` for more details. Roughly,
+the expression
+
+```
+@transform df begin
+    @when :a .== 1
+    :y = 5
+end
+```
+
+translates to
+
+```
+df1 = @subset(copy(df), :a .== 1; view = true)
+df2 = @transform! df1 :y = 5
+parent(df2)
+```
+
+Unlike the other macro-flags, such as `@passmissing` and `@byrow`, `@when` cannot be
+used at the top-level.
+```
+@transform df @byrow @when(:a == 1) begin
+    :x = 1
+    :y = 2
+end
+```
+is not supported.
+
+"""
+macro when(args...)
+    throw(ArgumentError("@passmissing only works inside DataFramesMeta macros."))
+end
+
+
 ASTABLE_RHS_ORDERBY_DOCS = """
 In operations, it is also allowed to use `AsTable(cols)` to work with
 multiple columns at once, where the columns are grouped together in a
