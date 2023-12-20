@@ -3009,12 +3009,19 @@ macro rename!(x, args...)
 end
 
 function groupby_helper(df, args...)
-    cols = map(get_column_expr, args)
+    cols = map(args) do a
+        if a isa Expr && a.head == :call && a.args[1] in (:All, :Between, :Cols, :Not)
+            a
+        else
+            get_column_expr(a)
+        end
+    end
     if any(isnothing, cols)
         throw(ArgumentError("All inputs to @groupby must be valid column selectors"))
     end
 
-    :($groupby($df, $make_source_concrete($reduce($vcat, $(Expr(:tuple, cols...))))))
+    t = Expr(:tuple, cols...)
+    :($groupby($df, ($Cols($t...))))
 end
 
 function groupby_helper(df, arg)
