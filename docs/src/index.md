@@ -49,12 +49,6 @@ but exported by DataFramesMeta for convenience.
 
 # Provided macros
 
-!!! note 
-    
-    Newer versions of DataFrames.jl support the operators `Between`, `All`, `Cols`,
-    and `Not` when selecting and transforming columns. DataFramesMeta does not currently
-    support this syntax. 
-
 ## `@select` and `@select!`
 
 Column selections and transformations. Only newly created columns are kept. 
@@ -77,6 +71,16 @@ gd = groupby(df, :x);
 @select!(df, :x, :y)
 @select!(df, :x = 2 * :x, :y)
 @select!(gd, :y = 2 .* :y .* first(:y))
+```
+
+To select or de-select multiple columns, use `Not`, `Between`, `All`, and `Cols`. 
+These multi-column selectors are all re-exported from DataFrames.jl. 
+
+```julia
+@select df Not(:x)
+@select df Between(:x, :y)
+@select df All()
+@select df Cols(r"x") # Regular expressions.
 ```
 
 ## `@transform` and `@transform!`

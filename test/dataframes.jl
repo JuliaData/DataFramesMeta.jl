@@ -275,10 +275,10 @@ s = [:i, :g]
     # not part of DataFramesMeta.
     @test_throws LoadError @eval @transform(df, [:i, :g])
     @test_throws LoadError @eval @transform(df, All())
-    @test_throws LoadError @eval @transform(df, Between(:i, :t)).Between == df.i
-    @test_throws LoadError @eval @transform(df, Not(:i)).Not == df.i
+    @test_throws LoadError @eval @transform(df, Between(:i, :t))
+    @test_throws LoadError @eval @transform(df, Not(:i))
     @test_throws LoadError @eval @transform(df, Not([:i, :g]))
-    @test_throws MethodError @eval @transform(df, :n = sum(Between(:i, :t)))
+    @test_throws LoadError @eval @transform(df, :n = sum(Between(:i, :t)))
 end
 
 @testset "@select" begin
@@ -546,11 +546,7 @@ cr = "c"
 @testset "limits of @select" begin
     ## Test for not-implemented or strange behavior
     @test_throws LoadError @eval @select(df, [:i, :g])
-    @test_throws LoadError @eval @select(df, All())
-    @test_throws LoadError @eval @select(df, Between(:i, :t)).Between == df.i
-    @test_throws LoadError @eval  @select(df, Not(:i)).Not == df.i
-    @test_throws LoadError @eval @select(df, Not([:i, :g]))
-    @test_throws MethodError @eval @select(df, :n = sum(Between(:i, :t)))
+    @test_throws LoadError @eval @select(df, :n = sum(Between(:i, :t)))
 end
 
 @testset "with" begin

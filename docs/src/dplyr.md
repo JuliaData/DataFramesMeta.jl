@@ -136,22 +136,22 @@ Similarly, to select the first column, use the syntax `$1`.
 @select msleep $1
 ```
 
-To select all the columns *except* a specific column, use the `Not` function for inverse selection. We also need to wrap `Not` in the `$` sign, because it is not a symbol. 
+To select all the columns *except* a specific column, use the `Not` function for inverse selection. 
 
 ```@repl 1
-@select msleep $(Not(:name))
+@select msleep Not(:name)
 ```
 
 To select a range of columns by name, use the `Between` operator:
 
 ```@repl 1
-@select msleep $(Between(:name, :order))
+@select msleep Between(:name, :order)
 ```
 
-To select all columns that start with the character string `"sl"` use [regular expressions](https://regexone.com/):
+To select all columns that start with the character string `"sl"` use [regular expressions](https://regexone.com/) in conjunction with `Cols`.
 
 ```@repl 1
-@select msleep $(r"^sl")
+@select msleep Cols(r"^sl")
 ```
 
 Regular expressions are powerful, but can be difficult for new users to understand. Here are some quick tips.  

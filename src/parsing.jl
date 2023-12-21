@@ -18,17 +18,29 @@ a `QuoteNode` or an expression beginning with
 If input is not a valid column identifier,
 returns `nothing`.
 """
-get_column_expr(x) = nothing
-function get_column_expr(e::Expr)
+get_column_expr(x; allow_multicol::Bool = false) = nothing
+function get_column_expr(e::Expr; allow_multicol::Bool = false)
     e.head == :$ && return e.args[1]
     onearg(e, :AsTable) && return :($AsTable($(e.args[2])))
     if onearg(e, :cols)
         Base.depwarn("cols is deprecated use $DOLLAR to escape column names instead", :cols)
         return e.args[2]
     end
+    if e.head === :call
+        e1 = e.args[1]
+        if e1 === :All || e1 === :Not || e1 === :Between || e1 == :Cols
+            if allow_multicol
+                return e
+            else
+                s = "Multi-column references outside of @select, @rselect, @select!" *
+                 " and @rselect! must be wrapped in AsTable"
+                throw(ArgumentError(s))
+            end
+        end
+    end
     return nothing
 end
-get_column_expr(x::QuoteNode) = x
+get_column_expr(x::QuoteNode; allow_multicol::Bool = false) = x
 
 get_column_expr_rename(x) = nothing
 function get_column_expr_rename(e::Expr)
@@ -314,10 +326,12 @@ end
 function fun_to_vec(ex::Expr;
                     gensym_names::Bool=false,
                     outer_flags::NamedTuple=deepcopy(DEFAULT_FLAGS),
-                    no_dest::Bool=false)
+                    no_dest::Bool=false,
+                    allow_multicol::Bool=false)
     # classify the type of expression
     # :x # handled via dispatch
     # $:x # handled as though above
+    # All(), Between(...), Cols(...), Not(...), requires allow_multicol (only true in select)
     # f(:x) # requires no_dest, for `@with` and `@subset` in future
     # :y = :x # Simple pair
     # :y = $:x # Extract and return simple pair (no function)
@@ -342,7 +356,7 @@ function fun_to_vec(ex::Expr;
     # :x
     # handled below via dispatch on ::QuoteNode
 
-    ex_col = get_column_expr(ex)
+    ex_col = get_column_expr(ex; allow_multicol = allow_multicol)
     if ex_col !== nothing
         return ex_col
     end
@@ -404,7 +418,8 @@ end
 fun_to_vec(ex::QuoteNode;
            no_dest::Bool=false,
            gensym_names::Bool=false,
-           outer_flags::Union{NamedTuple, Nothing}=nothing) = ex
+           outer_flags::Union{NamedTuple, Nothing}=nothing,
+           allow_multicol::Bool = false) = ex
 
 
 """
