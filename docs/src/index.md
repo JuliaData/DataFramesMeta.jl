@@ -441,7 +441,7 @@ macros and the function that is actually called by the macro.
 | `@select` | `select` |
 | `@select!` | `select!` |
 | `@rselect` | `select` |
-| `@rselect!` | `select!` |`
+| `@rselect!` | `select!` |
 
 This can be done in two ways. When inputs are given as multiple 
 arguments, they are added at the end after a semi-colon `;`, as in
