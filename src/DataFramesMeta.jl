@@ -20,7 +20,7 @@ export @with,
        @rtransform, @rselect, @rtransform!, @rselect!,
        @distinct, @rdistinct, @distinct!, @rdistinct!,
        @eachrow, @eachrow!,
-       @byrow, @passmissing, @astable, @kwarg,
+       @byrow, @passmissing, @astable, @kwarg, @when,
        @based_on, @where # deprecated
 
 const DOLLAR = raw"$"
