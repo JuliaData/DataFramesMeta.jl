@@ -426,22 +426,22 @@ macros and the function that is actually called by the macro.
 
 | Macro | Base DataFrames.jl function called |
 |-------|---------------------------|
-| @subset | `subset` |
-| @subset! | `subset!` |
-| @rsubset | `subset` |
-| @rsubset! | `subset!` |
-| @orderby | None (no keyword arguments supported) |
-| @rorderby | None (no keyword arguments supported) |
-| @by | `combine` |
-| @combine | `combine` |
-| @transform | `transform` |
-| @transform! | `transform!` |
-| @rtransform | `transform` |
-| @rtransform! | `transform!` |
-| @select | `select` |
-| @select! | `select!` |
-| @rselect | `select` |
-| @rselect! | `select!` |
+| `@subset` | `subset` |
+| `@subset!` | `subset!` |
+| `@rsubset` | `subset` |
+| `@rsubset!` | `subset!` |
+| `@orderby` | None (no keyword arguments supported) |
+| `@rorderby` | None (no keyword arguments supported) |
+| `@by` | `combine` |
+| `@combine` | `combine` |
+| `@transform` | `transform` |
+| `@transform!` | `transform!` |
+| `@rtransform` | `transform` |
+| `@rtransform!` | `transform!` |
+| `@select` | `select` |
+| `@select!` | `select!` |
+| `@rselect` | `select` |
+| `@rselect!` | `select!` |`
 
 This can be done in two ways. When inputs are given as multiple 
 arguments, they are added at the end after a semi-colon `;`, as in
@@ -903,15 +903,15 @@ Here is a table of equivalents for Hadley's
 [LINQ](http://en.wikipedia.org/wiki/Language_Integrated_Query)
 functions.
 
-    Julia             dplyr            LINQ
-    ---------------------------------------------
-    @subset           filter           Where
-    @transform        mutate           Select (?)
-    @by                                GroupBy
-    groupby           group_by         GroupBy
-    @combine          summarise/do
-    @orderby          arrange          OrderBy
-    @select           select           Select
+| Julia        | dplyr            | LINQ         |
+|--------------|------------------|--------------|
+| `@subset`    | `filter`         | `Where`      |
+| `@transform` | `mutate`         | `Select` (?) |
+| `@by`        |                  | `GroupBy`    |
+| `groupby`    | `group_by`       | `GroupBy`    |
+| `@combine`   | `summarise`/`do` |              |
+| `@orderby`   | `arrange`        | `OrderBy`    |
+| `@select`    | `select`         | `Select`     |
 
 
 ## Chaining operations together with `@chain`
