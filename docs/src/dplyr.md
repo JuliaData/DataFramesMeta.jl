@@ -93,7 +93,7 @@ DataFramesMeta.jl macro | By-row version | Description | `dplyr` equivalent
 `@subset` | `@rsubset` | filter rows | `filter`
 `@orderby` | `@rorderby` | re-order or arrange rows | `arrange`
 `@combine` | | summarise values | `summarize` (but `@combine` is more flexible)
-`groupby` | | allows for group operations in the "split-apply-combine" concept | `group_by`
+`@groupby` | | allows for group operations in the "split-apply-combine" concept | `group_by`
 
 # DataFramesMeta.jl Verbs In Action
 
@@ -341,15 +341,15 @@ DataFrames.jl also provides the function `describe` which performs many of these
 describe(msleep)
 ```
 
-## Group Operations using `groupby` and `@combine`
+## Group Operations using `@groupby` and `@combine`
 
-The `groupby` verb is an important function in DataFrames.jl (it does not live in DataFramesMeta.jl). As we mentioned before it's related to concept of "split-apply-combine". We literally want to split the data frame by some variable (e.g. taxonomic order), apply a function to the individual data frames and then combine the output.   
+The `@groupby` verb is the first step in the "split-apply-combine" workflow. We literally want to split the data frame by some variable (e.g. taxonomic order), apply a function to the individual data frames and then combine the output.   
 
 Let's do that: split the `msleep` data frame by the taxonomic order, then ask for the same summary statistics as above. We expect a set of summary statistics for each taxonomic order. 
 
 ```@repl 1
 @chain msleep begin 
-    groupby(:order)
+    @groupby :order
     @combine begin 
         :avg_sleep = mean(:sleep_total)
         :min_sleep = minimum(:sleep_total)
@@ -363,7 +363,7 @@ Split-apply-combine can also be used with `@transform` to add new variables to a
 
 ```@repl 1
 @chain msleep begin 
-    groupby(:order)
+    @groupby :order
     @transform :sleep_genus = :sleep_total .- mean(:sleep_total)
 end
 ```
