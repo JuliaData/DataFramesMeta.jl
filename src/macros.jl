@@ -1786,7 +1786,7 @@ end
 function select_helper(x, args...)
     x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)
 
-    t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
+    t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags, allow_multicol = true) for ex in exprs)
     quote
         $select($x, $(t...); $(kw...))
     end
@@ -1851,6 +1851,18 @@ transformations by row, `@select` allows `@byrow` at the
 beginning of a block of selections (i.e. `@byrow begin... end`).
 All transformations in the block will operate by row.
 
+To select many columns at once use the tools `Not`, `Between`, `All`, and `Cols`.
+
+* `@select df Not(:a)` keeps all columns except for `:a`
+* `@select df Between(:a, :z)` keeps all columns between `:a` and `:z`, inclusive
+* `@select df All()` keeps all columns
+* `@select df Cols(...)` can be used to combine many different selectors, as well as use
+  regular expressions. For example `Cols(r"a")` selects all columns that start with `"a"`.
+
+Expressions inside `Not(...)`, `Between(...)` etc. are untouched by DataFramesMeta's
+parsing. To refer to a variable `x` which represents a column inside `Not`, write `Not(x)`,
+rather than `Not($(DOLLAR)x)`.
+
 $ASTABLE_MACRO_FLAG_DOCS
 
 $ASTABLE_RHS_SELECT_TRANSFORM_DOCS
@@ -1869,7 +1881,7 @@ When inputs are given in "block" format, the last lines may be written
 ```
 @select gd begin
     :a
-    @select copycols = false
+    @kwarg copycols = false
 end
 ```
 
@@ -2023,6 +2035,14 @@ To avoid writing `@byrow` multiple times when performing multiple
 transformations by row, `@select!` allows `@byrow` at the
 beginning of a block of select!ations (i.e. `@byrow begin... end`).
 All transformations in the block will operate by row.
+
+To select many columns at once use the tools `Not`, `Between`, `All`, and `Cols`.
+
+* `@select df Not(:a)` keeps all columns except for `:a`
+* `@select df Between(:a, :z)` keeps all columns between `:a` and `:z`, inclusive
+* `@select df All()` keeps all columns
+* `@select df Cols(...)` can be used to combine many different selectors, as well as use
+  regular expressions. For example `Cols(r"a")` selects all columns that start with `"a"`.
 
 $ASTABLE_MACRO_FLAG_DOCS
 
