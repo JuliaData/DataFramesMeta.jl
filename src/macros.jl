@@ -3007,3 +3007,86 @@ julia> @rename!(df, :new1 = $DOLLAR("old_col" * "1"), :new2 = :old_col2)
 macro rename!(x, args...)
     esc(rename!_helper(x, args...))
 end
+
+function fix_c(x)
+    c = get_column_expr(x; allow_multicol = true)
+    if isnothing(c)
+        throw(ArgumentError("Invalid column selector in @groupby"))
+    end
+    c
+end
+
+function groupby_helper(df, args...)
+    cols = map(fix_c, args)
+    t = Expr(:tuple, cols...)
+    :($groupby($df, ($Cols($t...))))
+end
+
+function groupby_helper(df, arg::Expr)
+    if arg isa Expr && arg.head == :block
+        argsvec = MacroTools.rmlines(arg).args
+        return groupby_helper(df, argsvec...)
+    else
+        c = fix_c(arg)
+        return :($groupby($df, $c))
+    end
+end
+
+
+"""
+    groupby(df, args...)
+
+Group a data frame by columns. Similar
+
+```
+groupby(df, [args...])
+```
+
+but with a few convenience features.
+
+## Details
+
+`@groupby` does not perform any transformations or allow the
+generation of new columns. New column generation must be done
+before `@groupby` is called.
+
+Unlike `DataFrames.groupby`, `@groupby` allows mixing of `Symbol`
+and `String` inputs, such that `@groupby df :A $DOLLAR"B"`
+is supported. However integers cannot be mixed with strings or symbols.
+`@groupby(df, :A, 1)` fails.
+
+To use vectors as a single argument for grouping, escaping with `$DOLLAR`
+must be used. `@groupby df [:a, :b]` fails. Rather, use `@groupby df $DOLLAR[:a, :b]`.
+This behavior ensures consistency with other DataFramesMeta.jl macros.
+
+`@groupby` automatically concatenates together multiple inputs such that mixing
+vector and scalar column selectors is supported, as in `@groupby df :A $DOLLAR[:B, :C]`
+
+`@groupby` also allows for the "block" style of DataFramesMeta.jl macros,
+as in
+
+```
+@grouby df begin
+    :A
+    :B
+end
+```
+
+## Examples
+```julia-repl
+julia> df = DataFrame(A = [1, 1], B = [3, 4], C = [6, 6]);
+julia> @groupby df :A;
+julia> @groupby df :A :B;
+julia> @groupby df $DOLLAR[:A, :B];
+julia> @groupby df begin
+           :A
+           :B
+       end;
+julia> @groupby df :A $DOLLAR[:B, :C];
+```
+
+"""
+macro groupby(df, args...)
+    esc(groupby_helper(df, args...))
+end
+
