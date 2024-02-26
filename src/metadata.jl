@@ -53,7 +53,8 @@ Use `@note!` for longer explanations of columns.
 
 Labels are "note"-style columnar metadata. Labels are preserved upon
 renaming and transformations. `@label! :x = "Lab"` over-writes any
-existing label for the column `:x`. To add information, see [`@note`](@ref).
+existing label for the column `:x`. To add information without overwriting,
+use [`@note!`](@ref).
 
 `@label!` returns the input data frame for use with `@chain`.
 

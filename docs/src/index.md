@@ -976,9 +976,12 @@ form of labels and notes. Like Stata, Julia's data ecosystem implements a common
 API for keeping track of information associated with columns. DataFramesMeta.jl 
 implements the `@label!` and `@note!` macros to attach information to columns. 
 
+DataFramesMeta.jl also provides two convenience functions 
+for examining metadata, `printlabels` and `printnotes`.
+
 ### `@label!`: For short column labels 
 
-Use `@label` to attach short-but-informative labels to columns. For example,
+Use `@label!` to attach short-but-informative labels to columns. For example,
 a variable `:wage` might be given the label `"Wage (2015 USD)"`. 
 
 ```julia
@@ -986,7 +989,77 @@ df = DataFrame(wage = [16, 25, 14, 23]);
 @label! df :wage = "Wage (2015 USD)"
 ``` 
 
+View the labels with `printlabels(df)`
 
+```
+julia> printlabels(df)
+┌────────┬─────────────────┐
+│ Column │           Label │
+├────────┼─────────────────┤
+│   wage │ Wage (2015 USD) │
+└────────┴─────────────────┘
+```
+
+You can access labels via the `label` function defined in TablesMetaDataTools.jl
+
+```
+julia> label(df, :wage)
+"Wage (2015 USD)"
+```
+
+### `@note!`: For longer column notes
+
+While labels are useful for pretty printing and clarification of short variable
+names, notes are used to give more in depth information and describe the data 
+cleaning process. Unlike labels, notes can be stacked on to one another. 
+
+Consider the cleaning process for wages, starting with the data frame
+
+```julia
+julia> df = DataFrame(wage = [-99, 16, 14, 23, 5000])
+5×1 DataFrame
+ Row │ wage  
+     │ Int64 
+─────┼───────
+   1 │   -99
+   2 │    16
+   3 │    14
+   4 │    23
+   5 │  5000
+
+```
+
+When data cleaning you might want to do the following:
+
+1. Record the source of the data
+
+```
+@note! df :wage = "Hourly wage from 2015 American Community Survey (ACS)"
+```
+
+2. Fix coded wages. In this example, `-99` corresponds to "no job"
+
+```
+@rtransform! df :wage = :wage == -99 ? 0 : :wage
+@note! df :wage = "Individuals with no job are recorded as 0 wage"
+```
+
+We use `printnotes` to see the notes for columns. 
+
+```
+julia> printnotes(df)
+Column: wage
+────────────
+Hourly wage from 2015 American Community Survey (ACS)
+Individuals with no job are recorded as 0 wage
+```
+
+You can access the note via the `note` function. 
+
+```
+julia> note(df, :wage)
+"Hourly wage from 2015 American Community Survey (ACS)\nIndividuals with no job are recorded as 0 wage"
+```
 
 
 ```@contents

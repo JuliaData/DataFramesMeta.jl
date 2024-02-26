@@ -25,7 +25,7 @@ export @with,
        @distinct, @rdistinct, @distinct!, @rdistinct!,
        @eachrow, @eachrow!,
        @byrow, @passmissing, @astable, @kwarg,
-       @label!, @note!,
+       @label!, @note!, printlabels, printnotes,
        @based_on, @where # deprecated
 
 const DOLLAR = raw"$"
