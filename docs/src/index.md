@@ -968,6 +968,27 @@ in the middle of a `@chain` block.
 end
 ```
 
+## Attaching variable labels and notes
+
+A widely used and appreciated feature of the Stata data analysis
+programming language is it's tools for column-level metadata in the
+form of labels and notes. Like Stata, Julia's data ecosystem implements a common 
+API for keeping track of information associated with columns. DataFramesMeta.jl 
+implements the `@label!` and `@note!` macros to attach information to columns. 
+
+### `@label!`: For short column labels 
+
+Use `@label` to attach short-but-informative labels to columns. For example,
+a variable `:wage` might be given the label `"Wage (2015 USD)"`. 
+
+```julia
+df = DataFrame(wage = [16, 25, 14, 23]);
+@label! df :wage = "Wage (2015 USD)"
+``` 
+
+
+
+
 ```@contents
 Pages = ["api/api.md"]
 Depth = 3
