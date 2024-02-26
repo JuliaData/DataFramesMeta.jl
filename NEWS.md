@@ -1,3 +1,8 @@
+# DataFramesMeta v0.15.0 Release notes
+
+* Added support for `Not`, `All`, and `Cols` in `@select`, making it easier to keep or drop many columns at once. ([#372](https://github.com/JuliaData/DataFramesMeta.jl/pull/372))
+* Added the `@groupby` macro, which provides an easier syntax for grouping data frames ([#373](https://github.com/JuliaData/DataFramesMeta.jl/pull/373))
+
 # DataFramesMeta v0.14.1 Release notes
 * Fixed a bug where `ByRow` was not properly identified if DataFramesMeta.jl was `import`ed ([#366](https://github.com/JuliaData/DataFramesMeta.jl/pull/366))
 
