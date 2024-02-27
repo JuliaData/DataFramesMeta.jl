@@ -63,13 +63,17 @@ end
     printlabels(df, :a)
     printlabels(df, [:a, :b])
     printlabels(df; unlabelled = true)
+    printlabels(df; unlabelled = false)
     printlabels(df, [:a, :b], unlabelled = false)
+    printlabels(df, [:a, :b], unlabelled = true)
 
     printnotes(df)
     printnotes(df, :a)
     printnotes(df, [:a, :b])
     printnotes(df; unnoted = true)
+    printnotes(df; unnoted = false)
     printnotes(df, [:a, :b], unnoted = false)
+    printnotes(df, [:a, :b], unnoted = true)
 end
 
 end # module

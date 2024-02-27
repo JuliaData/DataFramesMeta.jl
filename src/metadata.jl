@@ -230,7 +230,6 @@ addition to notes. However column labels are not returned by
 """
 function printnotes(df, cols = All(); unnoted = false)
     nms = names(df, cols)
-    # "Column: " has 8 characters
     for n in nms
         nt = note(df, n)
         lab = label(df, n)
@@ -248,6 +247,7 @@ function printnotes(df, cols = All(); unnoted = false)
 end
 
 function printnote(n, nt, lab, no_note, no_lab)
+    # "Column: " has 8 characters
     println("Column: $n")
     println(repeat("─", length(n) + 8))
     if no_lab == false
