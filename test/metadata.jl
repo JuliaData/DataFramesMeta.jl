@@ -53,6 +53,23 @@ end
     @test note(df_new, :b) == "bnote"
 end
 
+@testset "Metadata printing" begin
+    df = DataFrame(a = [1], b = [2])
+    @label! df :a = "A label"
+    @note! df :a = "A note"
 
+    # Just confirm the printing doesn't error
+    printlabels(df)
+    printlabels(df, :a)
+    printlabels(df, [:a, :b])
+    printlabels(df; unlabelled = true)
+    printlabels(df, [:a, :b], unlabelled = false)
+
+    printnotes(df)
+    printnotes(df, :a)
+    printnotes(df, [:a, :b])
+    printnotes(df; unnoted = true)
+    printnotes(df, [:a, :b], unnoted = false)
+end
 
 end # module

@@ -138,26 +138,123 @@ macro note!(df, args...)
     esc(addnote_helper(df, args...))
 end
 
-function printlabels(df; all = true)
-    d = colmetadata(df)
-    t = DataFrame(Column = names(df))
-    t.Label = labels(df)
-    if all == false
-        t = t[t.Label .!= t.Column, :]
+
+"""
+    printlabels(df, [cols=All()]; unlabelled = true)
+
+Pretty-print all labels in a data frame.
+
+## Arguments
+
+* `cols`: Optional argument to select columns to print. Can
+  be any valid multi-column selector, such as `Not(...)`,
+  `Between(...)`, or a regular expression.
+
+* `unlabelled`: Keyword argument for whether to print
+  the columns without user-defined labels. Deftaults to `true`.
+  For column `col` without a user-defined label, `label(df, col)` returns
+  the name of the column, `col`.
+
+## Examples
+```julia-repl
+julia> df = DataFrame(wage = [12], age = [23]);
+
+julia> @label! df :wage = "Hourly wage (2015 USD)";
+
+julia> printlabels(df)
+┌────────┬────────────────────────┐
+│ Column │                  Label │
+├────────┼────────────────────────┤
+│   wage │ Hourly wage (2015 USD) │
+│    age │                    age │
+└────────┴────────────────────────┘
+
+julia> printlabels(df, :wage)
+┌────────┬────────────────────────┐
+│ Column │                  Label │
+├────────┼────────────────────────┤
+│   wage │ Hourly wage (2015 USD) │
+└────────┴────────────────────────┘
+
+julia> printlabels(df; unlabelled = false)
+┌────────┬────────────────────────┐
+│ Column │                  Label │
+├────────┼────────────────────────┤
+│   wage │ Hourly wage (2015 USD) │
+└────────┴────────────────────────┘
+
+julia> printlabels(df, r"^wage")
+┌────────┬────────────────────────┐
+│ Column │                  Label │
+├────────┼────────────────────────┤
+│   wage │ Hourly wage (2015 USD) │
+└────────┴────────────────────────┘
+```
+
+"""
+function printlabels(df, cols=All(); unlabelled = true)
+    cs = String[]
+    ls = String[]
+    for n in names(df, cols)
+        lab = label(df, n)
+        if unlabelled == true
+            push!(cs, n)
+            push!(ls, lab)
+        else
+            if n != lab
+                push!(cs, n)
+                push!(ls, lab)
+            end
+        end
     end
+    t = DataFrame(Column = cs, Label = ls)
     pretty_table(t; show_subheader = false)
     return nothing
 end
 
-function printnotes(df)
+"""
+    printnotes(df, cols = All(); unnoted = false)
+
+Print the notes and labels in a data frame.
+
+## Arguments
+* `cols`: Optional argument to select columns to print. Can
+  be any valid multi-column selector, such as `Not(...)`,
+  `Between(...)`, or a regular expression.
+* `unnoted`: Keyword argument for whether to print
+  the columns without user-defined notes or labels.
+
+For the purposes of printing, column labels are printed in
+addition to notes. However column labels are not returned by
+`note(df, col)`.
+"""
+function printnotes(df, cols = All(); unnoted = false)
+    nms = names(df, cols)
     # "Column: " has 8 characters
-    L = maximum(length.(names(df))) + 8
-    for n in names(df)
+    for n in nms
         nt = note(df, n)
-        if nt != ""
-            println("Column: $n")
-            println(repeat("─", L))
-            println(nt)
+        lab = label(df, n)
+        no_note = nt == ""
+        no_lab = lab == n
+        if unnoted == true
+            printnote(n, nt, lab, no_note, no_lab)
+        else
+            if no_note == false || no_lab == false
+                printnote(n, nt, lab, no_note, no_lab)
+            end
         end
     end
+    nothing
+end
+
+function printnote(n, nt, lab, no_note, no_lab)
+    println("Column: $n")
+    println(repeat("─", length(n) + 8))
+    if no_lab == false
+        println("Label: ", lab)
+    end
+    if no_note == false
+        println(nt)
+    end
+    println()
 end

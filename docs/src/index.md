@@ -1067,6 +1067,66 @@ To remove all notes from a column, run
 note!(df, :wage, ""; append = false)
 ````
 
+### Printing metadata
+
+#### `printlabels`: For printing labels
+
+Use `printlabels` to print the labels of columns in a data frame. The optional
+argument `cols` determines which columns to print, while the keyword
+argument `unlabelled` controls whether to print columns without user-defined labels. 
+
+```julia-repl
+julia> df = DataFrame(wage = [12], age = [23]);
+
+julia> @label! df :wage = "Hourly wage (2015 USD)";
+
+julia> printlabels(df)
+┌────────┬────────────────────────┐
+│ Column │                  Label │
+├────────┼────────────────────────┤
+│   wage │ Hourly wage (2015 USD) │
+│    age │                    age │
+└────────┴────────────────────────┘
+
+julia> printlabels(df, [:wage, :age]; unlabelled = false)
+┌────────┬────────────────────────┐
+│ Column │                  Label │
+├────────┼────────────────────────┤
+│   wage │ Hourly wage (2015 USD) │
+└────────┴────────────────────────┘
+```
+
+#### `printlabels`: For printing notes
+
+Use `printnotes` to print the notes of columns in a data frame. The optional
+argument `cols` determines which columns to print, while the keyword
+argument `unnoted` controls whether to print columns without user-defined notes. 
+
+```julia-repl
+julia> df = DataFrame(wage = [12], age = [23]);
+
+julia> @label! df :age = "Age (years)";
+
+julia> @note! df :wage = "Derived from American Community Survey";
+
+julia> @note! df :wage = "Missing values imputed as 0 wage";
+
+julia> @label! df :wage = "Hourly wage (2015 USD)";
+
+julia> printnotes(df)
+Column: wage
+────────────
+Label: Hourly wage (2015 USD)
+Derived from American Community Survey
+Missing values imputed as 0 wage
+
+Column: age
+───────────
+Label: Age (years)
+
+```
+
+
 ```@contents
 Pages = ["api/api.md"]
 Depth = 3
