@@ -16,6 +16,7 @@ In addition, DataFramesMeta provides
 * Row-wise versions of the above macros in the form of `@rtransform`, `@rtransform!`,
   `@rselect`, `@rselect!`, `@rorderby`, `@rsubset`, and `@rsubset!`.
 * `@rename` and `@rename!` for renaming columns
+* `@groupby` for grouping data
 * `@by`, for grouping and combining a data frame in a single step
 * `@with`, for working with the columns of a data frame with high performance and 
   convenient syntax
@@ -64,7 +65,7 @@ data frame.
 
 ```julia
 df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
-gd = groupby(df, :x);
+gd = @groupby(df, :x);
 @select(df, :x, :y)
 @select(df, :x2 = 2 * :x, :y)
 @select(gd, :x2 = 2 .* :y .* first(:y))
@@ -98,7 +99,7 @@ data frame.
 
 ```julia
 df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
-gd = groupby(df, :x);
+gd = @groupby(df, :x);
 @transform(df, :x2 = 2 * :x, :y)
 @transform(gd, :x2 = 2 .* :y .* first(:y))
 @transform!(df, :x, :y)
@@ -115,7 +116,7 @@ Select row subsets. Operates on both a `DataFrame` and a `GroupedDataFrame`.
 ```julia
 using Statistics
 df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
-gd = groupby(df, :x);
+gd = @groupby(df, :x);
 outside_var = 1;
 @subset(df, :x .> 1)
 @subset(df, :x .> outside_var)
@@ -134,11 +135,14 @@ acts like a `GroupedDataFrame` with one group.
 Like `@select` and `@transform`, transformations are called with the keyword-like 
 syntax `:y = f(:x)`. 
 
+To group data together into a `GroupedDataFrame`, use `@groupby`, a short-hand for
+the DataFrames.jl function `groupby`.
+
 Examples:
 
 ```julia
 df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
-gd = groupby(df, :x);
+gd = @groupby(df, :x);
 @combine(gd, :x2 = sum(:y))
 @combine(gd, :x2 = :y .- sum(:y))
 @combine(gd, $AsTable = (n1 = sum(:y), n2 = first(:y)))
@@ -159,6 +163,17 @@ The following, however, will work.
 df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
 gd = groupby(df, :x);
 @combine(gd, $AsTable = (a = sum(:x), b = sum(:y)))
+```
+
+### `@by` 
+
+Perform the grouping and combining operations in one step with `@by`
+
+```
+df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+@by df :x begin
+    :x = sum(:y)
+end
 ```
 
 ## `@orderby`
@@ -355,7 +370,7 @@ julia> @subset df @byrow begin
 however, like with `ByRow` in DataFrames.jl, when `@byrow` is
 used, functions do not take into account the grouping, so for
 example the result of `@transform(df, @byrow :y = f(:x))` and 
-`@transform(groupby(df, :g), @byrow :y = f(:x))` is the same.
+`@transform(@groupby(df, :g), @byrow :y = f(:x))` is the same.
 
 ## Propagating missing values with `@passmissing`
 
@@ -912,7 +927,7 @@ functions.
 | `@subset`    | `filter`         | `Where`      |
 | `@transform` | `mutate`         | `Select` (?) |
 | `@by`        |                  | `GroupBy`    |
-| `groupby`    | `group_by`       | `GroupBy`    |
+| `@groupby`   | `group_by`       | `GroupBy`    |
 | `@combine`   | `summarise`/`do` |              |
 | `@orderby`   | `arrange`        | `OrderBy`    |
 | `@select`    | `select`         | `Select`     |
