@@ -1061,6 +1061,11 @@ julia> note(df, :wage)
 "Hourly wage from 2015 American Community Survey (ACS)\nIndividuals with no job are recorded as 0 wage"
 ```
 
+To remove all notes from a column, run
+
+```
+note!(df, :wage, ""; append = false)
+````
 
 ```@contents
 Pages = ["api/api.md"]
