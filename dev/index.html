@@ -337,21 +337,41 @@ Column: wage
 ────────────
 Hourly wage from 2015 American Community Survey (ACS)
 Individuals with no job are recorded as 0 wage</code></pre><p>You can access the note via the <code>note</code> function. </p><pre><code class="nohighlight hljs">julia&gt; note(df, :wage)
-&quot;Hourly wage from 2015 American Community Survey (ACS)\nIndividuals with no job are recorded as 0 wage&quot;</code></pre><p>To remove all notes from a column, run</p><pre><code class="nohighlight hljs">note!(df, :wage, &quot;&quot;; append = false)
-````
+&quot;Hourly wage from 2015 American Community Survey (ACS)\nIndividuals with no job are recorded as 0 wage&quot;</code></pre><p>To remove all notes from a column, run</p><pre><code class="nohighlight hljs">note!(df, :wage, &quot;&quot;; append = false)</code></pre><h3 id="Printing-metadata"><a class="docs-heading-anchor" href="#Printing-metadata">Printing metadata</a><a id="Printing-metadata-1"></a><a class="docs-heading-anchor-permalink" href="#Printing-metadata" title="Permalink"></a></h3><h4 id="printlabels:-For-printing-labels"><a class="docs-heading-anchor" href="#printlabels:-For-printing-labels"><code>printlabels</code>: For printing labels</a><a id="printlabels:-For-printing-labels-1"></a><a class="docs-heading-anchor-permalink" href="#printlabels:-For-printing-labels" title="Permalink"></a></h4><p>Use <code>printlabels</code> to print the labels of columns in a data frame. The optional argument <code>cols</code> determines which columns to print, while the keyword argument <code>unlabelled</code> controls whether to print columns without user-defined labels. </p><pre><code class="language-julia-repl hljs">julia&gt; df = DataFrame(wage = [12], age = [23]);
 
-### Printing metadata
+julia&gt; @label! df :wage = &quot;Hourly wage (2015 USD)&quot;;
 
-#### `printlabels`: For printing labels
+julia&gt; printlabels(df)
+┌────────┬────────────────────────┐
+│ Column │                  Label │
+├────────┼────────────────────────┤
+│   wage │ Hourly wage (2015 USD) │
+│    age │                    age │
+└────────┴────────────────────────┘
 
-Use `printlabels` to print the labels of columns in a data frame. The optional
-argument `cols` determines which columns to print, while the keyword
-argument `unlabelled` controls whether to print columns without user-defined labels. 
-</code></pre><p>julia-repl julia&gt; df = DataFrame(wage = [12], age = [23]);</p><p>julia&gt; @label! df :wage = &quot;Hourly wage (2015 USD)&quot;;</p><p>julia&gt; printlabels(df) ┌────────┬────────────────────────┐ │ Column │                  Label │ ├────────┼────────────────────────┤ │   wage │ Hourly wage (2015 USD) │ │    age │                    age │ └────────┴────────────────────────┘</p><p>julia&gt; printlabels(df, [:wage, :age]; unlabelled = false) ┌────────┬────────────────────────┐ │ Column │                  Label │ ├────────┼────────────────────────┤ │   wage │ Hourly wage (2015 USD) │ └────────┴────────────────────────┘</p><pre><code class="nohighlight hljs">
-#### `printlabels`: For printing notes
+julia&gt; printlabels(df, [:wage, :age]; unlabelled = false)
+┌────────┬────────────────────────┐
+│ Column │                  Label │
+├────────┼────────────────────────┤
+│   wage │ Hourly wage (2015 USD) │
+└────────┴────────────────────────┘</code></pre><h4 id="printnotes:-For-printing-notes"><a class="docs-heading-anchor" href="#printnotes:-For-printing-notes"><code>printnotes</code>: For printing notes</a><a id="printnotes:-For-printing-notes-1"></a><a class="docs-heading-anchor-permalink" href="#printnotes:-For-printing-notes" title="Permalink"></a></h4><p>Use <code>printnotes</code> to print the notes of columns in a data frame. The optional argument <code>cols</code> determines which columns to print, while the keyword argument <code>unnoted</code> controls whether to print columns without user-defined notes. </p><pre><code class="language-julia-repl hljs">julia&gt; df = DataFrame(wage = [12], age = [23]);
 
-Use `printnotes` to print the notes of columns in a data frame. The optional
-argument `cols` determines which columns to print, while the keyword
-argument `unnoted` controls whether to print columns without user-defined notes. 
-</code></pre><p>julia-repl julia&gt; df = DataFrame(wage = [12], age = [23]);</p><p>julia&gt; @label! df :age = &quot;Age (years)&quot;;</p><p>julia&gt; @note! df :wage = &quot;Derived from American Community Survey&quot;;</p><p>julia&gt; @note! df :wage = &quot;Missing values imputed as 0 wage&quot;;</p><p>julia&gt; @label! df :wage = &quot;Hourly wage (2015 USD)&quot;;</p><p>julia&gt; printnotes(df) Column: wage ──────────── Label: Hourly wage (2015 USD) Derived from American Community Survey Missing values imputed as 0 wage</p><p>Column: age ─────────── Label: Age (years)</p><pre><code class="nohighlight hljs">
-</code></pre><p>@contents Pages = [&quot;api/api.md&quot;] Depth = 3 ```</p></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="dplyr/">Tutorial for coming from dplyr »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Friday 1 March 2024 16:59">Friday 1 March 2024</span>. Using Julia version 1.10.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+julia&gt; @label! df :age = &quot;Age (years)&quot;;
+
+julia&gt; @note! df :wage = &quot;Derived from American Community Survey&quot;;
+
+julia&gt; @note! df :wage = &quot;Missing values imputed as 0 wage&quot;;
+
+julia&gt; @label! df :wage = &quot;Hourly wage (2015 USD)&quot;;
+
+julia&gt; printnotes(df)
+Column: wage
+────────────
+Label: Hourly wage (2015 USD)
+Derived from American Community Survey
+Missing values imputed as 0 wage
+
+Column: age
+───────────
+Label: Age (years)
+</code></pre><ul><li><a href="api/api/#API">API</a></li></ul></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="dplyr/">Tutorial for coming from dplyr »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Friday 1 March 2024 21:36">Friday 1 March 2024</span>. Using Julia version 1.10.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
