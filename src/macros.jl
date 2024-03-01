@@ -551,7 +551,7 @@ function with_helper(d, body)
     # complicated method of fun_to_vec
     # in the case of QuoteNode
     t = fun_to_vec(Expr(:block, body); no_dest=true)
-    :(DataFramesMeta.exec($d, $t))
+    :($exec($d, $t))
 end
 
 """
@@ -2453,7 +2453,7 @@ function distinct_helper(x, args...)
     x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)    
     t = (fun_to_vec(ex; no_dest = true, outer_flags=outer_flags) for ex in exprs)
     quote            
-        $DataFramesMeta.make_distinct($x, $(t...); $(kw...))
+        $make_distinct($x, $(t...); $(kw...))
     end
 end
 
@@ -2560,7 +2560,7 @@ function rdistinct_helper(x, args...)
     x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = true)    
     t = (fun_to_vec(ex; no_dest = true, outer_flags=outer_flags) for ex in exprs)
     quote            
-        $DataFramesMeta.make_distinct($x, $(t...); $(kw...))
+        $make_distinct($x, $(t...); $(kw...))
     end
 end
 
@@ -2620,7 +2620,7 @@ function distinct!_helper(x, args...)
     x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)    
     t = (fun_to_vec(ex; no_dest = true, outer_flags=outer_flags) for ex in exprs)
     quote            
-        $DataFramesMeta.make_distinct!($x, $(t...); $(kw...))
+        $make_distinct!($x, $(t...); $(kw...))
     end
 end
 
@@ -2732,7 +2732,7 @@ function rdistinct!_helper(x, args...)
     x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = true)    
     t = (fun_to_vec(ex; no_dest = true, outer_flags=outer_flags) for ex in exprs)
     quote            
-        $DataFramesMeta.make_distinct!($x, $(t...); $(kw...))
+        $make_distinct!($x, $(t...); $(kw...))
     end
 end
 
