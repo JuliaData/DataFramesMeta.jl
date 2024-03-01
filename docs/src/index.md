@@ -16,6 +16,7 @@ In addition, DataFramesMeta provides
 * Row-wise versions of the above macros in the form of `@rtransform`, `@rtransform!`,
   `@rselect`, `@rselect!`, `@rorderby`, `@rsubset`, and `@rsubset!`.
 * `@rename` and `@rename!` for renaming columns
+* `@groupby` for grouping data
 * `@by`, for grouping and combining a data frame in a single step
 * `@with`, for working with the columns of a data frame with high performance and 
   convenient syntax
@@ -26,6 +27,7 @@ In addition, DataFramesMeta provides
 * `@astable` to create multiple columns within a single transformation.
 * `@chain`, from [Chain.jl](https://github.com/jkrumbiegel/Chain.jl) for piping the above macros together, similar to [magrittr](https://cran.r-project.org/web/packages/magrittr/vignettes/magrittr.html)'s
   `%>%` in R. 
+* `@label!` and `@note!` for attaching metadata to columns. 
 
 See below the convenience of DataFramesMeta compared to DataFrames.
 
@@ -64,7 +66,7 @@ data frame.
 
 ```julia
 df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
-gd = groupby(df, :x);
+gd = @groupby(df, :x);
 @select(df, :x, :y)
 @select(df, :x2 = 2 * :x, :y)
 @select(gd, :x2 = 2 .* :y .* first(:y))
@@ -98,7 +100,7 @@ data frame.
 
 ```julia
 df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
-gd = groupby(df, :x);
+gd = @groupby(df, :x);
 @transform(df, :x2 = 2 * :x, :y)
 @transform(gd, :x2 = 2 .* :y .* first(:y))
 @transform!(df, :x, :y)
@@ -115,7 +117,7 @@ Select row subsets. Operates on both a `DataFrame` and a `GroupedDataFrame`.
 ```julia
 using Statistics
 df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
-gd = groupby(df, :x);
+gd = @groupby(df, :x);
 outside_var = 1;
 @subset(df, :x .> 1)
 @subset(df, :x .> outside_var)
@@ -134,11 +136,14 @@ acts like a `GroupedDataFrame` with one group.
 Like `@select` and `@transform`, transformations are called with the keyword-like 
 syntax `:y = f(:x)`. 
 
+To group data together into a `GroupedDataFrame`, use `@groupby`, a short-hand for
+the DataFrames.jl function `groupby`.
+
 Examples:
 
 ```julia
 df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
-gd = groupby(df, :x);
+gd = @groupby(df, :x);
 @combine(gd, :x2 = sum(:y))
 @combine(gd, :x2 = :y .- sum(:y))
 @combine(gd, $AsTable = (n1 = sum(:y), n2 = first(:y)))
@@ -159,6 +164,17 @@ The following, however, will work.
 df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
 gd = groupby(df, :x);
 @combine(gd, $AsTable = (a = sum(:x), b = sum(:y)))
+```
+
+### `@by` 
+
+Perform the grouping and combining operations in one step with `@by`
+
+```
+df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+@by df :x begin
+    :x = sum(:y)
+end
 ```
 
 ## `@orderby`
@@ -355,7 +371,7 @@ julia> @subset df @byrow begin
 however, like with `ByRow` in DataFrames.jl, when `@byrow` is
 used, functions do not take into account the grouping, so for
 example the result of `@transform(df, @byrow :y = f(:x))` and 
-`@transform(groupby(df, :g), @byrow :y = f(:x))` is the same.
+`@transform(@groupby(df, :g), @byrow :y = f(:x))` is the same.
 
 ## Propagating missing values with `@passmissing`
 
@@ -912,7 +928,7 @@ functions.
 | `@subset`    | `filter`         | `Where`      |
 | `@transform` | `mutate`         | `Select` (?) |
 | `@by`        |                  | `GroupBy`    |
-| `groupby`    | `group_by`       | `GroupBy`    |
+| `@groupby`   | `group_by`       | `GroupBy`    |
 | `@combine`   | `summarise`/`do` |              |
 | `@orderby`   | `arrange`        | `OrderBy`    |
 | `@select`    | `select`         | `Select`     |
@@ -967,6 +983,165 @@ in the middle of a `@chain` block.
     @select :y_standardize = :y .- y_mean
 end
 ```
+
+## Attaching variable labels and notes
+
+A widely used and appreciated feature of the Stata data analysis
+programming language is it's tools for column-level metadata in the
+form of labels and notes. Like Stata, Julia's data ecosystem implements a common 
+API for keeping track of information associated with columns. DataFramesMeta.jl 
+implements the `@label!` and `@note!` macros to attach information to columns. 
+
+DataFramesMeta.jl also provides two convenience functions 
+for examining metadata, `printlabels` and `printnotes`.
+
+### `@label!`: For short column labels 
+
+Use `@label!` to attach short-but-informative labels to columns. For example,
+a variable `:wage` might be given the label `"Wage (2015 USD)"`. 
+
+```julia
+df = DataFrame(wage = [16, 25, 14, 23]);
+@label! df :wage = "Wage (2015 USD)"
+``` 
+
+View the labels with `printlabels(df)`
+
+```
+julia> printlabels(df)
+┌────────┬─────────────────┐
+│ Column │           Label │
+├────────┼─────────────────┤
+│   wage │ Wage (2015 USD) │
+└────────┴─────────────────┘
+```
+
+You can access labels via the `label` function defined in TablesMetaDataTools.jl
+
+```
+julia> label(df, :wage)
+"Wage (2015 USD)"
+```
+
+### `@note!`: For longer column notes
+
+While labels are useful for pretty printing and clarification of short variable
+names, notes are used to give more in depth information and describe the data 
+cleaning process. Unlike labels, notes can be stacked on to one another. 
+
+Consider the cleaning process for wages, starting with the data frame
+
+```julia
+julia> df = DataFrame(wage = [-99, 16, 14, 23, 5000])
+5×1 DataFrame
+ Row │ wage  
+     │ Int64 
+─────┼───────
+   1 │   -99
+   2 │    16
+   3 │    14
+   4 │    23
+   5 │  5000
+
+```
+
+When data cleaning you might want to do the following:
+
+1. Record the source of the data
+
+```
+@note! df :wage = "Hourly wage from 2015 American Community Survey (ACS)"
+```
+
+2. Fix coded wages. In this example, `-99` corresponds to "no job"
+
+```
+@rtransform! df :wage = :wage == -99 ? 0 : :wage
+@note! df :wage = "Individuals with no job are recorded as 0 wage"
+```
+
+We use `printnotes` to see the notes for columns. 
+
+```
+julia> printnotes(df)
+Column: wage
+────────────
+Hourly wage from 2015 American Community Survey (ACS)
+Individuals with no job are recorded as 0 wage
+```
+
+You can access the note via the `note` function. 
+
+```
+julia> note(df, :wage)
+"Hourly wage from 2015 American Community Survey (ACS)\nIndividuals with no job are recorded as 0 wage"
+```
+
+To remove all notes from a column, run
+
+```
+note!(df, :wage, ""; append = false)
+````
+
+### Printing metadata
+
+#### `printlabels`: For printing labels
+
+Use `printlabels` to print the labels of columns in a data frame. The optional
+argument `cols` determines which columns to print, while the keyword
+argument `unlabelled` controls whether to print columns without user-defined labels. 
+
+```julia-repl
+julia> df = DataFrame(wage = [12], age = [23]);
+
+julia> @label! df :wage = "Hourly wage (2015 USD)";
+
+julia> printlabels(df)
+┌────────┬────────────────────────┐
+│ Column │                  Label │
+├────────┼────────────────────────┤
+│   wage │ Hourly wage (2015 USD) │
+│    age │                    age │
+└────────┴────────────────────────┘
+
+julia> printlabels(df, [:wage, :age]; unlabelled = false)
+┌────────┬────────────────────────┐
+│ Column │                  Label │
+├────────┼────────────────────────┤
+│   wage │ Hourly wage (2015 USD) │
+└────────┴────────────────────────┘
+```
+
+#### `printlabels`: For printing notes
+
+Use `printnotes` to print the notes of columns in a data frame. The optional
+argument `cols` determines which columns to print, while the keyword
+argument `unnoted` controls whether to print columns without user-defined notes. 
+
+```julia-repl
+julia> df = DataFrame(wage = [12], age = [23]);
+
+julia> @label! df :age = "Age (years)";
+
+julia> @note! df :wage = "Derived from American Community Survey";
+
+julia> @note! df :wage = "Missing values imputed as 0 wage";
+
+julia> @label! df :wage = "Hourly wage (2015 USD)";
+
+julia> printnotes(df)
+Column: wage
+────────────
+Label: Hourly wage (2015 USD)
+Derived from American Community Survey
+Missing values imputed as 0 wage
+
+Column: age
+───────────
+Label: Age (years)
+
+```
+
 
 ```@contents
 Pages = ["api/api.md"]

@@ -6,9 +6,13 @@ using MacroTools
 
 using OrderedCollections: OrderedCollections
 
+@reexport using TableMetadataTools
+
 @reexport using DataFrames
 
 @reexport using Chain
+
+using DataFrames.PrettyTables
 
 # Basics:
 export @with,
@@ -21,6 +25,8 @@ export @with,
        @distinct, @rdistinct, @distinct!, @rdistinct!,
        @eachrow, @eachrow!,
        @byrow, @passmissing, @astable, @kwarg,
+       @label!, @note!, printlabels, printnotes,
+       @groupby,
        @based_on, @where # deprecated
 
 const DOLLAR = raw"$"
@@ -30,5 +36,6 @@ include("parsing_astable.jl")
 include("macros.jl")
 include("linqmacro.jl")
 include("eachrow.jl")
+include("metadata.jl")
 
 end # module
