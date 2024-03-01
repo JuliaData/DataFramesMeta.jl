@@ -1,5 +1,6 @@
 # DataFramesMeta v0.15.0 Release notes
 
+* Added `@note!` and `@label!`, along with `printlabels` and `printnotes` to make working with metadata easier. ([#377](https://github.com/JuliaData/DataFramesMeta.jl/pull/377))
 * Added support for `Not`, `All`, and `Cols` in `@select`, making it easier to keep or drop many columns at once. ([#372](https://github.com/JuliaData/DataFramesMeta.jl/pull/372))
 * Added the `@groupby` macro, which provides an easier syntax for grouping data frames ([#373](https://github.com/JuliaData/DataFramesMeta.jl/pull/373))
 
