@@ -213,4 +213,18 @@ end
     @test_throws ArgumentError @eval @transform df @astable cols(AsTable) = :y
 end
 
+@testset "Broadcasting bugfix #380" begin
+    df = DataFrame(x=["a","b"], y = [1, 2], z = [3, 4])
+    @transform df @astable :a = string.(:x, "c")
+    @transform df @astable :a = :y .+ :z
+    @transform df @astable :a = (+).(:y, :z)
+    @select df @astable begin
+        :a = string.(:x, "c")
+        :b = string.(:x, :y)
+        :c = string.(:x, $"y")
+        :d = :y .+ :z
+        :e = (+).(:y, :z)
+    end
+end
+
 end # module
