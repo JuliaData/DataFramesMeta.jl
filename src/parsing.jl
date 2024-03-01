@@ -280,7 +280,7 @@ function get_source_fun(function_expr; exprflags = deepcopy(DEFAULT_FLAGS))
         source = args_to_selectors(function_expr.args[2:end])
         fun_t = function_expr.args[1]
 
-        # .+ to +
+        # .+ to Expr(:., +)
         fun = fix_simple_dot(fun_t)
     elseif is_simple_broadcast_call(function_expr)
         # extract source symbols from quotenodes
