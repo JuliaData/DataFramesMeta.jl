@@ -170,7 +170,7 @@ function args_to_selectors(v)
         col
     end
 
-    :(DataFramesMeta.make_source_concrete($(Expr(:vect, t...))))
+    :($make_source_concrete($(Expr(:vect, t...))))
 end
 
 is_macro_head(ex, name) = false
@@ -296,7 +296,7 @@ function get_source_fun(function_expr; exprflags = deepcopy(DEFAULT_FLAGS))
         membernames = Dict{Any, Symbol}()
 
         body = replace_syms!(membernames, function_expr)
-        source = :(DataFramesMeta.make_source_concrete($(Expr(:vect, keys(membernames)...))))
+        source = :($make_source_concrete($(Expr(:vect, keys(membernames)...))))
         inputargs = Expr(:tuple, values(membernames)...)
         fun = quote
             $inputargs -> begin
