@@ -1081,7 +1081,7 @@ To remove all notes from a column, run
 
 ```
 note!(df, :wage, ""; append = false)
-````
+```
 
 ### Printing metadata
 
@@ -1112,7 +1112,7 @@ julia> printlabels(df, [:wage, :age]; unlabelled = false)
 └────────┴────────────────────────┘
 ```
 
-#### `printlabels`: For printing notes
+#### `printnotes`: For printing notes
 
 Use `printnotes` to print the notes of columns in a data frame. The optional
 argument `cols` determines which columns to print, while the keyword
