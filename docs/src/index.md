@@ -27,6 +27,7 @@ In addition, DataFramesMeta provides
 * `@astable` to create multiple columns within a single transformation.
 * `@chain`, from [Chain.jl](https://github.com/jkrumbiegel/Chain.jl) for piping the above macros together, similar to [magrittr](https://cran.r-project.org/web/packages/magrittr/vignettes/magrittr.html)'s
   `%>%` in R. 
+* `@label!` and `@note!` for attaching metadata to columns. 
 
 See below the convenience of DataFramesMeta compared to DataFrames.
 
