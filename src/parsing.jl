@@ -170,7 +170,7 @@ function args_to_selectors(v)
         col
     end
 
-    :(DataFramesMeta.make_source_concrete($(Expr(:vect, t...))))
+    :($make_source_concrete($(Expr(:vect, t...))))
 end
 
 is_macro_head(ex, name) = false
@@ -280,7 +280,7 @@ function get_source_fun(function_expr; exprflags = deepcopy(DEFAULT_FLAGS))
         source = args_to_selectors(function_expr.args[2:end])
         fun_t = function_expr.args[1]
 
-        # .+ to +
+        # .+ to Expr(:., +)
         fun = fix_simple_dot(fun_t)
     elseif is_simple_broadcast_call(function_expr)
         # extract source symbols from quotenodes
@@ -296,7 +296,7 @@ function get_source_fun(function_expr; exprflags = deepcopy(DEFAULT_FLAGS))
         membernames = Dict{Any, Symbol}()
 
         body = replace_syms!(membernames, function_expr)
-        source = :(DataFramesMeta.make_source_concrete($(Expr(:vect, keys(membernames)...))))
+        source = :($make_source_concrete($(Expr(:vect, keys(membernames)...))))
         inputargs = Expr(:tuple, values(membernames)...)
         fun = quote
             $inputargs -> begin
