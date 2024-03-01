@@ -30,7 +30,7 @@ function addlabel_helper(df, args...)
 end
 
 """
-    label!(df, args...)
+    @label!(df, args...)
 
 Assign labels to columns in a data frame using `:col = label` syntax.
 Shorthand for `label!(df, ...)` from TablesMetaDataTools.jl.
@@ -56,7 +56,7 @@ renaming and transformations. `@label! :x = "Lab"` over-writes any
 existing label for the column `:x`. To add information without overwriting,
 use [`@note!`](@ref).
 
-`@label!` returns the input data frame for use with `@chain`.
+Returns `df`, with the labels of `df` modified.
 
 Like other DataFramesMeta.jl macros, `@label!` can be used in "keyword"
 format as well as block format.
@@ -98,7 +98,7 @@ function addnote_helper(df, args...)
 end
 
 """
-    note!(df, args...)
+    @note!(df, args...)
 
 Assign notes to columns in a data frame using `:col = note` syntax.
 Shorthand for `note!(df, col, note)` from TablesMetadataTools.jl.
@@ -106,32 +106,42 @@ Shorthand for `note!(df, col, note)` from TablesMetadataTools.jl.
 Use `@note!` for longer explanations of columns.
 Use `@label!` for short descriptions, primarily for pretty printing.
 
+Returns `df`, with the notes of `df` modified.
+
 ```julia-repl
+
 julia> df = DataFrame(wage = 12);
 
 julia> @note! df :wage = "
-    Long discussion of variable construction.
-     ";
+       Wage per hour in 2014 USD taken from ACS data provided by IPUMS.
+
+       Wage per hour is measured directly for hourly workers. For
+       salaried workers, equal to salary / hours worked.
+       ";
 
 julia> printnotes(df)
 Column: wage
 ────────────
-Long discussion of variable construction.
-```
 
-Unlike labels, notes are appended.
-
-```julia-repl
-julia> @note! df :wage = "Another comment on variable construction";
-
-julia> printnotes(df)
-Column: wage
-────────────
 Wage per hour in 2014 USD taken from ACS data provided by IPUMS.
+
 Wage per hour is measured directly for hourly workers. For
 salaried workers, equal to salary / hours worked.
 
-Values capped at the 99th percentile
+
+
+julia> @note! df :wage = "Wage is capped at 99th percentile";
+
+julia> printnotes(df)
+Column: wage
+────────────
+
+Wage per hour in 2014 USD taken from ACS data provided by IPUMS.
+
+Wage per hour is measured directly for hourly workers. For
+salaried workers, equal to salary / hours worked.
+
+Wage is capped at 99th percentile
 ```
 """
 macro note!(df, args...)
