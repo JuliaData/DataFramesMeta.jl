@@ -21,7 +21,6 @@ function replace_syms_astable!(inputs_to_function::AbstractDict,
         return e.args[2]
     end
 
-    println(e)
     col = get_column_expr(e)
     if col !== nothing
         return conditionally_add_symbols!(inputs_to_function, lhs_assignments, col)
