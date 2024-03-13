@@ -1,3 +1,7 @@
+# DataFramesMeta v0.15.1 Release notes
+
+* Deleted an errant `print` statement introduced in [#382](https://github.com/JuliaData/DataFramesMeta.jl/pull/382) ([#389](https://github.com/JuliaData/DataFramesMeta.jl/pull/389))
+
 # DataFramesMeta v0.15.0 Release notes
 
 * Fixed macro hygiene issues ([#384](https://github.com/JuliaData/DataFramesMeta.jl/pull/384))
