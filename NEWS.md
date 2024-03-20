@@ -1,3 +1,6 @@
+# DataFramesMeta v0.15.2 Release notes
+* Bumped the Chain.jl compat entry in the Project.toml ([#382](https://github.com/JuliaData/DataFramesMeta.jl/pull/391))
+
 # DataFramesMeta v0.15.1 Release notes
 
 * Deleted an errant `print` statement introduced in [#382](https://github.com/JuliaData/DataFramesMeta.jl/pull/382) ([#389](https://github.com/JuliaData/DataFramesMeta.jl/pull/389))
