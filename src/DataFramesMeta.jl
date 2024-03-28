@@ -24,13 +24,9 @@ export @with,
        @rtransform, @rselect, @rtransform!, @rselect!,
        @distinct, @rdistinct, @distinct!, @rdistinct!,
        @eachrow, @eachrow!,
-<<<<<<< HEAD
-       @byrow, @passmissing, @astable, @kwarg, @when,
-=======
-       @byrow, @passmissing, @astable, @kwarg,
+       @byrow, @passmissing, @astable, @kwarg, @when
        @label!, @note!, printlabels, printnotes,
        @groupby,
->>>>>>> master
        @based_on, @where # deprecated
 
 const DOLLAR = raw"$"
