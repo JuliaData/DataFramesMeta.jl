@@ -148,7 +148,7 @@ gd = groupby(df, :g)
 newvar = :n
 
 @testset "Limits of @combine" begin
-    @test_throws MethodError @eval @combine(gd, :n = sum(Between(:i, :t)))
+    @test_throws LoadError @eval @combine(gd, :n = sum(Between(:i, :t)))
     @test_throws ArgumentError @eval @combine(gd, :n = mean(:i) + mean(cols(1)))
 end
 
@@ -287,7 +287,7 @@ gd = groupby(df, :g)
 newvar = :n
 
 @testset "limits of @by" begin
-    @test_throws MethodError @eval @by(df, :g, :n = sum(Between(:i, :t)))
+    @test_throws LoadError @eval @by(df, :g, :n = sum(Between(:i, :t)))
     @test_throws ArgumentError @eval @by(df, :g, :n = mean(:i) + mean(cols(1)))
 end
 
@@ -347,6 +347,23 @@ end
 
 	@test @transform(g, @byrow :t = :a ^ 2).t ≅ d.a .^ 2
 	@test @select(g, :a, @byrow :t = :a ^ 2).t ≅ d.a .^ 2
+end
+
+@testset "@groupby" begin
+    df = DataFrame(a = [1, 2], b = [3, 4], c = [5, 6])
+    resa = groupby(df, [:a])
+    resab = groupby(df, [:a, :b])
+    resabc = groupby(df, [:a, :b, :c])
+    ab = [:a, :b]
+
+    @test @groupby(df, :a) == resa
+    @test @groupby(df, :a, :b) == resab
+    @test (@groupby df ab) == resab
+    @test (@groupby df :a 2) == resab
+    @test (@groupby df [:a, :b]) == resab
+    @test (@groupby df :a "b") == resab
+    @test (@groupby df All()) == resabc
+    @test (@groupby df Cols(:a, 2, "c")) == resabc
 end
 
 end # module

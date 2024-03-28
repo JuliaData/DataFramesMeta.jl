@@ -1966,6 +1966,18 @@ transformations by row, `@select` allows `@byrow` at the
 beginning of a block of selections (i.e. `@byrow begin... end`).
 All transformations in the block will operate by row.
 
+To select many columns at once use the tools `Not`, `Between`, `All`, and `Cols`.
+
+* `@select df Not(:a)` keeps all columns except for `:a`
+* `@select df Between(:a, :z)` keeps all columns between `:a` and `:z`, inclusive
+* `@select df All()` keeps all columns
+* `@select df Cols(...)` can be used to combine many different selectors, as well as use
+  regular expressions. For example `Cols(r"a")` selects all columns that start with `"a"`.
+
+Expressions inside `Not(...)`, `Between(...)` etc. are untouched by DataFramesMeta's
+parsing. To refer to a variable `x` which represents a column inside `Not`, write `Not(x)`,
+rather than `Not($(DOLLAR)x)`.
+
 $ASTABLE_MACRO_FLAG_DOCS
 
 $ASTABLE_RHS_SELECT_TRANSFORM_DOCS
@@ -1984,7 +1996,7 @@ When inputs are given in "block" format, the last lines may be written
 ```
 @select gd begin
     :a
-    @select copycols = false
+    @kwarg copycols = false
 end
 ```
 
@@ -2128,6 +2140,14 @@ To avoid writing `@byrow` multiple times when performing multiple
 transformations by row, `@select!` allows `@byrow` at the
 beginning of a block of select!ations (i.e. `@byrow begin... end`).
 All transformations in the block will operate by row.
+
+To select many columns at once use the tools `Not`, `Between`, `All`, and `Cols`.
+
+* `@select df Not(:a)` keeps all columns except for `:a`
+* `@select df Between(:a, :z)` keeps all columns between `:a` and `:z`, inclusive
+* `@select df All()` keeps all columns
+* `@select df Cols(...)` can be used to combine many different selectors, as well as use
+  regular expressions. For example `Cols(r"a")` selects all columns that start with `"a"`.
 
 $ASTABLE_MACRO_FLAG_DOCS
 
@@ -2533,7 +2553,7 @@ function distinct_helper(x, args...)
     x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)    
     t = (fun_to_vec(ex; no_dest = true, outer_flags=outer_flags) for ex in exprs)
     quote            
-        $DataFramesMeta.make_distinct($x, $(t...); $(kw...))
+        $make_distinct($x, $(t...); $(kw...))
     end
 end
 
@@ -2640,7 +2660,7 @@ function rdistinct_helper(x, args...)
     x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = true)    
     t = (fun_to_vec(ex; no_dest = true, outer_flags=outer_flags) for ex in exprs)
     quote            
-        $DataFramesMeta.make_distinct($x, $(t...); $(kw...))
+        $make_distinct($x, $(t...); $(kw...))
     end
 end
 
@@ -2700,7 +2720,7 @@ function distinct!_helper(x, args...)
     x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)    
     t = (fun_to_vec(ex; no_dest = true, outer_flags=outer_flags) for ex in exprs)
     quote            
-        $DataFramesMeta.make_distinct!($x, $(t...); $(kw...))
+        $make_distinct!($x, $(t...); $(kw...))
     end
 end
 
@@ -2812,7 +2832,7 @@ function rdistinct!_helper(x, args...)
     x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = true)    
     t = (fun_to_vec(ex; no_dest = true, outer_flags=outer_flags) for ex in exprs)
     quote            
-        $DataFramesMeta.make_distinct!($x, $(t...); $(kw...))
+        $make_distinct!($x, $(t...); $(kw...))
     end
 end
 
@@ -3086,5 +3106,47 @@ julia> @rename!(df, :new1 = $DOLLAR("old_col" * "1"), :new2 = :old_col2)
 """
 macro rename!(x, args...)
     esc(rename!_helper(x, args...))
+end
+
+function groupby_helper(df, args...)
+    t = Expr(:tuple, args...)
+    :($groupby($df, ($Cols($t...))))
+end
+
+"""
+    groupby(df, args...)
+
+Group a data frame by columns. An alias for
+
+```
+groupby(df, Cols(args...))
+```
+
+but with a few convenience features.
+
+## Details
+
+`@groupby` does not perform any transformations or allow the
+generation of new columns. New column generation must be done
+before `@groupby` is called.
+
+`@groupby` allows mixing of `Symbol`
+and `String` inputs, such that `@groupby df :A "B"`
+is supported.
+
+Arguments are not escaped and DataFramesMeta.jl rules for column
+selection, such as `$DOLLAR` for escaping, do not apply.
+
+## Examples
+```julia-repl
+julia> df = DataFrame(A = [1, 1], B = [3, 4], C = [6, 6]);
+julia> @groupby df :A;
+julia> @groupby df :A :B;
+julia> @groupby df [:A, :B];
+julia> @groupby df :A [:B, :C];
+```
+"""
+macro groupby(df, args...)
+    esc(groupby_helper(df, args...))
 end
 

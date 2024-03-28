@@ -35,7 +35,7 @@ protect_replace_syms_astable!(inputs_to_function::AbstractDict,
                               lhs_assignments::OrderedCollections.OrderedDict, e) = e
 protect_replace_syms_astable!(inputs_to_function::AbstractDict,
                               lhs_assignments::OrderedCollections.OrderedDict, e::Expr) =
-    replace_syms!(inputs_to_function, lhs_assignments, e)
+    replace_syms_astable!(inputs_to_function, lhs_assignments, e)
 
 function replace_dotted_astable!(inputs_to_function::AbstractDict,
                                  lhs_assignments::OrderedCollections.OrderedDict, e)
@@ -81,10 +81,10 @@ function get_source_fun_astable(ex; exprflags = deepcopy(DEFAULT_FLAGS))
             replace_syms_astable!(inputs_to_function, lhs_assignments, arg)
         end
     end
-    source = :(DataFramesMeta.make_source_concrete($(Expr(:vect, keys(inputs_to_function)...))))
+    source = :($make_source_concrete($(Expr(:vect, keys(inputs_to_function)...))))
 
     inputargs = Expr(:tuple, values(inputs_to_function)...)
-    nt_iterator = (:(DataFramesMeta.sym_or_str_to_sym($k) => $v) for (k, v) in lhs_assignments)
+    nt_iterator = (:($sym_or_str_to_sym($k) => $v) for (k, v) in lhs_assignments)
     nt_expr = Expr(:tuple, Expr(:parameters, nt_iterator...))
 
     body = Expr(:block, Expr(:block, exprs...), nt_expr)
