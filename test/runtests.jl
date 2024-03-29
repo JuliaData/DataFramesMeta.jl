@@ -16,6 +16,7 @@ my_tests = ["dataframes.jl",
             "astable.jl",
             "astable_flag.jl",
             "passmissing.jl",
+            "when.jl",
             "multicol.jl"]
 
 println("Running tests:")

@@ -179,6 +179,7 @@ is_macro_head(ex::Expr, name) = ex.head == :macrocall && ex.args[1] == Symbol(na
 const BYROW_SYM = Symbol("@byrow")
 const PASSMISSING_SYM = Symbol("@passmissing")
 const ASTABLE_SYM = Symbol("@astable")
+const WHEN_SYM = Symbol("@when")
 const DEFAULT_FLAGS = (;BYROW_SYM => Ref(false), PASSMISSING_SYM => Ref(false), ASTABLE_SYM => Ref(false))
 
 extract_macro_flags(ex, exprflags = deepcopy(DEFAULT_FLAGS)) = (ex, exprflags)
@@ -191,6 +192,9 @@ function extract_macro_flags(ex::Expr, exprflags = deepcopy(DEFAULT_FLAGS))
                 throw(ArgumentError("Redundant flag $macroname used."))
             end
             exprflag[] = true
+            if length(ex.args) > 3
+                throw(ArgumentError("Too many arguments passed to $macroname"))
+            end
             return extract_macro_flags(MacroTools.unblock(ex.args[3]), exprflags)
         else
             return (ex, exprflags)
@@ -198,6 +202,56 @@ function extract_macro_flags(ex::Expr, exprflags = deepcopy(DEFAULT_FLAGS))
     end
     return (ex, exprflags)
 end
+
+"""
+    omit_nested_when(ex::Expr, when = Ref(false))
+
+For a statement of the form `@passmissing @when x` return `@passmissing x` and
+a flag signifying a `@when` statement was present.
+"""
+function omit_nested_when(ex::Expr, when = Ref(false))
+    if ex.head == :macrocall && ex.args[1] in keys(DEFAULT_FLAGS) || is_macro_head(ex, "@when")
+        macroname = ex.args[1]
+        if length(ex.args) > 3
+            throw(ArgumentError("Too many arguments passed to $macroname"))
+        end
+        if macroname == Symbol("@when")
+            when[] = true
+            return omit_nested_when(MacroTools.unblock(ex.args[3]), when)
+        else
+            new_expr, when = omit_nested_when(MacroTools.unblock(ex.args[3]), when)
+            ex.args[3] = new_expr
+        end
+    end
+    return ex, when
+end
+omit_nested_when(ex, when = Ref(false)) = ex, when
+
+function get_when_statements(exprs)
+    new_exprs = []
+    when_statement = nothing
+    seen_non_when = false
+    seen_when = false
+    for expr in exprs
+        e, when = omit_nested_when(expr)
+        if when[]
+            if seen_when
+                throw(ArgumentError("Only one @when statement allowed at a time"))
+            end
+            if seen_non_when
+                throw(ArgumentError("All @when statements must come first"))
+            end
+            seen_when = true
+            when_statement = e
+        else
+            seen_non_when = true
+            push!(new_exprs, expr)
+        end
+    end
+
+    new_exprs, when_statement
+end
+
 
 """
     check_macro_flags_consistency(exprflags)
