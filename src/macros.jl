@@ -1555,6 +1555,8 @@ end
 ## transform & @transform
 ##
 ##############################################################################
+copy_gd(x::GroupedDataFrame) = transform(x; ungroup = false)
+copy_gd(x::AbstractDataFrame) = copy(x)
 function generic_transform_select_helper(x, args...; wrap_byrow::Bool = false, modify::Bool = false, selectfun::Bool = false)
     if selectfun
         secondstagefun = select!
@@ -1586,7 +1588,7 @@ function generic_transform_select_helper(x, args...; wrap_byrow::Bool = false, m
             end
         else
             quote
-                $z = $subset($copy($x), $w; view = true, skipmissing = true)
+                $z = $subset($copy_gd($x), $w; view = true, skipmissing = true)
                 $parent($secondstagefun($z, $(t...); $(kw...)))
             end
         end
