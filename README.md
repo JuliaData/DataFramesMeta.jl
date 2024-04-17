@@ -5,7 +5,7 @@
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://JuliaData.github.io/DataFramesMeta.jl/stable)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://JuliaData.github.io/DataFramesMeta.jl/dev)
 
-Metaprogramming tools for DataFrames.jl objects.
+A collection of macro functions which simplify the syntax required to operate on DataFrames.jl objects.
 
 # Installation
 
