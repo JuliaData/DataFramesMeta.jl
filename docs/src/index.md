@@ -35,10 +35,16 @@ See below the convenience of DataFramesMeta compared to DataFrames.
 df = DataFrame(a = [1, 2], b = [3, 4]);
 
 # With DataFrames
-transform(df, [:a, :b] => ((a, b) -> a .* b .+ first(a) .- sum(b)) => :c);
+transform(df, [:a, :b] => ((x, y) -> x + y) => :c)
 
 # With DataFramesMeta
-@transform(df, :c = :a .* :b .+ first(:a) .- sum(:b))
+@transform(df, :c = :a + :b)
+
+# With DataFrames
+subset(df, :a => ByRow(==(2)))
+
+# With DataFramesMeta
+@rsubset(df, :a == 2)
 ```
 
 To reference columns inside DataFramesMeta macros, use `Symbol`s. For example, use `:x`
