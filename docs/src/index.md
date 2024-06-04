@@ -173,7 +173,7 @@ Perform the grouping and combining operations in one step with `@by`
 ```
 df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
 @by df :x begin
-    :x = sum(:y)
+    :y_sum = sum(:y)
 end
 ```
 
