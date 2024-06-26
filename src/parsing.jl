@@ -545,20 +545,20 @@ function create_args_vector!(kw, arg; wrap_byrow::Bool=false)
     end
 
     # @astable means the whole block is one transformation
+
     if arg isa Expr && arg.head == :block && !outer_flags[ASTABLE_SYM][]
         x = MacroTools.rmlines(arg).args
-        kw = []
         transforms = []
-        seen_kw = false
+        seen_kw = !isempty(kw)
         for xi in x
             if is_macro_head(xi, "@kwarg")
+                if seen_kw
+                    throw(ArgumentError("@kwarg calls must be at end of block"))
+                end
                 kw_item = get_kw_from_macro_call(xi)
                 push!(kw, kw_item)
                 seen_kw = true
             else
-                if seen_kw
-                    throw(ArgumentError("@kwarg calls must be at end of block"))
-                end
                 push!(transforms, xi)
             end
         end
