@@ -759,7 +759,6 @@ write
 
 function subset_helper(x, args...)
     x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)
-
     t = (fun_to_vec(ex; no_dest=true, outer_flags=outer_flags) for ex in exprs)
     quote
         $subset($x, $(t...); (skipmissing = true,)..., $(kw...))

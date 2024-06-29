@@ -401,4 +401,28 @@ end
     @test df2 == correct
 end
 
+@testset "Multiple arguments #399" begin
+    correct = df[df.a .== 1, :]
+    correct_view = view(df, df.a .== 1, :)
+
+    df2 = @subset(df, :a .== 1, :b .== 3; view = true)
+    @test df2 ≈ correct_view
+
+    @test_throws ArgumentError @subset(df, :a .== 1, :b .== 3; skipmissing = false)
+    @test_throws ArgumentError @subset(df, :a .== 1, :b .== 3; skipmissing = false, view = true)
+
+    correct = transform(df, :a => ByRow(t -> t + 1) => :y, :b => ByRow(t -> t + 2) => :z)
+    df2 = @rtransform(df, :y = :a + 1, :z = :b + 2; copycols = false)
+    @test df2 ≅ correct
+    @test df.a === df2.a
+
+    correct = DataFrame(b_mean = [3.5, 5.0], b_first = [3, 5])
+    df2 = @combine(gd, :b_mean = mean(skipmissing(:b)), :b_first = first(:b); keepkeys = false)
+    @test df2 ≅ correct
+end
+
+@testset "@kwarg errors" begin
+
+end
+
 end # module
