@@ -402,11 +402,12 @@ end
 end
 
 @testset "Multiple arguments #399" begin
-    correct = df[df.a .== 1, :]
-    correct_view = view(df, df.a .== 1, :)
+    correct = df[df.a .== 1 .& isequal.(df.b, 3), :]
+    correct_view = view(df, df.a .== 1 .& isequal.(df.b, 3), :)
 
     df2 = @subset(df, :a .== 1, :b .== 3; view = true)
     @test df2 ≈ correct_view
+    @test df2 isa SubDataFrame
 
     @test_throws ArgumentError @subset(df, :a .== 1, :b .== 3; skipmissing = false)
     @test_throws ArgumentError @subset(df, :a .== 1, :b .== 3; skipmissing = false, view = true)
