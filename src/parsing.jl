@@ -499,22 +499,35 @@ end
 
 function get_df_args_kwargs(x, args...; wrap_byrow = false)
     kw = []
+    # x is normally a data frame. But if the call looks like
+    # transform(df, :x = 1; copycols = false)
+    # then x is actually Expr(:parameters, Expr(:kw, :copycole, false))
+    # When this happens, we assign x to the data frame, use only
+    # the rest of the args, and keep trask of the keyword argument.
     if x isa Expr && x.head === :parameters
         append!(kw, x.args)
         x = first(args)
         args = args[2:end]
     end
 
-    transforms, outer_flags, kw = create_args_vector!(kw, args...; wrap_byrow = wrap_byrow)
+    if args isa Tuple
+        blockarg = Expr(:block, args...)
+    else
+        blockarg = args
+    end
+
+    # create_args_vector! has an exclamation point because
+    # we modify the keyword arguments kw
+    transforms, outer_flags, kw = create_args_vector!(kw, blockarg; wrap_byrow = wrap_byrow)
 
     return (x, transforms, outer_flags, kw)
 end
 
-function create_args_vector!(kw, args...; wrap_byrow::Bool=false)
-    create_args_vector!(kw, Expr(:block, args...); wrap_byrow = wrap_byrow)
-end
-
 function get_kw_from_macro_call(e::Expr)
+    if length(e.args) != 3
+        throw(ArgumentError("Invalid @kwarg expression"))
+    end
+
     nv = e.args[3]
 
     return nv
@@ -532,8 +545,6 @@ the block as an array. If a simple expression,
 wrap the expression in a one-element vector.
 """
 function create_args_vector!(kw, arg; wrap_byrow::Bool=false)
-    # TODO: Pass vector of keyword arguments to this function
-    # and modify by detecting presence of `@kwarg`.
     arg, outer_flags = extract_macro_flags(MacroTools.unblock(arg))
 
     if wrap_byrow
@@ -545,18 +556,18 @@ function create_args_vector!(kw, arg; wrap_byrow::Bool=false)
     end
 
     # @astable means the whole block is one transformation
+
     if arg isa Expr && arg.head == :block && !outer_flags[ASTABLE_SYM][]
         x = MacroTools.rmlines(arg).args
-        kw = []
         transforms = []
-        seen_kw = false
+        seen_kw_macro = false
         for xi in x
             if is_macro_head(xi, "@kwarg")
                 kw_item = get_kw_from_macro_call(xi)
                 push!(kw, kw_item)
-                seen_kw = true
+                seen_kw_macro = true
             else
-                if seen_kw
+                if seen_kw_macro
                     throw(ArgumentError("@kwarg calls must be at end of block"))
                 end
                 push!(transforms, xi)
