@@ -24,7 +24,7 @@ export @with,
        @rtransform, @rselect, @rtransform!, @rselect!,
        @distinct, @rdistinct, @distinct!, @rdistinct!,
        @eachrow, @eachrow!,
-       @byrow, @passmissing, @astable, @kwarg,
+       @byrow, @passmissing, @astable, @kwarg, @when,
        @label!, @note!, printlabels, printnotes,
        @groupby,
        @based_on, @where # deprecated

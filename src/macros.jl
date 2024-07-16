@@ -547,11 +547,33 @@ getsinglecolumn(df, s) = throw(ArgumentError("Only indexing with Symbols, string
     "is currently allowed with $DOLLAR"))
 
 function with_helper(d, body)
+    # Get rid of the leading @byrow, @passmissing etc.
+    # but otherwise leave body untouched
+    body, outer_flags = extract_macro_flags(body)
+    if outer_flags[ASTABLE_SYM][]
+        throw(ArgumentError("@astable macro-flag cannot be used inside of @with"))
+    end
+    # If we have a begin...end somewhere, we might
+    # have a @when.
+    # Remove the @when statements, recording that they
+    # exist. To do this we also have to de-construct
+    # body into a vector expressions.
+    es, when = get_when_statements(MacroTools.rmlines(MacroTools.block(body)).args)
+    newbody = Expr(:block, es...)
     # Make body an expression to force the
     # complicated method of fun_to_vec
     # in the case of QuoteNode
-    t = fun_to_vec(Expr(:block, body); no_dest=true)
-    :($exec($d, $t))
+    t = fun_to_vec(newbody; no_dest=true, outer_flags = outer_flags)
+    if !isnothing(when)
+        w = fun_to_vec(when; no_dest = true, gensym_names=false, outer_flags = outer_flags)
+        z = gensym()
+        quote
+            $z = $subset($d, $w; view = true, skipmissing = true)
+            $exec($z, $t)
+        end
+    else
+        :($exec($d, $t))
+    end
 end
 
 """
@@ -662,6 +684,83 @@ julia> @with df @byrow :x * :y
 macro with(d, body)
     esc(with_helper(d, body))
 end
+
+"""
+    @when(args...)
+
+Perform operations on a subset of `df`, but still
+return a data frame with the same number of rows as `df`. `@when` can be used
+with the `@transform` macros, `@select` macros, and `@with`.
+
+`@when` is not a "real" macro. It is only functional inside DataFramesMeta.jl macros.
+A motivating example:
+
+```
+@rtransform df begin
+    @when :a == 1
+    :y = :y - mean(:y)
+end
+```
+
+The above block generates the column `:y` which is de-meaned with respect to observations where
+`:a == 1`. If `:y` already exists in `df`, then new values over-write old values only
+when `:a == 1`. If `:y` does not already exist in `df`, then new values are written
+when `:a == 1`, and remaining values are filled with `missing`.
+
+Only one `@when` statement is allowed per transformation macro and it must be the
+first argument in the transformation.
+
+`@when` inherits `@byrow` and `@passmissing` from the transformation. As an example:
+
+```
+@transform df @byrow begin
+    @when :a == 1
+    ...
+end
+```
+
+In the above, the condition inside `@when` operates row-wise. However, `@byrow` and `@passmissing` can
+also be passed independently, such as `@byrow @when :a == 1`.
+
+Like `@subset`, `@when` drops rows where `missing` values are returned. Unlike `@subset`,
+there is currently no way to control this behavior.
+
+## Details
+
+`@when` operates by calling `select` with the `view = true` keyword argument,
+followed by a `transform!` call. See `?transform!` for more details. Roughly,
+the expression
+
+```
+@transform df begin
+    @when :a .== 1
+    :y = 5
+end
+```
+
+translates to
+
+```
+df1 = @subset(copy(df), :a .== 1; view = true)
+df2 = @transform! df1 :y = 5
+parent(df2)
+```
+
+Unlike the other macro-flags, such as `@passmissing` and `@byrow`, `@when` cannot be
+used at the top-level.
+```
+@transform df @byrow @when(:a == 1) begin
+    :x = 1
+    :y = 2
+end
+```
+is not supported.
+
+"""
+macro when(args...)
+    throw(ArgumentError("@passmissing only works inside DataFramesMeta macros."))
+end
+
 
 ASTABLE_RHS_ORDERBY_DOCS = """
 In operations, it is also allowed to use `AsTable(cols)` to work with
@@ -1455,15 +1554,53 @@ end
 ## transform & @transform
 ##
 ##############################################################################
+copy_gd(x::GroupedDataFrame) = transform(x; ungroup = false)
+copy_gd(x::AbstractDataFrame) = copy(x)
+function generic_transform_select_helper(x, args...; wrap_byrow::Bool = false, modify::Bool = false, selectfun::Bool = false)
+    if selectfun
+        secondstagefun = select!
+        if modify
+            transformfun = select!
+        else
+            transformfun = select
+        end
+    else
+        secondstagefun = transform!
+        if modify
+            transformfun = transform!
+        else
+            transformfun = transform
+        end
+    end
 
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = wrap_byrow)
+    exprs, when = get_when_statements(exprs)
+   # Main.@infiltrate
+    if !isnothing(when)
+        w = fun_to_vec(when; no_dest = true, gensym_names=false, outer_flags=outer_flags)
+        t = (fun_to_vec(ex; gensym_names=false, outer_flags=outer_flags) for ex in exprs)
+        z = gensym()
+        if modify
+            quote
+                $z = $subset($x, $w; view = true, skipmissing = true)
+                $parent($secondstagefun($z, $(t...); $(kw...)))
+            end
+        else
+            quote
+                $z = $subset($copy_gd($x), $w; view = true, skipmissing = true)
+                $parent($secondstagefun($z, $(t...); $(kw...)))
+            end
+        end
+    else
+        t = (fun_to_vec(ex; gensym_names=false, outer_flags=outer_flags) for ex in exprs)
+        quote
+            $transformfun($x, $(t...); $(kw...))
+        end
+    end
+end
 
 function transform_helper(x, args...)
-    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)
-
-    t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
-    quote
-        $transform($x, $(t...);  $(kw...))
-    end
+    generic_transform_select_helper(x, args...; wrap_byrow = false, modify = false)
 end
 
 """
@@ -1592,12 +1729,7 @@ macro transform(x, args...)
 end
 
 function rtransform_helper(x, args...)
-    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = true)
-
-    t = (fun_to_vec(ex; gensym_names=false, outer_flags=outer_flags) for ex in exprs)
-    quote
-        $transform($x, $(t...); $(kw...))
-    end
+    generic_transform_select_helper(x, args...; wrap_byrow = true, modify = false)
 end
 
 """
@@ -1645,12 +1777,7 @@ end
 
 
 function transform!_helper(x, args...)
-    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)
-
-    t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
-    quote
-        $transform!($x, $(t...); $(kw...))
-    end
+    generic_transform_select_helper(x, args...; wrap_byrow = false, modify = true)
 end
 
 """
@@ -1759,12 +1886,7 @@ macro transform!(x, args...)
 end
 
 function rtransform!_helper(x, args...)
-    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = true)
-
-    t = (fun_to_vec(ex; gensym_names=false, outer_flags=outer_flags) for ex in exprs)
-    quote
-        $transform!($x, $(t...); $(kw...))
-    end
+    generic_transform_select_helper(x, args...; wrap_byrow = true, modify = true)
 end
 
 """
@@ -1783,12 +1905,7 @@ end
 ##############################################################################
 
 function select_helper(x, args...)
-    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)
-
-    t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags, allow_multicol = true) for ex in exprs)
-    quote
-        $select($x, $(t...); $(kw...))
-    end
+    generic_transform_select_helper(x, args...; wrap_byrow = false, modify = false, selectfun = true)
 end
 
 """
@@ -1928,12 +2045,7 @@ macro select(x, args...)
 end
 
 function rselect_helper(x, args...)
-    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = true)
-
-    t = (fun_to_vec(ex; gensym_names=false, outer_flags=outer_flags) for ex in exprs)
-    quote
-        $select($x, $(t...); $(kw...))
-    end
+    generic_transform_select_helper(x, args...; wrap_byrow = true, modify = false, selectfun = true)
 end
 
 """
@@ -1981,12 +2093,7 @@ end
 ##############################################################################
 
 function select!_helper(x, args...)
-    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)
-
-    t = (fun_to_vec(ex; gensym_names = false, outer_flags = outer_flags) for ex in exprs)
-    quote
-        $select!($x, $(t...); $(kw...))
-    end
+    generic_transform_select_helper(x, args...; wrap_byrow = false, modify = true, selectfun = true)
 end
 
 """
@@ -2117,12 +2224,7 @@ macro select!(x, args...)
 end
 
 function rselect!_helper(x, args...)
-    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = true)
-
-    t = (fun_to_vec(ex; gensym_names=false, outer_flags=outer_flags) for ex in exprs)
-    quote
-        $select!($x, $(t...); $(kw...))
-    end
+    generic_transform_select_helper(x, args...; wrap_byrow = true, modify = true, selectfun = true)
 end
 
 """
