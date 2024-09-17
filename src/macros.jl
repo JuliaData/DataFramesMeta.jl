@@ -1264,7 +1264,7 @@ given by its arguments (but does not create new columns) and sorts
 the given `DataFrame` on the result, returning a new `DataFrame`.
 
 Inputs to `@orderby` can come in two formats: a `begin ... end` block, in which case each
-line in the block is a separate ordering operation, and as mulitple
+line in the block is a separate ordering operation, and as multiple
 arguments. For example, the following two statements are equivalent:
 
 ```julia
