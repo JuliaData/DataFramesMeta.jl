@@ -22,6 +22,67 @@ df = DataFrame(A = 1, AA = 2, B = 3)
     @test t == DataFrame(AA = 2, B = 3)
 end
 
+@testset "rselect_multi" begin
+    df = DataFrame(A = 1, AA = 2, B = 3)
+
+    t = @rselect df Not(:A)
+    @test t == DataFrame(AA = 2, B = 3)
+
+    t = @rselect df All()
+    @test t == DataFrame(A = 1, AA = 2, B = 3)
+
+    t = @rselect df Cols(r"A")
+    @test t == DataFrame(A = 1, AA = 2)
+
+    t = @rselect df Between(:AA, :B)
+    @test t == DataFrame(AA = 2, B = 3)
+end
+
+@testset "select!_multi" begin
+    df = DataFrame(A = 1, AA = 2, B = 3)
+
+    @select! df Not(:A)
+    @test df == DataFrame(AA = 2, B = 3)
+
+    df = DataFrame(A = 1, AA = 2, B = 3)
+
+    @select! df All()
+    @test df == DataFrame(A = 1, AA = 2, B = 3)
+
+    df = DataFrame(A = 1, AA = 2, B = 3)
+
+    @select! df Cols(r"A")
+    @test df == DataFrame(A = 1, AA = 2)
+
+    df = DataFrame(A = 1, AA = 2, B = 3)
+
+    @select! df Between(:AA, :B)
+    @test df == DataFrame(AA = 2, B = 3)
+end
+
+@testset "rselect!_multi" begin
+    df = DataFrame(A = 1, AA = 2, B = 3)
+
+    @rselect! df Not(:A)
+    @test df == DataFrame(AA = 2, B = 3)
+
+    df = DataFrame(A = 1, AA = 2, B = 3)
+
+    @rselect! df All()
+    @test df == DataFrame(A = 1, AA = 2, B = 3)
+
+    df = DataFrame(A = 1, AA = 2, B = 3)
+
+    @rselect! df Cols(r"A")
+    @test df == DataFrame(A = 1, AA = 2)
+
+    df = DataFrame(A = 1, AA = 2, B = 3)
+
+    @rselect! df Between(:AA, :B)
+    @test df == DataFrame(AA = 2, B = 3)
+end
+
+
 @testset "othermacros_multi" begin
     df = DataFrame(A = 1, AA = 2, B = 3)
 
