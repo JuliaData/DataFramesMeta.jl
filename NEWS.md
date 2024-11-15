@@ -1,5 +1,8 @@
+# DataFramesMeta v0.15.4 Release Notes
+* Fix a bug where multicolumn selectors were ignored by `@select!`, `@rselect`, and `@rselect!` (Issue [#404](https://github.com/JuliaData/DataFramesMeta.jl/issues/404)), ([#405](https://github.com/JuliaData/DataFramesMeta.jl/pull/405))
+
 # DataFramesMeta v0.15.3 Release Notes
-* Fixed a bug ([#399](https://github.com/JuliaData/DataFramesMeta.jl/issues/399)) where keyword arguments were accidentally ignored ([#400](https://github.com/JuliaData/DataFramesMeta.jl/pull/400#pullrequestreview-2180944667))
+* Fixed a bug ([#399](https://github.com/JuliaData/DataFramesMeta.jl/issues/399)) where keyword arguments were accidentally ignored ([#400](https://github.com/JuliaData/DataFramesMeta.jl/pull/400))
 
 # DataFramesMeta v0.15.2 Release notes
 * Bumped the Chain.jl compat entry in the Project.toml ([#382](https://github.com/JuliaData/DataFramesMeta.jl/pull/391))
