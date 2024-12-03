@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Introduction · DataFramesMeta Documentation</title><script data-outdated-warner src="assets/warner.js"></script><link rel="canonical" href="https://juliadata.github.io/DataFramesMeta.jl/stable/"/><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="assets/documenter.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href>DataFramesMeta Documentation</a></span></div><form class="docs-search" action="search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li class="is-active"><a class="tocitem" href>Introduction</a><ul class="internal"><li class="toplevel"><a class="tocitem" href="#Provided-macros"><span>Provided macros</span></a></li><li><a class="tocitem" href="#@select-and-@select!"><span><code>@select</code> and <code>@select!</code></span></a></li><li><a class="tocitem" href="#@transform-and-@transform!"><span><code>@transform</code> and <code>@transform!</code></span></a></li><li><a class="tocitem" href="#@subset-and-@subset!"><span><code>@subset</code> and <code>@subset!</code></span></a></li><li><a class="tocitem" href="#@combine"><span><code>@combine</code></span></a></li><li><a class="tocitem" href="#@orderby"><span><code>@orderby</code></span></a></li><li><a class="tocitem" href="#@rename"><span><code>@rename</code></span></a></li><li><a class="tocitem" href="#@with"><span><code>@with</code></span></a></li><li><a class="tocitem" href="#@eachrow-and-@eachrow!"><span><code>@eachrow</code> and <code>@eachrow!</code></span></a></li><li><a class="tocitem" href="#Row-wise-transformations-with-@byrow-and-@rtransform/@rselect/etc."><span>Row-wise transformations with <code>@byrow</code> and <code>@rtransform</code>/<code>@rselect</code>/etc.</span></a></li><li><a class="tocitem" href="#Propagating-missing-values-with-@passmissing"><span>Propagating missing values with <code>@passmissing</code></span></a></li><li><a class="tocitem" href="#Passing-keyword-arguments-to-underlying-DataFrames.jl-functions"><span>Passing keyword arguments to underlying DataFrames.jl functions</span></a></li><li><a class="tocitem" href="#Creating-multiple-columns-at-once-with-@astable"><span>Creating multiple columns at once with <code>@astable</code></span></a></li><li><a class="tocitem" href="#Operations-with-multiple-columns-at-once-using-AsTable-inside-operations"><span>Operations with multiple columns at once using <code>AsTable</code> inside operations</span></a></li><li><a class="tocitem" href="#AsTable-and-@astable,-explained"><span>AsTable and <code>@astable</code>, explained</span></a></li><li><a class="tocitem" href="#dollar"><span>Working with column names programmatically with <code>$</code></span></a></li><li><a class="tocitem" href="#Using-src-fun-dest-calls-using"><span>Using <code>src =&gt; fun =&gt; dest</code> calls using <code>$</code></span></a></li><li><a class="tocitem" href="#Multi-argument-column-selection"><span>Multi-argument column selection</span></a></li><li><a class="tocitem" href="#Working-with-Symbols-without-referring-to-columns"><span>Working with <code>Symbol</code>s without referring to columns</span></a></li><li><a class="tocitem" href="#Comparison-with-dplyr-and-LINQ"><span>Comparison with <code>dplyr</code> and LINQ</span></a></li><li><a class="tocitem" href="#Chaining-operations-together-with-@chain"><span>Chaining operations together with <code>@chain</code></span></a></li><li><a class="tocitem" href="#Attaching-variable-labels-and-notes"><span>Attaching variable labels and notes</span></a></li></ul></li><li><a class="tocitem" href="dplyr/">Tutorial for coming from dplyr</a></li><li><a class="tocitem" href="api/api/">API</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Introduction</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Introduction</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/JuliaData/DataFramesMeta.jl/blob/master/docs/src/index.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Introduction"><a class="docs-heading-anchor" href="#Introduction">Introduction</a><a id="Introduction-1"></a><a class="docs-heading-anchor-permalink" href="#Introduction" title="Permalink"></a></h1><p>Metaprogramming tools for DataFrames.jl objects to provide more convenient syntax.</p><p>DataFrames.jl has the functions <code>select</code>, <code>transform</code>, and <code>combine</code>, as well as the in-place <code>select!</code> and <code>transform!</code> for manipulating data frames. DataFramesMeta.jl provides the macros  <code>@select</code>, <code>@transform</code>, <code>@combine</code>, <code>@select!</code>, and <code>@transform!</code> to mirror these functions with  more convenient syntax. Inspired by <a href="https://dplyr.tidyverse.org/">dplyr</a> in R  and <a href="https://docs.microsoft.com/en-us/dotnet/csharp/programming-guide/concepts/linq/">LINQ</a> in C#. </p><p>In addition, DataFramesMeta provides </p><ul><li><code>@orderby</code>, for sorting data frames</li><li><code>@subset</code> and <code>@subset!</code>, for keeping rows of a data frame matching a given condition</li><li>Row-wise versions of the above macros in the form of <code>@rtransform</code>, <code>@rtransform!</code>, <code>@rselect</code>, <code>@rselect!</code>, <code>@rorderby</code>, <code>@rsubset</code>, and <code>@rsubset!</code>.</li><li><code>@rename</code> and <code>@rename!</code> for renaming columns</li><li><code>@groupby</code> for grouping data</li><li><code>@by</code>, for grouping and combining a data frame in a single step</li><li><code>@with</code>, for working with the columns of a data frame with high performance and  convenient syntax</li><li><code>@eachrow</code> and <code>@eachrow!</code> for looping through rows in data frame, again with high performance and  convenient syntax. </li><li><code>@byrow</code> for applying functions to each row of a data frame (only supported inside other macros).</li><li><code>@passmissing</code> for propagating missing values inside row-wise DataFramesMeta.jl transformations.</li><li><code>@astable</code> to create multiple columns within a single transformation.</li><li><code>@chain</code>, from <a href="https://github.com/jkrumbiegel/Chain.jl">Chain.jl</a> for piping the above macros together, similar to <a href="https://cran.r-project.org/web/packages/magrittr/vignettes/magrittr.html">magrittr</a>&#39;s <code>%&gt;%</code> in R. </li><li><code>@label!</code> and <code>@note!</code> for attaching metadata to columns. </li></ul><p>See below the convenience of DataFramesMeta compared to DataFrames.</p><pre><code class="language-julia hljs">df = DataFrame(a = [1, 2], b = [3, 4]);
+
+# With DataFrames
+transform(df, [:a, :b] =&gt; ((a, b) -&gt; a .* b .+ first(a) .- sum(b)) =&gt; :c);
+
+# With DataFramesMeta
+@transform(df, :c = :a .* :b .+ first(:a) .- sum(:b))</code></pre><p>To reference columns inside DataFramesMeta macros, use <code>Symbol</code>s. For example, use <code>:x</code> to refer to the column <code>df.x</code>. To use a variable <code>varname</code> representing a <code>Symbol</code> to refer to  a column, use the syntax <code>$varname</code>. </p><p>Use <code>passmissing</code>  to propagate <code>missing</code> values more easily. See <code>?passmissing</code> for  details. <code>passmissing</code> is defined in <a href="https://github.com/JuliaData/Missings.jl">Missings.jl</a> but exported by DataFramesMeta for convenience. </p><h1 id="Provided-macros"><a class="docs-heading-anchor" href="#Provided-macros">Provided macros</a><a id="Provided-macros-1"></a><a class="docs-heading-anchor-permalink" href="#Provided-macros" title="Permalink"></a></h1><h2 id="@select-and-@select!"><a class="docs-heading-anchor" href="#@select-and-@select!"><code>@select</code> and <code>@select!</code></a><a id="@select-and-@select!-1"></a><a class="docs-heading-anchor-permalink" href="#@select-and-@select!" title="Permalink"></a></h2><p>Column selections and transformations. Only newly created columns are kept.  Operates on both a <code>DataFrame</code> and a <code>GroupedDataFrame</code>. Transformations are  called with the keyword-like syntax <code>:y = f(:x)</code>. </p><p><code>@select</code> returns a new data frame with newly allocated columns, while <code>@select!</code> mutates the original data frame and returns it.</p><p>When given a <code>GroupedDataFrame</code>, performs a transformation by group and then  if necessary repeats the result to have as many rows as the input  data frame. </p><pre><code class="language-julia hljs">df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+gd = @groupby(df, :x);
+@select(df, :x, :y)
+@select(df, :x2 = 2 * :x, :y)
+@select(gd, :x2 = 2 .* :y .* first(:y))
+@select!(df, :x, :y)
+@select!(df, :x = 2 * :x, :y)
+@select!(gd, :y = 2 .* :y .* first(:y))</code></pre><p>To select or de-select multiple columns, use <code>Not</code>, <code>Between</code>, <code>All</code>, and <code>Cols</code>.  These multi-column selectors are all re-exported from DataFrames.jl. </p><pre><code class="language-julia hljs">@select df Not(:x)
+@select df Between(:x, :y)
+@select df All()
+@select df Cols(r&quot;x&quot;) # Regular expressions.</code></pre><h2 id="@transform-and-@transform!"><a class="docs-heading-anchor" href="#@transform-and-@transform!"><code>@transform</code> and <code>@transform!</code></a><a id="@transform-and-@transform!-1"></a><a class="docs-heading-anchor-permalink" href="#@transform-and-@transform!" title="Permalink"></a></h2><p>Add additional columns based on keyword-like arguments. Operates on both a  <code>DataFrame</code> and a <code>GroupedDataFrame</code>. Transformations are  called with the keyword-like syntax <code>:y = f(:x)</code>. </p><p><code>@transform</code> returns a new data frame with newly allocated columns, while <code>@transform!</code> mutates the original data frame and returns it.</p><p>When given a <code>GroupedDataFrame</code>, performs a transformation by group and then  if necessary repeats the result to have as many rows as the input  data frame. </p><pre><code class="language-julia hljs">df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+gd = @groupby(df, :x);
+@transform(df, :x2 = 2 * :x, :y)
+@transform(gd, :x2 = 2 .* :y .* first(:y))
+@transform!(df, :x, :y)
+@transform!(df, :x = 2 * :x, :y)
+@transform!(gd, :y = 2 .* :y .* first(:y))</code></pre><h2 id="@subset-and-@subset!"><a class="docs-heading-anchor" href="#@subset-and-@subset!"><code>@subset</code> and <code>@subset!</code></a><a id="@subset-and-@subset!-1"></a><a class="docs-heading-anchor-permalink" href="#@subset-and-@subset!" title="Permalink"></a></h2><p>Select row subsets. Operates on both a <code>DataFrame</code> and a <code>GroupedDataFrame</code>.  <code>@subset</code> always returns a freshly-allocated data frame whereas  <code>@subset!</code> modifies the data frame in-place.</p><pre><code class="language-julia hljs">using Statistics
+df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+gd = @groupby(df, :x);
+outside_var = 1;
+@subset(df, :x .&gt; 1)
+@subset(df, :x .&gt; outside_var)
+@subset(df, :x .&gt; outside_var, :y .&lt; 102)  # the two expressions are &quot;and-ed&quot;
+@subset(df, in.(:y, Ref([101, 102]))) # pick rows with values found in a reference list
+@rsubset(df, :y in [101, 102]) # the same with @rsubset - explained below; broadcasting is not needed
+@subset(gd, :x .&gt; mean(:x))</code></pre><h2 id="@combine"><a class="docs-heading-anchor" href="#@combine"><code>@combine</code></a><a id="@combine-1"></a><a class="docs-heading-anchor-permalink" href="#@combine" title="Permalink"></a></h2><p>Summarize, or collapse, a grouped data frame by performing transformations at the group level and  collecting the result into a single data frame. Also works on a <code>DataFrame</code>, which  acts like a <code>GroupedDataFrame</code> with one group. </p><p>Like <code>@select</code> and <code>@transform</code>, transformations are called with the keyword-like  syntax <code>:y = f(:x)</code>. </p><p>To group data together into a <code>GroupedDataFrame</code>, use <code>@groupby</code>, a short-hand for the DataFrames.jl function <code>groupby</code>.</p><p>Examples:</p><pre><code class="language-julia hljs">df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+gd = @groupby(df, :x);
+@combine(gd, :x2 = sum(:y))
+@combine(gd, :x2 = :y .- sum(:y))
+@combine(gd, $AsTable = (n1 = sum(:y), n2 = first(:y)))</code></pre><p>The last example tells the underlying DataFrames.jl function <code>combine</code>  that the output should be a &quot;Table&quot; in the <a href="https://tables.juliadata.org/stable/">Tables.jl</a>  sense. For more information, see the documentation for <code>DataFrames.combine</code> and  the <a href="#dollar">section below</a> on escaping column identifiers with <code>$</code>. </p><p><code>@combine</code> requires a <code>DataFrame</code> or <code>GroupedDataFrame</code> as the first argument. This is unlike <code>combine</code> from DataFrames.jl, which can take a function as the first argument and a <code>GroupedDataFrame</code> as the second argument. For instance, <code>@combine((a = sum(:x), b = sum(:y)), gd)</code> will fail.  The following, however, will work.</p><pre><code class="nohighlight hljs">df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+gd = groupby(df, :x);
+@combine(gd, $AsTable = (a = sum(:x), b = sum(:y)))</code></pre><h3 id="@by"><a class="docs-heading-anchor" href="#@by"><code>@by</code></a><a id="@by-1"></a><a class="docs-heading-anchor-permalink" href="#@by" title="Permalink"></a></h3><p>Perform the grouping and combining operations in one step with <code>@by</code></p><pre><code class="nohighlight hljs">df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+@by df :x begin
+    :y_sum = sum(:y)
+end</code></pre><h2 id="@orderby"><a class="docs-heading-anchor" href="#@orderby"><code>@orderby</code></a><a id="@orderby-1"></a><a class="docs-heading-anchor-permalink" href="#@orderby" title="Permalink"></a></h2><p>Sort rows in a <code>DataFrame</code> by values in one of several columns or a  transformation of columns. Only operates on <code>DataFrame</code>s and not <code>GroupedDataFrame</code>s. </p><pre><code class="language-julia hljs">df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+@orderby(df, -1 .* :x)
+@orderby(df, :x, :y .- mean(:y))</code></pre><h2 id="@rename"><a class="docs-heading-anchor" href="#@rename"><code>@rename</code></a><a id="@rename-1"></a><a class="docs-heading-anchor-permalink" href="#@rename" title="Permalink"></a></h2><p>Rename columns in a data frame using the keyword argument-like syntax <code>:new = :old</code>. Like other macros, <code>@rename</code> can be used in both multi-argument and &quot;block&quot; format. </p><pre><code class="language-julia hljs">df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+@rename df :x_new = :x
+@rename(df, :x_new = :x)
+@rename df $&quot;Name with spaces&quot; = :y
+@rename df begin 
+    :x_new = :x
+    :y_new = :y
+end</code></pre><h2 id="@with"><a class="docs-heading-anchor" href="#@with"><code>@with</code></a><a id="@with-1"></a><a class="docs-heading-anchor-permalink" href="#@with" title="Permalink"></a></h2><p><code>@with</code> creates a scope in which all symbols that appear are aliases for the columns in a DataFrame. </p><pre><code class="language-julia hljs">df = DataFrame(x = 1:3, y = [2, 1, 2])
+x = [2, 1, 0]
+
+@with(df, :y .+ 1)
+@with(df, :x + x)  # the two x&#39;s are different
+
+x = @with df begin
+    res = 0.0
+    for i in 1:length(:x)
+        res += :x[i] * :y[i]
+    end
+    res
+end
+
+@with(df, df[:x .&gt; 1, ^(:y)]) # The ^ means leave the :y alone
+</code></pre><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p><code>@with</code> creates a function, so scope within <code>@with</code> is a local scope. Variables in the parent can be read. Writing to variables in the parent scope differs depending on the type of scope of the parent. If the parent scope is a global scope, then a variable cannot be assigned without using the <code>global</code> keyword. If the parent scope is a local scope (inside a function or let block for example), the <code>global</code> keyword is not needed to assign to that parent scope.</p></div></div><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>Because <code>@with</code> creates a function, be careful with the use of <code>return</code>. </p><pre><code class="nohighlight hljs">function data_transform(df; returnearly = true)
+    if returnearly
+        @with df begin 
+            z = :x + :y
+            return z
+        end
+    else 
+        return [1, 2, 3]
+    end
+
+    return [4, 5, 6]
+end</code></pre><p>The above function will return <code>[4, 5, 6]</code> because the <code>return</code> inside the <code>@with</code> applies to the anonymous function created by <code>@with</code>. </p><p>Given that <code>@eachrow</code> (below) is implemented with <code>@with</code>, the same caveat applies to  <code>@eachrow</code> blocks. </p></div></div><h2 id="@eachrow-and-@eachrow!"><a class="docs-heading-anchor" href="#@eachrow-and-@eachrow!"><code>@eachrow</code> and <code>@eachrow!</code></a><a id="@eachrow-and-@eachrow!-1"></a><a class="docs-heading-anchor-permalink" href="#@eachrow-and-@eachrow!" title="Permalink"></a></h2><p>Act on each row of a data frame. Includes support for control flow and <code>begin end</code>  blocks. Since the &quot;environment&quot; induced by <code>@eachrow df</code> is implicitly a  single row of <code>df</code>, one uses regular operators and comparisons instead of  their elementwise counterparts as in <code>@with</code>. Does not change the input data  frame argument.</p><p><code>@eachrow!</code> is identical to <code>@eachrow</code> but acts on a data frame in-place, modifying the input.</p><pre><code class="language-julia hljs">df = DataFrame(A = 1:3, B = [2, 1, 2])
+df2 = @eachrow df begin 
+    :A = :B + 1
+end</code></pre><p><code>@eachrow</code> introduces a function scope, so a <code>let</code> block is required here to create  a scope to allow assignment of variables within <code>@eachrow</code>. </p><pre><code class="language-julia hljs">df = DataFrame(A = 1:3, B = [2, 1, 2], C = [-4,2,1])
+let x = 0.0
+    @eachrow df begin
+        if :A &lt; :B
+            x += :A * :C
+        end
+    end
+    x
+end</code></pre><p><code>@eachrow</code> also supports special syntax for allocating new columns to make <code>@eachrow</code> more useful for data transformations. The syntax <code>@newcol :x::Vector{Int}</code> allocates a new column <code>:x</code> with an <code>Vector</code> container with eltype <code>Int</code>. Here is an example where two new columns are added:</p><pre><code class="language-julia hljs">df = DataFrame(A = 1:3, B = [2, 1, 2])
+df2 = @eachrow df begin
+    @newcol :colX::Vector{Float64}
+    @newcol :colY::Vector{Union{Int,Missing}}
+    :colX = :B == 2 ? pi * :A : :B
+    if :A &gt; 1
+        :colY = :A * :B
+    else
+        :colY = missing
+    end
+end</code></pre><h2 id="Row-wise-transformations-with-@byrow-and-@rtransform/@rselect/etc."><a class="docs-heading-anchor" href="#Row-wise-transformations-with-@byrow-and-@rtransform/@rselect/etc.">Row-wise transformations with <code>@byrow</code> and <code>@rtransform</code>/<code>@rselect</code>/etc.</a><a id="Row-wise-transformations-with-@byrow-and-@rtransform/@rselect/etc.-1"></a><a class="docs-heading-anchor-permalink" href="#Row-wise-transformations-with-@byrow-and-@rtransform/@rselect/etc." title="Permalink"></a></h2><p><code>@byrow</code> provides a convenient syntax to apply operations by-row, without having to vectorize manually. Additionally, the macros <code>@rtransform</code>, <code>@rtransform!</code>, <code>@rselect</code>, <code>@rselect!</code>,  <code>@rorderby</code>, <code>@rsubset</code>, and <code>@rsubset!</code> use <code>@byrow</code> by default.</p><p>DataFrames.jl provides the function wrapper <code>ByRow</code>. <code>ByRow(f)(x, y)</code> is roughly equivalent to <code>f.(x, y)</code>. DataFramesMeta.jl allows users  to construct expressions using <code>ByRow</code> function wrapper with the  syntax <code>@byrow</code> or the row-wise macros <code>@rtransform</code>, etc.</p><p><code>@byrow</code> is not a &quot;real&quot; macro and cannot be used outside of  DataFramesMeta.jl macros. However its behavior within DataFramesMeta.jl macros should be indistinguishable from externally defined macros.  Thought of as a macro <code>@byrow</code> accepts a single argument and  creates an anonymous function wrapped in <code>ByRow</code>.  For example,</p><pre><code class="language-julia hljs">@transform(df, @byrow :y = :x == 1 ? true : false)</code></pre><p>is equivalent to</p><pre><code class="language-julia hljs">transform(df, :x =&gt; ByRow(x -&gt; x == 1 ? true : false) =&gt; :y)</code></pre><p>The following macros accept <code>@byrow</code>:</p><ul><li><code>@transform</code> and <code>@transform!</code>, <code>@select</code>, <code>@select!</code>, and <code>@combine</code>.  <code>@byrow</code> can be used in the left hand side of expressions, e.g. <code>@select(df, @byrow z = :x * :y)</code>. </li><li><code>@subset</code>, <code>@subset!</code> and <code>@orderby</code>, with syntax of the form <code>@subset(df, @byrow :x &gt; :y)</code></li><li><code>@with</code>, where the anonymous function created by <code>@with</code> is wrapped in <code>ByRow</code>, as in <code>@with(df, @byrow :x * :y)</code>.</li></ul><p>To avoid writing <code>@byrow</code> multiple times when performing multiple operations, it is allowed to use <code>@byrow</code> at the beginning of a block of  operations. All transformations in the block will operate by row.</p><pre><code class="language-julia hljs">julia&gt; df = DataFrame(a = [1, 2], b = [3, 4]);
+
+julia&gt; @subset df @byrow begin
+           :a &gt; 1
+           :b &lt; 5
+       end
+1×2 DataFrame
+ Row │ a      b     
+     │ Int64  Int64 
+─────┼──────────────
+   1 │     2      4</code></pre><p><code>@byrow</code> can be used inside macros which accept <code>GroupedDataFrame</code>s, however, like with <code>ByRow</code> in DataFrames.jl, when <code>@byrow</code> is used, functions do not take into account the grouping, so for example the result of <code>@transform(df, @byrow :y = f(:x))</code> and  <code>@transform(@groupby(df, :g), @byrow :y = f(:x))</code> is the same.</p><h2 id="Propagating-missing-values-with-@passmissing"><a class="docs-heading-anchor" href="#Propagating-missing-values-with-@passmissing">Propagating missing values with <code>@passmissing</code></a><a id="Propagating-missing-values-with-@passmissing-1"></a><a class="docs-heading-anchor-permalink" href="#Propagating-missing-values-with-@passmissing" title="Permalink"></a></h2><p>Many Julia functions do not automatically propagate missing values. For instance,  <code>parse(Int, missing)</code> will error. </p><p>Missings.jl provides the <code>passmissing</code> function-wrapper to help get around these roadblocks: <code>passmissing(f)(args...)</code> will return <code>missing</code> if any of <code>args</code> is missing. Similarly, DataFramesMeta.jl provides the <code>@passmissing</code> function to wrap the anonymous functions created by row-wise transformations in DataFramesMeta.jl  in <code>Missings.passmissing</code>.</p><p>The expression </p><pre><code class="language-julia hljs">@transform df @byrow @passmissing :c = f(:a, :b)</code></pre><p>is translated to </p><pre><code class="nohighlight hljs">transform(df, [:a, :b] =&gt; ByRow(passmissing(f)) =&gt; :c)</code></pre><p>See more examples below.</p><pre><code class="language-julia hljs">julia&gt; no_missing(x::Int, y::Int) = x + y;
+
+julia&gt; df = DataFrame(a = [1, 2, missing], b = [4, 5, 6])
+3×2 DataFrame
+ Row │ a        b
+     │ Int64?   Int64
+─────┼────────────────
+   1 │       1      4
+   2 │       2      5
+   3 │ missing      6
+
+julia&gt; @transform df @passmissing @byrow :c = no_missing(:a, :b)
+3×3 DataFrame
+ Row │ a        b      c
+     │ Int64?   Int64  Int64?
+─────┼─────────────────────────
+   1 │       1      4        5
+   2 │       2      5        7
+   3 │ missing      6  missing
+
+julia&gt; df = DataFrame(x_str = [&quot;1&quot;, &quot;2&quot;, missing])
+3×1 DataFrame
+ Row │ x_str
+     │ String?
+─────┼─────────
+   1 │ 1
+   2 │ 2
+   3 │ missing
+
+julia&gt; @rtransform df @passmissing :x = parse(Int, :x_str)
+3×2 DataFrame
+ Row │ x_str    x
+     │ String?  Int64?
+─────┼──────────────────
+   1 │ 1              1
+   2 │ 2              2
+   3 │ missing  missing</code></pre><h2 id="Passing-keyword-arguments-to-underlying-DataFrames.jl-functions"><a class="docs-heading-anchor" href="#Passing-keyword-arguments-to-underlying-DataFrames.jl-functions">Passing keyword arguments to underlying DataFrames.jl functions</a><a id="Passing-keyword-arguments-to-underlying-DataFrames.jl-functions-1"></a><a class="docs-heading-anchor-permalink" href="#Passing-keyword-arguments-to-underlying-DataFrames.jl-functions" title="Permalink"></a></h2><p>All DataFramesMeta.jl macros allow passing of keyword arguments to their DataFrames.jl function equivalents. The table below describes the correspondence between DataFramesMeta.jl macros and the function that is actually called by the macro. </p><table><tr><th style="text-align: right">Macro</th><th style="text-align: right">Base DataFrames.jl function called</th></tr><tr><td style="text-align: right"><code>@subset</code></td><td style="text-align: right"><code>subset</code></td></tr><tr><td style="text-align: right"><code>@subset!</code></td><td style="text-align: right"><code>subset!</code></td></tr><tr><td style="text-align: right"><code>@rsubset</code></td><td style="text-align: right"><code>subset</code></td></tr><tr><td style="text-align: right"><code>@rsubset!</code></td><td style="text-align: right"><code>subset!</code></td></tr><tr><td style="text-align: right"><code>@orderby</code></td><td style="text-align: right">None (no keyword arguments supported)</td></tr><tr><td style="text-align: right"><code>@rorderby</code></td><td style="text-align: right">None (no keyword arguments supported)</td></tr><tr><td style="text-align: right"><code>@by</code></td><td style="text-align: right"><code>combine</code></td></tr><tr><td style="text-align: right"><code>@combine</code></td><td style="text-align: right"><code>combine</code></td></tr><tr><td style="text-align: right"><code>@transform</code></td><td style="text-align: right"><code>transform</code></td></tr><tr><td style="text-align: right"><code>@transform!</code></td><td style="text-align: right"><code>transform!</code></td></tr><tr><td style="text-align: right"><code>@rtransform</code></td><td style="text-align: right"><code>transform</code></td></tr><tr><td style="text-align: right"><code>@rtransform!</code></td><td style="text-align: right"><code>transform!</code></td></tr><tr><td style="text-align: right"><code>@select</code></td><td style="text-align: right"><code>select</code></td></tr><tr><td style="text-align: right"><code>@select!</code></td><td style="text-align: right"><code>select!</code></td></tr><tr><td style="text-align: right"><code>@rselect</code></td><td style="text-align: right"><code>select</code></td></tr><tr><td style="text-align: right"><code>@rselect!</code></td><td style="text-align: right"><code>select!</code></td></tr></table><p>This can be done in two ways. When inputs are given as multiple  arguments, they are added at the end after a semi-colon <code>;</code>, as in</p><pre><code class="language-julia hljs">julia&gt; df = DataFrame(x = [1, 1, 2, 2], b = [5, 6, 7, 8]);
+
+julia&gt; @rsubset(df, :x == 1 ; view = true)
+2×2 SubDataFrame
+ Row │ x      b     
+     │ Int64  Int64 
+─────┼──────────────
+   1 │     1      5
+   2 │     1      6
+</code></pre><p>When inputs are given in &quot;block&quot; format, the last lines may be written <code>@kwarg key = value</code>, which indicates keyword arguments to be passed to <code>subset</code> function.</p><pre><code class="nohighlight hljs">julia&gt; df = DataFrame(x = [1, 1, 2, 2], b = [5, 6, 7, 8]);
+
+julia&gt; @rsubset df begin
+           :x == 1
+           @kwarg view = true
+       end
+2×2 SubDataFrame
+ Row │ x      b     
+     │ Int64  Int64 
+─────┼──────────────
+   1 │     1      5
+   2 │     1      6</code></pre><p>Just as with Julia functions, it is possible to pass keyword arguments as <code>Pair</code>s  programatically to DataFramesMeta.jl macros. </p><pre><code class="nohighlight hljs">julia&gt; df = DataFrame(x = [1, 1, 2, 2], b = [5, 6, 7, 8]);
+
+julia&gt; my_kwargs = [:view =&gt; true, :skipmissing =&gt; false];
+
+julia&gt; @rsubset(df, :x == 1; my_kwargs...)
+2×2 SubDataFrame
+ Row │ x      b     
+     │ Int64  Int64 
+─────┼──────────────
+   1 │     1      5
+   2 │     1      6
+
+julia&gt; @rsubset df begin 
+           :x == 1
+           @kwarg my_kwargs...
+       end
+2×2 SubDataFrame
+ Row │ x      b     
+     │ Int64  Int64 
+─────┼──────────────
+   1 │     1      5
+   2 │     1      6</code></pre><h2 id="Creating-multiple-columns-at-once-with-@astable"><a class="docs-heading-anchor" href="#Creating-multiple-columns-at-once-with-@astable">Creating multiple columns at once with <code>@astable</code></a><a id="Creating-multiple-columns-at-once-with-@astable-1"></a><a class="docs-heading-anchor-permalink" href="#Creating-multiple-columns-at-once-with-@astable" title="Permalink"></a></h2><p>Often new variables may depend on the same intermediate calculations. <code>@astable</code> makes it easy to create multiple new variables in the same operation, yet have them share information. </p><p>In a single block, all assignments of the form <code>:y = f(:x)</code>  or <code>$y = f(:x)</code> at the top-level generate new columns. In the second form, <code>y</code> must be a string or <code>Symbol</code>. </p><pre><code class="nohighlight hljs">julia&gt; df = DataFrame(a = [1, 2, 3], b = [400, 500, 600]);
+
+julia&gt; @transform df @astable begin 
+           ex = extrema(:b)
+           :b_first = :b .- first(ex)
+           :b_last = :b .- last(ex)
+       end
+3×4 DataFrame
+ Row │ a      b      b_first  b_last 
+     │ Int64  Int64  Int64    Int64  
+─────┼───────────────────────────────
+   1 │     1    400        0    -200
+   2 │     2    500      100    -100
+   3 │     3    600      200       0</code></pre><h2 id="Operations-with-multiple-columns-at-once-using-AsTable-inside-operations"><a class="docs-heading-anchor" href="#Operations-with-multiple-columns-at-once-using-AsTable-inside-operations">Operations with multiple columns at once using <code>AsTable</code> inside operations</a><a id="Operations-with-multiple-columns-at-once-using-AsTable-inside-operations-1"></a><a class="docs-heading-anchor-permalink" href="#Operations-with-multiple-columns-at-once-using-AsTable-inside-operations" title="Permalink"></a></h2><p>In operations, it is also allowed to use <code>AsTable(cols)</code> to work with multiple columns at once, where the columns are grouped together in a <code>NamedTuple</code>. When <code>AsTable(cols)</code> appears in a operation, no other columns may be referenced in the block.</p><p><code>AsTable</code> on the right-hand side also allows the use of the special column selectors <code>Not</code>, <code>Between</code>, and regular expressions, as well as working with lists of variables programmatically. </p><p>For example, consider a collection of column names <code>vars</code>, such that</p><pre><code class="nohighlight hljs">df = DataFrame(a = [11, 14], b = [17, 10], c = [12, 5]);
+vars = [&quot;a&quot;, &quot;b&quot;];</code></pre><p>To make a new column which is the sum of <code>vars</code>, write</p><pre><code class="nohighlight hljs">julia&gt; @rtransform df :y = sum(AsTable(vars))
+2×4 DataFrame
+ Row │ a      b      c      y     
+     │ Int64  Int64  Int64  Int64 
+─────┼────────────────────────────
+   1 │    11     17     12     28
+   2 │    14     10      5     24</code></pre><p>Of course, you can also use <code>AsTable</code> on the right-hand side using <code>Symbol</code>s as column selectors</p><pre><code class="nohighlight hljs">julia&gt; @rtransform df :y = sum(AsTable([:a, :b]))
+2×4 DataFrame
+ Row │ a      b      c      y     
+     │ Int64  Int64  Int64  Int64 
+─────┼────────────────────────────
+   1 │    11     17     12     28
+   2 │    14     10      5     24</code></pre><p><code>AsTable</code> on the right-hand side also allows operations which can use the names of the variables. </p><pre><code class="nohighlight hljs">julia&gt; function fun_with_new_name(x::NamedTuple)
+           nms = string.(propertynames(x))
+           new_name = Symbol(join(nms, &quot;_&quot;), &quot;_sum&quot;)
+           s = sum(x)
+           (; new_name =&gt; s)
+       end
+
+julia&gt; @rtransform df $AsTable = fun_with_new_name(AsTable([:a, :b]))
+2×4 DataFrame
+ Row │ a      b      c      a_b_sum 
+     │ Int64  Int64  Int64  Int64   
+─────┼──────────────────────────────
+   1 │    11     17     12       28
+   2 │    14     10      5       24</code></pre><p>To subset all rows where the sum is greater than <code>25</code>, write</p><pre><code class="nohighlight hljs">julia&gt; @rsubset df sum(AsTable(vars)) &gt; 25
+1×3 DataFrame
+ Row │ a      b      c     
+     │ Int64  Int64  Int64 
+─────┼─────────────────────
+   1 │    11     17     12</code></pre><p>To understand the how this works, recall that DataFrames.jl allows for <code>AsTable(cols)</code> to be a <code>source</code> in a <code>source =&gt; fun =&gt; dest</code> mini-language expression. As a consequence, the transformation call</p><pre><code class="nohighlight hljs">:y = f(AsTable(cols)) </code></pre><p>becomes</p><pre><code class="nohighlight hljs">AsTable(cols) =&gt; f =&gt; :y</code></pre><p>Note that DataFrames does <em>not</em> allow <code>source =&gt; fun =&gt; dest</code> commands  to be of the form </p><pre><code class="nohighlight hljs">[AsTable(cols), :x] =&gt; f =&gt; :y</code></pre><p>As a consequence, DataFramesMeta.jl does not allow any other column selectors to appear  inside the expression. The command</p><pre><code class="nohighlight hljs">:y = sum(AsTable(cols)) + :d</code></pre><p>will fail. </p><p>Finally, note that everything inside <code>AsTable</code> is escaped by default. There is no ned to use <code>$</code> inside <code>AsTable</code> on the right-hand side. For example</p><pre><code class="nohighlight hljs">:y = first(AsTable(&quot;a&quot;))</code></pre><p>will work as expected.  </p><h2 id="AsTable-and-@astable,-explained"><a class="docs-heading-anchor" href="#AsTable-and-@astable,-explained">AsTable and <code>@astable</code>, explained</a><a id="AsTable-and-@astable,-explained-1"></a><a class="docs-heading-anchor-permalink" href="#AsTable-and-@astable,-explained" title="Permalink"></a></h2><p>At this point we have seen <code>AsTable</code> appear in three places:</p><ol><li><code>AsTable</code> on the left-hand side of transformations: <code>$AsTable = f(:a, :b)</code></li><li>The macro-flag <code>@astable</code> within the transformation. </li><li><code>AsTable(cols)</code> on the right-hand side for multi-column transformations. </li></ol><p>The differences between the three is summarized below</p><table><tr><th style="text-align: right">Operation</th><th style="text-align: right">Purpose</th><th style="text-align: right">Notes</th></tr><tr><td style="text-align: right"><code>$AsTable</code> on LHS</td><td style="text-align: right">Create multiple columns at once, whose column names are only known programmatically</td><td style="text-align: right">Requires escaping with <code>$</code> until deprecation period ends for unquoted column names on LHS.</td></tr><tr><td style="text-align: right"><code>@astable</code></td><td style="text-align: right">Create multiple columns at once where number of columns is known in advance</td><td style="text-align: right"></td></tr><tr><td style="text-align: right"><code>AsTable</code> on RHS</td><td style="text-align: right">Work with multiple columns at once</td><td style="text-align: right">Requires input columns, unlike on LHS</td></tr></table><h2 id="dollar"><a class="docs-heading-anchor" href="#dollar">Working with column names programmatically with <code>$</code></a><a id="dollar-1"></a><a class="docs-heading-anchor-permalink" href="#dollar" title="Permalink"></a></h2><p>DataFramesMeta provides the special syntax <code>$</code> for referring to  columns in a data frame via a <code>Symbol</code>, string, or column position as either a literal or a variable. </p><pre><code class="language-julia hljs">df = DataFrame(A = 1:3, :B = [2, 1, 2])
+
+nameA = :A
+df2 = @transform(df, :C = :B - $nameA)
+
+nameA_string = &quot;A&quot;
+df3 = @transform(df, :C = :B - $nameA_string)
+
+nameB = &quot;B&quot;
+df4 = @eachrow df begin 
+    :A = $nameB
+end</code></pre><p><code>$</code> can also be used to create new columns in a data frame. </p><pre><code class="language-julia hljs">df = DataFrame(A = 1:3, B = [2, 1, 2])
+
+newcol = &quot;C&quot;
+@select(df, $newcol = :A + :B)
+
+@by(df, :B, $(&quot;A complicated&quot; * &quot; new name&quot;) = first(:A))
+
+nameC = &quot;C&quot;
+df3 = @eachrow df begin 
+    @newcol $nameC::Vector{Int}
+    $nameC = :A
+end</code></pre><p>DataFramesMeta macros do not allow mixing of integer column references with references  of other types. This means <code>@transform(df, :y = :A + $2)</code>, attempting to add the columns  <code>df[!, :A]</code> and <code>df[!, 2]</code>, will fail. This is because in DataFrames, the command </p><pre><code class="language-julia hljs">transform(df, [:A, 2] =&gt; (+) =&gt; :y)</code></pre><p>will fail, as DataFrames requires the &quot;source&quot; column identifiers in a  <code>source =&gt; fun =&gt; dest</code> pair to all have the same type. DataFramesMeta adds one exception to this rule. <code>Symbol</code>s and strings are allowed to be mixed inside DataFramesMeta macros.  Consequently, </p><pre><code class="nohighlight hljs">@transform(df, :y = :A + $&quot;B&quot;)</code></pre><p>will not error even though </p><pre><code class="nohighlight hljs">transform(df, [:A, &quot;B&quot;] =&gt; (+) =&gt; :y)</code></pre><p>will error in DataFrames. </p><p>For consistency, this restriction in the input column types also applies to <code>@with</code> and <code>@eachrow</code>. You cannot mix integer column references with <code>Symbol</code> or string column  references in <code>@with</code> and <code>@eachrow</code> in any part of the expression, but you can mix  <code>Symbol</code>s and strings. The following will fail:</p><pre><code class="language-julia hljs">df = DataFrame(A = 1:3, B = [2, 1, 2])
+@eachrow df begin 
+    :A = $2
+end
+
+@with df begin 
+    $1 + $&quot;A&quot;
+end</code></pre><p>while the following will work without error</p><pre><code class="language-julia hljs">@eachrow df begin 
+    $1 + $2
+end
+
+@with df begin 
+    $1 + $2
+end</code></pre><p>To reference columns with more complicated expressions, you must wrap column references in parentheses. </p><pre><code class="nohighlight hljs">@transform df :a + $(&quot;a column name&quot; * &quot; in two parts&quot;)
+@transform df :a + $(get_column_name(x))</code></pre><h2 id="Using-src-fun-dest-calls-using"><a class="docs-heading-anchor" href="#Using-src-fun-dest-calls-using">Using <code>src =&gt; fun =&gt; dest</code> calls using <code>$</code></a><a id="Using-src-fun-dest-calls-using-1"></a><a class="docs-heading-anchor-permalink" href="#Using-src-fun-dest-calls-using" title="Permalink"></a></h2><p>If an argument is entirely wrapped in <code>$()</code>, the result bypasses the anonymous function  creation of DataFramesMeta.jl and is passed to the underling DataFrames.jl function  directly. Importantly, this allows for <code>src =&gt; fun =&gt; dest</code> calls from the DataFrames.jl  &quot;mini-language&quot; directly. One example where this is useful is calling multiple functions across multiple input parameters. For instance, the <code>Pair</code></p><pre><code class="nohighlight hljs">[:a, :b] .=&gt; [sum mean]</code></pre><p>takes the <code>sum</code> and <code>mean</code> of both columns <code>:a</code> and <code>:b</code> separately. It is not possible to express this with DataFramesMeta.jl. But the operation can easily be performed with <code>$</code></p><pre><code class="nohighlight hljs">julia&gt; using Statistics
+
+julia&gt; df = DataFrame(a = [1, 2], b = [30, 40]);
+
+julia&gt; @transform df $([:a, :b] .=&gt; [sum mean])
+2×6 DataFrame
+ Row │ a      b      a_sum  b_sum  a_mean   b_mean  
+     │ Int64  Int64  Int64  Int64  Float64  Float64 
+─────┼──────────────────────────────────────────────
+   1 │     1     30      3     70      1.5     35.0
+   2 │     2     40      3     70      1.5     35.0</code></pre><h2 id="Multi-argument-column-selection"><a class="docs-heading-anchor" href="#Multi-argument-column-selection">Multi-argument column selection</a><a id="Multi-argument-column-selection-1"></a><a class="docs-heading-anchor-permalink" href="#Multi-argument-column-selection" title="Permalink"></a></h2><p>To refer to multiple columns in DataFrames.jl, one can write</p><pre><code class="language-julia hljs">select(df, [:a, :b])</code></pre><p>which selects the columns <code>:a</code> and <code>:b</code> in the data frame. We can generate this command in DataFramesMeta.jl with</p><pre><code class="language-julia hljs">@select df $[:a, :b]</code></pre><p>Similarly, to select all columns beginning with the letter <code>&quot;a&quot;</code>, wrap a regular expression in <code>$()</code>. As mentioned above, because the regex is a complicated syntax, we need to wrap it in parentheses, so that</p><pre><code class="language-julia hljs">@select df $(r&quot;^a&quot;)</code></pre><p>will construct the command <code>select(df, r&quot;^a&quot;)</code>. </p><p>Multi-argument selectors <em>may only</em> be used when an entire argument is wrapped in <code>$()</code>. For example</p><pre><code class="language-julia hljs">@select df :y = f($[:a, :b])</code></pre><p>will fail. </p><p>Not all functions in DataFrames.jl allow for multi-column selectors, so detailed knowledge of the underlying functions in DataFrames.jl may be required. For example, the call </p><pre><code class="language-julia hljs">subset(df, [:a, :b])</code></pre><p>will fail in DataFrames.jl, because <code>DataFrames.subset</code> does not support vectors of column names. Likewise, <code>@subset df $[:a, :b]</code> will fail. The macros which support multi-column selectors are </p><ul><li><code>@select</code></li><li><code>@transform</code> (multi-argument selectors have no effect)</li><li><code>@combine</code></li><li><code>@by</code></li></ul><p>Since arguments wrapped entirely in <code>$()</code> get passed directly to underlying DataFrames.jl functions, this allows the use of the DataFrames.jl &quot;mini-language&quot; consisting of <code>src =&gt; fun =&gt; dest</code> pairs inside DataFramesMeta.jl macros. For example, you can do the following:</p><pre><code class="language-julia hljs">julia&gt; df = DataFrame(a = [1, 2], b = [3, 4]);
+
+julia&gt; my_transformation = :a =&gt; (t -&gt; t .+ 100) =&gt; :c;
+
+julia&gt; @transform df begin 
+           $my_transformation
+           :d = :b .+ 200
+       end
+2×4 DataFrame
+ Row │ a      b      c      d     
+     │ Int64  Int64  Int64  Int64 
+─────┼────────────────────────────
+   1 │     1      3    101    203
+   2 │     2      4    102    204</code></pre><p>or with <code>@subset</code></p><pre><code class="language-julia hljs">julia&gt; @subset df $(:a =&gt; t -&gt; t .&gt;= 2)
+1×2 DataFrame
+ Row │ a      b     
+     │ Int64  Int64 
+─────┼──────────────
+   1 │     2      4</code></pre><div class="admonition is-warning"><header class="admonition-header">Warning</header><div class="admonition-body"><p>The macros <code>@orderby</code> and <code>@with</code> do not transparently call underlying DataFrames.jl functions. Escaping entire transformations should be considered unstable and may change in future versions.</p></div></div><div class="admonition is-warning"><header class="admonition-header">Warning</header><div class="admonition-body"><p>Row-wise macros such as <code>@rtransform</code> and <code>@rsubset</code> will not automatically wrap functions in <code>src =&gt; fun =&gt; dest</code> in <code>ByRow</code>. </p></div></div><p>In summary</p><ul><li><p>All arguments that are not <em>entirely</em> escaped with <code>$</code> or <code>$()</code> construct anonymous functions. Inside these expressions only single-column selectors are allowed. This includes</p><ul><li><code>Symbol</code>s, i.e. <code>:x</code> and <code>:y</code></li><li>Strings, escaped with <code>$</code>, i.e. <code>$&quot;A string&quot;</code> or <code>$(&quot;A string with many&quot; * &quot;parts&quot;)</code></li><li>Integers, escaped with <code>$</code>, i.e. <code>$1</code></li><li>Any single-column variable representing one of the above, escaped with <code>$</code>, i.e. <code>$x</code></li></ul><p>In transformation operations, i.e. <code>@transform :y = f(:x)</code>, the same rules on the right hand side also apply to the left hand side. For example, <code>@transform $&quot;y&quot; = f(:x)</code> will work. </p></li><li><p>Arguments wrapped entirely in <code>$</code> or <code>$()</code> are passed directly to the underlying DataFrames.jl functions. Because of this, <em>in addition to</em> the single-column selectors listed above, multi-argument selectors are allowed. These include, but are not limited to</p><ul><li>Vectors of <code>Symbol</code>s, <code>$[:x, :y]</code>, strings, <code>$[&quot;x&quot;, &quot;y&quot;]</code>, or integers <code>$[1, 2]</code></li><li>Regular expressions, <code>$(r&quot;^a&quot;)</code></li><li>Filtering column selectors, such as <code>$(Not(:x))</code> and <code>$(Between(:a, :z))</code></li></ul><p>The macros <code>@with</code>, <code>@subset</code>, and <code>@orderby</code> do not support multi-column selectors. </p></li><li><p>Advanced users of DataFramesMeta.jl and DataFrames.jl may wrap an argument entirely in <code>$()</code> to pass <code>src =&gt; fun =&gt; dest</code> pairs directly to DataFrames.jl functions. However this is discouraged and it&#39;s behavior may change in future versions. </p></li></ul><h2 id="Working-with-Symbols-without-referring-to-columns"><a class="docs-heading-anchor" href="#Working-with-Symbols-without-referring-to-columns">Working with <code>Symbol</code>s without referring to columns</a><a id="Working-with-Symbols-without-referring-to-columns-1"></a><a class="docs-heading-anchor-permalink" href="#Working-with-Symbols-without-referring-to-columns" title="Permalink"></a></h2><p>To refer to <code>Symbol</code>s without aliasing the column in a data frame, use <code>^</code>. </p><pre><code class="nohighlight hljs">df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
+@select(df, :x2 = :x, :x3 = ^(:x))</code></pre><p>This rule applies to all DataFramesMeta macros.</p><h2 id="Comparison-with-dplyr-and-LINQ"><a class="docs-heading-anchor" href="#Comparison-with-dplyr-and-LINQ">Comparison with <code>dplyr</code> and LINQ</a><a id="Comparison-with-dplyr-and-LINQ-1"></a><a class="docs-heading-anchor-permalink" href="#Comparison-with-dplyr-and-LINQ" title="Permalink"></a></h2><p>A number of functions for operations on DataFrames have been defined. Here is a table of equivalents for Hadley&#39;s <a href="https://github.com/hadley/dplyr">dplyr</a> and common <a href="http://en.wikipedia.org/wiki/Language_Integrated_Query">LINQ</a> functions.</p><table><tr><th style="text-align: right">Julia</th><th style="text-align: right">dplyr</th><th style="text-align: right">LINQ</th></tr><tr><td style="text-align: right"><code>@subset</code></td><td style="text-align: right"><code>filter</code></td><td style="text-align: right"><code>Where</code></td></tr><tr><td style="text-align: right"><code>@transform</code></td><td style="text-align: right"><code>mutate</code></td><td style="text-align: right"><code>Select</code> (?)</td></tr><tr><td style="text-align: right"><code>@by</code></td><td style="text-align: right"></td><td style="text-align: right"><code>GroupBy</code></td></tr><tr><td style="text-align: right"><code>@groupby</code></td><td style="text-align: right"><code>group_by</code></td><td style="text-align: right"><code>GroupBy</code></td></tr><tr><td style="text-align: right"><code>@combine</code></td><td style="text-align: right"><code>summarise</code>/<code>do</code></td><td style="text-align: right"></td></tr><tr><td style="text-align: right"><code>@orderby</code></td><td style="text-align: right"><code>arrange</code></td><td style="text-align: right"><code>OrderBy</code></td></tr><tr><td style="text-align: right"><code>@select</code></td><td style="text-align: right"><code>select</code></td><td style="text-align: right"><code>Select</code></td></tr></table><h2 id="Chaining-operations-together-with-@chain"><a class="docs-heading-anchor" href="#Chaining-operations-together-with-@chain">Chaining operations together with <code>@chain</code></a><a id="Chaining-operations-together-with-@chain-1"></a><a class="docs-heading-anchor-permalink" href="#Chaining-operations-together-with-@chain" title="Permalink"></a></h2><p>To enable connecting multiple commands together in  a pipe, DataFramesMeta.jl re-exports the <code>@chain</code> macro from  <a href="https://github.com/jkrumbiegel/Chain.jl">Chain.jl</a>. </p><pre><code class="language-julia hljs">using Statistics 
+
+df = DataFrame(a = repeat(1:5, outer = 20),
+               b = repeat([&quot;a&quot;, &quot;b&quot;, &quot;c&quot;, &quot;d&quot;], inner = 25),
+               x = repeat(1:20, inner = 5))
+
+x_thread = @chain df begin
+    @transform(:y = 10 * :x)
+    @subset(:a .&gt; 2)
+    @by(:b, :meanX = mean(:x), :meanY = mean(:y))
+    @orderby(:meanX)
+    @select(:meanX, :meanY, :var = :b)
+end</code></pre><p>By default, <code>@chain</code> places the value of the  previous expression into the first argument of the current expression. The placeholder <code>_</code> is used to break that convention and refer to the argument returned from the previous  expression.</p><pre><code class="language-julia hljs"># Get the sum of all columns after 
+# a few transformations
+@chain df begin 
+    @transform(:y = 10 .* :x)
+    @subset(:a .&gt; 2)
+    @select(:a, :y, :x)
+    reduce(+, eachcol(_))
+end</code></pre><p><code>@chain</code> also provides the <code>@aside</code> macro-flag to perform operations in the middle of a <code>@chain</code> block. </p><pre><code class="language-julia hljs">@chain df begin 
+    @transform :y = 10 .* :x
+    @aside y_mean = mean(_.y) # From Chain.jl, not DataFramesMeta.jl
+    @select :y_standardize = :y .- y_mean
+end</code></pre><h2 id="Attaching-variable-labels-and-notes"><a class="docs-heading-anchor" href="#Attaching-variable-labels-and-notes">Attaching variable labels and notes</a><a id="Attaching-variable-labels-and-notes-1"></a><a class="docs-heading-anchor-permalink" href="#Attaching-variable-labels-and-notes" title="Permalink"></a></h2><p>A widely used and appreciated feature of the Stata data analysis programming language is it&#39;s tools for column-level metadata in the form of labels and notes. Like Stata, Julia&#39;s data ecosystem implements a common  API for keeping track of information associated with columns. DataFramesMeta.jl  implements the <code>@label!</code> and <code>@note!</code> macros to attach information to columns. </p><p>DataFramesMeta.jl also provides two convenience functions  for examining metadata, <code>printlabels</code> and <code>printnotes</code>.</p><h3 id="@label!:-For-short-column-labels"><a class="docs-heading-anchor" href="#@label!:-For-short-column-labels"><code>@label!</code>: For short column labels</a><a id="@label!:-For-short-column-labels-1"></a><a class="docs-heading-anchor-permalink" href="#@label!:-For-short-column-labels" title="Permalink"></a></h3><p>Use <code>@label!</code> to attach short-but-informative labels to columns. For example, a variable <code>:wage</code> might be given the label <code>&quot;Wage (2015 USD)&quot;</code>. </p><pre><code class="language-julia hljs">df = DataFrame(wage = [16, 25, 14, 23]);
+@label! df :wage = &quot;Wage (2015 USD)&quot;</code></pre><p>View the labels with <code>printlabels(df)</code></p><pre><code class="nohighlight hljs">julia&gt; printlabels(df)
+┌────────┬─────────────────┐
+│ Column │           Label │
+├────────┼─────────────────┤
+│   wage │ Wage (2015 USD) │
+└────────┴─────────────────┘</code></pre><p>You can access labels via the <code>label</code> function defined in TablesMetaDataTools.jl</p><pre><code class="nohighlight hljs">julia&gt; label(df, :wage)
+&quot;Wage (2015 USD)&quot;</code></pre><h3 id="@note!:-For-longer-column-notes"><a class="docs-heading-anchor" href="#@note!:-For-longer-column-notes"><code>@note!</code>: For longer column notes</a><a id="@note!:-For-longer-column-notes-1"></a><a class="docs-heading-anchor-permalink" href="#@note!:-For-longer-column-notes" title="Permalink"></a></h3><p>While labels are useful for pretty printing and clarification of short variable names, notes are used to give more in depth information and describe the data  cleaning process. Unlike labels, notes can be stacked on to one another. </p><p>Consider the cleaning process for wages, starting with the data frame</p><pre><code class="language-julia hljs">julia&gt; df = DataFrame(wage = [-99, 16, 14, 23, 5000])
+5×1 DataFrame
+ Row │ wage  
+     │ Int64 
+─────┼───────
+   1 │   -99
+   2 │    16
+   3 │    14
+   4 │    23
+   5 │  5000
+</code></pre><p>When data cleaning you might want to do the following:</p><ol><li>Record the source of the data</li></ol><pre><code class="nohighlight hljs">@note! df :wage = &quot;Hourly wage from 2015 American Community Survey (ACS)&quot;</code></pre><ol><li>Fix coded wages. In this example, <code>-99</code> corresponds to &quot;no job&quot;</li></ol><pre><code class="nohighlight hljs">@rtransform! df :wage = :wage == -99 ? 0 : :wage
+@note! df :wage = &quot;Individuals with no job are recorded as 0 wage&quot;</code></pre><p>We use <code>printnotes</code> to see the notes for columns. </p><pre><code class="nohighlight hljs">julia&gt; printnotes(df)
+Column: wage
+────────────
+Hourly wage from 2015 American Community Survey (ACS)
+Individuals with no job are recorded as 0 wage</code></pre><p>You can access the note via the <code>note</code> function. </p><pre><code class="nohighlight hljs">julia&gt; note(df, :wage)
+&quot;Hourly wage from 2015 American Community Survey (ACS)\nIndividuals with no job are recorded as 0 wage&quot;</code></pre><p>To remove all notes from a column, run</p><pre><code class="nohighlight hljs">note!(df, :wage, &quot;&quot;; append = false)</code></pre><h3 id="Printing-metadata"><a class="docs-heading-anchor" href="#Printing-metadata">Printing metadata</a><a id="Printing-metadata-1"></a><a class="docs-heading-anchor-permalink" href="#Printing-metadata" title="Permalink"></a></h3><h4 id="printlabels:-For-printing-labels"><a class="docs-heading-anchor" href="#printlabels:-For-printing-labels"><code>printlabels</code>: For printing labels</a><a id="printlabels:-For-printing-labels-1"></a><a class="docs-heading-anchor-permalink" href="#printlabels:-For-printing-labels" title="Permalink"></a></h4><p>Use <code>printlabels</code> to print the labels of columns in a data frame. The optional argument <code>cols</code> determines which columns to print, while the keyword argument <code>unlabelled</code> controls whether to print columns without user-defined labels. </p><pre><code class="language-julia-repl hljs">julia&gt; df = DataFrame(wage = [12], age = [23]);
+
+julia&gt; @label! df :wage = &quot;Hourly wage (2015 USD)&quot;;
+
+julia&gt; printlabels(df)
+┌────────┬────────────────────────┐
+│ Column │                  Label │
+├────────┼────────────────────────┤
+│   wage │ Hourly wage (2015 USD) │
+│    age │                    age │
+└────────┴────────────────────────┘
+
+julia&gt; printlabels(df, [:wage, :age]; unlabelled = false)
+┌────────┬────────────────────────┐
+│ Column │                  Label │
+├────────┼────────────────────────┤
+│   wage │ Hourly wage (2015 USD) │
+└────────┴────────────────────────┘</code></pre><h4 id="printnotes:-For-printing-notes"><a class="docs-heading-anchor" href="#printnotes:-For-printing-notes"><code>printnotes</code>: For printing notes</a><a id="printnotes:-For-printing-notes-1"></a><a class="docs-heading-anchor-permalink" href="#printnotes:-For-printing-notes" title="Permalink"></a></h4><p>Use <code>printnotes</code> to print the notes of columns in a data frame. The optional argument <code>cols</code> determines which columns to print, while the keyword argument <code>unnoted</code> controls whether to print columns without user-defined notes. </p><pre><code class="language-julia-repl hljs">julia&gt; df = DataFrame(wage = [12], age = [23]);
+
+julia&gt; @label! df :age = &quot;Age (years)&quot;;
+
+julia&gt; @note! df :wage = &quot;Derived from American Community Survey&quot;;
+
+julia&gt; @note! df :wage = &quot;Missing values imputed as 0 wage&quot;;
+
+julia&gt; @label! df :wage = &quot;Hourly wage (2015 USD)&quot;;
+
+julia&gt; printnotes(df)
+Column: wage
+────────────
+Label: Hourly wage (2015 USD)
+Derived from American Community Survey
+Missing values imputed as 0 wage
+
+Column: age
+───────────
+Label: Age (years)
+</code></pre><ul><li><a href="api/api/#API">API</a></li></ul></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="dplyr/">Tutorial for coming from dplyr »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Tuesday 3 December 2024 14:58">Tuesday 3 December 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

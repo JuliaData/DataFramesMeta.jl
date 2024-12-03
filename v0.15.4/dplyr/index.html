@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Tutorial for coming from dplyr · DataFramesMeta Documentation</title><script data-outdated-warner src="../assets/warner.js"></script><link rel="canonical" href="https://juliadata.github.io/DataFramesMeta.jl/stable/dplyr/"/><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">DataFramesMeta Documentation</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Introduction</a></li><li class="is-active"><a class="tocitem" href>Tutorial for coming from dplyr</a><ul class="internal"><li><a class="tocitem" href="#What-is-DataFramesMeta.jl?"><span>What is DataFramesMeta.jl?</span></a></li><li><a class="tocitem" href="#Why-Is-It-Useful?"><span>Why Is It Useful?</span></a></li><li><a class="tocitem" href="#How-Does-It-Compare-To-Using-Base-Functions-in-Julia-and-in-DataFrames.jl?"><span>How Does It Compare To Using Base Functions in Julia and in DataFrames.jl?</span></a></li><li><a class="tocitem" href="#How-Do-I-Get-DataFramesMeta.jl?"><span>How Do I Get DataFramesMeta.jl?</span></a></li><li class="toplevel"><a class="tocitem" href="#Data:-Mammals-Sleep"><span>Data: Mammals Sleep</span></a></li><li class="toplevel"><a class="tocitem" href="#Important-DataFramesMeta.jl-Verbs-To-Remember"><span>Important DataFramesMeta.jl Verbs To Remember</span></a></li><li class="toplevel"><a class="tocitem" href="#DataFramesMeta.jl-Verbs-In-Action"><span>DataFramesMeta.jl Verbs In Action</span></a></li><li><a class="tocitem" href="#Selecting-Columns-Using-@select"><span>Selecting Columns Using <code>@select</code></span></a></li><li><a class="tocitem" href="#Selecting-Rows-Using-@subset-and-@rsubset"><span>Selecting Rows Using <code>@subset</code> and <code>@rsubset</code></span></a></li><li class="toplevel"><a class="tocitem" href="#Chain.jl"><span>Chain.jl</span></a></li><li class="toplevel"><a class="tocitem" href="#Back-To-dplyr-Verbs-In-Action"><span>Back To dplyr Verbs In Action</span></a></li><li><a class="tocitem" href="#Arrange-Or-Re-order-Rows-Using-@orderby"><span>Arrange Or Re-order Rows Using <code>@orderby</code></span></a></li><li><a class="tocitem" href="#Create-New-Columns-Using-@transform-and-@rtransform"><span>Create New Columns Using <code>@transform</code> and <code>@rtransform</code></span></a></li><li><a class="tocitem" href="#Create-Summaries-of-the-Data-Frame-using-@combine"><span>Create Summaries of the Data Frame using <code>@combine</code></span></a></li><li><a class="tocitem" href="#Group-Operations-using-@groupby-and-@combine"><span>Group Operations using <code>@groupby</code> and <code>@combine</code></span></a></li></ul></li><li><a class="tocitem" href="../api/api/">API</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Tutorial for coming from dplyr</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Tutorial for coming from dplyr</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/JuliaData/DataFramesMeta.jl/blob/master/docs/src/dplyr.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="DataFramesMeta.jl-Tutorial"><a class="docs-heading-anchor" href="#DataFramesMeta.jl-Tutorial">DataFramesMeta.jl Tutorial</a><a id="DataFramesMeta.jl-Tutorial-1"></a><a class="docs-heading-anchor-permalink" href="#DataFramesMeta.jl-Tutorial" title="Permalink"></a></h1><p>This is a port of the HarvardX series PH525x Genomics class tutorial on dplyr. View the original <a href="https://genomicsclass.github.io/book/pages/dplyr_tutorial.html">here</a> and the source <a href="https://github.com/genomicsclass/labs/blob/master/intro/dplyr_tutorial.Rmd">here</a>.</p><h2 id="What-is-DataFramesMeta.jl?"><a class="docs-heading-anchor" href="#What-is-DataFramesMeta.jl?">What is DataFramesMeta.jl?</a><a id="What-is-DataFramesMeta.jl?-1"></a><a class="docs-heading-anchor-permalink" href="#What-is-DataFramesMeta.jl?" title="Permalink"></a></h2><p>DataFramesMeta.jl is a Julia package to transform and summarize tabular data. It uses Julia macros to create a domain-specific language for convenient syntax to work with data frames from <a href="https://github.com/JuliaData/DataFrames.jl">DataFrames.jl</a>. DataFramesMeta.jl mirrors concepts in DataFrames.jl as closely as possible, without implementing new features on it&#39;s own. For a deeper explanation of DataFramesMeta.jl, see the <a href="https://github.com/JuliaData/DataFramesMeta.jl">documentation</a>. </p><p>DataFramesMeta.jl is heavily inspired by R&#39;s <a href="https://cran.r-project.org/web/packages/dplyr/vignettes/dplyr.html"><code>dplyr</code></a>. If you are familiar with <code>dplyr</code> this guide should get you up to speed with DataFramesMeta.jl. </p><p>However this tutorial assumes a cursory knowledge of DataFrames.jl. For instance, you should be familiar with the concept of a symbol in Julia (<code>:x</code>), and how it is used to index a data frame in DataFrames.jl, such as with <code>df[:, :x]</code>. </p><h2 id="Why-Is-It-Useful?"><a class="docs-heading-anchor" href="#Why-Is-It-Useful?">Why Is It Useful?</a><a id="Why-Is-It-Useful?-1"></a><a class="docs-heading-anchor-permalink" href="#Why-Is-It-Useful?" title="Permalink"></a></h2><p>Like dplyr, the DataFramesMeta.jl package contains a set of macros (or &quot;verbs&quot;) that perform common data manipulation operations such as filtering for rows, selecting specific columns, re-ordering rows, and adding new columns. </p><p>In addition, DataFramesMeta.jl makes it easier to summarize data with the <code>@combine</code> verb, which implements the <a href="https://dataframes.juliadata.org/stable/man/split_apply_combine/">split-apply-combine</a> pattern commonly seen in <code>dplyr</code> and other data manipulation packages.</p><h2 id="How-Does-It-Compare-To-Using-Base-Functions-in-Julia-and-in-DataFrames.jl?"><a class="docs-heading-anchor" href="#How-Does-It-Compare-To-Using-Base-Functions-in-Julia-and-in-DataFrames.jl?">How Does It Compare To Using Base Functions in Julia and in DataFrames.jl?</a><a id="How-Does-It-Compare-To-Using-Base-Functions-in-Julia-and-in-DataFrames.jl?-1"></a><a class="docs-heading-anchor-permalink" href="#How-Does-It-Compare-To-Using-Base-Functions-in-Julia-and-in-DataFrames.jl?" title="Permalink"></a></h2><p>If you are familiar with Julia, you are probably familiar with base Julia functions such  <code>map</code>, and <code>broadcast</code> (akin to <code>*apply</code> in R). These functions are convenient to use, but are designed to work with arrays, not tabular data.</p><p>DataFrames.jl provides the functions <code>select</code>, <code>transform</code>, and more to work with data frames. Unlike <code>map</code> and <code>broadcast</code>, these functions are designed to work with tabular data, but have a complicated syntax. </p><p>DataFramesMeta.jl provides a convenient syntax for working with the vectors in a data frame so that you get all the convenience of Base Julia and DataFrames combined. </p><h2 id="How-Do-I-Get-DataFramesMeta.jl?"><a class="docs-heading-anchor" href="#How-Do-I-Get-DataFramesMeta.jl?">How Do I Get DataFramesMeta.jl?</a><a id="How-Do-I-Get-DataFramesMeta.jl?-1"></a><a class="docs-heading-anchor-permalink" href="#How-Do-I-Get-DataFramesMeta.jl?" title="Permalink"></a></h2><p>To install DataFramesMeta.jl, which also installs DataFrames.jl:</p><pre><code class="language-julia hljs">import Pkg
+Pkg.activate(; temp=true) # activate a temporary environment for this tutorial
+Pkg.add(&quot;DataFramesMeta&quot;);</code></pre><p>To load DataFramesMeta.jl, which also loads DataFrames.jl:</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; using DataFramesMeta</code><code class="nohighlight hljs ansi" style="display:block;"></code></pre><p>For this tutorial, we will install some additional packages as well. </p><pre><code class="language-julia hljs">Pkg.add([&quot;CSV&quot;, &quot;HTTP&quot;])</code></pre><p>Now we load them. We also load the Statistics standard library, which is shipped with Julia, so does not need to be installed.</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; using CSV, HTTP, Statistics</code><code class="nohighlight hljs ansi" style="display:block;"></code></pre><p>We will use <a href="https://csv.juliadata.org/stable/">CSV.jl</a> and <a href="https://juliaweb.github.io/HTTP.jl/stable/">HTTP.jl</a> for downloading our dataset from the internet.</p><h1 id="Data:-Mammals-Sleep"><a class="docs-heading-anchor" href="#Data:-Mammals-Sleep">Data: Mammals Sleep</a><a id="Data:-Mammals-Sleep-1"></a><a class="docs-heading-anchor-permalink" href="#Data:-Mammals-Sleep" title="Permalink"></a></h1><p>The <code>msleep</code> (mammals sleep) data set contains the sleep times and weights for a set of mammals and is available in the dagdata repository on GitHub. This data set contains 83 rows and 11 variables.  </p><p>We can load the data directly into a DataFrame from the <code>url</code>. </p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; url = &quot;https://raw.githubusercontent.com/genomicsclass/dagdata/master/inst/extdata/msleep_ggplot2.csv&quot;</code><code class="nohighlight hljs ansi" style="display:block;">&quot;https://raw.githubusercontent.com/genomicsclass/dagdata/master/inst/extdata/msleep_ggplot2.csv&quot;</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; msleep = CSV.read(HTTP.get(url).body, DataFrame; missingstring=&quot;NA&quot;)</code><code class="nohighlight hljs ansi" style="display:block;">83×11 DataFrame
+ Row │ name                        genus         vore      order           con ⋯
+     │ String31                    String15      String7?  String15        Str ⋯
+─────┼──────────────────────────────────────────────────────────────────────────
+   1 │ Cheetah                     Acinonyx      carni     Carnivora       lc  ⋯
+   2 │ Owl monkey                  Aotus         omni      Primates        mis
+   3 │ Mountain beaver             Aplodontia    herbi     Rodentia        nt
+   4 │ Greater short-tailed shrew  Blarina       omni      Soricomorpha    lc
+   5 │ Cow                         Bos           herbi     Artiodactyla    dom ⋯
+   6 │ Three-toed sloth            Bradypus      herbi     Pilosa          mis
+   7 │ Northern fur seal           Callorhinus   carni     Carnivora       vu
+   8 │ Vesper mouse                Calomys       missing   Rodentia        mis
+  ⋮  │             ⋮                    ⋮           ⋮            ⋮             ⋱
+  77 │ Brazilian tapir             Tapirus       herbi     Perissodactyla  vu  ⋯
+  78 │ Tenrec                      Tenrec        omni      Afrosoricida    mis
+  79 │ Tree shrew                  Tupaia        omni      Scandentia      mis
+  80 │ Bottle-nosed dolphin        Tursiops      carni     Cetacea         mis
+  81 │ Genet                       Genetta       carni     Carnivora       mis ⋯
+  82 │ Arctic fox                  Vulpes        carni     Carnivora       mis
+  83 │ Red fox                     Vulpes        carni     Carnivora       mis
+                                                   7 columns and 68 rows omitted</code></pre><p>The columns (in order) correspond to the following: </p><table><tr><th style="text-align: right">column name</th><th style="text-align: right">Description</th></tr><tr><td style="text-align: right"><code>:name</code></td><td style="text-align: right">common name</td></tr><tr><td style="text-align: right"><code>:genus</code></td><td style="text-align: right">taxonomic rank</td></tr><tr><td style="text-align: right"><code>:vore</code></td><td style="text-align: right">carnivore, omnivore or herbivore?</td></tr><tr><td style="text-align: right"><code>:order</code></td><td style="text-align: right">taxonomic rank</td></tr><tr><td style="text-align: right"><code>:conservation</code></td><td style="text-align: right">the conservation status of the mammal</td></tr><tr><td style="text-align: right"><code>:sleep_total</code></td><td style="text-align: right">total amount of sleep, in hours</td></tr><tr><td style="text-align: right"><code>:sleep_rem</code></td><td style="text-align: right">rem sleep, in hours</td></tr><tr><td style="text-align: right"><code>:sleep_cycle</code></td><td style="text-align: right">length of sleep cycle, in hours</td></tr><tr><td style="text-align: right"><code>:awake</code></td><td style="text-align: right">amount of time spent awake, in hours</td></tr><tr><td style="text-align: right"><code>:brainwt</code></td><td style="text-align: right">brain weight in kilograms</td></tr><tr><td style="text-align: right"><code>:bodywt</code></td><td style="text-align: right">body weight in kilograms</td></tr></table><h1 id="Important-DataFramesMeta.jl-Verbs-To-Remember"><a class="docs-heading-anchor" href="#Important-DataFramesMeta.jl-Verbs-To-Remember">Important DataFramesMeta.jl Verbs To Remember</a><a id="Important-DataFramesMeta.jl-Verbs-To-Remember-1"></a><a class="docs-heading-anchor-permalink" href="#Important-DataFramesMeta.jl-Verbs-To-Remember" title="Permalink"></a></h1><p>Many DataFrames.jl macros come in two forms, a version which operates on columns as a whole and a version which operations row-wise, prefixed by <code>r</code>.</p><table><tr><th style="text-align: right">DataFramesMeta.jl macro</th><th style="text-align: right">By-row version</th><th style="text-align: right">Description</th><th style="text-align: right"><code>dplyr</code> equivalent</th></tr><tr><td style="text-align: right"><code>@select</code></td><td style="text-align: right"><code>@rselect</code></td><td style="text-align: right">select columns</td><td style="text-align: right"><code>select</code></td></tr><tr><td style="text-align: right"><code>@transform</code></td><td style="text-align: right"><code>@rtransform</code></td><td style="text-align: right">create new columns</td><td style="text-align: right"><code>mutate</code></td></tr><tr><td style="text-align: right"><code>@subset</code></td><td style="text-align: right"><code>@rsubset</code></td><td style="text-align: right">filter rows</td><td style="text-align: right"><code>filter</code></td></tr><tr><td style="text-align: right"><code>@orderby</code></td><td style="text-align: right"><code>@rorderby</code></td><td style="text-align: right">re-order or arrange rows</td><td style="text-align: right"><code>arrange</code></td></tr><tr><td style="text-align: right"><code>@combine</code></td><td style="text-align: right"></td><td style="text-align: right">summarise values</td><td style="text-align: right"><code>summarize</code> (but <code>@combine</code> is more flexible)</td></tr><tr><td style="text-align: right"><code>@groupby</code></td><td style="text-align: right"></td><td style="text-align: right">allows for group operations in the &quot;split-apply-combine&quot; concept</td><td style="text-align: right"><code>group_by</code></td></tr></table><h1 id="DataFramesMeta.jl-Verbs-In-Action"><a class="docs-heading-anchor" href="#DataFramesMeta.jl-Verbs-In-Action">DataFramesMeta.jl Verbs In Action</a><a id="DataFramesMeta.jl-Verbs-In-Action-1"></a><a class="docs-heading-anchor-permalink" href="#DataFramesMeta.jl-Verbs-In-Action" title="Permalink"></a></h1><p>Two of the most basic functions are <code>@select</code> and <code>@subset</code>, which selects columns and filters rows respectively. To reference columns, use the <code>Symbol</code> of the column name, i.e. <code>:name</code> refers to the column <code>msleep.name</code>.</p><h2 id="Selecting-Columns-Using-@select"><a class="docs-heading-anchor" href="#Selecting-Columns-Using-@select">Selecting Columns Using <code>@select</code></a><a id="Selecting-Columns-Using-@select-1"></a><a class="docs-heading-anchor-permalink" href="#Selecting-Columns-Using-@select" title="Permalink"></a></h2><p>Select a set of columns: the <code>:name</code> and the <code>:sleep_total</code> columns. </p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @select msleep :name :sleep_total</code><code class="nohighlight hljs ansi" style="display:block;">83×2 DataFrame
+ Row │ name                        sleep_total
+     │ String31                    Float64
+─────┼─────────────────────────────────────────
+   1 │ Cheetah                            12.1
+   2 │ Owl monkey                         17.0
+   3 │ Mountain beaver                    14.4
+   4 │ Greater short-tailed shrew         14.9
+   5 │ Cow                                 4.0
+   6 │ Three-toed sloth                   14.4
+   7 │ Northern fur seal                   8.7
+   8 │ Vesper mouse                        7.0
+  ⋮  │             ⋮                    ⋮
+  77 │ Brazilian tapir                     4.4
+  78 │ Tenrec                             15.6
+  79 │ Tree shrew                          8.9
+  80 │ Bottle-nosed dolphin                5.2
+  81 │ Genet                               6.3
+  82 │ Arctic fox                         12.5
+  83 │ Red fox                             9.8
+                                68 rows omitted</code></pre><p>If you have a column name stored as a variable, you can select it as a column with the syntax <code>$</code>. </p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; varname = :sleep_total</code><code class="nohighlight hljs ansi" style="display:block;">:sleep_total</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; @select msleep :name $varname</code><code class="nohighlight hljs ansi" style="display:block;">83×2 DataFrame
+ Row │ name                        sleep_total
+     │ String31                    Float64
+─────┼─────────────────────────────────────────
+   1 │ Cheetah                            12.1
+   2 │ Owl monkey                         17.0
+   3 │ Mountain beaver                    14.4
+   4 │ Greater short-tailed shrew         14.9
+   5 │ Cow                                 4.0
+   6 │ Three-toed sloth                   14.4
+   7 │ Northern fur seal                   8.7
+   8 │ Vesper mouse                        7.0
+  ⋮  │             ⋮                    ⋮
+  77 │ Brazilian tapir                     4.4
+  78 │ Tenrec                             15.6
+  79 │ Tree shrew                          8.9
+  80 │ Bottle-nosed dolphin                5.2
+  81 │ Genet                               6.3
+  82 │ Arctic fox                         12.5
+  83 │ Red fox                             9.8
+                                68 rows omitted</code></pre><p>The <code>$</code> sign has special meaning in DataFramesMeta.jl. We use it for any column reference which is <em>not</em> a symbol. Without it, DataFramesMeta.jl can&#39;t tell whether <code>varname</code> refers to the column <code>:sleep_total</code>. </p><p>You can also use <code>$</code> to refer to columns with strings</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; varname = &quot;sleep_total&quot;</code><code class="nohighlight hljs ansi" style="display:block;">&quot;sleep_total&quot;</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; @select msleep :name $varname</code><code class="nohighlight hljs ansi" style="display:block;">83×2 DataFrame
+ Row │ name                        sleep_total
+     │ String31                    Float64
+─────┼─────────────────────────────────────────
+   1 │ Cheetah                            12.1
+   2 │ Owl monkey                         17.0
+   3 │ Mountain beaver                    14.4
+   4 │ Greater short-tailed shrew         14.9
+   5 │ Cow                                 4.0
+   6 │ Three-toed sloth                   14.4
+   7 │ Northern fur seal                   8.7
+   8 │ Vesper mouse                        7.0
+  ⋮  │             ⋮                    ⋮
+  77 │ Brazilian tapir                     4.4
+  78 │ Tenrec                             15.6
+  79 │ Tree shrew                          8.9
+  80 │ Bottle-nosed dolphin                5.2
+  81 │ Genet                               6.3
+  82 │ Arctic fox                         12.5
+  83 │ Red fox                             9.8
+                                68 rows omitted</code></pre><p>as well as vectors of variable names </p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; varnames = [&quot;name&quot;, &quot;sleep_total&quot;]</code><code class="nohighlight hljs ansi" style="display:block;">2-element Vector{String}:
+ &quot;name&quot;
+ &quot;sleep_total&quot;</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; @select msleep $varnames</code><code class="nohighlight hljs ansi" style="display:block;">83×2 DataFrame
+ Row │ name                        sleep_total
+     │ String31                    Float64
+─────┼─────────────────────────────────────────
+   1 │ Cheetah                            12.1
+   2 │ Owl monkey                         17.0
+   3 │ Mountain beaver                    14.4
+   4 │ Greater short-tailed shrew         14.9
+   5 │ Cow                                 4.0
+   6 │ Three-toed sloth                   14.4
+   7 │ Northern fur seal                   8.7
+   8 │ Vesper mouse                        7.0
+  ⋮  │             ⋮                    ⋮
+  77 │ Brazilian tapir                     4.4
+  78 │ Tenrec                             15.6
+  79 │ Tree shrew                          8.9
+  80 │ Bottle-nosed dolphin                5.2
+  81 │ Genet                               6.3
+  82 │ Arctic fox                         12.5
+  83 │ Red fox                             9.8
+                                68 rows omitted</code></pre><p>Similarly, to select the first column, use the syntax <code>$1</code>. </p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @select msleep $1</code><code class="nohighlight hljs ansi" style="display:block;">83×1 DataFrame
+ Row │ name
+     │ String31
+─────┼────────────────────────────
+   1 │ Cheetah
+   2 │ Owl monkey
+   3 │ Mountain beaver
+   4 │ Greater short-tailed shrew
+   5 │ Cow
+   6 │ Three-toed sloth
+   7 │ Northern fur seal
+   8 │ Vesper mouse
+  ⋮  │             ⋮
+  77 │ Brazilian tapir
+  78 │ Tenrec
+  79 │ Tree shrew
+  80 │ Bottle-nosed dolphin
+  81 │ Genet
+  82 │ Arctic fox
+  83 │ Red fox
+                   68 rows omitted</code></pre><p>To select all the columns <em>except</em> a specific column, use the <code>Not</code> function for inverse selection. </p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @select msleep Not(:name)</code><code class="nohighlight hljs ansi" style="display:block;">83×10 DataFrame
+ Row │ genus         vore      order           conservation  sleep_total  slee ⋯
+     │ String15      String7?  String15        String15?     Float64      Floa ⋯
+─────┼──────────────────────────────────────────────────────────────────────────
+   1 │ Acinonyx      carni     Carnivora       lc                   12.1  miss ⋯
+   2 │ Aotus         omni      Primates        missing              17.0
+   3 │ Aplodontia    herbi     Rodentia        nt                   14.4
+   4 │ Blarina       omni      Soricomorpha    lc                   14.9
+   5 │ Bos           herbi     Artiodactyla    domesticated          4.0       ⋯
+   6 │ Bradypus      herbi     Pilosa          missing              14.4
+   7 │ Callorhinus   carni     Carnivora       vu                    8.7
+   8 │ Calomys       missing   Rodentia        missing               7.0  miss
+  ⋮  │      ⋮           ⋮            ⋮              ⋮             ⋮            ⋱
+  77 │ Tapirus       herbi     Perissodactyla  vu                    4.4       ⋯
+  78 │ Tenrec        omni      Afrosoricida    missing              15.6
+  79 │ Tupaia        omni      Scandentia      missing               8.9
+  80 │ Tursiops      carni     Cetacea         missing               5.2  miss
+  81 │ Genetta       carni     Carnivora       missing               6.3       ⋯
+  82 │ Vulpes        carni     Carnivora       missing              12.5  miss
+  83 │ Vulpes        carni     Carnivora       missing               9.8
+                                                   5 columns and 68 rows omitted</code></pre><p>To select a range of columns by name, use the <code>Between</code> operator:</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @select msleep Between(:name, :order)</code><code class="nohighlight hljs ansi" style="display:block;">83×4 DataFrame
+ Row │ name                        genus         vore      order
+     │ String31                    String15      String7?  String15
+─────┼────────────────────────────────────────────────────────────────────
+   1 │ Cheetah                     Acinonyx      carni     Carnivora
+   2 │ Owl monkey                  Aotus         omni      Primates
+   3 │ Mountain beaver             Aplodontia    herbi     Rodentia
+   4 │ Greater short-tailed shrew  Blarina       omni      Soricomorpha
+   5 │ Cow                         Bos           herbi     Artiodactyla
+   6 │ Three-toed sloth            Bradypus      herbi     Pilosa
+   7 │ Northern fur seal           Callorhinus   carni     Carnivora
+   8 │ Vesper mouse                Calomys       missing   Rodentia
+  ⋮  │             ⋮                    ⋮           ⋮            ⋮
+  77 │ Brazilian tapir             Tapirus       herbi     Perissodactyla
+  78 │ Tenrec                      Tenrec        omni      Afrosoricida
+  79 │ Tree shrew                  Tupaia        omni      Scandentia
+  80 │ Bottle-nosed dolphin        Tursiops      carni     Cetacea
+  81 │ Genet                       Genetta       carni     Carnivora
+  82 │ Arctic fox                  Vulpes        carni     Carnivora
+  83 │ Red fox                     Vulpes        carni     Carnivora
+                                                           68 rows omitted</code></pre><p>To select all columns that start with the character string <code>&quot;sl&quot;</code> use <a href="https://regexone.com/">regular expressions</a> in conjunction with <code>Cols</code>.</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @select msleep Cols(r&quot;^sl&quot;)</code><code class="nohighlight hljs ansi" style="display:block;">83×3 DataFrame
+ Row │ sleep_total  sleep_rem  sleep_cycle
+     │ Float64      Float64?   Float64?
+─────┼────────────────────────────────────────
+   1 │        12.1  missing    missing
+   2 │        17.0        1.8  missing
+   3 │        14.4        2.4  missing
+   4 │        14.9        2.3        0.133333
+   5 │         4.0        0.7        0.666667
+   6 │        14.4        2.2        0.766667
+   7 │         8.7        1.4        0.383333
+   8 │         7.0  missing    missing
+  ⋮  │      ⋮           ⋮            ⋮
+  77 │         4.4        1.0        0.9
+  78 │        15.6        2.3  missing
+  79 │         8.9        2.6        0.233333
+  80 │         5.2  missing    missing
+  81 │         6.3        1.3  missing
+  82 │        12.5  missing    missing
+  83 │         9.8        2.4        0.35
+                               68 rows omitted</code></pre><p>Regular expressions are powerful, but can be difficult for new users to understand. Here are some quick tips.  </p><ol><li><code>r&quot;^abc&quot;</code> = Starts with <code>&quot;abc&quot;</code></li><li><code>r&quot;abc$&quot;</code> = Ends with <code>&quot;abc&quot;</code></li><li><code>r&quot;abc&quot;</code> = Contains <code>&quot;abc&quot;</code> anywhere. </li></ol><h2 id="Selecting-Rows-Using-@subset-and-@rsubset"><a class="docs-heading-anchor" href="#Selecting-Rows-Using-@subset-and-@rsubset">Selecting Rows Using <code>@subset</code> and <code>@rsubset</code></a><a id="Selecting-Rows-Using-@subset-and-@rsubset-1"></a><a class="docs-heading-anchor-permalink" href="#Selecting-Rows-Using-@subset-and-@rsubset" title="Permalink"></a></h2><p>Filter the rows for mammals that sleep a total of more than 16 hours. </p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @subset msleep :sleep_total .&gt;= 16</code><code class="nohighlight hljs ansi" style="display:block;">8×11 DataFrame
+ Row │ name                    genus         vore      order            conser ⋯
+     │ String31                String15      String7?  String15         String ⋯
+─────┼──────────────────────────────────────────────────────────────────────────
+   1 │ Owl monkey              Aotus         omni      Primates         missin ⋯
+   2 │ Long-nosed armadillo    Dasypus       carni     Cingulata        lc
+   3 │ North American Opossum  Didelphis     omni      Didelphimorphia  lc
+   4 │ Big brown bat           Eptesicus     insecti   Chiroptera       lc
+   5 │ Thick-tailed opposum    Lutreolina    carni     Didelphimorphia  lc     ⋯
+   6 │ Little brown bat        Myotis        insecti   Chiroptera       missin
+   7 │ Giant armadillo         Priodontes    insecti   Cingulata        en
+   8 │ Arctic ground squirrel  Spermophilus  herbi     Rodentia         lc
+                                                               7 columns omitted</code></pre><p>In the above expression, the <code>.&gt;=</code> means we &quot;broadcast&quot; the <code>&gt;=</code> comparison across the whole column. We can use a simpler syntax, <code>@rsubset</code> which automatically broadcasts all operations.</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @rsubset msleep :sleep_total &gt; 16</code><code class="nohighlight hljs ansi" style="display:block;">8×11 DataFrame
+ Row │ name                    genus         vore      order            conser ⋯
+     │ String31                String15      String7?  String15         String ⋯
+─────┼──────────────────────────────────────────────────────────────────────────
+   1 │ Owl monkey              Aotus         omni      Primates         missin ⋯
+   2 │ Long-nosed armadillo    Dasypus       carni     Cingulata        lc
+   3 │ North American Opossum  Didelphis     omni      Didelphimorphia  lc
+   4 │ Big brown bat           Eptesicus     insecti   Chiroptera       lc
+   5 │ Thick-tailed opposum    Lutreolina    carni     Didelphimorphia  lc     ⋯
+   6 │ Little brown bat        Myotis        insecti   Chiroptera       missin
+   7 │ Giant armadillo         Priodontes    insecti   Cingulata        en
+   8 │ Arctic ground squirrel  Spermophilus  herbi     Rodentia         lc
+                                                               7 columns omitted</code></pre><p>Subset the rows for mammals that sleep a total of more than 16 hours <em>and</em> have a body weight of greater than 1 kilogram. For this we put multiple operations on separate lines in a single block. </p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @rsubset msleep begin
+           :sleep_total &gt;= 16
+           :bodywt &gt;= 1
+       end</code><code class="nohighlight hljs ansi" style="display:block;">3×11 DataFrame
+ Row │ name                    genus       vore      order            conserva ⋯
+     │ String31                String15    String7?  String15         String15 ⋯
+─────┼──────────────────────────────────────────────────────────────────────────
+   1 │ Long-nosed armadillo    Dasypus     carni     Cingulata        lc       ⋯
+   2 │ North American Opossum  Didelphis   omni      Didelphimorphia  lc
+   3 │ Giant armadillo         Priodontes  insecti   Cingulata        en
+                                                               7 columns omitted</code></pre><p>If you are coming from <code>dplyr</code>, you can also write the above command in a way that looks more familiar. </p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @rsubset(msleep, :sleep_total &gt;= 16, :bodywt &gt;= 1)</code><code class="nohighlight hljs ansi" style="display:block;">3×11 DataFrame
+ Row │ name                    genus       vore      order            conserva ⋯
+     │ String31                String15    String7?  String15         String15 ⋯
+─────┼──────────────────────────────────────────────────────────────────────────
+   1 │ Long-nosed armadillo    Dasypus     carni     Cingulata        lc       ⋯
+   2 │ North American Opossum  Didelphis   omni      Didelphimorphia  lc
+   3 │ Giant armadillo         Priodontes  insecti   Cingulata        en
+                                                               7 columns omitted</code></pre><p>Filter the rows for mammals in the Perissodactyla and Primates taxonomic order. We wrap code in a <code>let</code> block to ensure things are fast.</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; let
+           relevant_orders = Set([&quot;Perissodactyla&quot;, &quot;Primates&quot;])
+           @rsubset msleep :order in relevant_orders
+       end</code><code class="nohighlight hljs ansi" style="display:block;">15×11 DataFrame
+ Row │ name             genus          vore      order           conservation  ⋯
+     │ String31         String15       String7?  String15        String15?     ⋯
+─────┼──────────────────────────────────────────────────────────────────────────
+   1 │ Owl monkey       Aotus          omni      Primates        missing       ⋯
+   2 │ Grivet           Cercopithecus  omni      Primates        lc
+   3 │ Horse            Equus          herbi     Perissodactyla  domesticated
+   4 │ Donkey           Equus          herbi     Perissodactyla  domesticated
+   5 │ Patas monkey     Erythrocebus   omni      Primates        lc            ⋯
+   6 │ Galago           Galago         omni      Primates        missing
+   7 │ Human            Homo           omni      Primates        missing
+   8 │ Mongoose lemur   Lemur          herbi     Primates        vu
+   9 │ Macaque          Macaca         omni      Primates        missing       ⋯
+  10 │ Slow loris       Nyctibeus      carni     Primates        missing
+  11 │ Chimpanzee       Pan            omni      Primates        missing
+  12 │ Baboon           Papio          omni      Primates        missing
+  13 │ Potto            Perodicticus   omni      Primates        lc            ⋯
+  14 │ Squirrel monkey  Saimiri        omni      Primates        missing
+  15 │ Brazilian tapir  Tapirus        herbi     Perissodactyla  vu
+                                                               6 columns omitted</code></pre><p>You can use the boolean operators (e.g. &gt;, &lt;, &gt;=, &lt;=, !=, in) to create the logical tests. </p><h1 id="Chain.jl"><a class="docs-heading-anchor" href="#Chain.jl">Chain.jl</a><a id="Chain.jl-1"></a><a class="docs-heading-anchor-permalink" href="#Chain.jl" title="Permalink"></a></h1><p>Before we go any further, let&#39;s introduce the <code>@chain</code> macro from <a href="https://github.com/jkrumbiegel/Chain.jl">Chain.jl</a>, which is re-exported by DataFramesMeta.jl. <code>@chain</code> allows for you to pipe the output from one operation into the input of another operation.  The idea of piping is to read the functions from left to right. The syntax and design of <code>@chain</code> is very similar to <code>%&gt;%</code> which users of dplyr are familiar with.</p><p>To show it&#39;s usefulness, let&#39;s use <code>@select</code> and <code>@rsubset</code> one after the other. </p><pre><code class="nohighlight hljs">msleep_1 = @select msleep :name :sleep_total
+msleep_2 = @rsubset msleep_1 :sleep_total &gt; 16</code></pre><p>Now in this case, we will pipe the msleep data frame to the function that will select two columns (<code>:name</code> and <code>:sleep_total</code>) and then pipe the new data frame to the <code>@rsubset</code> operation. This method involves awkwardly creating and naming temporary data frames. We can avoid this with <code>@chain</code>.</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @chain msleep begin
+           @select :name :sleep_total
+           @rsubset :sleep_total &gt; 16
+       end</code><code class="nohighlight hljs ansi" style="display:block;">8×2 DataFrame
+ Row │ name                    sleep_total
+     │ String31                Float64
+─────┼─────────────────────────────────────
+   1 │ Owl monkey                     17.0
+   2 │ Long-nosed armadillo           17.4
+   3 │ North American Opossum         18.0
+   4 │ Big brown bat                  19.7
+   5 │ Thick-tailed opposum           19.4
+   6 │ Little brown bat               19.9
+   7 │ Giant armadillo                18.1
+   8 │ Arctic ground squirrel         16.6</code></pre><p>You will soon see how useful the <code>@chain</code> macro is when we start to combine many functions.  </p><h1 id="Back-To-dplyr-Verbs-In-Action"><a class="docs-heading-anchor" href="#Back-To-dplyr-Verbs-In-Action">Back To dplyr Verbs In Action</a><a id="Back-To-dplyr-Verbs-In-Action-1"></a><a class="docs-heading-anchor-permalink" href="#Back-To-dplyr-Verbs-In-Action" title="Permalink"></a></h1><p>Now that you know about the <code>@chain</code> macro, we will use it throughout the rest of this tutorial. </p><h2 id="Arrange-Or-Re-order-Rows-Using-@orderby"><a class="docs-heading-anchor" href="#Arrange-Or-Re-order-Rows-Using-@orderby">Arrange Or Re-order Rows Using <code>@orderby</code></a><a id="Arrange-Or-Re-order-Rows-Using-@orderby-1"></a><a class="docs-heading-anchor-permalink" href="#Arrange-Or-Re-order-Rows-Using-@orderby" title="Permalink"></a></h2><p>To arrange (or re-order) rows by a particular column, such as the taxonomic order, list the name of the column you want to arrange the rows by:</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @orderby msleep :order</code><code class="nohighlight hljs ansi" style="display:block;">83×11 DataFrame
+ Row │ name                            genus         vore      order         c ⋯
+     │ String31                        String15      String7?  String15      S ⋯
+─────┼──────────────────────────────────────────────────────────────────────────
+   1 │ Tenrec                          Tenrec        omni      Afrosoricida  m ⋯
+   2 │ Cow                             Bos           herbi     Artiodactyla  d
+   3 │ Roe deer                        Capreolus     herbi     Artiodactyla  l
+   4 │ Goat                            Capri         herbi     Artiodactyla  l
+   5 │ Giraffe                         Giraffa       herbi     Artiodactyla  c ⋯
+   6 │ Sheep                           Ovis          herbi     Artiodactyla  d
+   7 │ Pig                             Sus           omni      Artiodactyla  d
+   8 │ Cheetah                         Acinonyx      carni     Carnivora     l
+  ⋮  │               ⋮                      ⋮           ⋮           ⋮          ⋱
+  77 │ Eastern american chipmunk       Tamias        herbi     Rodentia      m ⋯
+  78 │ Tree shrew                      Tupaia        omni      Scandentia    m
+  79 │ Greater short-tailed shrew      Blarina       omni      Soricomorpha  l
+  80 │ Star-nosed mole                 Condylura     omni      Soricomorpha  l
+  81 │ Lesser short-tailed shrew       Cryptotis     omni      Soricomorpha  l ⋯
+  82 │ Eastern american mole           Scalopus      insecti   Soricomorpha  l
+  83 │ Musk shrew                      Suncus        missing   Soricomorpha  m
+                                                   7 columns and 68 rows omitted</code></pre><p>Now we will select three columns from msleep, arrange the rows by the taxonomic order and then arrange the rows by <code>:sleep_total</code>. Finally, keep the first 10 rows of the data frame.</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @chain msleep begin
+           @select :name :order :sleep_total
+           @orderby :order :sleep_total
+           first(10)
+       end</code><code class="nohighlight hljs ansi" style="display:block;">10×3 DataFrame
+ Row │ name          order         sleep_total
+     │ String31      String15      Float64
+─────┼─────────────────────────────────────────
+   1 │ Tenrec        Afrosoricida         15.6
+   2 │ Giraffe       Artiodactyla          1.9
+   3 │ Roe deer      Artiodactyla          3.0
+   4 │ Sheep         Artiodactyla          3.8
+   5 │ Cow           Artiodactyla          4.0
+   6 │ Goat          Artiodactyla          5.3
+   7 │ Pig           Artiodactyla          9.1
+   8 │ Caspian seal  Carnivora             3.5
+   9 │ Gray seal     Carnivora             6.2
+  10 │ Genet         Carnivora             6.3</code></pre><p>The last line of the above block, <code>first(10)</code>, does not have <code>@</code>. This is because <code>first</code> is a Julia function, not a macro, whose names always begin with <code>@</code>. </p><p>Same as above, except here we filter the rows for mammals that sleep for 16 or more hours, instead of showing the head of the final data frame:</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @chain msleep begin
+           @select :name :order :sleep_total
+           @orderby :order :sleep_total
+           @rsubset :sleep_total &gt; 16
+       end</code><code class="nohighlight hljs ansi" style="display:block;">8×3 DataFrame
+ Row │ name                    order            sleep_total
+     │ String31                String15         Float64
+─────┼──────────────────────────────────────────────────────
+   1 │ Big brown bat           Chiroptera              19.7
+   2 │ Little brown bat        Chiroptera              19.9
+   3 │ Long-nosed armadillo    Cingulata               17.4
+   4 │ Giant armadillo         Cingulata               18.1
+   5 │ North American Opossum  Didelphimorphia         18.0
+   6 │ Thick-tailed opposum    Didelphimorphia         19.4
+   7 │ Owl monkey              Primates                17.0
+   8 │ Arctic ground squirrel  Rodentia                16.6</code></pre><p>Something slightly more complicated: same as above, except arrange the rows in the <code>:sleep_total</code> column in a descending order. Since this column is numeric we can do it by negating it:</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @chain msleep begin
+           @select :name :order :sleep_total
+           @orderby begin
+               :order
+               -:sleep_total
+           end
+           @rsubset :sleep_total &gt;= 16
+       end</code><code class="nohighlight hljs ansi" style="display:block;">8×3 DataFrame
+ Row │ name                    order            sleep_total
+     │ String31                String15         Float64
+─────┼──────────────────────────────────────────────────────
+   1 │ Little brown bat        Chiroptera              19.9
+   2 │ Big brown bat           Chiroptera              19.7
+   3 │ Giant armadillo         Cingulata               18.1
+   4 │ Long-nosed armadillo    Cingulata               17.4
+   5 │ Thick-tailed opposum    Didelphimorphia         19.4
+   6 │ North American Opossum  Didelphimorphia         18.0
+   7 │ Owl monkey              Primates                17.0
+   8 │ Arctic ground squirrel  Rodentia                16.6</code></pre><p>Alternatively, using the StatsBase.jl package you could have written <code>ordinalrank(:sleep_total, rev=true)</code>. Finally, if you wanted to avoid using an additional package you could use the following expression <code>invperm(sortperm(:sleep_total, rev=true))</code>.</p><p>Here is a minimal example of sorting string column in reverse:</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; using StatsBase</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; df = DataFrame(group=[1, 2, 1, 2, 1], name = [&quot;Bob&quot;, &quot;Dexter&quot;, &quot;Alice&quot;, &quot;Eve&quot;, &quot;Cedric&quot;])</code><code class="nohighlight hljs ansi" style="display:block;">5×2 DataFrame
+ Row │ group  name
+     │ Int64  String
+─────┼───────────────
+   1 │     1  Bob
+   2 │     2  Dexter
+   3 │     1  Alice
+   4 │     2  Eve
+   5 │     1  Cedric</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; @orderby df begin
+           :group
+           ordinalrank(:name, rev=true)
+       end</code><code class="nohighlight hljs ansi" style="display:block;">5×2 DataFrame
+ Row │ group  name
+     │ Int64  String
+─────┼───────────────
+   1 │     1  Cedric
+   2 │     1  Bob
+   3 │     1  Alice
+   4 │     2  Eve
+   5 │     2  Dexter</code></pre><h2 id="Create-New-Columns-Using-@transform-and-@rtransform"><a class="docs-heading-anchor" href="#Create-New-Columns-Using-@transform-and-@rtransform">Create New Columns Using <code>@transform</code> and <code>@rtransform</code></a><a id="Create-New-Columns-Using-@transform-and-@rtransform-1"></a><a class="docs-heading-anchor-permalink" href="#Create-New-Columns-Using-@transform-and-@rtransform" title="Permalink"></a></h2><p>The <code>@transform</code> macro will add new columns to the data frame. Like with other macros, use <code>@rtransform</code> to operate row-wise. Create a new column called <code>:rem_proportion</code>, which is the ratio of rem sleep to total amount of sleep. </p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @rtransform msleep :rem_proportion = :sleep_rem / :sleep_total</code><code class="nohighlight hljs ansi" style="display:block;">83×12 DataFrame
+ Row │ name                        genus         vore      order           con ⋯
+     │ String31                    String15      String7?  String15        Str ⋯
+─────┼──────────────────────────────────────────────────────────────────────────
+   1 │ Cheetah                     Acinonyx      carni     Carnivora       lc  ⋯
+   2 │ Owl monkey                  Aotus         omni      Primates        mis
+   3 │ Mountain beaver             Aplodontia    herbi     Rodentia        nt
+   4 │ Greater short-tailed shrew  Blarina       omni      Soricomorpha    lc
+   5 │ Cow                         Bos           herbi     Artiodactyla    dom ⋯
+   6 │ Three-toed sloth            Bradypus      herbi     Pilosa          mis
+   7 │ Northern fur seal           Callorhinus   carni     Carnivora       vu
+   8 │ Vesper mouse                Calomys       missing   Rodentia        mis
+  ⋮  │             ⋮                    ⋮           ⋮            ⋮             ⋱
+  77 │ Brazilian tapir             Tapirus       herbi     Perissodactyla  vu  ⋯
+  78 │ Tenrec                      Tenrec        omni      Afrosoricida    mis
+  79 │ Tree shrew                  Tupaia        omni      Scandentia      mis
+  80 │ Bottle-nosed dolphin        Tursiops      carni     Cetacea         mis
+  81 │ Genet                       Genetta       carni     Carnivora       mis ⋯
+  82 │ Arctic fox                  Vulpes        carni     Carnivora       mis
+  83 │ Red fox                     Vulpes        carni     Carnivora       mis
+                                                   8 columns and 68 rows omitted</code></pre><p>You can add many columns at a time by placing multiple operations in a block.</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @rtransform msleep begin
+           :rem_proportion = :sleep_rem / :sleep_total
+           :bodywt_grams = :bodywt * 1000
+       end</code><code class="nohighlight hljs ansi" style="display:block;">83×13 DataFrame
+ Row │ name                        genus         vore      order           con ⋯
+     │ String31                    String15      String7?  String15        Str ⋯
+─────┼──────────────────────────────────────────────────────────────────────────
+   1 │ Cheetah                     Acinonyx      carni     Carnivora       lc  ⋯
+   2 │ Owl monkey                  Aotus         omni      Primates        mis
+   3 │ Mountain beaver             Aplodontia    herbi     Rodentia        nt
+   4 │ Greater short-tailed shrew  Blarina       omni      Soricomorpha    lc
+   5 │ Cow                         Bos           herbi     Artiodactyla    dom ⋯
+   6 │ Three-toed sloth            Bradypus      herbi     Pilosa          mis
+   7 │ Northern fur seal           Callorhinus   carni     Carnivora       vu
+   8 │ Vesper mouse                Calomys       missing   Rodentia        mis
+  ⋮  │             ⋮                    ⋮           ⋮            ⋮             ⋱
+  77 │ Brazilian tapir             Tapirus       herbi     Perissodactyla  vu  ⋯
+  78 │ Tenrec                      Tenrec        omni      Afrosoricida    mis
+  79 │ Tree shrew                  Tupaia        omni      Scandentia      mis
+  80 │ Bottle-nosed dolphin        Tursiops      carni     Cetacea         mis
+  81 │ Genet                       Genetta       carni     Carnivora       mis ⋯
+  82 │ Arctic fox                  Vulpes        carni     Carnivora       mis
+  83 │ Red fox                     Vulpes        carni     Carnivora       mis
+                                                   9 columns and 68 rows omitted</code></pre><p>Using <code>@transform</code> instead of <code>@rtransform</code> will let us work with the column as a whole, and not a single row at a time. Let&#39;s create a new variable showing how far an animal&#39;s sleep time is from the average of all animals. </p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @transform msleep :demeand_sleep = :sleep_total .- mean(:sleep_total)</code><code class="nohighlight hljs ansi" style="display:block;">83×12 DataFrame
+ Row │ name                        genus         vore      order           con ⋯
+     │ String31                    String15      String7?  String15        Str ⋯
+─────┼──────────────────────────────────────────────────────────────────────────
+   1 │ Cheetah                     Acinonyx      carni     Carnivora       lc  ⋯
+   2 │ Owl monkey                  Aotus         omni      Primates        mis
+   3 │ Mountain beaver             Aplodontia    herbi     Rodentia        nt
+   4 │ Greater short-tailed shrew  Blarina       omni      Soricomorpha    lc
+   5 │ Cow                         Bos           herbi     Artiodactyla    dom ⋯
+   6 │ Three-toed sloth            Bradypus      herbi     Pilosa          mis
+   7 │ Northern fur seal           Callorhinus   carni     Carnivora       vu
+   8 │ Vesper mouse                Calomys       missing   Rodentia        mis
+  ⋮  │             ⋮                    ⋮           ⋮            ⋮             ⋱
+  77 │ Brazilian tapir             Tapirus       herbi     Perissodactyla  vu  ⋯
+  78 │ Tenrec                      Tenrec        omni      Afrosoricida    mis
+  79 │ Tree shrew                  Tupaia        omni      Scandentia      mis
+  80 │ Bottle-nosed dolphin        Tursiops      carni     Cetacea         mis
+  81 │ Genet                       Genetta       carni     Carnivora       mis ⋯
+  82 │ Arctic fox                  Vulpes        carni     Carnivora       mis
+  83 │ Red fox                     Vulpes        carni     Carnivora       mis
+                                                   8 columns and 68 rows omitted</code></pre><p>Finally, note that you can create a new column with the name taken from an existing variable, or a new column name with spaces in it, with <code>$</code></p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; newname = :rem_proportion</code><code class="nohighlight hljs ansi" style="display:block;">:rem_proportion</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; @rtransform msleep begin
+           $newname = :sleep_rem / :sleep_total
+           $&quot;Body weight in grams&quot; = :bodywt * 1000
+       end</code><code class="nohighlight hljs ansi" style="display:block;">83×13 DataFrame
+ Row │ name                        genus         vore      order           con ⋯
+     │ String31                    String15      String7?  String15        Str ⋯
+─────┼──────────────────────────────────────────────────────────────────────────
+   1 │ Cheetah                     Acinonyx      carni     Carnivora       lc  ⋯
+   2 │ Owl monkey                  Aotus         omni      Primates        mis
+   3 │ Mountain beaver             Aplodontia    herbi     Rodentia        nt
+   4 │ Greater short-tailed shrew  Blarina       omni      Soricomorpha    lc
+   5 │ Cow                         Bos           herbi     Artiodactyla    dom ⋯
+   6 │ Three-toed sloth            Bradypus      herbi     Pilosa          mis
+   7 │ Northern fur seal           Callorhinus   carni     Carnivora       vu
+   8 │ Vesper mouse                Calomys       missing   Rodentia        mis
+  ⋮  │             ⋮                    ⋮           ⋮            ⋮             ⋱
+  77 │ Brazilian tapir             Tapirus       herbi     Perissodactyla  vu  ⋯
+  78 │ Tenrec                      Tenrec        omni      Afrosoricida    mis
+  79 │ Tree shrew                  Tupaia        omni      Scandentia      mis
+  80 │ Bottle-nosed dolphin        Tursiops      carni     Cetacea         mis
+  81 │ Genet                       Genetta       carni     Carnivora       mis ⋯
+  82 │ Arctic fox                  Vulpes        carni     Carnivora       mis
+  83 │ Red fox                     Vulpes        carni     Carnivora       mis
+                                                   9 columns and 68 rows omitted</code></pre><h2 id="Create-Summaries-of-the-Data-Frame-using-@combine"><a class="docs-heading-anchor" href="#Create-Summaries-of-the-Data-Frame-using-@combine">Create Summaries of the Data Frame using <code>@combine</code></a><a id="Create-Summaries-of-the-Data-Frame-using-@combine-1"></a><a class="docs-heading-anchor-permalink" href="#Create-Summaries-of-the-Data-Frame-using-@combine" title="Permalink"></a></h2><p>The <code>@combine</code> macro will create summary statistics for a given column in the data frame, such as finding the mean. For example, to compute the average number of hours of sleep, apply the <code>mean</code> function to the column <code>:sleep_total</code> and call the summary value <code>:avg_sleep</code>. </p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @chain msleep @combine :avg_sleep = mean(:sleep_total)</code><code class="nohighlight hljs ansi" style="display:block;">1×1 DataFrame
+ Row │ avg_sleep
+     │ Float64
+─────┼───────────
+   1 │   10.4337</code></pre><p>There are many other summary statistics you could consider such <code>std</code>, <code>minimum</code>, <code>maximum</code>, <code>median</code>, <code>sum</code>, <code>length</code> (returns the length of vector), <code>first</code> (returns first value in vector), and <code>last</code> (returns last value in vector).</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @combine msleep begin
+           :avg_sleep = mean(:sleep_total)
+           :min_sleep = minimum(:sleep_total)
+           :max_sleep = maximum(:sleep_total)
+           :total = length(:sleep_total)
+       end</code><code class="nohighlight hljs ansi" style="display:block;">1×4 DataFrame
+ Row │ avg_sleep  min_sleep  max_sleep  total
+     │ Float64    Float64    Float64    Int64
+─────┼────────────────────────────────────────
+   1 │   10.4337        1.9       19.9     83</code></pre><p>DataFrames.jl also provides the function <code>describe</code> which performs many of these summaries automatically. </p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; describe(msleep)</code><code class="nohighlight hljs ansi" style="display:block;">11×7 DataFrame
+ Row │ variable      mean      min               median    max                 ⋯
+     │ Symbol        Union…    Any               Union…    Any                 ⋯
+─────┼──────────────────────────────────────────────────────────────────────────
+   1 │ name                    African elephant            Western american ch ⋯
+   2 │ genus                   Acinonyx                    Vulpes
+   3 │ vore                    carni                       omni
+   4 │ order                   Afrosoricida                Soricomorpha
+   5 │ conservation            cd                          vu                  ⋯
+   6 │ sleep_total   10.4337   1.9               10.1      19.9
+   7 │ sleep_rem     1.87541   0.1               1.5       6.6
+   8 │ sleep_cycle   0.439583  0.116667          0.333333  1.5
+   9 │ awake         13.5675   4.1               13.9      22.1                ⋯
+  10 │ brainwt       0.281581  0.00014           0.0124    5.712
+  11 │ bodywt        166.136   0.005             1.67      6654.0
+                                                               3 columns omitted</code></pre><h2 id="Group-Operations-using-@groupby-and-@combine"><a class="docs-heading-anchor" href="#Group-Operations-using-@groupby-and-@combine">Group Operations using <code>@groupby</code> and <code>@combine</code></a><a id="Group-Operations-using-@groupby-and-@combine-1"></a><a class="docs-heading-anchor-permalink" href="#Group-Operations-using-@groupby-and-@combine" title="Permalink"></a></h2><p>The <code>@groupby</code> verb is the first step in the &quot;split-apply-combine&quot; workflow. We literally want to split the data frame by some variable (e.g. taxonomic order), apply a function to the individual data frames and then combine the output.   </p><p>Let&#39;s do that: split the <code>msleep</code> data frame by the taxonomic order, then ask for the same summary statistics as above. We expect a set of summary statistics for each taxonomic order. </p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @chain msleep begin
+           @groupby :order
+           @combine begin
+               :avg_sleep = mean(:sleep_total)
+               :min_sleep = minimum(:sleep_total)
+               :max_sleep = maximum(:sleep_total)
+               :total = length(:sleep_total)
+           end
+       end</code><code class="nohighlight hljs ansi" style="display:block;">19×5 DataFrame
+ Row │ order            avg_sleep  min_sleep  max_sleep  total
+     │ String15         Float64    Float64    Float64    Int64
+─────┼─────────────────────────────────────────────────────────
+   1 │ Carnivora         10.1167         3.5       15.8     12
+   2 │ Primates          10.5            8.0       17.0     12
+   3 │ Rodentia          12.4682         7.0       16.6     22
+   4 │ Soricomorpha      11.1            8.4       14.9      5
+   5 │ Artiodactyla       4.51667        1.9        9.1      6
+   6 │ Pilosa            14.4           14.4       14.4      1
+   7 │ Cingulata         17.75          17.4       18.1      2
+   8 │ Hyracoidea         5.66667        5.3        6.3      3
+  ⋮  │        ⋮             ⋮          ⋮          ⋮        ⋮
+  13 │ Erinaceomorpha    10.2           10.1       10.3      2
+  14 │ Cetacea            4.5            2.7        5.6      3
+  15 │ Lagomorpha         8.4            8.4        8.4      1
+  16 │ Diprotodontia     12.4           11.1       13.7      2
+  17 │ Monotremata        8.6            8.6        8.6      1
+  18 │ Afrosoricida      15.6           15.6       15.6      1
+  19 │ Scandentia         8.9            8.9        8.9      1
+                                                 4 rows omitted</code></pre><p>Split-apply-combine can also be used with <code>@transform</code> to add new variables to a data frame by performing operations by group. For instance, we can de-mean the total hours of sleep of an animal relative to other animals in the same genus. </p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @chain msleep begin
+           @groupby :order
+           @transform :sleep_genus = :sleep_total .- mean(:sleep_total)
+       end</code><code class="nohighlight hljs ansi" style="display:block;">83×12 DataFrame
+ Row │ name                        genus         vore      order           con ⋯
+     │ String31                    String15      String7?  String15        Str ⋯
+─────┼──────────────────────────────────────────────────────────────────────────
+   1 │ Cheetah                     Acinonyx      carni     Carnivora       lc  ⋯
+   2 │ Owl monkey                  Aotus         omni      Primates        mis
+   3 │ Mountain beaver             Aplodontia    herbi     Rodentia        nt
+   4 │ Greater short-tailed shrew  Blarina       omni      Soricomorpha    lc
+   5 │ Cow                         Bos           herbi     Artiodactyla    dom ⋯
+   6 │ Three-toed sloth            Bradypus      herbi     Pilosa          mis
+   7 │ Northern fur seal           Callorhinus   carni     Carnivora       vu
+   8 │ Vesper mouse                Calomys       missing   Rodentia        mis
+  ⋮  │             ⋮                    ⋮           ⋮            ⋮             ⋱
+  77 │ Brazilian tapir             Tapirus       herbi     Perissodactyla  vu  ⋯
+  78 │ Tenrec                      Tenrec        omni      Afrosoricida    mis
+  79 │ Tree shrew                  Tupaia        omni      Scandentia      mis
+  80 │ Bottle-nosed dolphin        Tursiops      carni     Cetacea         mis
+  81 │ Genet                       Genetta       carni     Carnivora       mis ⋯
+  82 │ Arctic fox                  Vulpes        carni     Carnivora       mis
+  83 │ Red fox                     Vulpes        carni     Carnivora       mis
+                                                   8 columns and 68 rows omitted</code></pre><p>This short tutorial only touches on the wide array of features in Julia, DataFrames.jl, and DataFramesMeta.jl. Read the <a href="https://github.com/JuliaData/DataFramesMeta.jl">full documentation</a> for more information.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Introduction</a><a class="docs-footer-nextpage" href="../api/api/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Tuesday 3 December 2024 14:58">Tuesday 3 December 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
