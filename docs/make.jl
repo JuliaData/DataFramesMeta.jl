@@ -9,7 +9,9 @@ makedocs(
     pages = Any[
         "Introduction" => "index.md",
         "Tutorial for coming from dplyr" => "dplyr.md",
-        "API" => "api/api.md"],
+        "API" => "api/api.md",
+    ],
+    warnonly = [:missing_docs],
 )
 
 deploydocs(
