@@ -2578,7 +2578,7 @@ Row-wise version of `@distinct`, i.e. all operations use `@byrow` by
 default. See [`@distinct`](@ref) for details.
 
 ### Examples
-```julia
+```julia-repl
 julia> using DataFramesMeta
 
 julia> df = DataFrame(x = 1:5, y = 5:-1:1)
@@ -2750,7 +2750,7 @@ Row-wise version of `@distinct!`, i.e. all operations use `@byrow` by
 default. See [`@distinct!`](@ref) for details.
 
 ### Examples
-```julia
+```julia-repl
 julia> using DataFramesMeta
 
 julia> df = DataFrame(x = 1:5, y = 5:-1:1)
