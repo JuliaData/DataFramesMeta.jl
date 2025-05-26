@@ -29,7 +29,7 @@ The following embedded function calls are equivalent to their macro version:
 
 ### Examples
 
-```julia
+```julia-repl
 julia> using DataFramesMeta, Statistics
 
 julia> df = DataFrame(

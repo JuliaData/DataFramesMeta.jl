@@ -206,7 +206,7 @@ Before we go any further, let's introduce the `@chain` macro from [Chain.jl](htt
 
 To show it's usefulness, let's use `@select` and `@rsubset` one after the other. 
 
-```
+```julia
 msleep_1 = @select msleep :name :sleep_total
 msleep_2 = @rsubset msleep_1 :sleep_total > 16
 ```

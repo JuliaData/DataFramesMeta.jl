@@ -82,7 +82,7 @@ end
 Act on each row of a data frame, producing a new dataframe.
 Similar to
 
-```
+```julia
 for row in eachrow(copy(df))
     ...
 end
@@ -126,7 +126,7 @@ The modified `AbstractDataFrame`.
 
 ### Examples
 
-```julia
+```julia-repl
 julia> using DataFramesMeta
 
 julia> df = DataFrame(A = 1:3, B = [2, 1, 2]);
@@ -237,7 +237,7 @@ end
 
 Act on each row of a data frame in-place, similar to
 
-```
+```julia
 for row in eachrow(df)
     ... # Actions that modify `df`.
 end
@@ -280,7 +280,7 @@ The modified `AbstractDataFrame`.
 
 ### Examples
 
-```julia
+```julia-repl
 julia> using DataFramesMeta
 
 julia> df = DataFrame(A = 1:3, B = [2, 1, 2]);
