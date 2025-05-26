@@ -887,6 +887,9 @@ julia> @subset df begin
            :y .== 3
        end
 0×2 DataFrame
+ Row │ x      y
+     │ Int64  Int64
+─────┴──────────────
 
 julia> df = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
                                     2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
@@ -999,12 +1002,12 @@ julia> @rsubset df :A > 3
 
 julia> @rsubset df :A > 3 || :B == "pear"
 3×2 DataFrame
-  Row │ A      B
-      │ Int64  String
- ─────┼───────────────
-    1 │     2  pear
-    2 │     4  orange
-    3 │     5  pear
+ Row │ A      B
+     │ Int64  String
+─────┼───────────────
+   1 │     2  pear
+   2 │     4  orange
+   3 │     5  pear
 ```
 """
 macro rsubset(x, args...)
@@ -1155,9 +1158,12 @@ julia> @subset! copy(df) begin
            :y .== 3
        end
 0×2 DataFrame
+ Row │ x      y
+     │ Int64  Int64
+─────┴──────────────
 
 julia> df = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
-                                    2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
+                                     2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
 
 julia> g = groupby(copy(df), :x);
 
@@ -1357,15 +1363,15 @@ julia> @orderby d begin
  Row │ x      n      c
      │ Int64  Int64  String
 ─────┼──────────────────────
-   1 │     1      5  e
-   2 │     1      6  f
-   3 │     1      7  g
-   4 │     1      9  i
-   5 │     1     10  j
-   6 │     2      4  d
-   7 │     2      8  h
-   8 │     3      3  c
-   9 │     3      2  b
+   1 │     1      5  d
+   2 │     1      6  g
+   3 │     1      7  f
+   4 │     1      9  j
+   5 │     1     10  h
+   6 │     2      4  e
+   7 │     2      8  i
+   8 │     3      3  b
+   9 │     3      2  c
   10 │     3      1  a
 
 julia> @orderby d @byrow :x^2
@@ -1373,16 +1379,16 @@ julia> @orderby d @byrow :x^2
  Row │ x      n      c
      │ Int64  Int64  String
 ─────┼──────────────────────
-   1 │     1      5  e
-   2 │     1      6  f
-   3 │     1      7  g
-   4 │     1      9  i
-   5 │     1     10  j
-   6 │     2      4  d
-   7 │     2      8  h
+   1 │     1      5  d
+   2 │     1      6  g
+   3 │     1      7  f
+   4 │     1      9  j
+   5 │     1     10  h
+   6 │     2      4  e
+   7 │     2      8  i
    8 │     3      1  a
-   9 │     3      2  b
-  10 │     3      3  c
+   9 │     3      2  c
+  10 │     3      3  b
 ```
 """
 macro orderby(d, args...)
@@ -1422,6 +1428,7 @@ julia> df = DataFrame(x = [8,8,-8,7,7,-7], y = [-1, 1, -2, 2, -3, 3])
    6 │    -7      3
 
 julia> @rorderby df abs(:x) (:x * :y^3)
+6×2 DataFrame
  Row │ x      y
      │ Int64  Int64
 ─────┼──────────────
@@ -2434,13 +2441,13 @@ end
 ##
 ##############################################################################
 
-function make_distinct(x::AbstractDataFrame, @nospecialize(t...))    
+function make_distinct(x::AbstractDataFrame, @nospecialize(t...))
     if isempty(t)
         DataFrames.unique(x)
-    else        
+    else
         tmp = DataFrames.select(x, t...; copycols = false)
         rowidxs = (!).(DataFrames.nonunique(tmp))
-        (x)[rowidxs, :]                
+        (x)[rowidxs, :]
     end
 end
 
@@ -2448,10 +2455,10 @@ function make_distinct(x::GroupedDataFrame, @nospecialize(t...))
     throw(ArgumentError("@distinct with a GroupedDataFrame is reserved"))
 end
 
-function distinct_helper(x, args...)    
-    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)    
+function distinct_helper(x, args...)
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)
     t = (fun_to_vec(ex; no_dest = true, outer_flags=outer_flags) for ex in exprs)
-    quote            
+    quote
         $make_distinct($x, $(t...); $(kw...))
     end
 end
@@ -2459,11 +2466,11 @@ end
 """
     @distinct(d, args...)
 
-Return the first occurrence of unique rows in an `AbstractDataFrame` according 
-to given combinations of values in selected columns or their transformation. 
-`args` can be most column selectors or transformation accepted by `select`. 
+Return the first occurrence of unique rows in an `AbstractDataFrame` according
+to given combinations of values in selected columns or their transformation.
+`args` can be most column selectors or transformation accepted by `select`.
 Users should note that `@distinct` differs from `unique` in DataFrames.jl,
-such that `@distinct(df, :x,:y)` is not the same as `unique(df, [:x,:y])`. 
+such that `@distinct(df, :x,:y)` is not the same as `unique(df, [:x,:y])`.
 See  **Details** for a discussion of these differences.
 
 
@@ -2471,7 +2478,7 @@ See  **Details** for a discussion of these differences.
 
 * `d` : an AbstractDataFrame
 * `args...` :  transformations of the form `:x` designating
-symbols to specify columns or `f(:x)` specifying their transformations 
+symbols to specify columns or `f(:x)` specifying their transformations
 
 ### Returns
 
@@ -2481,26 +2488,26 @@ Inputs to `@distinct` can come in two formats: a `begin ... end` block, or as a 
 arguments and keyword-like arguments. For example, the following are equivalent:
 
 ```julia
-@distinct df begin 
+@distinct df begin
     :x + :y
 end
 ```
 
-and 
+and
 
 ```
 @distinct(df, :x + :y)
 ```
 
-`@distinct` uses the syntax `@byrow` to wrap transformations in the `ByRow` 
-function wrapper from DataFrames, apply a function row-wise, similar to 
-broadcasting. `@distinct` allows `@byrow` at the beginning of a block of 
-selections (i.e. `@byrow begin... end`). The transformation in the block 
+`@distinct` uses the syntax `@byrow` to wrap transformations in the `ByRow`
+function wrapper from DataFrames, apply a function row-wise, similar to
+broadcasting. `@distinct` allows `@byrow` at the beginning of a block of
+selections (i.e. `@byrow begin... end`). The transformation in the block
 will operate by row. For example, the following two statements are equivalent.
 
 
 ```
-@distinct df @byrow begin 
+@distinct df @byrow begin
     :x + :y
     :z + :t
 end
@@ -2509,7 +2516,7 @@ end
 and
 
 ```
-@distinct df begin 
+@distinct df begin
     @byrow :x + :y
     @byrow :z + :t
 end
@@ -2518,10 +2525,10 @@ end
 
 ### Details
 
-The implementation of `@distinct` differs from the `unique` function in DataFrames.jl. 
-When `args` are present, `@distinct` relies upon an internal `select` call which produces 
+The implementation of `@distinct` differs from the `unique` function in DataFrames.jl.
+When `args` are present, `@distinct` relies upon an internal `select` call which produces
 an intermediate data frame containing columns of `df` specified by `args`. The unique rows
-of `df` are thus determined by this intermediate data frame. This focus on `select` allows 
+of `df` are thus determined by this intermediate data frame. This focus on `select` allows
 for multiple arguments to be passed conveniently in the form of column names or transformations.
 
 Users should be cautious when passing function arguments as vectors. E.g., `@distinct(df, $DOLLAR[:x,:y])`
@@ -2530,25 +2537,25 @@ should be used instead of `@distinct(df, [:x,:y])` to avoid unexpected behaviors
 ### Examples
 
 ```jldoctest
-julia> using DataFramesMeta;
+julia> using DataFramesMeta
 
 julia> df = DataFrame(x = 1:10, y = 10:-1:1);
 
 julia> @distinct(df, :x .+ :y)
 1×2 DataFrame
- Row │ x      y      
-     │ Int64  Int64  
-─────┼───────────────
-   1 │     1      10   
+ Row │ x      y
+     │ Int64  Int64
+─────┼──────────────
+   1 │     1     10
 
 julia> @distinct df begin
             :x .+ :y
         end
 1×2 DataFrame
- Row │ x      y      
-     │ Int64  Int64  
-─────┼───────────────
-   1 │     1      10   
+ Row │ x      y
+     │ Int64  Int64
+─────┼──────────────
+   1 │     1     10
 ```
 """
 macro distinct(d, args...)
@@ -2556,9 +2563,9 @@ macro distinct(d, args...)
 end
 
 function rdistinct_helper(x, args...)
-    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = true)    
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = true)
     t = (fun_to_vec(ex; no_dest = true, outer_flags=outer_flags) for ex in exprs)
-    quote            
+    quote
         $make_distinct($x, $(t...); $(kw...))
     end
 end
@@ -2583,7 +2590,7 @@ julia> df = DataFrame(x = 1:5, y = 5:-1:1)
    3 │     3     3
    4 │     4     2
    5 │     5     1
-   
+
 julia> @rdistinct(df, :x + :y)
 5×2 DataFrame
  Row │ x      y
@@ -2607,7 +2614,7 @@ function make_distinct!(x::AbstractDataFrame, @nospecialize(t...))
         DataFrames.unique!(x)
     else
         tmp = DataFrames.select(x, t...; copycols = false)
-        DataFrames.deleteat!(x, DataFrames._findall(DataFrames.nonunique(tmp)))                
+        DataFrames.deleteat!(x, DataFrames._findall(DataFrames.nonunique(tmp)))
     end
 end
 
@@ -2616,9 +2623,9 @@ function make_distinct!(x::GroupedDataFrame, @nospecialize(t...))
 end
 
 function distinct!_helper(x, args...)
-    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)    
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)
     t = (fun_to_vec(ex; no_dest = true, outer_flags=outer_flags) for ex in exprs)
-    quote            
+    quote
         $make_distinct!($x, $(t...); $(kw...))
     end
 end
@@ -2628,14 +2635,14 @@ end
 
 In-place selection of unique rows in an `AbstractDataFrame`.
 Users should note that `@distinct!` differs from `unique!` in DataFrames.jl,
-such that `@distinct!(df, [:x,:y])` is not equal to `unique(df, [:x,:y])`. 
+such that `@distinct!(df, [:x,:y])` is not equal to `unique(df, [:x,:y])`.
 See  **Details** for a discussion of these differences.
 
 ### Arguments
 
 * `d` : an AbstractDataFrame
 * `args...` :   transformations of the form `:x` designating
-symbols to specify columns or `f(:x)` specifying their transformations 
+symbols to specify columns or `f(:x)` specifying their transformations
 
 
 ### Returns
@@ -2647,12 +2654,12 @@ arguments and keyword-like arguments. For example, the following are
 equivalent:
 
 ```julia
-@distinct! df begin 
+@distinct! df begin
     :x .+ :y
 end
 ```
 
-and 
+and
 
 ```
 @distinct!(df, :x .+ :y)
@@ -2660,13 +2667,13 @@ and
 
 `@distinct!` uses the syntax `@byrow` to wrap transformations in
 the `ByRow` function wrapper from DataFrames, apply a function row-wise,
-similar to broadcasting. `@distinct!` allows `@byrow` at the beginning of a block of 
-selections (i.e. `@byrow begin... end`). The transformation in the block 
+similar to broadcasting. `@distinct!` allows `@byrow` at the beginning of a block of
+selections (i.e. `@byrow begin... end`). The transformation in the block
 will operate by row. For example, the following two statements are equivalent.
 
 
 ```
-@distinct! df @byrow begin 
+@distinct! df @byrow begin
     :x + :y
     :z + :t
 end
@@ -2675,7 +2682,7 @@ end
 and
 
 ```
-@distinct! df begin 
+@distinct! df begin
     @byrow :x + :y
     @byrow :z + :t
 end
@@ -2684,10 +2691,10 @@ end
 
 ### Details
 
-The implementation of `@distinct!` differs from the `unique` function in DataFrames.jl. 
-When `args` are present, `@distinct!` relies upon an internal `select` call which produces 
+The implementation of `@distinct!` differs from the `unique` function in DataFrames.jl.
+When `args` are present, `@distinct!` relies upon an internal `select` call which produces
 an intermediate data frame containing columns of `df` specified by `args`. The unique rows
-of `df` are thus determined by this intermediate data frame. This focus on `select` allows 
+of `df` are thus determined by this intermediate data frame. This focus on `select` allows
 for multiple arguments to be conveniently passed in the form of column names or transformations.
 
 Users should be cautious when passing function arguments as vectors. E.g., `@distinct(df, $DOLLAR[:x,:y])`
@@ -2702,19 +2709,19 @@ julia> df = DataFrame(x = 1:10, y = 10:-1:1);
 
 julia> @distinct!(df, :x .+ :y)
 1×2 DataFrame
- Row │ x      y      
-     │ Int64  Int64  
+ Row │ x      y
+     │ Int64  Int64
 ─────┼───────────────
-   1 │     1      10   
+   1 │     1      10
 
 julia> @distinct! df begin
             :x .+ :y
         end
 1×2 DataFrame
- Row │ x      y      
-     │ Int64  Int64  
+ Row │ x      y
+     │ Int64  Int64
 ─────┼───────────────
-   1 │     1      10   
+   1 │     1      10
 ```
 """
 macro distinct!(d, args...)
@@ -2723,14 +2730,14 @@ end
 
 ##############################################################################
 ##
-## @rdistinct - select distinct rows with @byrow 
+## @rdistinct - select distinct rows with @byrow
 ##
 ##############################################################################
 
 function rdistinct!_helper(x, args...)
-    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = true)    
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = true)
     t = (fun_to_vec(ex; no_dest = true, outer_flags=outer_flags) for ex in exprs)
-    quote            
+    quote
         $make_distinct!($x, $(t...); $(kw...))
     end
 end
@@ -2755,7 +2762,7 @@ julia> df = DataFrame(x = 1:5, y = 5:-1:1)
    3 │     3     3
    4 │     4     2
    5 │     5     1
-   
+
 julia> @rdistinct!(df, :x + :y)
 5×2 DataFrame
  Row │ x      y
