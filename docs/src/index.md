@@ -1048,16 +1048,16 @@ When data cleaning you might want to do the following:
 
 1. Record the source of the data
 
-```julia
-@note! df :wage = "Hourly wage from 2015 American Community Survey (ACS)"
-```
+   ```julia
+   @note! df :wage = "Hourly wage from 2015 American Community Survey (ACS)"
+   ```
 
 2. Fix coded wages. In this example, `-99` corresponds to "no job"
 
-```julia
-@rtransform! df :wage = :wage == -99 ? 0 : :wage
-@note! df :wage = "Individuals with no job are recorded as 0 wage"
-```
+   ```julia
+   @rtransform! df :wage = :wage == -99 ? 0 : :wage
+   @note! df :wage = "Individuals with no job are recorded as 0 wage"
+   ```
 
 We use `printnotes` to see the notes for columns. 
 
