@@ -11,7 +11,7 @@ makedocs(
         "Tutorial for coming from dplyr" => "dplyr.md",
         "API" => "api/api.md",
     ],
-    warnonly = [:missing_docs],
+    checkdocs = :export,
 )
 
 deploydocs(
