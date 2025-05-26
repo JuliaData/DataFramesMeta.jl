@@ -2,7 +2,7 @@ using Documenter, DataFramesMeta
 
 makedocs(
     modules = [DataFramesMeta],
-    sitename = "DataFramesMeta Documentation",
+    sitename = "DataFramesMeta",
     format = Documenter.HTML(
         canonical = "https://juliadata.github.io/DataFramesMeta.jl/stable/"
     ),
