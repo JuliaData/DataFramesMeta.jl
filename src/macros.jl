@@ -2953,7 +2953,7 @@ and
 ### Details
 
 Both the left- and right-hand side of an expression specifying a column name assignment
-can be either a `Symbol` or a `String`` escaped with `$DOLLAR` For example `:new = ...`,
+can be either a `Symbol` or a `String` escaped with `$DOLLAR` For example `:new = ...`,
 and `$(DOLLAR)"new" = ...` are both valid ways of assigning a new column name.
 
 This idea can be extended to pass arbitrary right-hand side expressions. For example,
