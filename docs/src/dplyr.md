@@ -60,7 +60,7 @@ The `msleep` (mammals sleep) data set contains the sleep times and weights for a
 We can load the data directly into a DataFrame from the `url`. 
 
 ```@repl 1
-url = "https://raw.githubusercontent.com/genomicsclass/dagdata/master/inst/extdata/msleep_ggplot2.csv"
+url = "https://raw.githubusercontent.com/genomicsclass/dagdata/master/inst/extdata/msleep_ggplot2.csv";
 msleep = CSV.read(HTTP.get(url).body, DataFrame; missingstring="NA")
 ```
 
