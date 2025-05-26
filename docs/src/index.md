@@ -1140,9 +1140,3 @@ Column: age
 Label: Age (years)
 
 ```
-
-
-```@contents
-Pages = ["api/api.md"]
-Depth = 3
-```
