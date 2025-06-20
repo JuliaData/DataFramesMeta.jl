@@ -7,4 +7,7 @@ HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
-Documenter = "0.27"
+Documenter = "1"
+
+[sources]
+DataFramesMeta = {path = ".."}

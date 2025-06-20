@@ -26,24 +26,23 @@ DataFramesMeta.jl provides a convenient syntax for working with the vectors in a
 
 ## How Do I Get DataFramesMeta.jl? 
 
-To install DataFramesMeta.jl, which also installs DataFrames.jl:
+First, we will install DataFramesMeta.jl, which also installs DataFrames.jl.
+We will also install some additional packages
 
-```julia
-import Pkg
-Pkg.activate(; temp=true) # activate a temporary environment for this tutorial
-Pkg.add("DataFramesMeta");
+```julia-repl
+julia> ] # press ] to drop into pkg-mode
+
+pkg> activate --temp # activate a temporary environment for this tutorial
+
+pkg> add DataFramesMeta
+
+pkg> add CSV HTTP
 ```
 
 To load DataFramesMeta.jl, which also loads DataFrames.jl:
 
 ```@repl 1
 using DataFramesMeta
-```
-
-For this tutorial, we will install some additional packages as well. 
-
-```julia
-Pkg.add(["CSV", "HTTP"])
 ```
 
 Now we load them. We also load the Statistics standard library, which is shipped with Julia, so does not need to be installed.
@@ -61,7 +60,7 @@ The `msleep` (mammals sleep) data set contains the sleep times and weights for a
 We can load the data directly into a DataFrame from the `url`. 
 
 ```@repl 1
-url = "https://raw.githubusercontent.com/genomicsclass/dagdata/master/inst/extdata/msleep_ggplot2.csv"
+url = "https://raw.githubusercontent.com/genomicsclass/dagdata/master/inst/extdata/msleep_ggplot2.csv";
 msleep = CSV.read(HTTP.get(url).body, DataFrame; missingstring="NA")
 ```
 
@@ -206,7 +205,7 @@ Before we go any further, let's introduce the `@chain` macro from [Chain.jl](htt
 
 To show it's usefulness, let's use `@select` and `@rsubset` one after the other. 
 
-```
+```julia
 msleep_1 = @select msleep :name :sleep_total
 msleep_2 = @rsubset msleep_1 :sleep_total > 16
 ```

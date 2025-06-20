@@ -1,15 +1,18 @@
 using Documenter, DataFramesMeta
 
 makedocs(
-	modules = [DataFramesMeta],
-	sitename = "DataFramesMeta Documentation",
-	format = Documenter.HTML(
-		canonical = "https://juliadata.github.io/DataFramesMeta.jl/stable/"
-	),
-	pages = Any[
-		"Introduction" => "index.md",
-		"Tutorial for coming from dplyr" => "dplyr.md",
-		"API" => "api/api.md"])
+    modules = [DataFramesMeta],
+    sitename = "DataFramesMeta",
+    format = Documenter.HTML(
+        canonical = "https://juliadata.github.io/DataFramesMeta.jl/stable/"
+    ),
+    pages = Any[
+        "Introduction" => "index.md",
+        "Tutorial for coming from dplyr" => "dplyr.md",
+        "API" => "api/api.md",
+    ],
+    checkdocs = :export,
+)
 
 deploydocs(
     repo = "github.com/JuliaData/DataFramesMeta.jl.git",

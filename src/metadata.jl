@@ -238,7 +238,7 @@ For the purposes of printing, column labels are printed in
 addition to notes. However column labels are not returned by
 `note(df, col)`.
 
-```
+```julia-repl
 julia> df = DataFrame(wage = [12], age = [23]);
 
 julia> @label! df :age = "Age (years)";

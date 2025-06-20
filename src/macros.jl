@@ -23,7 +23,7 @@ a `source => fun => destination` pair that is suitable for the `select`, `transf
 
 ### Examples
 
-```julia
+```julia-repl
 julia> @col :z = :x + :y
 [:x, :y] => (##595 => :z)
 ```
@@ -76,7 +76,7 @@ then the anonymous function created by DataFramesMeta is wrapped in the
 
 ### Examples
 
-```julia
+```julia-repl
 julia> df = DataFrame(a = [1, 2, 3, 4], b = [5, 6, 7, 8]);
 
 julia> @transform(df, @byrow :c = :a * :b)
@@ -101,7 +101,7 @@ To avoid writing `@byrow` multiple times when performing multiple
 operations, it is allowed to use `@byrow` at the beginning of a block of
 operations. All transformations in the block will operate by row.
 
-```julia
+```julia-repl
 julia> @subset df @byrow begin
            :a > 1
            :b < 5
@@ -162,7 +162,7 @@ broadcasted multiplication and not a data frame.
 Additionally, transformations applied using `@eachrow!` modify the input
 data frame. On the contrary, `@byrow` does not update columns.
 
-```julia
+```julia-repl
 julia> df = DataFrame(a = [1, 2], b = [3, 4]);
 
 julia> @with df @byrow begin
@@ -197,7 +197,7 @@ df = DataFrame(a = [1, 2], b = [3, 4])
   the form `a && b` and `a || b` to be applied by row, something that
   is not possible in Julia versions below 1.7.
 
-```
+```julia-repl
 julia> @with df @byrow begin
            if :a == 1
                5
@@ -223,8 +223,9 @@ julia> @with df @. begin
   and broadcasts that function. Consequently, it does not broadcast
   referenced objects which are not columns.
 
-```julia
+```julia-repl
 julia> df = DataFrame(a = [1, 2], b = [3, 4]);
+
 julia> @with df @byrow :x + [5, 6]
 ```
 
@@ -251,7 +252,7 @@ julia> @with df @byrow :x + [5, 6]
   that function for every row in the data frame, expensive functions
   will be evaluated many times.
 
-```julia
+```julia-repl
 julia> function expensive()
            sleep(.5)
            return 1
@@ -270,7 +271,7 @@ julia> @time @with df :a .+ expensive();
   reserved for escaping column references, no solution currently exists with
   `@byrow` or in DataFramesMeta.jl at large. The best solution is simply
 
-```
+```julia
 @with df begin
     x = expensive()
     :a + x
@@ -305,7 +306,7 @@ flag.
 
 ### Examples
 
-```
+```julia-repl
 julia> no_missing(x::Int, y::Int) = x + y;
 
 julia> df = DataFrame(a = [1, 2, missing], b = [4, 5, 6])
@@ -370,7 +371,7 @@ transformation mini-language.
 
 Concretely, the expressions
 
-```
+```julia
 df = DataFrame(a = 1)
 
 @rtransform df @astable begin
@@ -382,7 +383,7 @@ end
 
 become the pair
 
-```
+```julia
 function f(a)
     x_t = 1
     y = 50
@@ -399,7 +400,7 @@ First, `@astable` makes it easy to create multiple columns from a single
 transformation, which share a scope. For example, `@astable` allows
 for the following (where `:x` and `:x_2` exist in the data frame already).
 
-```
+```julia
 @transform df @astable begin
     m = mean(:x)
     :x_demeaned = :x .- m
@@ -413,7 +414,7 @@ which does not need to be calculated twice.
 Second, `@astable` is useful when performing intermediate calculations
 and storing their results in new columns. For example, the following fails.
 
-```
+```julia
 @rtransform df begin
     :new_col_1 = :x + :y
     :new_col_2 = :new_col_1 + :z
@@ -436,7 +437,7 @@ expression which evaluates to a `Symbol` or `AbstractString`. For example
 However unlike other DataFramesMeta.jl macros, multi-column assignments via
 `AsTable` are disallowed. The following will fail.
 
-```
+```julia
 @transform df @astable begin
     $AsTable = :x
 end
@@ -447,7 +448,7 @@ rules as other DataFramesMeta.jl macros.
 
 ### Examples
 
-```
+```julia-repl
 julia> df = DataFrame(a = [1, 2, 3], b = [4, 5, 6]);
 
 julia> d = @rtransform df @astable begin
@@ -505,7 +506,7 @@ end
 Inside of DataFramesMeta.jl macros, pass keyword arguments to the underlying
 DataFrames.jl function when arguments are written in "block" format.
 
-```
+```julia-repl
 julia> df = DataFrame(x = [1, 1, 2, 2], b = [5, 6, 7, 8]);
 
 julia> @rsubset df begin
@@ -673,13 +674,13 @@ Using `AsTable` in this way is useful for working with many columns
 at once programmatically. For example, to order rows by the
 sum of the columns `:a`, `:b`, and `:c`, write
 
-```
+```julia
 @byrow sum(AsTable([:a, :b, :c]))
 ```
 
 This constructs the pair
 
-```
+```julia
 AsTable([:a, :b, :c]) => ByRow(sum)
 ```
 
@@ -687,7 +688,7 @@ AsTable([:a, :b, :c]) => ByRow(sum)
 column selectors `Not`, `Between`, and regular expressions. For example,
 to order all rows by the product of all columns starting with `"a"`, write
 
-```
+```julia
 @byrow prod(AsTable(r"^a"))
 ```
 """
@@ -702,13 +703,13 @@ Using `AsTable` in this way is useful for working with many columns
 at once programmatically. For example, to select rows where the
 sum of the columns `:a`, `:b`, and `:c` is greater than `5`, write
 
-```
+```julia
 @byrow sum(AsTable([:a, :b, :c])) > 5
 ```
 
 This constructs the pair
 
-```
+```julia
 AsTable([:a, :b, :c]) => ByRow(t -> sum(t) > 5)
 ```
 
@@ -717,7 +718,7 @@ column selectors `Not`, `Between`, and regular expressions. For example,
 to subset all rows where the product of all columns starting with `"a"`,
 is greater than `5`, write
 
-```
+```julia
 @byrow prod(AsTable(r"^a")) > 5
 ```
 """
@@ -732,13 +733,13 @@ Using `AsTable` in this way is useful for working with many columns
 at once programmatically. For example, to compute the row-wise sum of the
 columns `[:a, :b, :c, :d]`, write
 
-```
+```julia
 @byrow :c = sum(AsTable([:a, :b, :c, :d]))
 ```
 
 This constructs the pairs
 
-```
+```julia
 AsTable(nms) => ByRow(sum) => :c
 ```
 
@@ -747,7 +748,7 @@ column selectors `Not`, `Between`, and regular expressions. For example,
 to calculate the product of all the columns beginning with the letter `"a"`,
 write
 
-```
+```julia
 @byrow :d = prod(AsTable(r"^a"))
 ```
 """
@@ -805,7 +806,7 @@ end
 
 and
 
-```
+```julia
 @subset(df, :x .> 1, :y .< 2)
 ```
 
@@ -820,7 +821,7 @@ are applied "by row" along the data frame. To avoid writing `@byrow` multiple
 times, `@orderby` also allows `@byrow` to be placed at the beginning of a block of
 operations. For example, the following two statements are equivalent.
 
-```
+```julia
 @subset df @byrow begin
     :x > 1
     :y < 2
@@ -829,7 +830,7 @@ end
 
 and
 
-```
+```julia
 @subset df
     @byrow :x > 1
     @byrow :y < 2
@@ -842,14 +843,14 @@ $ASTABLE_RHS_SUBSET_DOCS
 two ways. When inputs are given as multiple arguments, they are added at the end after
 a semi-colon `;`, as in
 
-```
+```julia
 @subset(df, :a; skipmissing = false, view = true)
 ```
 
 When inputs are given in "block" format, the last lines may be written
 `@kwarg key = value`, which indicates keyword arguments to be passed to `subset` function.
 
-```
+```julia
 @subset df begin
     :a .== 1
     @kwarg skipmissing = false
@@ -887,6 +888,9 @@ julia> @subset df begin
            :y .== 3
        end
 0×2 DataFrame
+ Row │ x      y
+     │ Int64  Int64
+─────┴──────────────
 
 julia> df = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
                                     2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
@@ -999,12 +1003,12 @@ julia> @rsubset df :A > 3
 
 julia> @rsubset df :A > 3 || :B == "pear"
 3×2 DataFrame
-  Row │ A      B
-      │ Int64  String
- ─────┼───────────────
-    1 │     2  pear
-    2 │     4  orange
-    3 │     5  pear
+ Row │ A      B
+     │ Int64  String
+─────┼───────────────
+   1 │     2  pear
+   2 │     4  orange
+   3 │     5  pear
 ```
 """
 macro rsubset(x, args...)
@@ -1074,7 +1078,7 @@ end
 
 and
 
-```
+```julia
 @subset!(df, :x .> 1, :y .< 2)
 ```
 
@@ -1089,7 +1093,7 @@ are applied "by row" along the data frame. To avoid writing `@byrow` multiple
 times, `@orderby` also allows `@byrow`to be placed at the beginning of a block of
 operations. For example, the following two statements are equivalent.
 
-```
+```julia
 @subset! df @byrow begin
     :x > 1
     :y < 2
@@ -1098,7 +1102,7 @@ end
 
 and
 
-```
+```julia
 @subset! df
     @byrow :x > 1
     @byrow :y < 2
@@ -1111,14 +1115,14 @@ $ASTABLE_RHS_SUBSET_DOCS
 two ways. When inputs are given as multiple arguments, they are added at the end after
 a semi-colon `;`, as in
 
-```
+```julia
 @subset!(df, :a; skipmissing = false)
 ```
 
 When inputs are given in "block" format, the last lines may be written
 `@kwarg key = value`, which indicates keyword arguments to be passed to `subset!` function.
 
-```
+```julia
 @subset! df begin
     :a .== 1
     @kwarg skipmissing = false
@@ -1155,9 +1159,12 @@ julia> @subset! copy(df) begin
            :y .== 3
        end
 0×2 DataFrame
+ Row │ x      y
+     │ Int64  Int64
+─────┴──────────────
 
 julia> df = DataFrame(n = 1:20, x = [3, 3, 3, 3, 1, 1, 1, 2, 1, 1,
-                                    2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
+                                     2, 1, 1, 2, 2, 2, 3, 1, 1, 2]);
 
 julia> g = groupby(copy(df), :x);
 
@@ -1276,7 +1283,7 @@ end
 
 and
 
-```
+```julia
 @orderby(df, :x, -:y)
 ```
 
@@ -1291,7 +1298,7 @@ are applied "by row" along the data frame. To avoid writing `@byrow` multiple
 times, `@orderby` also allows `@byrow`to be placed at the beginning of a block of
 operations. For example, the following two statements are equivalent.
 
-```
+```julia
 @orderby df @byrow begin
     :x^2
     :x^3
@@ -1300,7 +1307,7 @@ end
 
 and
 
-```
+```julia
 @orderby df
     @byrow :x^2
     @byrow :x^3
@@ -1357,15 +1364,15 @@ julia> @orderby d begin
  Row │ x      n      c
      │ Int64  Int64  String
 ─────┼──────────────────────
-   1 │     1      5  e
-   2 │     1      6  f
-   3 │     1      7  g
-   4 │     1      9  i
-   5 │     1     10  j
-   6 │     2      4  d
-   7 │     2      8  h
-   8 │     3      3  c
-   9 │     3      2  b
+   1 │     1      5  d
+   2 │     1      6  g
+   3 │     1      7  f
+   4 │     1      9  j
+   5 │     1     10  h
+   6 │     2      4  e
+   7 │     2      8  i
+   8 │     3      3  b
+   9 │     3      2  c
   10 │     3      1  a
 
 julia> @orderby d @byrow :x^2
@@ -1373,16 +1380,16 @@ julia> @orderby d @byrow :x^2
  Row │ x      n      c
      │ Int64  Int64  String
 ─────┼──────────────────────
-   1 │     1      5  e
-   2 │     1      6  f
-   3 │     1      7  g
-   4 │     1      9  i
-   5 │     1     10  j
-   6 │     2      4  d
-   7 │     2      8  h
+   1 │     1      5  d
+   2 │     1      6  g
+   3 │     1      7  f
+   4 │     1      9  j
+   5 │     1     10  h
+   6 │     2      4  e
+   7 │     2      8  i
    8 │     3      1  a
-   9 │     3      2  b
-  10 │     3      3  c
+   9 │     3      2  c
+  10 │     3      3  b
 ```
 """
 macro orderby(d, args...)
@@ -1422,6 +1429,7 @@ julia> df = DataFrame(x = [8,8,-8,7,7,-7], y = [-1, 1, -2, 2, -3, 3])
    6 │    -7      3
 
 julia> @rorderby df abs(:x) (:x * :y^3)
+6×2 DataFrame
  Row │ x      y
      │ Int64  Int64
 ─────┼──────────────
@@ -1498,7 +1506,7 @@ end
 
 and
 
-```
+```julia
 @transform(df, :a = :x, :b = :y)
 ```
 
@@ -1506,13 +1514,13 @@ and
 the `ByRow` function wrapper from DataFrames, apply a function row-wise,
 similar to broadcasting. For example, the call
 
-```
+```julia
 @transform(df, @byrow :y = :x == 1 ? true : false)
 ```
 
 becomes
 
-```
+```julia
 transform(df, :x => ByRow(x -> x == 1 ? true : false) => :y)
 ```
 
@@ -1532,14 +1540,14 @@ $ASTABLE_RHS_SELECT_TRANSFORM_DOCS
 two ways. When inputs are given as multiple arguments, they are added at the end after
 a semi-colon `;`, as in
 
-```
+```julia
 @transform(gd, :x = :a .- 1; ungroup = false)
 ```
 
 When inputs are given in "block" format, the last lines may be written
 `@kwarg key = value`, which indicates keyword arguments to be passed to `transform!` function.
 
-```
+```julia
 @transform gd begin
     :x = :a .- 1
     @kwarg ungroup = false
@@ -1686,7 +1694,7 @@ end
 
 and
 
-```
+```julia
 @transform!(df, :a = :x, :b = :y)
 ```
 
@@ -1694,13 +1702,13 @@ and
 the `ByRow` function wrapper from DataFrames, apply a function row-wise,
 similar to broadcasting. For example, the call
 
-```
+```julia
 @transform!(df, @byrow :y = :x == 1 ? true : false)
 ```
 
 becomes
 
-```
+```julia
 transform!(df, :x => ByRow(x -> x == 1 ? true : false) => :y)
 ```
 
@@ -1720,14 +1728,14 @@ $ASTABLE_RHS_SELECT_TRANSFORM_DOCS
 two ways. When inputs are given as multiple arguments, they are added at the end after
 a semi-colon `;`, as in
 
-```
+```julia
 @transform!(gd, :x = :a .- 1; ungroup = false)
 ```
 
 When inputs are given in "block" format, the last lines may be written
 `@kwarg key = value`, which indicates keyword arguments to be passed to `transform!` function.
 
-```
+```julia
 @transform! gd begin
     :x = :a .- 1
     @kwarg ungroup = false
@@ -1824,7 +1832,7 @@ end
 
 and
 
-```
+```julia
 @select(df, :x, :y = :a .+ :b)
 ```
 
@@ -1832,13 +1840,13 @@ and
 the `ByRow` function wrapper from DataFrames, apply a function row-wise,
 similar to broadcasting. For example, the call
 
-```
+```julia
 @select(df, @byrow :y = :x == 1 ? true : false)
 ```
 
 becomes
 
-```
+```julia
 select(df, :x => ByRow(x -> x == 1 ? true : false) => :y)
 ```
 
@@ -1870,14 +1878,14 @@ $ASTABLE_RHS_SELECT_TRANSFORM_DOCS
 two ways. When inputs are given as multiple arguments, they are added at the end after
 a semi-colon `;`, as in
 
-```
+```julia
 @select(df, :a; copycols = false)
 ```
 
 When inputs are given in "block" format, the last lines may be written
 `@kwarg key = value`, which indicates keyword arguments to be passed to `select` function.
 
-```
+```julia
 @select gd begin
     :a
     @kwarg copycols = false
@@ -2017,13 +2025,13 @@ equivalent:
 the `ByRow` function wrapper from DataFrames, apply a function row-wise,
 similar to broadcasting. For example, the call
 
-```
+```julia
 @select!(df, @byrow :y = :x == 1 ? true : false)
 ```
 
 becomes
 
-```
+```julia
 select!(df, :x => ByRow(x -> x == 1 ? true : false) => :y)
 ```
 
@@ -2051,14 +2059,14 @@ $ASTABLE_RHS_SELECT_TRANSFORM_DOCS
 two ways. When inputs are given as multiple arguments, they are added at the end after
 a semi-colon `;`, as in
 
-```
+```julia
 @select!(gd, :a; ungroup = false)
 ```
 
 When inputs are given in "block" format, the last lines may be written
 `@kwarg key = value`, which indicates keyword arguments to be passed to `select!` function.
 
-```
+```julia
 @select! gd begin
     :a
     @kwarg ungroup = false
@@ -2175,7 +2183,7 @@ in which case each line in the block is a separate
 transformation, or as a series of keyword-like arguments.
 For example, the following are equivalent:
 
-```
+```julia
 @combine df begin
     :mx = mean(:x)
     :sx = std(:x)
@@ -2184,7 +2192,7 @@ end
 
 and
 
-```
+```julia
 @combine(df, :mx = mean(:x), :sx = std(:x))
 ```
 
@@ -2194,14 +2202,14 @@ $ASTABLE_MACRO_FLAG_DOCS
 two ways. When inputs are given as multiple arguments, they are added at the end after
 a semi-colon `;`, as in
 
-```
+```julia
 @combine(gd, :x = first(:a); ungroup = false)
 ```
 
 When inputs are given in "block" format, the last lines may be written
 `@kwarg key = value`, which indicates keyword arguments to be passed to `combine` function.
 
-```
+```julia
 @combine gd begin
     :x = first(:a)
     @kwarg ungroup = false
@@ -2322,7 +2330,7 @@ in which case each line in the block is a separate
 transformation, or as a series of keyword-like arguments.
 For example, the following are equivalent:
 
-```
+```julia
 @by df :g begin
     :mx = mean(:x)
     :sx = std(:x)
@@ -2331,7 +2339,7 @@ end
 
 and
 
-```
+```julia
 @by(df, :g, mx = mean(:x), sx = std(:x))
 ```
 
@@ -2341,14 +2349,14 @@ $ASTABLE_MACRO_FLAG_DOCS
 two ways. When inputs are given as multiple arguments, they are added at the end after
 a semi-colon `;`, as in
 
-```
+```julia
 @by(ds, :g, :x = first(:a); ungroup = false)
 ```
 
 When inputs are given in "block" format, the last lines may be written
 `@kwarg key = value`, which indicates keyword arguments to be passed to `combine` function.
 
-```
+```julia
 @by df :a begin
     :x = first(:a)
     @kwarg ungroup = false
@@ -2434,13 +2442,13 @@ end
 ##
 ##############################################################################
 
-function make_distinct(x::AbstractDataFrame, @nospecialize(t...))    
+function make_distinct(x::AbstractDataFrame, @nospecialize(t...))
     if isempty(t)
         DataFrames.unique(x)
-    else        
+    else
         tmp = DataFrames.select(x, t...; copycols = false)
         rowidxs = (!).(DataFrames.nonunique(tmp))
-        (x)[rowidxs, :]                
+        (x)[rowidxs, :]
     end
 end
 
@@ -2448,10 +2456,10 @@ function make_distinct(x::GroupedDataFrame, @nospecialize(t...))
     throw(ArgumentError("@distinct with a GroupedDataFrame is reserved"))
 end
 
-function distinct_helper(x, args...)    
-    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)    
+function distinct_helper(x, args...)
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)
     t = (fun_to_vec(ex; no_dest = true, outer_flags=outer_flags) for ex in exprs)
-    quote            
+    quote
         $make_distinct($x, $(t...); $(kw...))
     end
 end
@@ -2459,11 +2467,11 @@ end
 """
     @distinct(d, args...)
 
-Return the first occurrence of unique rows in an `AbstractDataFrame` according 
-to given combinations of values in selected columns or their transformation. 
-`args` can be most column selectors or transformation accepted by `select`. 
+Return the first occurrence of unique rows in an `AbstractDataFrame` according
+to given combinations of values in selected columns or their transformation.
+`args` can be most column selectors or transformation accepted by `select`.
 Users should note that `@distinct` differs from `unique` in DataFrames.jl,
-such that `@distinct(df, :x,:y)` is not the same as `unique(df, [:x,:y])`. 
+such that `@distinct(df, :x,:y)` is not the same as `unique(df, [:x,:y])`.
 See  **Details** for a discussion of these differences.
 
 
@@ -2471,7 +2479,7 @@ See  **Details** for a discussion of these differences.
 
 * `d` : an AbstractDataFrame
 * `args...` :  transformations of the form `:x` designating
-symbols to specify columns or `f(:x)` specifying their transformations 
+symbols to specify columns or `f(:x)` specifying their transformations
 
 ### Returns
 
@@ -2481,26 +2489,26 @@ Inputs to `@distinct` can come in two formats: a `begin ... end` block, or as a 
 arguments and keyword-like arguments. For example, the following are equivalent:
 
 ```julia
-@distinct df begin 
+@distinct df begin
     :x + :y
 end
 ```
 
-and 
+and
 
-```
+```julia
 @distinct(df, :x + :y)
 ```
 
-`@distinct` uses the syntax `@byrow` to wrap transformations in the `ByRow` 
-function wrapper from DataFrames, apply a function row-wise, similar to 
-broadcasting. `@distinct` allows `@byrow` at the beginning of a block of 
-selections (i.e. `@byrow begin... end`). The transformation in the block 
+`@distinct` uses the syntax `@byrow` to wrap transformations in the `ByRow`
+function wrapper from DataFrames, apply a function row-wise, similar to
+broadcasting. `@distinct` allows `@byrow` at the beginning of a block of
+selections (i.e. `@byrow begin... end`). The transformation in the block
 will operate by row. For example, the following two statements are equivalent.
 
 
-```
-@distinct df @byrow begin 
+```julia
+@distinct df @byrow begin
     :x + :y
     :z + :t
 end
@@ -2508,8 +2516,8 @@ end
 
 and
 
-```
-@distinct df begin 
+```julia
+@distinct df begin
     @byrow :x + :y
     @byrow :z + :t
 end
@@ -2518,10 +2526,10 @@ end
 
 ### Details
 
-The implementation of `@distinct` differs from the `unique` function in DataFrames.jl. 
-When `args` are present, `@distinct` relies upon an internal `select` call which produces 
+The implementation of `@distinct` differs from the `unique` function in DataFrames.jl.
+When `args` are present, `@distinct` relies upon an internal `select` call which produces
 an intermediate data frame containing columns of `df` specified by `args`. The unique rows
-of `df` are thus determined by this intermediate data frame. This focus on `select` allows 
+of `df` are thus determined by this intermediate data frame. This focus on `select` allows
 for multiple arguments to be passed conveniently in the form of column names or transformations.
 
 Users should be cautious when passing function arguments as vectors. E.g., `@distinct(df, $DOLLAR[:x,:y])`
@@ -2530,25 +2538,25 @@ should be used instead of `@distinct(df, [:x,:y])` to avoid unexpected behaviors
 ### Examples
 
 ```jldoctest
-julia> using DataFramesMeta;
+julia> using DataFramesMeta
 
 julia> df = DataFrame(x = 1:10, y = 10:-1:1);
 
 julia> @distinct(df, :x .+ :y)
 1×2 DataFrame
- Row │ x      y      
-     │ Int64  Int64  
-─────┼───────────────
-   1 │     1      10   
+ Row │ x      y
+     │ Int64  Int64
+─────┼──────────────
+   1 │     1     10
 
 julia> @distinct df begin
             :x .+ :y
         end
 1×2 DataFrame
- Row │ x      y      
-     │ Int64  Int64  
-─────┼───────────────
-   1 │     1      10   
+ Row │ x      y
+     │ Int64  Int64
+─────┼──────────────
+   1 │     1     10
 ```
 """
 macro distinct(d, args...)
@@ -2556,9 +2564,9 @@ macro distinct(d, args...)
 end
 
 function rdistinct_helper(x, args...)
-    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = true)    
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = true)
     t = (fun_to_vec(ex; no_dest = true, outer_flags=outer_flags) for ex in exprs)
-    quote            
+    quote
         $make_distinct($x, $(t...); $(kw...))
     end
 end
@@ -2570,7 +2578,7 @@ Row-wise version of `@distinct`, i.e. all operations use `@byrow` by
 default. See [`@distinct`](@ref) for details.
 
 ### Examples
-```julia
+```julia-repl
 julia> using DataFramesMeta
 
 julia> df = DataFrame(x = 1:5, y = 5:-1:1)
@@ -2583,7 +2591,7 @@ julia> df = DataFrame(x = 1:5, y = 5:-1:1)
    3 │     3     3
    4 │     4     2
    5 │     5     1
-   
+
 julia> @rdistinct(df, :x + :y)
 5×2 DataFrame
  Row │ x      y
@@ -2607,7 +2615,7 @@ function make_distinct!(x::AbstractDataFrame, @nospecialize(t...))
         DataFrames.unique!(x)
     else
         tmp = DataFrames.select(x, t...; copycols = false)
-        DataFrames.deleteat!(x, DataFrames._findall(DataFrames.nonunique(tmp)))                
+        DataFrames.deleteat!(x, DataFrames._findall(DataFrames.nonunique(tmp)))
     end
 end
 
@@ -2616,9 +2624,9 @@ function make_distinct!(x::GroupedDataFrame, @nospecialize(t...))
 end
 
 function distinct!_helper(x, args...)
-    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)    
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = false)
     t = (fun_to_vec(ex; no_dest = true, outer_flags=outer_flags) for ex in exprs)
-    quote            
+    quote
         $make_distinct!($x, $(t...); $(kw...))
     end
 end
@@ -2628,14 +2636,14 @@ end
 
 In-place selection of unique rows in an `AbstractDataFrame`.
 Users should note that `@distinct!` differs from `unique!` in DataFrames.jl,
-such that `@distinct!(df, [:x,:y])` is not equal to `unique(df, [:x,:y])`. 
+such that `@distinct!(df, [:x,:y])` is not equal to `unique(df, [:x,:y])`.
 See  **Details** for a discussion of these differences.
 
 ### Arguments
 
 * `d` : an AbstractDataFrame
 * `args...` :   transformations of the form `:x` designating
-symbols to specify columns or `f(:x)` specifying their transformations 
+symbols to specify columns or `f(:x)` specifying their transformations
 
 
 ### Returns
@@ -2647,26 +2655,26 @@ arguments and keyword-like arguments. For example, the following are
 equivalent:
 
 ```julia
-@distinct! df begin 
+@distinct! df begin
     :x .+ :y
 end
 ```
 
-and 
+and
 
-```
+```julia
 @distinct!(df, :x .+ :y)
 ```
 
 `@distinct!` uses the syntax `@byrow` to wrap transformations in
 the `ByRow` function wrapper from DataFrames, apply a function row-wise,
-similar to broadcasting. `@distinct!` allows `@byrow` at the beginning of a block of 
-selections (i.e. `@byrow begin... end`). The transformation in the block 
+similar to broadcasting. `@distinct!` allows `@byrow` at the beginning of a block of
+selections (i.e. `@byrow begin... end`). The transformation in the block
 will operate by row. For example, the following two statements are equivalent.
 
 
-```
-@distinct! df @byrow begin 
+```julia
+@distinct! df @byrow begin
     :x + :y
     :z + :t
 end
@@ -2674,8 +2682,8 @@ end
 
 and
 
-```
-@distinct! df begin 
+```julia
+@distinct! df begin
     @byrow :x + :y
     @byrow :z + :t
 end
@@ -2684,10 +2692,10 @@ end
 
 ### Details
 
-The implementation of `@distinct!` differs from the `unique` function in DataFrames.jl. 
-When `args` are present, `@distinct!` relies upon an internal `select` call which produces 
+The implementation of `@distinct!` differs from the `unique` function in DataFrames.jl.
+When `args` are present, `@distinct!` relies upon an internal `select` call which produces
 an intermediate data frame containing columns of `df` specified by `args`. The unique rows
-of `df` are thus determined by this intermediate data frame. This focus on `select` allows 
+of `df` are thus determined by this intermediate data frame. This focus on `select` allows
 for multiple arguments to be conveniently passed in the form of column names or transformations.
 
 Users should be cautious when passing function arguments as vectors. E.g., `@distinct(df, $DOLLAR[:x,:y])`
@@ -2702,19 +2710,19 @@ julia> df = DataFrame(x = 1:10, y = 10:-1:1);
 
 julia> @distinct!(df, :x .+ :y)
 1×2 DataFrame
- Row │ x      y      
-     │ Int64  Int64  
+ Row │ x      y
+     │ Int64  Int64
 ─────┼───────────────
-   1 │     1      10   
+   1 │     1      10
 
 julia> @distinct! df begin
             :x .+ :y
         end
 1×2 DataFrame
- Row │ x      y      
-     │ Int64  Int64  
+ Row │ x      y
+     │ Int64  Int64
 ─────┼───────────────
-   1 │     1      10   
+   1 │     1      10
 ```
 """
 macro distinct!(d, args...)
@@ -2723,14 +2731,14 @@ end
 
 ##############################################################################
 ##
-## @rdistinct - select distinct rows with @byrow 
+## @rdistinct - select distinct rows with @byrow
 ##
 ##############################################################################
 
 function rdistinct!_helper(x, args...)
-    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = true)    
+    x, exprs, outer_flags, kw = get_df_args_kwargs(x, args...; wrap_byrow = true)
     t = (fun_to_vec(ex; no_dest = true, outer_flags=outer_flags) for ex in exprs)
-    quote            
+    quote
         $make_distinct!($x, $(t...); $(kw...))
     end
 end
@@ -2742,7 +2750,7 @@ Row-wise version of `@distinct!`, i.e. all operations use `@byrow` by
 default. See [`@distinct!`](@ref) for details.
 
 ### Examples
-```julia
+```julia-repl
 julia> using DataFramesMeta
 
 julia> df = DataFrame(x = 1:5, y = 5:-1:1)
@@ -2755,7 +2763,7 @@ julia> df = DataFrame(x = 1:5, y = 5:-1:1)
    3 │     3     3
    4 │     4     2
    5 │     5     1
-   
+
 julia> @rdistinct!(df, :x + :y)
 5×2 DataFrame
  Row │ x      y
@@ -2809,7 +2817,7 @@ end
 
 and
 
-```
+```julia
 @rename df :new_col = :old_col
 @rename(df, :new_col = :old_col)
 ```
@@ -2824,13 +2832,13 @@ of assigning a new column name.
 This idea can be extended to pass arbitrary right-hand side expressions. For example,
 the following are equivalent:
 
-```
+```julia
 @rename(df, :new = :old1)
 ```
 
 and
 
-```
+```julia
 @rename(df, :new = $("old_col" * "1"))
 ```
 
@@ -2839,7 +2847,7 @@ column position. For example, to rename the 4th column in a data frame to a new 
 `@rename df :newname = $(DOLLAR)`.
 
 ### Examples
-```
+```julia-repl
 julia> df = DataFrame(old_col1 = 1:5, old_col2 = 11:15, old_col3 = 21:25);
 
 julia> @rename(df, :new1 = :old_col1)
@@ -2938,31 +2946,32 @@ end
 
 and
 
-```
+```julia
 @rename!(df, :new_col = :old_col)
 ```
 
 ### Details
 
 Both the left- and right-hand side of an expression specifying a column name assignment
-can be either a `Symbol` or a `String`` escaped with `$DOLLAR` For example `:new = ...`,
+can be either a `Symbol` or a `String` escaped with `$DOLLAR` For example `:new = ...`,
 and `$(DOLLAR)"new" = ...` are both valid ways of assigning a new column name.
 
 This idea can be extended to pass arbitrary right-hand side expressions. For example,
 the following are equivalent:
 
-```
+```julia
 @rename!(df, :new = :old1)
 ```
 
 and
 
-```
+```julia
 @rename!(df, :new = $("old_col" * "1"))
 ```
 
 ### Examples
-```
+
+```julia-repl
 julia> df = DataFrame(old_col1 = rand(5), old_col2 = rand(5),old_col3 = rand(5));
 
 julia> @rename!(df, :new1 = :old_col1)
@@ -3017,7 +3026,7 @@ end
 
 Group a data frame by columns. An alias for
 
-```
+```julia
 groupby(df, Cols(args...))
 ```
 

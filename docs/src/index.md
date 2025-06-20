@@ -166,7 +166,7 @@ and a `GroupedDataFrame` as the second argument.
 For instance, `@combine((a = sum(:x), b = sum(:y)), gd)` will fail. 
 The following, however, will work.
 
-```
+```julia
 df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
 gd = groupby(df, :x);
 @combine(gd, $AsTable = (a = sum(:x), b = sum(:y)))
@@ -176,7 +176,7 @@ gd = groupby(df, :x);
 
 Perform the grouping and combining operations in one step with `@by`
 
-```
+```julia
 df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
 @by df :x begin
     :y_sum = sum(:y)
@@ -244,7 +244,7 @@ end
 !!! note
     Because `@with` creates a function, be careful with the use of `return`. 
 
-    ```
+    ```julia
     function data_transform(df; returnearly = true)
         if returnearly
             @with df begin 
@@ -359,7 +359,7 @@ To avoid writing `@byrow` multiple times when performing multiple
 operations, it is allowed to use `@byrow` at the beginning of a block of 
 operations. All transformations in the block will operate by row.
 
-```julia
+```julia-repl
 julia> df = DataFrame(a = [1, 2], b = [3, 4]);
 
 julia> @subset df @byrow begin
@@ -398,13 +398,13 @@ The expression
 
 is translated to 
 
-```
+```julia
 transform(df, [:a, :b] => ByRow(passmissing(f)) => :c)
 ```
 
 See more examples below.
 
-```julia
+```julia-repl
 julia> no_missing(x::Int, y::Int) = x + y;
 
 julia> df = DataFrame(a = [1, 2, missing], b = [4, 5, 6])
@@ -472,7 +472,7 @@ macros and the function that is actually called by the macro.
 This can be done in two ways. When inputs are given as multiple 
 arguments, they are added at the end after a semi-colon `;`, as in
 
-```julia
+```julia-repl
 julia> df = DataFrame(x = [1, 1, 2, 2], b = [5, 6, 7, 8]);
 
 julia> @rsubset(df, :x == 1 ; view = true)
@@ -488,7 +488,7 @@ julia> @rsubset(df, :x == 1 ; view = true)
 When inputs are given in "block" format, the last lines may be written
 `@kwarg key = value`, which indicates keyword arguments to be passed to `subset` function.
 
-```
+```julia-repl
 julia> df = DataFrame(x = [1, 1, 2, 2], b = [5, 6, 7, 8]);
 
 julia> @rsubset df begin
@@ -506,7 +506,7 @@ julia> @rsubset df begin
 Just as with Julia functions, it is possible to pass keyword arguments as `Pair`s 
 programatically to DataFramesMeta.jl macros. 
 
-```
+```julia-repl
 julia> df = DataFrame(x = [1, 1, 2, 2], b = [5, 6, 7, 8]);
 
 julia> my_kwargs = [:view => true, :skipmissing => false];
@@ -541,7 +541,7 @@ In a single block, all assignments of the form `:y = f(:x)`
 or `$y = f(:x)` at the top-level generate new columns. In the second form, `y`
 must be a string or `Symbol`. 
 
-```
+```julia-repl
 julia> df = DataFrame(a = [1, 2, 3], b = [400, 500, 600]);
 
 julia> @transform df @astable begin 
@@ -571,14 +571,14 @@ as working with lists of variables programmatically.
 
 For example, consider a collection of column names `vars`, such that
 
-```
+```julia
 df = DataFrame(a = [11, 14], b = [17, 10], c = [12, 5]);
 vars = ["a", "b"];
 ```
 
 To make a new column which is the sum of `vars`, write
 
-```
+```julia-repl
 julia> @rtransform df :y = sum(AsTable(vars))
 2×4 DataFrame
  Row │ a      b      c      y     
@@ -590,7 +590,7 @@ julia> @rtransform df :y = sum(AsTable(vars))
 
 Of course, you can also use `AsTable` on the right-hand side using `Symbol`s as column selectors
 
-```
+```julia-repl
 julia> @rtransform df :y = sum(AsTable([:a, :b]))
 2×4 DataFrame
  Row │ a      b      c      y     
@@ -602,7 +602,7 @@ julia> @rtransform df :y = sum(AsTable([:a, :b]))
 
 `AsTable` on the right-hand side also allows operations which can use the names of the variables. 
 
-```
+```julia-repl
 julia> function fun_with_new_name(x::NamedTuple)
            nms = string.(propertynames(x))
            new_name = Symbol(join(nms, "_"), "_sum")
@@ -621,7 +621,7 @@ julia> @rtransform df $AsTable = fun_with_new_name(AsTable([:a, :b]))
 
 To subset all rows where the sum is greater than `25`, write
 
-```
+```julia-repl
 julia> @rsubset df sum(AsTable(vars)) > 25
 1×3 DataFrame
  Row │ a      b      c     
@@ -634,27 +634,27 @@ To understand the how this works, recall that DataFrames.jl allows for
 `AsTable(cols)` to be a `source` in a `source => fun => dest` mini-language
 expression. As a consequence, the transformation call
 
-```
+```julia
 :y = f(AsTable(cols)) 
 ```
 
 becomes
 
-```
+```julia
 AsTable(cols) => f => :y
 ```
 
 Note that DataFrames does *not* allow `source => fun => dest` commands 
 to be of the form 
 
-```
+```julia
 [AsTable(cols), :x] => f => :y
 ```
 
 As a consequence, DataFramesMeta.jl does not allow any other column selectors to appear 
 inside the expression. The command
 
-```
+```julia
 :y = sum(AsTable(cols)) + :d
 ```
 
@@ -664,7 +664,7 @@ Finally, note that everything inside `AsTable` is escaped by default.
 There is no ned to use `$` inside `AsTable` on the right-hand side.
 For example
 
-```
+```julia
 :y = first(AsTable("a"))
 ```
 
@@ -737,13 +737,13 @@ will fail, as DataFrames requires the "source" column identifiers in a
 to this rule. `Symbol`s and strings are allowed to be mixed inside DataFramesMeta macros. 
 Consequently, 
 
-```
+```julia
 @transform(df, :y = :A + $"B")
 ```
 
 will not error even though 
 
-```
+```julia
 transform(df, [:A, "B"] => (+) => :y)
 ```
 
@@ -779,7 +779,7 @@ end
 
 To reference columns with more complicated expressions, you must wrap column references in parentheses. 
 
-```
+```julia
 @transform df :a + $("a column name" * " in two parts")
 @transform df :a + $(get_column_name(x))
 ```
@@ -791,13 +791,13 @@ creation of DataFramesMeta.jl and is passed to the underling DataFrames.jl funct
 directly. Importantly, this allows for `src => fun => dest` calls from the DataFrames.jl 
 "mini-language" directly. One example where this is useful is calling multiple functions across multiple input parameters. For instance, the `Pair`
 
-```
+```julia
 [:a, :b] .=> [sum mean]
 ```
 
 takes the `sum` and `mean` of both columns `:a` and `:b` separately. It is not possible to express this with DataFramesMeta.jl. But the operation can easily be performed with `$`
 
-```
+```julia-repl
 julia> using Statistics
 
 julia> df = DataFrame(a = [1, 2], b = [30, 40]);
@@ -857,7 +857,7 @@ will fail in DataFrames.jl, because `DataFrames.subset` does not support vectors
 
 Since arguments wrapped entirely in `$()` get passed directly to underlying DataFrames.jl functions, this allows the use of the DataFrames.jl "mini-language" consisting of `src => fun => dest` pairs inside DataFramesMeta.jl macros. For example, you can do the following:
 
-```julia
+```julia-repl
 julia> df = DataFrame(a = [1, 2], b = [3, 4]);
 
 julia> my_transformation = :a => (t -> t .+ 100) => :c;
@@ -914,7 +914,7 @@ In summary
 
 To refer to `Symbol`s without aliasing the column in a data frame, use `^`. 
 
-```
+```julia
 df = DataFrame(x = [1, 1, 2, 2], y = [1, 2, 101, 102]);
 @select(df, :x2 = :x, :x3 = ^(:x))
 ```
@@ -1013,7 +1013,7 @@ df = DataFrame(wage = [16, 25, 14, 23]);
 
 View the labels with `printlabels(df)`
 
-```
+```julia-repl
 julia> printlabels(df)
 ┌────────┬─────────────────┐
 │ Column │           Label │
@@ -1024,7 +1024,7 @@ julia> printlabels(df)
 
 You can access labels via the `label` function defined in TablesMetaDataTools.jl
 
-```
+```julia-repl
 julia> label(df, :wage)
 "Wage (2015 USD)"
 ```
@@ -1037,7 +1037,7 @@ cleaning process. Unlike labels, notes can be stacked on to one another.
 
 Consider the cleaning process for wages, starting with the data frame
 
-```julia
+```julia-repl
 julia> df = DataFrame(wage = [-99, 16, 14, 23, 5000])
 5×1 DataFrame
  Row │ wage  
@@ -1048,27 +1048,26 @@ julia> df = DataFrame(wage = [-99, 16, 14, 23, 5000])
    3 │    14
    4 │    23
    5 │  5000
-
 ```
 
 When data cleaning you might want to do the following:
 
 1. Record the source of the data
 
-```
-@note! df :wage = "Hourly wage from 2015 American Community Survey (ACS)"
-```
+   ```julia
+   @note! df :wage = "Hourly wage from 2015 American Community Survey (ACS)"
+   ```
 
 2. Fix coded wages. In this example, `-99` corresponds to "no job"
 
-```
-@rtransform! df :wage = :wage == -99 ? 0 : :wage
-@note! df :wage = "Individuals with no job are recorded as 0 wage"
-```
+   ```julia
+   @rtransform! df :wage = :wage == -99 ? 0 : :wage
+   @note! df :wage = "Individuals with no job are recorded as 0 wage"
+   ```
 
 We use `printnotes` to see the notes for columns. 
 
-```
+```julia-repl
 julia> printnotes(df)
 Column: wage
 ────────────
@@ -1078,14 +1077,14 @@ Individuals with no job are recorded as 0 wage
 
 You can access the note via the `note` function. 
 
-```
+```julia-repl
 julia> note(df, :wage)
 "Hourly wage from 2015 American Community Survey (ACS)\nIndividuals with no job are recorded as 0 wage"
 ```
 
 To remove all notes from a column, run
 
-```
+```julia
 note!(df, :wage, ""; append = false)
 ```
 
@@ -1146,10 +1145,4 @@ Column: age
 ───────────
 Label: Age (years)
 
-```
-
-
-```@contents
-Pages = ["api/api.md"]
-Depth = 3
 ```

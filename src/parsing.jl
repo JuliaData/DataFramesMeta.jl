@@ -248,6 +248,7 @@ expression that `@byrow` acts on, with `wrap_byrow=true`.
 
 ### Examples
 
+```julia-repl
 julia> using MacroTools
 
 julia> ex = :(:x + :y);
@@ -271,7 +272,6 @@ julia> src, fun = DataFramesMeta.get_source_fun(ex);
 julia> MacroTools.prettify(fun)
 :(ByRow(*))
 ```
-
 """
 function get_source_fun(function_expr; exprflags = deepcopy(DEFAULT_FLAGS))
     function_expr = MacroTools.unblock(function_expr)
