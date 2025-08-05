@@ -11,7 +11,7 @@ Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 TableMetadataTools = "9ce81f87-eacc-4366-bf80-b621a3098ee2"
 
 [compat]
-Chain = "0.5, 0.6"
+Chain = "0.5, 0.6, 1"
 DataFrames = "1"
 MacroTools = "0.5"
 OrderedCollections = "1"
