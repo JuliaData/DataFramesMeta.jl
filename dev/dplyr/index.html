@@ -6,28 +6,28 @@ pkg&gt; activate --temp # activate a temporary environment for this tutorial
 pkg&gt; add DataFramesMeta
 
 pkg&gt; add CSV HTTP</code></pre><p>To load DataFramesMeta.jl, which also loads DataFrames.jl:</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; using DataFramesMeta</code></pre><p>Now we load them. We also load the Statistics standard library, which is shipped with Julia, so does not need to be installed.</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; using CSV, HTTP, Statistics</code></pre><p>We will use <a href="https://csv.juliadata.org/stable/">CSV.jl</a> and <a href="https://juliaweb.github.io/HTTP.jl/stable/">HTTP.jl</a> for downloading our dataset from the internet.</p><h1 id="Data:-Mammals-Sleep"><a class="docs-heading-anchor" href="#Data:-Mammals-Sleep">Data: Mammals Sleep</a><a id="Data:-Mammals-Sleep-1"></a><a class="docs-heading-anchor-permalink" href="#Data:-Mammals-Sleep" title="Permalink"></a></h1><p>The <code>msleep</code> (mammals sleep) data set contains the sleep times and weights for a set of mammals and is available in the dagdata repository on GitHub. This data set contains 83 rows and 11 variables.  </p><p>We can load the data directly into a DataFrame from the <code>url</code>. </p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; url = &quot;https://raw.githubusercontent.com/genomicsclass/dagdata/master/inst/extdata/msleep_ggplot2.csv&quot;;</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; msleep = CSV.read(HTTP.get(url).body, DataFrame; missingstring=&quot;NA&quot;)</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">83×11 DataFrame</span>
-<span class="sgr1"> Row </span>│<span class="sgr1"> name                        genus         vore      order           con</span> ⋯
-     │<span class="sgr90"> String31                    String15      String7?  String15        Str</span> ⋯
+<span class="sgr1"> Row </span>│<span class="sgr1"> name                        genus        vore      order           cons</span> ⋯
+<span class="sgr1">     </span>│<span class="sgr90"> String31                    String15     String7?  String15        Stri</span> ⋯
 ─────┼──────────────────────────────────────────────────────────────────────────
-   1 │ Cheetah                     Acinonyx      carni     Carnivora       lc  ⋯
-   2 │ Owl monkey                  Aotus         omni      Primates       <span class="sgr90"> mis</span>
-   3 │ Mountain beaver             Aplodontia    herbi     Rodentia        nt
-   4 │ Greater short-tailed shrew  Blarina       omni      Soricomorpha    lc
-   5 │ Cow                         Bos           herbi     Artiodactyla    dom ⋯
-   6 │ Three-toed sloth            Bradypus      herbi     Pilosa         <span class="sgr90"> mis</span>
-   7 │ Northern fur seal           Callorhinus   carni     Carnivora       vu
-   8 │ Vesper mouse                Calomys      <span class="sgr90"> missing  </span> Rodentia       <span class="sgr90"> mis</span>
-  ⋮  │             ⋮                    ⋮           ⋮            ⋮             ⋱
-  77 │ Brazilian tapir             Tapirus       herbi     Perissodactyla  vu  ⋯
-  78 │ Tenrec                      Tenrec        omni      Afrosoricida   <span class="sgr90"> mis</span>
-  79 │ Tree shrew                  Tupaia        omni      Scandentia     <span class="sgr90"> mis</span>
-  80 │ Bottle-nosed dolphin        Tursiops      carni     Cetacea        <span class="sgr90"> mis</span>
-  81 │ Genet                       Genetta       carni     Carnivora      <span class="sgr90"> mis</span> ⋯
-  82 │ Arctic fox                  Vulpes        carni     Carnivora      <span class="sgr90"> mis</span>
-  83 │ Red fox                     Vulpes        carni     Carnivora      <span class="sgr90"> mis</span>
+   1 │ Cheetah                     Acinonyx     carni     Carnivora       lc   ⋯
+   2 │ Owl monkey                  Aotus        omni      Primates       <span class="sgr90"> miss</span>
+   3 │ Mountain beaver             Aplodontia   herbi     Rodentia        nt
+   4 │ Greater short-tailed shrew  Blarina      omni      Soricomorpha    lc
+   5 │ Cow                         Bos          herbi     Artiodactyla    dome ⋯
+   6 │ Three-toed sloth            Bradypus     herbi     Pilosa         <span class="sgr90"> miss</span>
+   7 │ Northern fur seal           Callorhinus  carni     Carnivora       vu
+   8 │ Vesper mouse                Calomys     <span class="sgr90"> missing  </span> Rodentia       <span class="sgr90"> miss</span>
+  ⋮  │             ⋮                    ⋮          ⋮            ⋮              ⋱
+  77 │ Brazilian tapir             Tapirus      herbi     Perissodactyla  vu   ⋯
+  78 │ Tenrec                      Tenrec       omni      Afrosoricida   <span class="sgr90"> miss</span>
+  79 │ Tree shrew                  Tupaia       omni      Scandentia     <span class="sgr90"> miss</span>
+  80 │ Bottle-nosed dolphin        Tursiops     carni     Cetacea        <span class="sgr90"> miss</span>
+  81 │ Genet                       Genetta      carni     Carnivora      <span class="sgr90"> miss</span> ⋯
+  82 │ Arctic fox                  Vulpes       carni     Carnivora      <span class="sgr90"> miss</span>
+  83 │ Red fox                     Vulpes       carni     Carnivora      <span class="sgr90"> miss</span>
 <span class="sgr36">                                                   7 columns and 68 rows omitted</span></code></pre><p>The columns (in order) correspond to the following: </p><table><tr><th style="text-align: right">column name</th><th style="text-align: right">Description</th></tr><tr><td style="text-align: right"><code>:name</code></td><td style="text-align: right">common name</td></tr><tr><td style="text-align: right"><code>:genus</code></td><td style="text-align: right">taxonomic rank</td></tr><tr><td style="text-align: right"><code>:vore</code></td><td style="text-align: right">carnivore, omnivore or herbivore?</td></tr><tr><td style="text-align: right"><code>:order</code></td><td style="text-align: right">taxonomic rank</td></tr><tr><td style="text-align: right"><code>:conservation</code></td><td style="text-align: right">the conservation status of the mammal</td></tr><tr><td style="text-align: right"><code>:sleep_total</code></td><td style="text-align: right">total amount of sleep, in hours</td></tr><tr><td style="text-align: right"><code>:sleep_rem</code></td><td style="text-align: right">rem sleep, in hours</td></tr><tr><td style="text-align: right"><code>:sleep_cycle</code></td><td style="text-align: right">length of sleep cycle, in hours</td></tr><tr><td style="text-align: right"><code>:awake</code></td><td style="text-align: right">amount of time spent awake, in hours</td></tr><tr><td style="text-align: right"><code>:brainwt</code></td><td style="text-align: right">brain weight in kilograms</td></tr><tr><td style="text-align: right"><code>:bodywt</code></td><td style="text-align: right">body weight in kilograms</td></tr></table><h1 id="Important-DataFramesMeta.jl-Verbs-To-Remember"><a class="docs-heading-anchor" href="#Important-DataFramesMeta.jl-Verbs-To-Remember">Important DataFramesMeta.jl Verbs To Remember</a><a id="Important-DataFramesMeta.jl-Verbs-To-Remember-1"></a><a class="docs-heading-anchor-permalink" href="#Important-DataFramesMeta.jl-Verbs-To-Remember" title="Permalink"></a></h1><p>Many DataFrames.jl macros come in two forms, a version which operates on columns as a whole and a version which operations row-wise, prefixed by <code>r</code>.</p><table><tr><th style="text-align: right">DataFramesMeta.jl macro</th><th style="text-align: right">By-row version</th><th style="text-align: right">Description</th><th style="text-align: right"><code>dplyr</code> equivalent</th></tr><tr><td style="text-align: right"><code>@select</code></td><td style="text-align: right"><code>@rselect</code></td><td style="text-align: right">select columns</td><td style="text-align: right"><code>select</code></td></tr><tr><td style="text-align: right"><code>@transform</code></td><td style="text-align: right"><code>@rtransform</code></td><td style="text-align: right">create new columns</td><td style="text-align: right"><code>mutate</code></td></tr><tr><td style="text-align: right"><code>@subset</code></td><td style="text-align: right"><code>@rsubset</code></td><td style="text-align: right">filter rows</td><td style="text-align: right"><code>filter</code></td></tr><tr><td style="text-align: right"><code>@orderby</code></td><td style="text-align: right"><code>@rorderby</code></td><td style="text-align: right">re-order or arrange rows</td><td style="text-align: right"><code>arrange</code></td></tr><tr><td style="text-align: right"><code>@combine</code></td><td style="text-align: right"></td><td style="text-align: right">summarise values</td><td style="text-align: right"><code>summarize</code> (but <code>@combine</code> is more flexible)</td></tr><tr><td style="text-align: right"><code>@groupby</code></td><td style="text-align: right"></td><td style="text-align: right">allows for group operations in the &quot;split-apply-combine&quot; concept</td><td style="text-align: right"><code>group_by</code></td></tr></table><h1 id="DataFramesMeta.jl-Verbs-In-Action"><a class="docs-heading-anchor" href="#DataFramesMeta.jl-Verbs-In-Action">DataFramesMeta.jl Verbs In Action</a><a id="DataFramesMeta.jl-Verbs-In-Action-1"></a><a class="docs-heading-anchor-permalink" href="#DataFramesMeta.jl-Verbs-In-Action" title="Permalink"></a></h1><p>Two of the most basic functions are <code>@select</code> and <code>@subset</code>, which selects columns and filters rows respectively. To reference columns, use the <code>Symbol</code> of the column name, i.e. <code>:name</code> refers to the column <code>msleep.name</code>.</p><h2 id="Selecting-Columns-Using-@select"><a class="docs-heading-anchor" href="#Selecting-Columns-Using-@select">Selecting Columns Using <code>@select</code></a><a id="Selecting-Columns-Using-@select-1"></a><a class="docs-heading-anchor-permalink" href="#Selecting-Columns-Using-@select" title="Permalink"></a></h2><p>Select a set of columns: the <code>:name</code> and the <code>:sleep_total</code> columns. </p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @select msleep :name :sleep_total</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">83×2 DataFrame</span>
 <span class="sgr1"> Row </span>│<span class="sgr1"> name                        sleep_total </span>
-     │<span class="sgr90"> String31                    Float64     </span>
+<span class="sgr1">     </span>│<span class="sgr90"> String31                    Float64     </span>
 ─────┼─────────────────────────────────────────
    1 │ Cheetah                            12.1
    2 │ Owl monkey                         17.0
@@ -47,7 +47,7 @@ pkg&gt; add CSV HTTP</code></pre><p>To load DataFramesMeta.jl, which also loads 
   83 │ Red fox                             9.8
 <span class="sgr36">                                68 rows omitted</span></code></pre><p>If you have a column name stored as a variable, you can select it as a column with the syntax <code>$</code>. </p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; varname = :sleep_total</code><code class="nohighlight hljs ansi" style="display:block;">:sleep_total</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; @select msleep :name $varname</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">83×2 DataFrame</span>
 <span class="sgr1"> Row </span>│<span class="sgr1"> name                        sleep_total </span>
-     │<span class="sgr90"> String31                    Float64     </span>
+<span class="sgr1">     </span>│<span class="sgr90"> String31                    Float64     </span>
 ─────┼─────────────────────────────────────────
    1 │ Cheetah                            12.1
    2 │ Owl monkey                         17.0
@@ -67,7 +67,7 @@ pkg&gt; add CSV HTTP</code></pre><p>To load DataFramesMeta.jl, which also loads 
   83 │ Red fox                             9.8
 <span class="sgr36">                                68 rows omitted</span></code></pre><p>The <code>$</code> sign has special meaning in DataFramesMeta.jl. We use it for any column reference which is <em>not</em> a symbol. Without it, DataFramesMeta.jl can&#39;t tell whether <code>varname</code> refers to the column <code>:sleep_total</code>. </p><p>You can also use <code>$</code> to refer to columns with strings</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; varname = &quot;sleep_total&quot;</code><code class="nohighlight hljs ansi" style="display:block;">&quot;sleep_total&quot;</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; @select msleep :name $varname</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">83×2 DataFrame</span>
 <span class="sgr1"> Row </span>│<span class="sgr1"> name                        sleep_total </span>
-     │<span class="sgr90"> String31                    Float64     </span>
+<span class="sgr1">     </span>│<span class="sgr90"> String31                    Float64     </span>
 ─────┼─────────────────────────────────────────
    1 │ Cheetah                            12.1
    2 │ Owl monkey                         17.0
@@ -89,7 +89,7 @@ pkg&gt; add CSV HTTP</code></pre><p>To load DataFramesMeta.jl, which also loads 
  &quot;name&quot;
  &quot;sleep_total&quot;</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; @select msleep $varnames</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">83×2 DataFrame</span>
 <span class="sgr1"> Row </span>│<span class="sgr1"> name                        sleep_total </span>
-     │<span class="sgr90"> String31                    Float64     </span>
+<span class="sgr1">     </span>│<span class="sgr90"> String31                    Float64     </span>
 ─────┼─────────────────────────────────────────
    1 │ Cheetah                            12.1
    2 │ Owl monkey                         17.0
@@ -109,7 +109,7 @@ pkg&gt; add CSV HTTP</code></pre><p>To load DataFramesMeta.jl, which also loads 
   83 │ Red fox                             9.8
 <span class="sgr36">                                68 rows omitted</span></code></pre><p>Similarly, to select the first column, use the syntax <code>$1</code>. </p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @select msleep $1</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">83×1 DataFrame</span>
 <span class="sgr1"> Row </span>│<span class="sgr1"> name                       </span>
-     │<span class="sgr90"> String31                   </span>
+<span class="sgr1">     </span>│<span class="sgr90"> String31                   </span>
 ─────┼────────────────────────────
    1 │ Cheetah
    2 │ Owl monkey
@@ -128,48 +128,48 @@ pkg&gt; add CSV HTTP</code></pre><p>To load DataFramesMeta.jl, which also loads 
   82 │ Arctic fox
   83 │ Red fox
 <span class="sgr36">                   68 rows omitted</span></code></pre><p>To select all the columns <em>except</em> a specific column, use the <code>Not</code> function for inverse selection. </p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @select msleep Not(:name)</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">83×10 DataFrame</span>
-<span class="sgr1"> Row </span>│<span class="sgr1"> genus         vore      order           conservation  sleep_total  slee</span> ⋯
-     │<span class="sgr90"> String15      String7?  String15        String15?     Float64      Floa</span> ⋯
+<span class="sgr1"> Row </span>│<span class="sgr1"> genus        vore      order           conservation  sleep_total  sleep</span> ⋯
+<span class="sgr1">     </span>│<span class="sgr90"> String15     String7?  String15        String15?     Float64      Float</span> ⋯
 ─────┼──────────────────────────────────────────────────────────────────────────
-   1 │ Acinonyx      carni     Carnivora       lc                   12.1 <span class="sgr90"> miss</span> ⋯
-   2 │ Aotus         omni      Primates       <span class="sgr90"> missing      </span>        17.0
-   3 │ Aplodontia    herbi     Rodentia        nt                   14.4
-   4 │ Blarina       omni      Soricomorpha    lc                   14.9
-   5 │ Bos           herbi     Artiodactyla    domesticated          4.0       ⋯
-   6 │ Bradypus      herbi     Pilosa         <span class="sgr90"> missing      </span>        14.4
-   7 │ Callorhinus   carni     Carnivora       vu                    8.7
-   8 │ Calomys      <span class="sgr90"> missing  </span> Rodentia       <span class="sgr90"> missing      </span>         7.0 <span class="sgr90"> miss</span>
-  ⋮  │      ⋮           ⋮            ⋮              ⋮             ⋮            ⋱
-  77 │ Tapirus       herbi     Perissodactyla  vu                    4.4       ⋯
-  78 │ Tenrec        omni      Afrosoricida   <span class="sgr90"> missing      </span>        15.6
-  79 │ Tupaia        omni      Scandentia     <span class="sgr90"> missing      </span>         8.9
-  80 │ Tursiops      carni     Cetacea        <span class="sgr90"> missing      </span>         5.2 <span class="sgr90"> miss</span>
-  81 │ Genetta       carni     Carnivora      <span class="sgr90"> missing      </span>         6.3       ⋯
-  82 │ Vulpes        carni     Carnivora      <span class="sgr90"> missing      </span>        12.5 <span class="sgr90"> miss</span>
-  83 │ Vulpes        carni     Carnivora      <span class="sgr90"> missing      </span>         9.8
+   1 │ Acinonyx     carni     Carnivora       lc                   12.1 <span class="sgr90"> missi</span> ⋯
+   2 │ Aotus        omni      Primates       <span class="sgr90"> missing      </span>        17.0
+   3 │ Aplodontia   herbi     Rodentia        nt                   14.4
+   4 │ Blarina      omni      Soricomorpha    lc                   14.9
+   5 │ Bos          herbi     Artiodactyla    domesticated          4.0        ⋯
+   6 │ Bradypus     herbi     Pilosa         <span class="sgr90"> missing      </span>        14.4
+   7 │ Callorhinus  carni     Carnivora       vu                    8.7
+   8 │ Calomys     <span class="sgr90"> missing  </span> Rodentia       <span class="sgr90"> missing      </span>         7.0 <span class="sgr90"> missi</span>
+  ⋮  │      ⋮          ⋮            ⋮              ⋮             ⋮           ⋮ ⋱
+  77 │ Tapirus      herbi     Perissodactyla  vu                    4.4        ⋯
+  78 │ Tenrec       omni      Afrosoricida   <span class="sgr90"> missing      </span>        15.6
+  79 │ Tupaia       omni      Scandentia     <span class="sgr90"> missing      </span>         8.9
+  80 │ Tursiops     carni     Cetacea        <span class="sgr90"> missing      </span>         5.2 <span class="sgr90"> missi</span>
+  81 │ Genetta      carni     Carnivora      <span class="sgr90"> missing      </span>         6.3        ⋯
+  82 │ Vulpes       carni     Carnivora      <span class="sgr90"> missing      </span>        12.5 <span class="sgr90"> missi</span>
+  83 │ Vulpes       carni     Carnivora      <span class="sgr90"> missing      </span>         9.8
 <span class="sgr36">                                                   5 columns and 68 rows omitted</span></code></pre><p>To select a range of columns by name, use the <code>Between</code> operator:</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @select msleep Between(:name, :order)</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">83×4 DataFrame</span>
-<span class="sgr1"> Row </span>│<span class="sgr1"> name                        genus         vore      order          </span>
-     │<span class="sgr90"> String31                    String15      String7?  String15       </span>
-─────┼────────────────────────────────────────────────────────────────────
-   1 │ Cheetah                     Acinonyx      carni     Carnivora
-   2 │ Owl monkey                  Aotus         omni      Primates
-   3 │ Mountain beaver             Aplodontia    herbi     Rodentia
-   4 │ Greater short-tailed shrew  Blarina       omni      Soricomorpha
-   5 │ Cow                         Bos           herbi     Artiodactyla
-   6 │ Three-toed sloth            Bradypus      herbi     Pilosa
-   7 │ Northern fur seal           Callorhinus   carni     Carnivora
-   8 │ Vesper mouse                Calomys      <span class="sgr90"> missing  </span> Rodentia
-  ⋮  │             ⋮                    ⋮           ⋮            ⋮
-  77 │ Brazilian tapir             Tapirus       herbi     Perissodactyla
-  78 │ Tenrec                      Tenrec        omni      Afrosoricida
-  79 │ Tree shrew                  Tupaia        omni      Scandentia
-  80 │ Bottle-nosed dolphin        Tursiops      carni     Cetacea
-  81 │ Genet                       Genetta       carni     Carnivora
-  82 │ Arctic fox                  Vulpes        carni     Carnivora
-  83 │ Red fox                     Vulpes        carni     Carnivora
-<span class="sgr36">                                                           68 rows omitted</span></code></pre><p>To select all columns that start with the character string <code>&quot;sl&quot;</code> use <a href="https://regexone.com/">regular expressions</a> in conjunction with <code>Cols</code>.</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @select msleep Cols(r&quot;^sl&quot;)</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">83×3 DataFrame</span>
+<span class="sgr1"> Row </span>│<span class="sgr1"> name                        genus        vore      order          </span>
+<span class="sgr1">     </span>│<span class="sgr90"> String31                    String15     String7?  String15       </span>
+─────┼───────────────────────────────────────────────────────────────────
+   1 │ Cheetah                     Acinonyx     carni     Carnivora
+   2 │ Owl monkey                  Aotus        omni      Primates
+   3 │ Mountain beaver             Aplodontia   herbi     Rodentia
+   4 │ Greater short-tailed shrew  Blarina      omni      Soricomorpha
+   5 │ Cow                         Bos          herbi     Artiodactyla
+   6 │ Three-toed sloth            Bradypus     herbi     Pilosa
+   7 │ Northern fur seal           Callorhinus  carni     Carnivora
+   8 │ Vesper mouse                Calomys     <span class="sgr90"> missing  </span> Rodentia
+  ⋮  │             ⋮                    ⋮          ⋮            ⋮
+  77 │ Brazilian tapir             Tapirus      herbi     Perissodactyla
+  78 │ Tenrec                      Tenrec       omni      Afrosoricida
+  79 │ Tree shrew                  Tupaia       omni      Scandentia
+  80 │ Bottle-nosed dolphin        Tursiops     carni     Cetacea
+  81 │ Genet                       Genetta      carni     Carnivora
+  82 │ Arctic fox                  Vulpes       carni     Carnivora
+  83 │ Red fox                     Vulpes       carni     Carnivora
+<span class="sgr36">                                                          68 rows omitted</span></code></pre><p>To select all columns that start with the character string <code>&quot;sl&quot;</code> use <a href="https://regexone.com/">regular expressions</a> in conjunction with <code>Cols</code>.</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @select msleep Cols(r&quot;^sl&quot;)</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">83×3 DataFrame</span>
 <span class="sgr1"> Row </span>│<span class="sgr1"> sleep_total  sleep_rem  sleep_cycle    </span>
-     │<span class="sgr90"> Float64      Float64?   Float64?       </span>
+<span class="sgr1">     </span>│<span class="sgr90"> Float64      Float64?   Float64?       </span>
 ─────┼────────────────────────────────────────
    1 │        12.1 <span class="sgr90"> missing    missing        </span>
    2 │        17.0        1.8 <span class="sgr90"> missing        </span>
@@ -189,7 +189,7 @@ pkg&gt; add CSV HTTP</code></pre><p>To load DataFramesMeta.jl, which also loads 
   83 │         9.8        2.4        0.35
 <span class="sgr36">                               68 rows omitted</span></code></pre><p>Regular expressions are powerful, but can be difficult for new users to understand. Here are some quick tips.  </p><ol><li><code>r&quot;^abc&quot;</code> = Starts with <code>&quot;abc&quot;</code></li><li><code>r&quot;abc$&quot;</code> = Ends with <code>&quot;abc&quot;</code></li><li><code>r&quot;abc&quot;</code> = Contains <code>&quot;abc&quot;</code> anywhere. </li></ol><h2 id="Selecting-Rows-Using-@subset-and-@rsubset"><a class="docs-heading-anchor" href="#Selecting-Rows-Using-@subset-and-@rsubset">Selecting Rows Using <code>@subset</code> and <code>@rsubset</code></a><a id="Selecting-Rows-Using-@subset-and-@rsubset-1"></a><a class="docs-heading-anchor-permalink" href="#Selecting-Rows-Using-@subset-and-@rsubset" title="Permalink"></a></h2><p>Filter the rows for mammals that sleep a total of more than 16 hours. </p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @subset msleep :sleep_total .&gt;= 16</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">8×11 DataFrame</span>
 <span class="sgr1"> Row </span>│<span class="sgr1"> name                    genus         vore      order            conser</span> ⋯
-     │<span class="sgr90"> String31                String15      String7?  String15         String</span> ⋯
+<span class="sgr1">     </span>│<span class="sgr90"> String31                String15      String7?  String15         String</span> ⋯
 ─────┼──────────────────────────────────────────────────────────────────────────
    1 │ Owl monkey              Aotus         omni      Primates        <span class="sgr90"> missin</span> ⋯
    2 │ Long-nosed armadillo    Dasypus       carni     Cingulata        lc
@@ -201,7 +201,7 @@ pkg&gt; add CSV HTTP</code></pre><p>To load DataFramesMeta.jl, which also loads 
    8 │ Arctic ground squirrel  Spermophilus  herbi     Rodentia         lc
 <span class="sgr36">                                                               7 columns omitted</span></code></pre><p>In the above expression, the <code>.&gt;=</code> means we &quot;broadcast&quot; the <code>&gt;=</code> comparison across the whole column. We can use a simpler syntax, <code>@rsubset</code> which automatically broadcasts all operations.</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @rsubset msleep :sleep_total &gt; 16</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">8×11 DataFrame</span>
 <span class="sgr1"> Row </span>│<span class="sgr1"> name                    genus         vore      order            conser</span> ⋯
-     │<span class="sgr90"> String31                String15      String7?  String15         String</span> ⋯
+<span class="sgr1">     </span>│<span class="sgr90"> String31                String15      String7?  String15         String</span> ⋯
 ─────┼──────────────────────────────────────────────────────────────────────────
    1 │ Owl monkey              Aotus         omni      Primates        <span class="sgr90"> missin</span> ⋯
    2 │ Long-nosed armadillo    Dasypus       carni     Cingulata        lc
@@ -216,14 +216,14 @@ pkg&gt; add CSV HTTP</code></pre><p>To load DataFramesMeta.jl, which also loads 
            :bodywt &gt;= 1
        end</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">3×11 DataFrame</span>
 <span class="sgr1"> Row </span>│<span class="sgr1"> name                    genus       vore      order            conserva</span> ⋯
-     │<span class="sgr90"> String31                String15    String7?  String15         String15</span> ⋯
+<span class="sgr1">     </span>│<span class="sgr90"> String31                String15    String7?  String15         String15</span> ⋯
 ─────┼──────────────────────────────────────────────────────────────────────────
    1 │ Long-nosed armadillo    Dasypus     carni     Cingulata        lc       ⋯
    2 │ North American Opossum  Didelphis   omni      Didelphimorphia  lc
    3 │ Giant armadillo         Priodontes  insecti   Cingulata        en
 <span class="sgr36">                                                               7 columns omitted</span></code></pre><p>If you are coming from <code>dplyr</code>, you can also write the above command in a way that looks more familiar. </p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @rsubset(msleep, :sleep_total &gt;= 16, :bodywt &gt;= 1)</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">3×11 DataFrame</span>
 <span class="sgr1"> Row </span>│<span class="sgr1"> name                    genus       vore      order            conserva</span> ⋯
-     │<span class="sgr90"> String31                String15    String7?  String15         String15</span> ⋯
+<span class="sgr1">     </span>│<span class="sgr90"> String31                String15    String7?  String15         String15</span> ⋯
 ─────┼──────────────────────────────────────────────────────────────────────────
    1 │ Long-nosed armadillo    Dasypus     carni     Cingulata        lc       ⋯
    2 │ North American Opossum  Didelphis   omni      Didelphimorphia  lc
@@ -233,7 +233,7 @@ pkg&gt; add CSV HTTP</code></pre><p>To load DataFramesMeta.jl, which also loads 
            @rsubset msleep :order in relevant_orders
        end</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">15×11 DataFrame</span>
 <span class="sgr1"> Row </span>│<span class="sgr1"> name             genus          vore      order           conservation </span> ⋯
-     │<span class="sgr90"> String31         String15       String7?  String15        String15?    </span> ⋯
+<span class="sgr1">     </span>│<span class="sgr90"> String31         String15       String7?  String15        String15?    </span> ⋯
 ─────┼──────────────────────────────────────────────────────────────────────────
    1 │ Owl monkey       Aotus          omni      Primates       <span class="sgr90"> missing      </span> ⋯
    2 │ Grivet           Cercopithecus  omni      Primates        lc
@@ -256,7 +256,7 @@ msleep_2 = @rsubset msleep_1 :sleep_total &gt; 16</code></pre><p>Now in this cas
            @rsubset :sleep_total &gt; 16
        end</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">8×2 DataFrame</span>
 <span class="sgr1"> Row </span>│<span class="sgr1"> name                    sleep_total </span>
-     │<span class="sgr90"> String31                Float64     </span>
+<span class="sgr1">     </span>│<span class="sgr90"> String31                Float64     </span>
 ─────┼─────────────────────────────────────
    1 │ Owl monkey                     17.0
    2 │ Long-nosed armadillo           17.4
@@ -266,32 +266,32 @@ msleep_2 = @rsubset msleep_1 :sleep_total &gt; 16</code></pre><p>Now in this cas
    6 │ Little brown bat               19.9
    7 │ Giant armadillo                18.1
    8 │ Arctic ground squirrel         16.6</code></pre><p>You will soon see how useful the <code>@chain</code> macro is when we start to combine many functions.  </p><h1 id="Back-To-dplyr-Verbs-In-Action"><a class="docs-heading-anchor" href="#Back-To-dplyr-Verbs-In-Action">Back To dplyr Verbs In Action</a><a id="Back-To-dplyr-Verbs-In-Action-1"></a><a class="docs-heading-anchor-permalink" href="#Back-To-dplyr-Verbs-In-Action" title="Permalink"></a></h1><p>Now that you know about the <code>@chain</code> macro, we will use it throughout the rest of this tutorial. </p><h2 id="Arrange-Or-Re-order-Rows-Using-@orderby"><a class="docs-heading-anchor" href="#Arrange-Or-Re-order-Rows-Using-@orderby">Arrange Or Re-order Rows Using <code>@orderby</code></a><a id="Arrange-Or-Re-order-Rows-Using-@orderby-1"></a><a class="docs-heading-anchor-permalink" href="#Arrange-Or-Re-order-Rows-Using-@orderby" title="Permalink"></a></h2><p>To arrange (or re-order) rows by a particular column, such as the taxonomic order, list the name of the column you want to arrange the rows by:</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @orderby msleep :order</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">83×11 DataFrame</span>
-<span class="sgr1"> Row </span>│<span class="sgr1"> name                            genus         vore      order         c</span> ⋯
-     │<span class="sgr90"> String31                        String15      String7?  String15      S</span> ⋯
+<span class="sgr1"> Row </span>│<span class="sgr1"> name                        genus      vore      order         conserva</span> ⋯
+<span class="sgr1">     </span>│<span class="sgr90"> String31                    String15   String7?  String15      String15</span> ⋯
 ─────┼──────────────────────────────────────────────────────────────────────────
-   1 │ Tenrec                          Tenrec        omni      Afrosoricida <span class="sgr90"> m</span> ⋯
-   2 │ Cow                             Bos           herbi     Artiodactyla  d
-   3 │ Roe deer                        Capreolus     herbi     Artiodactyla  l
-   4 │ Goat                            Capri         herbi     Artiodactyla  l
-   5 │ Giraffe                         Giraffa       herbi     Artiodactyla  c ⋯
-   6 │ Sheep                           Ovis          herbi     Artiodactyla  d
-   7 │ Pig                             Sus           omni      Artiodactyla  d
-   8 │ Cheetah                         Acinonyx      carni     Carnivora     l
-  ⋮  │               ⋮                      ⋮           ⋮           ⋮          ⋱
-  77 │ Eastern american chipmunk       Tamias        herbi     Rodentia     <span class="sgr90"> m</span> ⋯
-  78 │ Tree shrew                      Tupaia        omni      Scandentia   <span class="sgr90"> m</span>
-  79 │ Greater short-tailed shrew      Blarina       omni      Soricomorpha  l
-  80 │ Star-nosed mole                 Condylura     omni      Soricomorpha  l
-  81 │ Lesser short-tailed shrew       Cryptotis     omni      Soricomorpha  l ⋯
-  82 │ Eastern american mole           Scalopus      insecti   Soricomorpha  l
-  83 │ Musk shrew                      Suncus       <span class="sgr90"> missing  </span> Soricomorpha <span class="sgr90"> m</span>
+   1 │ Tenrec                      Tenrec     omni      Afrosoricida <span class="sgr90"> missing </span> ⋯
+   2 │ Cow                         Bos        herbi     Artiodactyla  domestic
+   3 │ Roe deer                    Capreolus  herbi     Artiodactyla  lc
+   4 │ Goat                        Capri      herbi     Artiodactyla  lc
+   5 │ Giraffe                     Giraffa    herbi     Artiodactyla  cd       ⋯
+   6 │ Sheep                       Ovis       herbi     Artiodactyla  domestic
+   7 │ Pig                         Sus        omni      Artiodactyla  domestic
+   8 │ Cheetah                     Acinonyx   carni     Carnivora     lc
+  ⋮  │             ⋮                   ⋮         ⋮           ⋮             ⋮   ⋱
+  77 │ Eastern american chipmunk   Tamias     herbi     Rodentia     <span class="sgr90"> missing </span> ⋯
+  78 │ Tree shrew                  Tupaia     omni      Scandentia   <span class="sgr90"> missing </span>
+  79 │ Greater short-tailed shrew  Blarina    omni      Soricomorpha  lc
+  80 │ Star-nosed mole             Condylura  omni      Soricomorpha  lc
+  81 │ Lesser short-tailed shrew   Cryptotis  omni      Soricomorpha  lc       ⋯
+  82 │ Eastern american mole       Scalopus   insecti   Soricomorpha  lc
+  83 │ Musk shrew                  Suncus    <span class="sgr90"> missing  </span> Soricomorpha <span class="sgr90"> missing </span>
 <span class="sgr36">                                                   7 columns and 68 rows omitted</span></code></pre><p>Now we will select three columns from msleep, arrange the rows by the taxonomic order and then arrange the rows by <code>:sleep_total</code>. Finally, keep the first 10 rows of the data frame.</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @chain msleep begin
            @select :name :order :sleep_total
            @orderby :order :sleep_total
            first(10)
        end</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">10×3 DataFrame</span>
 <span class="sgr1"> Row </span>│<span class="sgr1"> name          order         sleep_total </span>
-     │<span class="sgr90"> String31      String15      Float64     </span>
+<span class="sgr1">     </span>│<span class="sgr90"> String31      String15      Float64     </span>
 ─────┼─────────────────────────────────────────
    1 │ Tenrec        Afrosoricida         15.6
    2 │ Giraffe       Artiodactyla          1.9
@@ -308,7 +308,7 @@ msleep_2 = @rsubset msleep_1 :sleep_total &gt; 16</code></pre><p>Now in this cas
            @rsubset :sleep_total &gt; 16
        end</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">8×3 DataFrame</span>
 <span class="sgr1"> Row </span>│<span class="sgr1"> name                    order            sleep_total </span>
-     │<span class="sgr90"> String31                String15         Float64     </span>
+<span class="sgr1">     </span>│<span class="sgr90"> String31                String15         Float64     </span>
 ─────┼──────────────────────────────────────────────────────
    1 │ Big brown bat           Chiroptera              19.7
    2 │ Little brown bat        Chiroptera              19.9
@@ -326,7 +326,7 @@ msleep_2 = @rsubset msleep_1 :sleep_total &gt; 16</code></pre><p>Now in this cas
            @rsubset :sleep_total &gt;= 16
        end</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">8×3 DataFrame</span>
 <span class="sgr1"> Row </span>│<span class="sgr1"> name                    order            sleep_total </span>
-     │<span class="sgr90"> String31                String15         Float64     </span>
+<span class="sgr1">     </span>│<span class="sgr90"> String31                String15         Float64     </span>
 ─────┼──────────────────────────────────────────────────────
    1 │ Little brown bat        Chiroptera              19.9
    2 │ Big brown bat           Chiroptera              19.7
@@ -337,7 +337,7 @@ msleep_2 = @rsubset msleep_1 :sleep_total &gt; 16</code></pre><p>Now in this cas
    7 │ Owl monkey              Primates                17.0
    8 │ Arctic ground squirrel  Rodentia                16.6</code></pre><p>Alternatively, using the StatsBase.jl package you could have written <code>ordinalrank(:sleep_total, rev=true)</code>. Finally, if you wanted to avoid using an additional package you could use the following expression <code>invperm(sortperm(:sleep_total, rev=true))</code>.</p><p>Here is a minimal example of sorting string column in reverse:</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; using StatsBase</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; df = DataFrame(group=[1, 2, 1, 2, 1], name = [&quot;Bob&quot;, &quot;Dexter&quot;, &quot;Alice&quot;, &quot;Eve&quot;, &quot;Cedric&quot;])</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">5×2 DataFrame</span>
 <span class="sgr1"> Row </span>│<span class="sgr1"> group  name   </span>
-     │<span class="sgr90"> Int64  String </span>
+<span class="sgr1">     </span>│<span class="sgr90"> Int64  String </span>
 ─────┼───────────────
    1 │     1  Bob
    2 │     2  Dexter
@@ -348,101 +348,101 @@ msleep_2 = @rsubset msleep_1 :sleep_total &gt; 16</code></pre><p>Now in this cas
            ordinalrank(:name, rev=true)
        end</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">5×2 DataFrame</span>
 <span class="sgr1"> Row </span>│<span class="sgr1"> group  name   </span>
-     │<span class="sgr90"> Int64  String </span>
+<span class="sgr1">     </span>│<span class="sgr90"> Int64  String </span>
 ─────┼───────────────
    1 │     1  Cedric
    2 │     1  Bob
    3 │     1  Alice
    4 │     2  Eve
    5 │     2  Dexter</code></pre><h2 id="Create-New-Columns-Using-@transform-and-@rtransform"><a class="docs-heading-anchor" href="#Create-New-Columns-Using-@transform-and-@rtransform">Create New Columns Using <code>@transform</code> and <code>@rtransform</code></a><a id="Create-New-Columns-Using-@transform-and-@rtransform-1"></a><a class="docs-heading-anchor-permalink" href="#Create-New-Columns-Using-@transform-and-@rtransform" title="Permalink"></a></h2><p>The <code>@transform</code> macro will add new columns to the data frame. Like with other macros, use <code>@rtransform</code> to operate row-wise. Create a new column called <code>:rem_proportion</code>, which is the ratio of rem sleep to total amount of sleep. </p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @rtransform msleep :rem_proportion = :sleep_rem / :sleep_total</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">83×12 DataFrame</span>
-<span class="sgr1"> Row </span>│<span class="sgr1"> name                        genus         vore      order           con</span> ⋯
-     │<span class="sgr90"> String31                    String15      String7?  String15        Str</span> ⋯
+<span class="sgr1"> Row </span>│<span class="sgr1"> name                        genus        vore      order           cons</span> ⋯
+<span class="sgr1">     </span>│<span class="sgr90"> String31                    String15     String7?  String15        Stri</span> ⋯
 ─────┼──────────────────────────────────────────────────────────────────────────
-   1 │ Cheetah                     Acinonyx      carni     Carnivora       lc  ⋯
-   2 │ Owl monkey                  Aotus         omni      Primates       <span class="sgr90"> mis</span>
-   3 │ Mountain beaver             Aplodontia    herbi     Rodentia        nt
-   4 │ Greater short-tailed shrew  Blarina       omni      Soricomorpha    lc
-   5 │ Cow                         Bos           herbi     Artiodactyla    dom ⋯
-   6 │ Three-toed sloth            Bradypus      herbi     Pilosa         <span class="sgr90"> mis</span>
-   7 │ Northern fur seal           Callorhinus   carni     Carnivora       vu
-   8 │ Vesper mouse                Calomys      <span class="sgr90"> missing  </span> Rodentia       <span class="sgr90"> mis</span>
-  ⋮  │             ⋮                    ⋮           ⋮            ⋮             ⋱
-  77 │ Brazilian tapir             Tapirus       herbi     Perissodactyla  vu  ⋯
-  78 │ Tenrec                      Tenrec        omni      Afrosoricida   <span class="sgr90"> mis</span>
-  79 │ Tree shrew                  Tupaia        omni      Scandentia     <span class="sgr90"> mis</span>
-  80 │ Bottle-nosed dolphin        Tursiops      carni     Cetacea        <span class="sgr90"> mis</span>
-  81 │ Genet                       Genetta       carni     Carnivora      <span class="sgr90"> mis</span> ⋯
-  82 │ Arctic fox                  Vulpes        carni     Carnivora      <span class="sgr90"> mis</span>
-  83 │ Red fox                     Vulpes        carni     Carnivora      <span class="sgr90"> mis</span>
+   1 │ Cheetah                     Acinonyx     carni     Carnivora       lc   ⋯
+   2 │ Owl monkey                  Aotus        omni      Primates       <span class="sgr90"> miss</span>
+   3 │ Mountain beaver             Aplodontia   herbi     Rodentia        nt
+   4 │ Greater short-tailed shrew  Blarina      omni      Soricomorpha    lc
+   5 │ Cow                         Bos          herbi     Artiodactyla    dome ⋯
+   6 │ Three-toed sloth            Bradypus     herbi     Pilosa         <span class="sgr90"> miss</span>
+   7 │ Northern fur seal           Callorhinus  carni     Carnivora       vu
+   8 │ Vesper mouse                Calomys     <span class="sgr90"> missing  </span> Rodentia       <span class="sgr90"> miss</span>
+  ⋮  │             ⋮                    ⋮          ⋮            ⋮              ⋱
+  77 │ Brazilian tapir             Tapirus      herbi     Perissodactyla  vu   ⋯
+  78 │ Tenrec                      Tenrec       omni      Afrosoricida   <span class="sgr90"> miss</span>
+  79 │ Tree shrew                  Tupaia       omni      Scandentia     <span class="sgr90"> miss</span>
+  80 │ Bottle-nosed dolphin        Tursiops     carni     Cetacea        <span class="sgr90"> miss</span>
+  81 │ Genet                       Genetta      carni     Carnivora      <span class="sgr90"> miss</span> ⋯
+  82 │ Arctic fox                  Vulpes       carni     Carnivora      <span class="sgr90"> miss</span>
+  83 │ Red fox                     Vulpes       carni     Carnivora      <span class="sgr90"> miss</span>
 <span class="sgr36">                                                   8 columns and 68 rows omitted</span></code></pre><p>You can add many columns at a time by placing multiple operations in a block.</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @rtransform msleep begin
            :rem_proportion = :sleep_rem / :sleep_total
            :bodywt_grams = :bodywt * 1000
        end</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">83×13 DataFrame</span>
-<span class="sgr1"> Row </span>│<span class="sgr1"> name                        genus         vore      order           con</span> ⋯
-     │<span class="sgr90"> String31                    String15      String7?  String15        Str</span> ⋯
+<span class="sgr1"> Row </span>│<span class="sgr1"> name                        genus        vore      order           cons</span> ⋯
+<span class="sgr1">     </span>│<span class="sgr90"> String31                    String15     String7?  String15        Stri</span> ⋯
 ─────┼──────────────────────────────────────────────────────────────────────────
-   1 │ Cheetah                     Acinonyx      carni     Carnivora       lc  ⋯
-   2 │ Owl monkey                  Aotus         omni      Primates       <span class="sgr90"> mis</span>
-   3 │ Mountain beaver             Aplodontia    herbi     Rodentia        nt
-   4 │ Greater short-tailed shrew  Blarina       omni      Soricomorpha    lc
-   5 │ Cow                         Bos           herbi     Artiodactyla    dom ⋯
-   6 │ Three-toed sloth            Bradypus      herbi     Pilosa         <span class="sgr90"> mis</span>
-   7 │ Northern fur seal           Callorhinus   carni     Carnivora       vu
-   8 │ Vesper mouse                Calomys      <span class="sgr90"> missing  </span> Rodentia       <span class="sgr90"> mis</span>
-  ⋮  │             ⋮                    ⋮           ⋮            ⋮             ⋱
-  77 │ Brazilian tapir             Tapirus       herbi     Perissodactyla  vu  ⋯
-  78 │ Tenrec                      Tenrec        omni      Afrosoricida   <span class="sgr90"> mis</span>
-  79 │ Tree shrew                  Tupaia        omni      Scandentia     <span class="sgr90"> mis</span>
-  80 │ Bottle-nosed dolphin        Tursiops      carni     Cetacea        <span class="sgr90"> mis</span>
-  81 │ Genet                       Genetta       carni     Carnivora      <span class="sgr90"> mis</span> ⋯
-  82 │ Arctic fox                  Vulpes        carni     Carnivora      <span class="sgr90"> mis</span>
-  83 │ Red fox                     Vulpes        carni     Carnivora      <span class="sgr90"> mis</span>
+   1 │ Cheetah                     Acinonyx     carni     Carnivora       lc   ⋯
+   2 │ Owl monkey                  Aotus        omni      Primates       <span class="sgr90"> miss</span>
+   3 │ Mountain beaver             Aplodontia   herbi     Rodentia        nt
+   4 │ Greater short-tailed shrew  Blarina      omni      Soricomorpha    lc
+   5 │ Cow                         Bos          herbi     Artiodactyla    dome ⋯
+   6 │ Three-toed sloth            Bradypus     herbi     Pilosa         <span class="sgr90"> miss</span>
+   7 │ Northern fur seal           Callorhinus  carni     Carnivora       vu
+   8 │ Vesper mouse                Calomys     <span class="sgr90"> missing  </span> Rodentia       <span class="sgr90"> miss</span>
+  ⋮  │             ⋮                    ⋮          ⋮            ⋮              ⋱
+  77 │ Brazilian tapir             Tapirus      herbi     Perissodactyla  vu   ⋯
+  78 │ Tenrec                      Tenrec       omni      Afrosoricida   <span class="sgr90"> miss</span>
+  79 │ Tree shrew                  Tupaia       omni      Scandentia     <span class="sgr90"> miss</span>
+  80 │ Bottle-nosed dolphin        Tursiops     carni     Cetacea        <span class="sgr90"> miss</span>
+  81 │ Genet                       Genetta      carni     Carnivora      <span class="sgr90"> miss</span> ⋯
+  82 │ Arctic fox                  Vulpes       carni     Carnivora      <span class="sgr90"> miss</span>
+  83 │ Red fox                     Vulpes       carni     Carnivora      <span class="sgr90"> miss</span>
 <span class="sgr36">                                                   9 columns and 68 rows omitted</span></code></pre><p>Using <code>@transform</code> instead of <code>@rtransform</code> will let us work with the column as a whole, and not a single row at a time. Let&#39;s create a new variable showing how far an animal&#39;s sleep time is from the average of all animals. </p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @transform msleep :demeand_sleep = :sleep_total .- mean(:sleep_total)</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">83×12 DataFrame</span>
-<span class="sgr1"> Row </span>│<span class="sgr1"> name                        genus         vore      order           con</span> ⋯
-     │<span class="sgr90"> String31                    String15      String7?  String15        Str</span> ⋯
+<span class="sgr1"> Row </span>│<span class="sgr1"> name                        genus        vore      order           cons</span> ⋯
+<span class="sgr1">     </span>│<span class="sgr90"> String31                    String15     String7?  String15        Stri</span> ⋯
 ─────┼──────────────────────────────────────────────────────────────────────────
-   1 │ Cheetah                     Acinonyx      carni     Carnivora       lc  ⋯
-   2 │ Owl monkey                  Aotus         omni      Primates       <span class="sgr90"> mis</span>
-   3 │ Mountain beaver             Aplodontia    herbi     Rodentia        nt
-   4 │ Greater short-tailed shrew  Blarina       omni      Soricomorpha    lc
-   5 │ Cow                         Bos           herbi     Artiodactyla    dom ⋯
-   6 │ Three-toed sloth            Bradypus      herbi     Pilosa         <span class="sgr90"> mis</span>
-   7 │ Northern fur seal           Callorhinus   carni     Carnivora       vu
-   8 │ Vesper mouse                Calomys      <span class="sgr90"> missing  </span> Rodentia       <span class="sgr90"> mis</span>
-  ⋮  │             ⋮                    ⋮           ⋮            ⋮             ⋱
-  77 │ Brazilian tapir             Tapirus       herbi     Perissodactyla  vu  ⋯
-  78 │ Tenrec                      Tenrec        omni      Afrosoricida   <span class="sgr90"> mis</span>
-  79 │ Tree shrew                  Tupaia        omni      Scandentia     <span class="sgr90"> mis</span>
-  80 │ Bottle-nosed dolphin        Tursiops      carni     Cetacea        <span class="sgr90"> mis</span>
-  81 │ Genet                       Genetta       carni     Carnivora      <span class="sgr90"> mis</span> ⋯
-  82 │ Arctic fox                  Vulpes        carni     Carnivora      <span class="sgr90"> mis</span>
-  83 │ Red fox                     Vulpes        carni     Carnivora      <span class="sgr90"> mis</span>
+   1 │ Cheetah                     Acinonyx     carni     Carnivora       lc   ⋯
+   2 │ Owl monkey                  Aotus        omni      Primates       <span class="sgr90"> miss</span>
+   3 │ Mountain beaver             Aplodontia   herbi     Rodentia        nt
+   4 │ Greater short-tailed shrew  Blarina      omni      Soricomorpha    lc
+   5 │ Cow                         Bos          herbi     Artiodactyla    dome ⋯
+   6 │ Three-toed sloth            Bradypus     herbi     Pilosa         <span class="sgr90"> miss</span>
+   7 │ Northern fur seal           Callorhinus  carni     Carnivora       vu
+   8 │ Vesper mouse                Calomys     <span class="sgr90"> missing  </span> Rodentia       <span class="sgr90"> miss</span>
+  ⋮  │             ⋮                    ⋮          ⋮            ⋮              ⋱
+  77 │ Brazilian tapir             Tapirus      herbi     Perissodactyla  vu   ⋯
+  78 │ Tenrec                      Tenrec       omni      Afrosoricida   <span class="sgr90"> miss</span>
+  79 │ Tree shrew                  Tupaia       omni      Scandentia     <span class="sgr90"> miss</span>
+  80 │ Bottle-nosed dolphin        Tursiops     carni     Cetacea        <span class="sgr90"> miss</span>
+  81 │ Genet                       Genetta      carni     Carnivora      <span class="sgr90"> miss</span> ⋯
+  82 │ Arctic fox                  Vulpes       carni     Carnivora      <span class="sgr90"> miss</span>
+  83 │ Red fox                     Vulpes       carni     Carnivora      <span class="sgr90"> miss</span>
 <span class="sgr36">                                                   8 columns and 68 rows omitted</span></code></pre><p>Finally, note that you can create a new column with the name taken from an existing variable, or a new column name with spaces in it, with <code>$</code></p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; newname = :rem_proportion</code><code class="nohighlight hljs ansi" style="display:block;">:rem_proportion</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; @rtransform msleep begin
            $newname = :sleep_rem / :sleep_total
            $&quot;Body weight in grams&quot; = :bodywt * 1000
        end</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">83×13 DataFrame</span>
-<span class="sgr1"> Row </span>│<span class="sgr1"> name                        genus         vore      order           con</span> ⋯
-     │<span class="sgr90"> String31                    String15      String7?  String15        Str</span> ⋯
+<span class="sgr1"> Row </span>│<span class="sgr1"> name                        genus        vore      order           cons</span> ⋯
+<span class="sgr1">     </span>│<span class="sgr90"> String31                    String15     String7?  String15        Stri</span> ⋯
 ─────┼──────────────────────────────────────────────────────────────────────────
-   1 │ Cheetah                     Acinonyx      carni     Carnivora       lc  ⋯
-   2 │ Owl monkey                  Aotus         omni      Primates       <span class="sgr90"> mis</span>
-   3 │ Mountain beaver             Aplodontia    herbi     Rodentia        nt
-   4 │ Greater short-tailed shrew  Blarina       omni      Soricomorpha    lc
-   5 │ Cow                         Bos           herbi     Artiodactyla    dom ⋯
-   6 │ Three-toed sloth            Bradypus      herbi     Pilosa         <span class="sgr90"> mis</span>
-   7 │ Northern fur seal           Callorhinus   carni     Carnivora       vu
-   8 │ Vesper mouse                Calomys      <span class="sgr90"> missing  </span> Rodentia       <span class="sgr90"> mis</span>
-  ⋮  │             ⋮                    ⋮           ⋮            ⋮             ⋱
-  77 │ Brazilian tapir             Tapirus       herbi     Perissodactyla  vu  ⋯
-  78 │ Tenrec                      Tenrec        omni      Afrosoricida   <span class="sgr90"> mis</span>
-  79 │ Tree shrew                  Tupaia        omni      Scandentia     <span class="sgr90"> mis</span>
-  80 │ Bottle-nosed dolphin        Tursiops      carni     Cetacea        <span class="sgr90"> mis</span>
-  81 │ Genet                       Genetta       carni     Carnivora      <span class="sgr90"> mis</span> ⋯
-  82 │ Arctic fox                  Vulpes        carni     Carnivora      <span class="sgr90"> mis</span>
-  83 │ Red fox                     Vulpes        carni     Carnivora      <span class="sgr90"> mis</span>
+   1 │ Cheetah                     Acinonyx     carni     Carnivora       lc   ⋯
+   2 │ Owl monkey                  Aotus        omni      Primates       <span class="sgr90"> miss</span>
+   3 │ Mountain beaver             Aplodontia   herbi     Rodentia        nt
+   4 │ Greater short-tailed shrew  Blarina      omni      Soricomorpha    lc
+   5 │ Cow                         Bos          herbi     Artiodactyla    dome ⋯
+   6 │ Three-toed sloth            Bradypus     herbi     Pilosa         <span class="sgr90"> miss</span>
+   7 │ Northern fur seal           Callorhinus  carni     Carnivora       vu
+   8 │ Vesper mouse                Calomys     <span class="sgr90"> missing  </span> Rodentia       <span class="sgr90"> miss</span>
+  ⋮  │             ⋮                    ⋮          ⋮            ⋮              ⋱
+  77 │ Brazilian tapir             Tapirus      herbi     Perissodactyla  vu   ⋯
+  78 │ Tenrec                      Tenrec       omni      Afrosoricida   <span class="sgr90"> miss</span>
+  79 │ Tree shrew                  Tupaia       omni      Scandentia     <span class="sgr90"> miss</span>
+  80 │ Bottle-nosed dolphin        Tursiops     carni     Cetacea        <span class="sgr90"> miss</span>
+  81 │ Genet                       Genetta      carni     Carnivora      <span class="sgr90"> miss</span> ⋯
+  82 │ Arctic fox                  Vulpes       carni     Carnivora      <span class="sgr90"> miss</span>
+  83 │ Red fox                     Vulpes       carni     Carnivora      <span class="sgr90"> miss</span>
 <span class="sgr36">                                                   9 columns and 68 rows omitted</span></code></pre><h2 id="Create-Summaries-of-the-Data-Frame-using-@combine"><a class="docs-heading-anchor" href="#Create-Summaries-of-the-Data-Frame-using-@combine">Create Summaries of the Data Frame using <code>@combine</code></a><a id="Create-Summaries-of-the-Data-Frame-using-@combine-1"></a><a class="docs-heading-anchor-permalink" href="#Create-Summaries-of-the-Data-Frame-using-@combine" title="Permalink"></a></h2><p>The <code>@combine</code> macro will create summary statistics for a given column in the data frame, such as finding the mean. For example, to compute the average number of hours of sleep, apply the <code>mean</code> function to the column <code>:sleep_total</code> and call the summary value <code>:avg_sleep</code>. </p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @chain msleep @combine :avg_sleep = mean(:sleep_total)</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">1×1 DataFrame</span>
 <span class="sgr1"> Row </span>│<span class="sgr1"> avg_sleep </span>
-     │<span class="sgr90"> Float64   </span>
+<span class="sgr1">     </span>│<span class="sgr90"> Float64   </span>
 ─────┼───────────
    1 │   10.4337</code></pre><p>There are many other summary statistics you could consider such <code>std</code>, <code>minimum</code>, <code>maximum</code>, <code>median</code>, <code>sum</code>, <code>length</code> (returns the length of vector), <code>first</code> (returns first value in vector), and <code>last</code> (returns last value in vector).</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @combine msleep begin
            :avg_sleep = mean(:sleep_total)
@@ -451,11 +451,11 @@ msleep_2 = @rsubset msleep_1 :sleep_total &gt; 16</code></pre><p>Now in this cas
            :total = length(:sleep_total)
        end</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">1×4 DataFrame</span>
 <span class="sgr1"> Row </span>│<span class="sgr1"> avg_sleep  min_sleep  max_sleep  total </span>
-     │<span class="sgr90"> Float64    Float64    Float64    Int64 </span>
+<span class="sgr1">     </span>│<span class="sgr90"> Float64    Float64    Float64    Int64 </span>
 ─────┼────────────────────────────────────────
    1 │   10.4337        1.9       19.9     83</code></pre><p>DataFrames.jl also provides the function <code>describe</code> which performs many of these summaries automatically. </p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; describe(msleep)</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">11×7 DataFrame</span>
 <span class="sgr1"> Row </span>│<span class="sgr1"> variable      mean      min               median    max                </span> ⋯
-     │<span class="sgr90"> Symbol        Union…    Any               Union…    Any                </span> ⋯
+<span class="sgr1">     </span>│<span class="sgr90"> Symbol        Union…    Any               Union…    Any                </span> ⋯
 ─────┼──────────────────────────────────────────────────────────────────────────
    1 │ name         <span class="sgr90">          </span> African elephant <span class="sgr90">          </span> Western american ch ⋯
    2 │ genus        <span class="sgr90">          </span> Acinonyx         <span class="sgr90">          </span> Vulpes
@@ -477,46 +477,46 @@ msleep_2 = @rsubset msleep_1 :sleep_total &gt; 16</code></pre><p>Now in this cas
                :total = length(:sleep_total)
            end
        end</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">19×5 DataFrame</span>
-<span class="sgr1"> Row </span>│<span class="sgr1"> order            avg_sleep  min_sleep  max_sleep  total </span>
-     │<span class="sgr90"> String15         Float64    Float64    Float64    Int64 </span>
-─────┼─────────────────────────────────────────────────────────
-   1 │ Carnivora         10.1167         3.5       15.8     12
-   2 │ Primates          10.5            8.0       17.0     12
-   3 │ Rodentia          12.4682         7.0       16.6     22
-   4 │ Soricomorpha      11.1            8.4       14.9      5
-   5 │ Artiodactyla       4.51667        1.9        9.1      6
-   6 │ Pilosa            14.4           14.4       14.4      1
-   7 │ Cingulata         17.75          17.4       18.1      2
-   8 │ Hyracoidea         5.66667        5.3        6.3      3
-  ⋮  │        ⋮             ⋮          ⋮          ⋮        ⋮
-  13 │ Erinaceomorpha    10.2           10.1       10.3      2
-  14 │ Cetacea            4.5            2.7        5.6      3
-  15 │ Lagomorpha         8.4            8.4        8.4      1
-  16 │ Diprotodontia     12.4           11.1       13.7      2
-  17 │ Monotremata        8.6            8.6        8.6      1
-  18 │ Afrosoricida      15.6           15.6       15.6      1
-  19 │ Scandentia         8.9            8.9        8.9      1
-<span class="sgr36">                                                 4 rows omitted</span></code></pre><p>Split-apply-combine can also be used with <code>@transform</code> to add new variables to a data frame by performing operations by group. For instance, we can de-mean the total hours of sleep of an animal relative to other animals in the same genus. </p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @chain msleep begin
+<span class="sgr1"> Row </span>│<span class="sgr1"> order           avg_sleep  min_sleep  max_sleep  total </span>
+<span class="sgr1">     </span>│<span class="sgr90"> String15        Float64    Float64    Float64    Int64 </span>
+─────┼────────────────────────────────────────────────────────
+   1 │ Carnivora        10.1167         3.5       15.8     12
+   2 │ Primates         10.5            8.0       17.0     12
+   3 │ Rodentia         12.4682         7.0       16.6     22
+   4 │ Soricomorpha     11.1            8.4       14.9      5
+   5 │ Artiodactyla      4.51667        1.9        9.1      6
+   6 │ Pilosa           14.4           14.4       14.4      1
+   7 │ Cingulata        17.75          17.4       18.1      2
+   8 │ Hyracoidea        5.66667        5.3        6.3      3
+  ⋮  │       ⋮             ⋮          ⋮          ⋮        ⋮
+  13 │ Erinaceomorpha   10.2           10.1       10.3      2
+  14 │ Cetacea           4.5            2.7        5.6      3
+  15 │ Lagomorpha        8.4            8.4        8.4      1
+  16 │ Diprotodontia    12.4           11.1       13.7      2
+  17 │ Monotremata       8.6            8.6        8.6      1
+  18 │ Afrosoricida     15.6           15.6       15.6      1
+  19 │ Scandentia        8.9            8.9        8.9      1
+<span class="sgr36">                                                4 rows omitted</span></code></pre><p>Split-apply-combine can also be used with <code>@transform</code> to add new variables to a data frame by performing operations by group. For instance, we can de-mean the total hours of sleep of an animal relative to other animals in the same genus. </p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; @chain msleep begin
            @groupby :order
            @transform :sleep_genus = :sleep_total .- mean(:sleep_total)
        end</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">83×12 DataFrame</span>
-<span class="sgr1"> Row </span>│<span class="sgr1"> name                        genus         vore      order           con</span> ⋯
-     │<span class="sgr90"> String31                    String15      String7?  String15        Str</span> ⋯
+<span class="sgr1"> Row </span>│<span class="sgr1"> name                        genus        vore      order           cons</span> ⋯
+<span class="sgr1">     </span>│<span class="sgr90"> String31                    String15     String7?  String15        Stri</span> ⋯
 ─────┼──────────────────────────────────────────────────────────────────────────
-   1 │ Cheetah                     Acinonyx      carni     Carnivora       lc  ⋯
-   2 │ Owl monkey                  Aotus         omni      Primates       <span class="sgr90"> mis</span>
-   3 │ Mountain beaver             Aplodontia    herbi     Rodentia        nt
-   4 │ Greater short-tailed shrew  Blarina       omni      Soricomorpha    lc
-   5 │ Cow                         Bos           herbi     Artiodactyla    dom ⋯
-   6 │ Three-toed sloth            Bradypus      herbi     Pilosa         <span class="sgr90"> mis</span>
-   7 │ Northern fur seal           Callorhinus   carni     Carnivora       vu
-   8 │ Vesper mouse                Calomys      <span class="sgr90"> missing  </span> Rodentia       <span class="sgr90"> mis</span>
-  ⋮  │             ⋮                    ⋮           ⋮            ⋮             ⋱
-  77 │ Brazilian tapir             Tapirus       herbi     Perissodactyla  vu  ⋯
-  78 │ Tenrec                      Tenrec        omni      Afrosoricida   <span class="sgr90"> mis</span>
-  79 │ Tree shrew                  Tupaia        omni      Scandentia     <span class="sgr90"> mis</span>
-  80 │ Bottle-nosed dolphin        Tursiops      carni     Cetacea        <span class="sgr90"> mis</span>
-  81 │ Genet                       Genetta       carni     Carnivora      <span class="sgr90"> mis</span> ⋯
-  82 │ Arctic fox                  Vulpes        carni     Carnivora      <span class="sgr90"> mis</span>
-  83 │ Red fox                     Vulpes        carni     Carnivora      <span class="sgr90"> mis</span>
-<span class="sgr36">                                                   8 columns and 68 rows omitted</span></code></pre><p>This short tutorial only touches on the wide array of features in Julia, DataFrames.jl, and DataFramesMeta.jl. Read the <a href="https://github.com/JuliaData/DataFramesMeta.jl">full documentation</a> for more information.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Introduction</a><a class="docs-footer-nextpage" href="../api/api/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Monday 25 August 2025 11:36">Monday 25 August 2025</span>. Using Julia version 1.11.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+   1 │ Cheetah                     Acinonyx     carni     Carnivora       lc   ⋯
+   2 │ Owl monkey                  Aotus        omni      Primates       <span class="sgr90"> miss</span>
+   3 │ Mountain beaver             Aplodontia   herbi     Rodentia        nt
+   4 │ Greater short-tailed shrew  Blarina      omni      Soricomorpha    lc
+   5 │ Cow                         Bos          herbi     Artiodactyla    dome ⋯
+   6 │ Three-toed sloth            Bradypus     herbi     Pilosa         <span class="sgr90"> miss</span>
+   7 │ Northern fur seal           Callorhinus  carni     Carnivora       vu
+   8 │ Vesper mouse                Calomys     <span class="sgr90"> missing  </span> Rodentia       <span class="sgr90"> miss</span>
+  ⋮  │             ⋮                    ⋮          ⋮            ⋮              ⋱
+  77 │ Brazilian tapir             Tapirus      herbi     Perissodactyla  vu   ⋯
+  78 │ Tenrec                      Tenrec       omni      Afrosoricida   <span class="sgr90"> miss</span>
+  79 │ Tree shrew                  Tupaia       omni      Scandentia     <span class="sgr90"> miss</span>
+  80 │ Bottle-nosed dolphin        Tursiops     carni     Cetacea        <span class="sgr90"> miss</span>
+  81 │ Genet                       Genetta      carni     Carnivora      <span class="sgr90"> miss</span> ⋯
+  82 │ Arctic fox                  Vulpes       carni     Carnivora      <span class="sgr90"> miss</span>
+  83 │ Red fox                     Vulpes       carni     Carnivora      <span class="sgr90"> miss</span>
+<span class="sgr36">                                                   8 columns and 68 rows omitted</span></code></pre><p>This short tutorial only touches on the wide array of features in Julia, DataFrames.jl, and DataFramesMeta.jl. Read the <a href="https://github.com/JuliaData/DataFramesMeta.jl">full documentation</a> for more information.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Introduction</a><a class="docs-footer-nextpage" href="../api/api/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Friday 17 October 2025 23:56">Friday 17 October 2025</span>. Using Julia version 1.12.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
