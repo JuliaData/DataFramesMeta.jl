@@ -1,4 +1,8 @@
 # DataFramesMeta v0.15.4 Release Notes
+* Update Chain.jl compat ([#410](https://github.com/JuliaData/DataFramesMeta.jl/pull/410))
+* Update docs and docs infrastructure ([#409](https://github.com/JuliaData/DataFramesMeta.jl/pull/410))
+
+# DataFramesMeta v0.15.4 Release Notes
 * Fix a bug where multicolumn selectors were ignored by `@select!`, `@rselect`, and `@rselect!` (Issue [#404](https://github.com/JuliaData/DataFramesMeta.jl/issues/404)), ([#405](https://github.com/JuliaData/DataFramesMeta.jl/pull/405))
 
 # DataFramesMeta v0.15.3 Release Notes
