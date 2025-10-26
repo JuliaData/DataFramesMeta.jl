@@ -233,9 +233,6 @@ else
     _print_labels(t) = pretty_table(t; column_labels = [names(t)])
 end
 
-
-
-
 """
     printnotes(df, cols = All(); unnoted = false)
 
