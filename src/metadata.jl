@@ -218,9 +218,23 @@ function printlabels(df, cols=All(); unlabelled = true)
         end
     end
     t = DataFrame(Column = cs, Label = ls)
-    pretty_table(t; show_subheader = false)
+    _print_labels(t)
     return nothing
 end
+
+# Support older PrettyTables for now
+# (Will change when DataFrames.jl drops support)
+# I can't just use keyword arguments provided by
+# DataFrames.jl because I like the lines of the default
+# printing
+@static if pkgversion(PrettyTables).major == 2
+    _print_labels(t) = pretty_table(t; show_subheader = false)
+else
+    _print_labels(t) = pretty_table(t; column_labels = [names(t)])
+end
+
+
+
 
 """
     printnotes(df, cols = All(); unnoted = false)
