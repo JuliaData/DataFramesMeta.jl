@@ -1,4 +1,7 @@
-# DataFramesMeta v0.15.4 Release Notes
+# DataFramesMeta v0.15.6 Release Notes
+* Update to PrettyTables.jl v3 ([#415](https://github.com/JuliaData/DataFramesMeta.jl/pull/415#event-20653251214))
+
+# DataFramesMeta v0.15.5 Release Notes
 * Update Chain.jl compat ([#410](https://github.com/JuliaData/DataFramesMeta.jl/pull/410))
 * Update docs and docs infrastructure ([#409](https://github.com/JuliaData/DataFramesMeta.jl/pull/410))
 
