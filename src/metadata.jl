@@ -230,7 +230,7 @@ end
 @static if pkgversion(PrettyTables).major == 2
     _print_labels(t) = pretty_table(t; show_subheader = false)
 else
-    _print_labels(t) = pretty_table(t; column_labels = [names(t)])
+    _print_labels(t) = pretty_table(t; show_first_column_label_only = true)
 end
 
 """
