@@ -421,6 +421,22 @@ fun_to_vec(ex::QuoteNode;
            outer_flags::Union{NamedTuple, Nothing}=nothing,
            allow_multicol::Bool = false) = ex
 
+# Catch-all method for literal values (Bool, Int, String, etc.)
+# Wraps them in Returns to create a constant function
+# This allows syntax like @subset(df, true) or @subset(df, false)
+function fun_to_vec(ex;
+                    no_dest::Bool=false,
+                    gensym_names::Bool=false,
+                    outer_flags::Union{NamedTuple, Nothing}=nothing,
+                    allow_multicol::Bool = false)
+    if no_dest
+        # For @subset and @with, return a constant function
+        return :([] => Returns($ex))
+    else
+        throw(ArgumentError("Literal values are only supported in @subset, @rsubset, @with, and similar macros"))
+    end
+end
+
 
 """
     rename_kw_to_pair(ex::Expr)

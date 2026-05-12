@@ -173,4 +173,18 @@ end
     @test @subset!(groupby(copy(df), :g), :c .== :g) ≅ df[[], :]
 end
 
+@testset "@subset with literal values" begin
+    df = DataFrame(A = [1, 2, 3], B = [4, 5, 6])
+
+    # Test with boolean literal true - should return all rows
+    @test @subset(df, true) ≅ df
+
+    # Test with boolean literal false - should return empty dataframe
+    @test @subset(df, false) ≅ df[Int[], :]
+
+    # Test combination with other conditions
+    @test @subset(df, true, :A .> 1) ≅ df[df.A .> 1, :]
+    @test @subset(df, false, :A .> 1) ≅ df[Int[], :]
+end
+
 end # module
