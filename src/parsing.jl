@@ -422,7 +422,10 @@ fun_to_vec(ex::QuoteNode;
            allow_multicol::Bool = false) = ex
 
 # Catch-all method for literal values (Bool, Int, String, etc.)
-# Wraps them in Returns to create a constant function
+# Wraps them in ByRow(Returns(...)) to create a constant vector function.
+# ByRow is required because DataFrames.subset enforces that transformation
+# functions return an AbstractVector, and ByRow with empty source columns
+# produces a vector via _empty_selector_helper.
 # This allows syntax like @subset(df, true) or @subset(df, false)
 function fun_to_vec(ex;
                     no_dest::Bool=false,
@@ -430,8 +433,7 @@ function fun_to_vec(ex;
                     outer_flags::Union{NamedTuple, Nothing}=nothing,
                     allow_multicol::Bool = false)
     if no_dest
-        # For @subset and @with, return a constant function
-        return :([] => Returns($ex))
+        return :([] => $ByRow($(Base.Returns)($ex)))
     else
         throw(ArgumentError("Literal values are only supported in @subset, @rsubset, @with, and similar macros"))
     end

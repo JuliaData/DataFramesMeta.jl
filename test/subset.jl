@@ -185,6 +185,15 @@ end
     # Test combination with other conditions
     @test @subset(df, true, :A .> 1) ≅ df[df.A .> 1, :]
     @test @subset(df, false, :A .> 1) ≅ df[Int[], :]
+
+    # @subset! with literal values
+    @test @subset!(copy(df), true) ≅ df
+    @test @subset!(copy(df), false) ≅ df[Int[], :]
+
+    # @subset with grouped data frame and literal
+    gd = groupby(df, :B)
+    @test @subset(gd, true) ≅ df
+    @test @subset(gd, false) ≅ df[Int[], :]
 end
 
 end # module
