@@ -173,19 +173,24 @@ end
     @test @subset!(groupby(copy(df), :g), :c .== :g) ≅ df[[], :]
 end
 
-@testset "@subset with literal values errors clearly" begin
+@testset "@subset / @rsubset with literal values" begin
     df = DataFrame(A = [1, 2, 3], B = [4, 5, 6])
 
-    # A bare literal is not a valid predicate — it must error (consistent
-    # with `subset(df, [] => Returns(true))`), not be silently broadcast.
-    # The error is raised during macro expansion (as the prior MethodError
-    # from #259 was), so it surfaces via @eval as a LoadError — matching
-    # the suite's convention for other invalid-expansion cases.
+    # @subset (not byrow): a bare literal is a scalar predicate, which
+    # subset rejects (subset(df, [] => Returns(true)) errors). It must error,
+    # not be silently broadcast. The error is raised during macro expansion
+    # (as the #259 MethodError was), so it surfaces via @eval as LoadError.
     @test_throws LoadError @eval @subset($df, true)
     @test_throws LoadError @eval @subset($df, false)
     @test_throws LoadError @eval @subset($df, true, :A .> 1)
     @test_throws LoadError @eval @subset!(copy($df), true)
     @test_throws LoadError @eval @subset(groupby($df, :B), true)
+
+    # @rsubset (byrow): a per-row literal is well-defined and matches
+    # subset(df, [] => ByRow(Returns(true))), which works.
+    @test @rsubset(df, true) ≅ df
+    @test @rsubset(df, false) ≅ df[Int[], :]
+    @test @rsubset(groupby(df, :B), true) ≅ df
 end
 
 end # module
