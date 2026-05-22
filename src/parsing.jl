@@ -421,22 +421,21 @@ fun_to_vec(ex::QuoteNode;
            outer_flags::Union{NamedTuple, Nothing}=nothing,
            allow_multicol::Bool = false) = ex
 
-# Catch-all method for literal values (Bool, Int, String, etc.)
-# Wraps them in ByRow(Returns(...)) to create a constant vector function.
-# ByRow is required because DataFrames.subset enforces that transformation
-# functions return an AbstractVector, and ByRow with empty source columns
-# produces a vector via _empty_selector_helper.
-# This allows syntax like @subset(df, true) or @subset(df, false)
+# Catch-all method for literal values (Bool, Int, String, etc.).
+# A bare literal isn't a column expression: `@subset(df, true)` lowers to a
+# scalar predicate, which `DataFrames.subset` rejects exactly as
+# `subset(df, [] => Returns(true))` does. Rather than accept it (which would
+# make the macro diverge from the function, and would mean different things
+# across macros — e.g. `@select(df, 1)` vs `@subset(df, true)`), surface a
+# clear error in place of the bare MethodError from #259.
 function fun_to_vec(ex;
                     no_dest::Bool=false,
                     gensym_names::Bool=false,
                     outer_flags::Union{NamedTuple, Nothing}=nothing,
                     allow_multicol::Bool = false)
-    if no_dest
-        return :([] => $ByRow($(Base.Returns)($ex)))
-    else
-        throw(ArgumentError("Literal values are only supported in @subset, @rsubset, @with, and similar macros"))
-    end
+    throw(ArgumentError(
+        "literal value `$ex` is not a valid column expression; pass a " *
+        "column reference or a vectorised predicate (e.g. `:x .> 0`)"))
 end
 
 

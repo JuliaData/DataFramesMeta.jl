@@ -173,27 +173,19 @@ end
     @test @subset!(groupby(copy(df), :g), :c .== :g) ≅ df[[], :]
 end
 
-@testset "@subset with literal values" begin
+@testset "@subset with literal values errors clearly" begin
     df = DataFrame(A = [1, 2, 3], B = [4, 5, 6])
 
-    # Test with boolean literal true - should return all rows
-    @test @subset(df, true) ≅ df
-
-    # Test with boolean literal false - should return empty dataframe
-    @test @subset(df, false) ≅ df[Int[], :]
-
-    # Test combination with other conditions
-    @test @subset(df, true, :A .> 1) ≅ df[df.A .> 1, :]
-    @test @subset(df, false, :A .> 1) ≅ df[Int[], :]
-
-    # @subset! with literal values
-    @test @subset!(copy(df), true) ≅ df
-    @test @subset!(copy(df), false) ≅ df[Int[], :]
-
-    # @subset with grouped data frame and literal
-    gd = groupby(df, :B)
-    @test @subset(gd, true) ≅ df
-    @test @subset(gd, false) ≅ df[Int[], :]
+    # A bare literal is not a valid predicate — it must error (consistent
+    # with `subset(df, [] => Returns(true))`), not be silently broadcast.
+    # The error is raised during macro expansion (as the prior MethodError
+    # from #259 was), so it surfaces via @eval as a LoadError — matching
+    # the suite's convention for other invalid-expansion cases.
+    @test_throws LoadError @eval @subset($df, true)
+    @test_throws LoadError @eval @subset($df, false)
+    @test_throws LoadError @eval @subset($df, true, :A .> 1)
+    @test_throws LoadError @eval @subset!(copy($df), true)
+    @test_throws LoadError @eval @subset(groupby($df, :B), true)
 end
 
 end # module
