@@ -33,6 +33,8 @@ This syntax simplification is demonstrated with two simple examples below.
 Define a data frame.
 
 ```julia
+# Importing DataFramesMeta also implicitly imports DataFrames
+using DataFramesMeta
 df = DataFrame(a = [1, 2], b = [3, 4]);
 ```
 
