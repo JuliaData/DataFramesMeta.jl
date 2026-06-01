@@ -35,7 +35,7 @@ Define a data frame.
 ```julia
 # Importing DataFramesMeta also implicitly imports DataFrames
 using DataFramesMeta
-df = DataFrame(a = [1, 2], b = [3, 4]);
+df = DataFrame(a = [1, 2], b = [3, 4])
 ```
 
 Add columns `a` and `b` together and store the result in a new column `c`.
