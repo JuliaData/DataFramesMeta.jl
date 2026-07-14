@@ -421,6 +421,31 @@ fun_to_vec(ex::QuoteNode;
            outer_flags::Union{NamedTuple, Nothing}=nothing,
            allow_multicol::Bool = false) = ex
 
+# Catch-all method for literal values (Bool, Int, String, etc.).
+# Behaviour mirrors the underlying `DataFrames.subset` exactly, keyed on the
+# `@byrow` flag:
+#   * byrow  -> `[] => ByRow(Returns(ex))`, a per-row constant vector, same
+#               as `subset(df, [] => ByRow(Returns(true)))` (which works).
+#   * !byrow -> a bare literal is a scalar predicate, which `subset` rejects
+#               (`subset(df, [] => Returns(true))` errors). Raise a clear
+#               ArgumentError in place of the #259 MethodError.
+# ByRow is applied only when byrow is set; applying it unconditionally would
+# make `@subset(df, true)` accept what the function rejects.
+function fun_to_vec(ex;
+                    no_dest::Bool=false,
+                    gensym_names::Bool=false,
+                    outer_flags::Union{NamedTuple, Nothing}=nothing,
+                    allow_multicol::Bool = false)
+    byrow = outer_flags !== nothing && outer_flags[BYROW_SYM][]
+    if byrow
+        return :([] => $ByRow($(Base.Returns)($ex)))
+    end
+    throw(ArgumentError(
+        "literal value `$ex` is not a valid column expression; pass a " *
+        "column reference or a vectorised predicate (e.g. `:x .> 0`), " *
+        "or use `@rsubset` for a per-row literal"))
+end
+
 
 """
     rename_kw_to_pair(ex::Expr)
