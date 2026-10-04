@@ -1117,9 +1117,21 @@ julia> printlabels(df, [:wage, :age]; unlabelled = false)
 └────────┴────────────────────────┘
 ```
 
+Pass an IO stream as the first argument to capture or redirect labels:
+
+```julia
+text = sprint(io -> printlabels(io, df))
+```
+
+Additional keywords are forwarded to `PrettyTables.pretty_table`. To produce
+HTML, use `backend=:html` with PrettyTables 3 or `backend=Val(:html)` with
+PrettyTables 2.
+
 #### `printnotes`: For printing notes
 
-Use `printnotes` to print the notes of columns in a data frame. The optional
+Use `printnotes` to print the notes of columns in a data frame.
+Pass an IO stream as the first argument to redirect the output, for example
+`sprint(io -> printnotes(io, df))`. The optional
 argument `cols` determines which columns to print, while the keyword
 argument `unnoted` controls whether to print columns without user-defined notes. 
 
