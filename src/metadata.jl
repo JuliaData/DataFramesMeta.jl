@@ -150,9 +150,11 @@ end
 
 
 """
-    printlabels(df, [cols=All()]; unlabelled = true)
+    printlabels(df, cols=All(); unlabelled=true, kwargs...)
+    printlabels(io::IO, df, cols=All(); unlabelled=true, kwargs...)
 
-Pretty-print all labels in a data frame.
+Pretty-print column labels to `io`, which defaults to `stdout`. Additional
+keyword arguments are passed to `PrettyTables.pretty_table`.
 
 ## Arguments
 
@@ -161,7 +163,7 @@ Pretty-print all labels in a data frame.
   `Between(...)`, or a regular expression.
 
 * `unlabelled`: Keyword argument for whether to print
-  the columns without user-defined labels. Deftaults to `true`.
+  the columns without user-defined labels. Defaults to `true`.
   For column `col` without a user-defined label, `label(df, col)` returns
   the name of the column, `col`.
 
@@ -202,7 +204,9 @@ julia> printlabels(df, r"^wage")
 ```
 
 """
-function printlabels(df, cols=All(); unlabelled = true)
+printlabels(df, cols=All(); kwargs...) = printlabels(stdout, df, cols; kwargs...)
+
+function printlabels(io::IO, df, cols=All(); unlabelled=true, kwargs...)
     cs = String[]
     ls = String[]
     for n in names(df, cols)
@@ -218,25 +222,24 @@ function printlabels(df, cols=All(); unlabelled = true)
         end
     end
     t = DataFrame(Column = cs, Label = ls)
-    _print_labels(t)
+    _print_labels(io, t; kwargs...)
     return nothing
 end
 
-# Support older PrettyTables for now
-# (Will change when DataFrames.jl drops support)
-# I can't just use keyword arguments provided by
-# DataFrames.jl because I like the lines of the default
-# printing
+# PrettyTables 2 and 3 use different options to hide column element types.
 @static if pkgversion(PrettyTables).major == 2
-    _print_labels(t) = pretty_table(t; show_subheader = false)
+    _print_labels(io, t; kwargs...) =
+        pretty_table(io, t; show_subheader=false, kwargs...)
 else
-    _print_labels(t) = pretty_table(t; show_first_column_label_only = true)
+    _print_labels(io, t; kwargs...) =
+        pretty_table(io, t; show_first_column_label_only=true, kwargs...)
 end
 
 """
-    printnotes(df, cols = All(); unnoted = false)
+    printnotes(df, cols=All(); unnoted=false)
+    printnotes(io::IO, df, cols=All(); unnoted=false)
 
-Print the notes and labels in a data frame.
+Print column notes and labels to `io`, which defaults to `stdout`.
 
 ## Arguments
 * `cols`: Optional argument to select columns to print. Can
@@ -272,7 +275,10 @@ Column: age
 Label: Age (years)
 ```
 """
-function printnotes(df, cols = All(); unnoted = false)
+printnotes(df, cols=All(); unnoted=false) =
+    printnotes(stdout, df, cols; unnoted=unnoted)
+
+function printnotes(io::IO, df, cols=All(); unnoted=false)
     nms = names(df, cols)
     for n in nms
         nt = note(df, n)
@@ -280,25 +286,25 @@ function printnotes(df, cols = All(); unnoted = false)
         no_note = nt == ""
         no_lab = lab == n
         if unnoted == true
-            printnote(n, nt, lab, no_note, no_lab)
+            printnote(io, n, nt, lab, no_note, no_lab)
         else
             if no_note == false || no_lab == false
-                printnote(n, nt, lab, no_note, no_lab)
+                printnote(io, n, nt, lab, no_note, no_lab)
             end
         end
     end
     nothing
 end
 
-function printnote(n, nt, lab, no_note, no_lab)
+function printnote(io, n, nt, lab, no_note, no_lab)
     # "Column: " has 8 characters
-    println("Column: $n")
-    println(repeat("─", length(n) + 8))
+    println(io, "Column: $n")
+    println(io, repeat("─", length(n) + 8))
     if no_lab == false
-        println("Label: ", lab)
+        println(io, "Label: ", lab)
     end
     if no_note == false
-        println(nt)
+        println(io, nt)
     end
-    println()
+    println(io)
 end
