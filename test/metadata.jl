@@ -1,6 +1,6 @@
 module TestMetaData
 
-using Test
+using Test, DataFramesMeta
 
 @testset "labels" begin
     df = DataFrame(a = 1, b = 2)
@@ -74,6 +74,54 @@ end
     printnotes(df; unnoted = false)
     printnotes(df, [:a, :b], unnoted = false)
     printnotes(df, [:a, :b], unnoted = true)
+end
+
+function captured_stdout(f)
+    mktemp() do _, io
+        result = redirect_stdout(f, io)
+        flush(io)
+        seekstart(io)
+        return result, read(io, String)
+    end
+end
+@testset "metadata output streams" begin
+    df = DataFrame(wage = [12], age = [23], extra = [1])
+    @label! df :wage = "Wage <USD>"
+    @label! df :age = "Age"
+    @note! df :wage = "First line\nSecond line"
+    for (printer, options) in ((printlabels, (;)),
+                               (printlabels, (; unlabelled = false)),
+                               (printnotes, (;)),
+                               (printnotes, (; unnoted = true)))
+        @testset "$(printer), $(options)" begin
+            old_result, expected = captured_stdout(() -> printer(df; options...))
+            buffer = IOBuffer()
+            result, leaked = captured_stdout(() -> printer(buffer, df; options...))
+            @test result === old_result === nothing
+            @test isempty(leaked)
+            @test String(take!(buffer)) == expected
+        end
+    end
+    @testset "selected labels" begin
+        text = sprint(io -> printlabels(io, df, :wage))
+        @test occursin("Wage <USD>", text)
+        @test !occursin("Age", text)
+    end
+    @testset "selected notes" begin
+        text = sprint(io -> printnotes(io, df, :wage))
+        @test text == "Column: wage\n────────────\nLabel: Wage <USD>\nFirst line\nSecond line\n\n"
+    end
+    @testset "HTML formatter" begin
+        backend = pkgversion(DataFramesMeta.PrettyTables).major == 2 ? Val(:html) : :html
+        html = sprint(io -> printlabels(io, df; backend))
+        @test occursin("<table", html)
+        @test occursin("Wage &lt;USD&gt;", html)
+    end
+    @testset "empty notes and empty frames" begin
+        @test isempty(sprint(io -> printnotes(io, DataFrame(a = [1]))))
+        @test isempty(sprint(io -> printnotes(io, DataFrame())))
+        @test printlabels(IOBuffer(), DataFrame()) === nothing
+    end
 end
 
 end # module
