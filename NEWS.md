@@ -1,5 +1,5 @@
 # DataFramesMeta v0.15.7 Release Notes
-* `printlabels` and `printnotes` now accept an `IO` stream as their first argument, and `printlabels` forwards keyword arguments to `PrettyTables.pretty_table` ([#429](https://github.com/JuliaData/DataFramesMeta.jl/pull/429))
+* `printlabels` and `printnotes` now accept an `IO` stream as their first argument. Additionally, `printlabels` now forwards keyword arguments to `PrettyTables.pretty_table` ([#429](https://github.com/JuliaData/DataFramesMeta.jl/pull/429))
 
 # DataFramesMeta v0.15.6 Release Notes
 * Update to PrettyTables.jl v3 ([#415](https://github.com/JuliaData/DataFramesMeta.jl/pull/415#event-20653251214))
