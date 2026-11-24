@@ -1820,7 +1820,7 @@ new columns in terms of existing columns or symbols to specify existing columns
 Inputs to `@select` can come in two formats: a `begin ... end` block,
 in which case each line in the block is a separate
 transformation or selector, or as a series of
-arguments and keyword-like arguments arguments. For example, the following are
+arguments and keyword-like arguments. For example, the following are
 equivalent:
 
 ```julia
